@@ -13,6 +13,7 @@ import appDataSource from "../dataSource";
 import { pubSub } from "../helpers/createPubSub";
 import { Notification as FirebaseNotification } from "firebase-admin/messaging";
 import { sendPushNotifications } from "../helpers/notifications";
+import lumen from "@zenith-to/lumen-js";
 
 @ObjectType()
 export class ChatResponse {
@@ -69,14 +70,14 @@ export class ChatResolver {
     async chats(
         @Ctx() { payload }: AuthContext
     ): Promise<Chat[]> {
-        const chats = await this.chatRepository.find({ relations: ["users", "messages", "events"], order: { updatedAt: "DESC" } });
+        const chats = await this.chatRepository.find({ relations: ["users"], order: { updatedAt: "DESC" } });
         const userChats: Chat[] = [];
 
         if (payload) {
             for (const chat of chats) {
                 const me = chat.users.find(user => user.userId === payload.id);
                 
-                if (me && ((chat.type === "group" && chat.users.some(obj => obj.userId === payload.id)) || (chat.type === "chat" && chat.creatorId === payload.id && me.inside) || (chat.type === "chat" && chat.users.some(obj => obj.userId === payload.id) && me.inside && chat.visible))) {
+                if (me && ((chat.type === "group" && chat.users.some(obj => obj.userId === payload.id) && me.inside) || (chat.type === "chat" && chat.creatorId === payload.id && me.inside) || (chat.type === "chat" && chat.users.some(obj => obj.userId === payload.id) && me.inside && chat.visible))) {
                     userChats.push(chat);
                 }
             }
@@ -123,12 +124,12 @@ export class ChatResolver {
         if (!payload) {
             return null;
         } else {
-            const chat = await this.chatRepository.findOne({ where: { chatId }, relations: ["users", "messages", "events"] });
+            const chat = await this.chatRepository.findOne({ where: { chatId }, relations: ["users"] });
             
             if (!chat) {
                 return null;
             } else {
-                const isIdInArray = chat.users.some(obj => obj.userId === payload.id);
+                const isIdInArray = chat.users.some(obj => obj.userId === payload.id && obj.inside);
 
                 if (isIdInArray) {
                     return chat;
@@ -145,18 +146,8 @@ export class ChatResolver {
         @Ctx() { payload }: AuthContext
     ) {
         if (payload) {
-            const follow = await this.followRepository.find({ where: { userId: payload.id } });
-            let followers: User[] = [];
-            let user;
-
-            await Promise.all(
-                follow.map(async (item) => {
-                    user = await this.userRepository.findOne({ where: { id: item.followerId } });
-                    if (user) {
-                        followers.push(user);
-                    }
-                })
-            );
+            const followRelations = await this.followRepository.find({ where: { user: { id: payload.id } }, relations: ["follower"] });
+            const followers = followRelations.map(follow => follow.follower);
 
             const everyoneUsers = await this.userRepository.find({ where: { userSettings: { incomingMessages: "everyone" } } });
 
@@ -165,10 +156,14 @@ export class ChatResolver {
             const filteredUsers = users.filter((item) => item.id !== payload.id);
 
             const blockActions = await this.blockRepository.find({ where: { userId: payload.id } });
+            const blockedMeActions = await this.blockRepository.find({ where: { blockedId: payload.id } });
 
             const blockedAccounts = blockActions.map((item) => item.blockedId);
+            const blockedMeAccounts = blockedMeActions.map((item) => item.userId);
 
-            return filteredUsers.filter((item) => !blockedAccounts.includes(item.id));
+            const blockArray = mergeAndDeduplicateArrays(blockedAccounts, blockedMeAccounts);
+
+            return filteredUsers.filter((item) => !blockArray.includes(item.id));
         } else {
             return [];
         }
@@ -180,7 +175,7 @@ export class ChatResolver {
         @Arg("chatId", { nullable: true }) chatId: string,
         @Ctx() { payload }: AuthContext
     ) {
-        const chat = await this.chatRepository.findOne({ where: { chatId }, relations: ["users", "messages", "events"] });
+        const chat = await this.chatRepository.findOne({ where: { chatId }, relations: ["users", "messages"] });
         let result = null;
 
         if (payload) {
@@ -302,10 +297,8 @@ export class ChatResolver {
                         visible: true,
                     }).save();
 
-                    const newChat = await this.chatRepository.findOne({ where: { chatId: chat.chatId }, relations: ["users", "messages", "events"] });
-
-                    if (newChat) {
-                        pubSub.publish("NEW_CHAT", newChat);
+                    if (chat) {
+                        pubSub.publish("NEW_CHAT", chat);
                     }
 
                     if (me) {
@@ -318,7 +311,7 @@ export class ChatResolver {
                                 const event = await this.eventRepository.create({
                                     userId: user.id,
                                     eventType: "chat",
-                                    eventMessage: `${me.firstName} ${me.lastName} added ${user.firstName} ${user.lastName} to the group.`,
+                                    eventMessage: `${me.name} added ${user.name} to the group.`,
                                     chat: await this.chatRepository.findOne({ where: { chatId: chat.chatId } }) as Chat,
                                     createdAt: new Date(),
                                 }).save();
@@ -414,7 +407,7 @@ export class ChatResolver {
                         const event = await this.eventRepository.create({
                             userId: chatUser.id,
                             eventType: "chat",
-                            eventMessage: `${me.firstName} ${me.lastName} added ${chatUser.firstName} ${chatUser.lastName} to the group.`,
+                            eventMessage: `${me.name} added ${chatUser.name} to the group.`,
                             chat: await this.chatRepository.findOne({ where: { chatId } }) as  Chat,
                             createdAt: new Date(),
                         }).save();
@@ -423,7 +416,7 @@ export class ChatResolver {
                     }
                 }
 
-                const publishedChat = await this.chatRepository.findOne({ where: { chatId }, relations: ["users", "messages", "events"] });
+                const publishedChat = await this.chatRepository.findOne({ where: { chatId }, relations: ["users"] });
 
                 if (publishedChat) {
                     pubSub.publish("NEW_CHAT", publishedChat);
@@ -479,7 +472,7 @@ export class ChatResolver {
                     const event = await this.eventRepository.create({
                         userId: user.id,
                         eventType: "chat",
-                        eventMessage: `${user.firstName} ${user.lastName} left the group.`,
+                        eventMessage: `${user.name} left the group.`,
                         chat: await this.chatRepository.findOne({ where: { chatId } }) as Chat,
                         createdAt: new Date(),
                     }).save();
@@ -546,7 +539,7 @@ export class ChatResolver {
                     const event = await this.eventRepository.create({
                         userId: user.id,
                         eventType: "chat",
-                        eventMessage: `${user.firstName} ${user.lastName} has been removed from the group by ${meUser.firstName} ${meUser.lastName}.`,
+                        eventMessage: `${user.name} has been removed from the group by ${meUser.name}.`,
                         chat: await this.chatRepository.findOne({ where: { chatId } }) as Chat,
                         createdAt: new Date(),
                     }).save();
@@ -657,7 +650,7 @@ export class ChatResolver {
                 const event = await this.eventRepository.create({
                     userId: user.id,
                     eventType: "chat",
-                    eventMessage: `${user.firstName} ${user.lastName} edited the group information.`,
+                    eventMessage: `${user.name} edited the group information.`,
                     chat: await this.chatRepository.findOne({ where: { chatId } }) as Chat,
                     createdAt: new Date(),
                 }).save();
@@ -745,7 +738,7 @@ export class ChatResolver {
             
             if (chat) {
                 const users = chat.users.map(chatUser => chatUser.userId);
-                return users.includes(payload.id);                
+                return users.includes(payload.id);
             } else {
                 return false;
             }
@@ -784,19 +777,21 @@ export class MessageResolver {
         @Arg("type") type: string,
         @Arg("content") content: string,
         @Arg("media") media: string,
+        @Arg("item") item: string,
         @Arg("chatId") chatId: string,
         @Ctx() { payload }: AuthContext,
         @Arg("isReplyTo", () => Int, { nullable: true }) isReplyTo?: number,
     ) {
         let mediaObject = JSON.parse(media);
+        let itemObject = JSON.parse(item);
 
         if (!payload) {
             return null;
         } else {
-            if (content === "" && (!media || media === "")) {
+            if (content === "" && (!media || media === "") && (!item || item === "")) {
                 return null;
             } else {
-                const chat = await this.chatRepository.findOne({ where: { chatId }, relations: ["users", "messages", "events"] });
+                const chat = await this.chatRepository.findOne({ where: { chatId }, relations: ["users", "messages"] });
 
                 const message = await this.messageRepository.create({
                     messageId: uuidv4(),
@@ -808,8 +803,12 @@ export class MessageResolver {
                         src: mediaObject.src,
                         type: mediaObject.type,
                     },
-                    mentions: [], // extractMentions(content)
-                    hashtags: [], // extractHashtags(content)
+                    item: {
+                        type: itemObject.type,
+                        id: itemObject.id,
+                    },
+                    mentions: lumen.extractMentions(content),
+                    hashtags: lumen.extractHashtags(content),
                     status: MessageStatus.SENT,
                     chat: await this.chatRepository.findOne({ where: { chatId } }) as Chat,
                     isReplyTo,
@@ -817,7 +816,6 @@ export class MessageResolver {
 
                 if (message && chat) {
                     chat.messages.push(message);
-                    chat.messagesCount += 1;
 
                     await chat.save();
 
@@ -871,7 +869,7 @@ export class MessageResolver {
 
                                 const tokens = await this.userDeviceTokenRepository.find({ where: { userId: user.userId } });
                                 const pushNotification: FirebaseNotification = {
-                                    title: `${me.firstName} ${me.lastName} (@${me.username})`,
+                                    title: `${me.name} (@${me.username})`,
                                     body: notification.content,
                                     imageUrl: me.profile.profilePicture.length > 0 ? me.profile.profilePicture : "https://img.zncdn.net/brand/profile-picture.png",
                                 };
@@ -906,7 +904,7 @@ export class MessageResolver {
             if (content === "" && (!media || media === "")) {
                 return false;
             } else {
-                const chat = await this.chatRepository.findOne({ where: { chatId }, relations: ["users", "messages", "events"] });
+                const chat = await this.chatRepository.findOne({ where: { chatId } });
 
                 if (!chat) {
                     return false;
@@ -920,8 +918,8 @@ export class MessageResolver {
                     {
                         content,
                         isEdited: true,
-                        mentions: [], // extractMentions(content)
-                        hashtags: [], // extractHashtags(content)
+                        mentions: lumen.extractMentions(content),
+                        hashtags: lumen.extractHashtags(content),
                         status: MessageStatus.SENT,
                     }
                 );
@@ -1007,7 +1005,7 @@ export class MessageResolver {
             return false;
         }
 
-        const chat = await this.chatRepository.findOne({ where: { chatId }, relations: ["users", "messages", "events"] });
+        const chat = await this.chatRepository.findOne({ where: { chatId }, relations: ["users", "messages"] });
         const message = await this.messageRepository.findOne({ where: { messageId }, relations: ["chat"] });
 
         if (!chat || !message) {
@@ -1028,7 +1026,6 @@ export class MessageResolver {
 
         if (chat.users.every((user) => user.hiddenMessagesIds.includes(message.id))) {
             chat.messages = chat.messages.filter((item) => item.id !== message.id);
-            chat.messagesCount--;
 
             await chat.save();
 
@@ -1049,7 +1046,7 @@ export class MessageResolver {
             return false;
         }
 
-        const chat = await this.chatRepository.findOne({ where: { chatId }, relations: ["users", "messages", "events"] });
+        const chat = await this.chatRepository.findOne({ where: { chatId }, relations: ["messages"] });
         const message = await this.messageRepository.findOne({ where: { messageId, authorId: payload.id }, relations: ["chat"] });
 
         if (!chat || !message) {
@@ -1061,7 +1058,6 @@ export class MessageResolver {
         pubSub.publish("DELETED_MESSAGE_OR_EVENT", message);
 
         chat.messages = chat.messages.filter((item) => item.id !== message.id);
-        chat.messagesCount--;
 
         await chat.save();
 
@@ -1102,7 +1098,7 @@ export class MessageResolver {
         @Arg("chatId", { nullable: true }) chatId: string,
         @Ctx() { payload }: AuthContext
     ) {
-        const chat = await this.chatRepository.findOne({ where: { chatId }, relations: ["users", "messages", "events"] });
+        const chat = await this.chatRepository.findOne({ where: { chatId }, relations: ["users"] });
 
         if (chat && payload) {
             const me = chat.users.find(chatUser => chatUser.userId === payload.id);
@@ -1206,7 +1202,7 @@ export class MessageResolver {
         const chat = await this.chatRepository.findOne({ where: { chatId: message.chat.chatId }, relations: ["users"] });
         const messageViewLogs = await this.messageViewLogRepository.find({ where: { messageId } });
 
-        if (message.status === MessageStatus.SENT && chat && messageViewLogs) {
+        if (message.status === MessageStatus.SENT && chat) {
             const chatUserIds = chat.users.filter((user) => user.inside).map((user) => user.userId);
             const usersViewedIds = messageViewLogs.map((view) => view.userId);
         

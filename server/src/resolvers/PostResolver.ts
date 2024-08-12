@@ -12,6 +12,7 @@ import { pubSub } from "../helpers/createPubSub";
 import { Notification as FirebaseNotification } from "firebase-admin/messaging";
 import { sendPushNotifications } from "../helpers/notifications";
 import { ComprehendClient, DetectDominantLanguageCommand } from "@aws-sdk/client-comprehend";
+import lumen from "@zenith-to/lumen-js";
 
 @ObjectType()
 export class PostResponse {
@@ -271,7 +272,7 @@ export class PostResolver {
                 const user = await this.userRepository.findOne({ where: { id: payload.id } });
                 
                 if (user) {
-                    let mentions: string[] = []; // extractMentions(content)
+                    let mentions: string[] = lumen.extractMentions(content);
                     const index = mentions.indexOf(user.username);
 
                     if (index !== -1) {
@@ -307,7 +308,7 @@ export class PostResolver {
                             content,
                             author: user,
                             mentions,
-                            hashtags: [], // extractHashtags(content)
+                            hashtags: lumen.extractHashtags(content),
                             isEdited: false,
                             media: mediaItems,
                             isReplyTo,
@@ -335,7 +336,7 @@ export class PostResolver {
                                         resourceId: post.id,
                                         type: "mention",
                                         viewed: false,
-                                        content: `${post.author.firstName} ${post.author.lastName} (@${post.author.username}) mentioned you in a ${(type === "comment") ? "comment" : "post"}.`,
+                                        content: `${post.author.name} (@${post.author.username}) mentioned you in a ${(type === "comment") ? "comment" : "post"}.`,
                                     }).save();
 
                                     pubSub.publish("NEW_NOTIFICATION", notification);
@@ -365,7 +366,7 @@ export class PostResolver {
                                 resourceId: post.id,
                                 type: "comment",
                                 viewed: false,
-                                content: `${post.author.firstName} ${post.author.lastName} (@${post.author.username}) commented your post.`,
+                                content: `${post.author.name} (@${post.author.username}) commented your post.`,
                             }).save();
 
                             pubSub.publish("NEW_NOTIFICATION", notification);
@@ -438,7 +439,7 @@ export class PostResolver {
                 const user = await this.userRepository.findOne({ where: { id: payload.id } });
                 
                 if (user) {
-                    let mentions: string[] = []; // extractMentions(content)
+                    let mentions: string[] = lumen.extractMentions(content);
                     const index = mentions.indexOf(user.username);
 
                     if (index !== -1) {
@@ -461,7 +462,7 @@ export class PostResolver {
                                 content,
                                 mentions,
                                 isEdited: true,
-                                hashtags: [], // extractHashtags(content)
+                                hashtags: lumen.extractHashtags(content),
                                 lang,
                                 topicsIds: [],
                             },
@@ -554,7 +555,7 @@ export class PostResolver {
                                             resourceId: post.id,
                                             type: "mention",
                                             viewed: false,
-                                            content: `${post.author.firstName} ${post.author.lastName} (@${post.author.username}) mentioned you in a ${(post.type === "comment") ? "comment" : "post"}.`,
+                                            content: `${post.author.name} (@${post.author.username}) mentioned you in a ${(post.type === "comment") ? "comment" : "post"}.`,
                                         }).save();
 
                                         pubSub.publish("NEW_NOTIFICATION", newNotification);
@@ -697,7 +698,7 @@ export class PostResolver {
                     resourceId: post.id,
                     type: "like",
                     viewed: false,
-                    content: `${user.firstName} ${user.lastName} (@${user.username}) liked your ${(post.type === "comment") ? "comment" : "post"}.`,
+                    content: `${user.name} (@${user.username}) liked your ${(post.type === "comment") ? "comment" : "post"}.`,
                 }).save();
 
                 pubSub.publish("NEW_NOTIFICATION", notification);

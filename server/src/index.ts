@@ -14,7 +14,7 @@ import { Session, User } from "./entities/User";
 import { createAccessToken, createRefreshToken } from "./auth/auth";
 import { sendRefreshToken } from "./auth/sendRefreshToken";
 import { PostResolver } from "./resolvers/PostResolver";
-import { getPresignedUrl } from "./helpers/getPresignedUrl";
+import { getPresignedUrlForDeleteCommand, getPresignedUrlForPutCommand } from "./helpers/getPresignedUrl";
 import { MessageNotificationResolver, NotificationResolver } from "./resolvers/NotificationResolver";
 import { WebSocketServer } from "ws";
 import { useServer } from "graphql-ws/lib/use/ws";
@@ -98,10 +98,6 @@ async function main() {
             return res.send({ ok: false, accessToken: "", sessionId: "" });
         }
 
-        if (user.tokenVersion !== payload.tokenVersion) {
-            return res.send({ ok: false, accessToken: "", sessionId: "" });
-        }
-
         sendRefreshToken(res, createRefreshToken(user, session));
 
         return res.send({ ok: true, accessToken: createAccessToken(user, session), sessionId: session.sessionId });
@@ -114,7 +110,7 @@ async function main() {
         rawUsers.map((user: User) => (
             users.push({
                 id: user.id,
-                name: user.firstName + " " + user.lastName,
+                name: user.name,
                 link: "/" + user.username,
                 username: user.username,
                 avatar: user.profile.profilePicture as string,
@@ -129,8 +125,15 @@ async function main() {
     });
 
     app.post("/presigned-url", async (req, res) => {
-        const { key } = req.body;
-        const url = await getPresignedUrl(key);
+        const { key, type, itemType } = req.body;
+        let url;
+
+        if (type === "put") {
+            url = await getPresignedUrlForPutCommand(key, itemType);
+        } else {
+            url = await getPresignedUrlForDeleteCommand(key, itemType);
+        }
+
         res.send({ url });
     });
 

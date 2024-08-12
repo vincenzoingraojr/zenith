@@ -36,6 +36,7 @@ export class LandingUserResolver {
         @Arg("username") username: string
     ): Promise<UserResponse> {
         let errors = [];
+        let ok = false;
 
         if (!email.includes("@") || email === "" || email === null) {
             errors.push({
@@ -171,6 +172,8 @@ export class LandingUserResolver {
                 );
 
                 status = "You are now signed up. You will be notified when the platform is completed.";
+
+                ok = true;
             } catch (error) {
                 console.log(error);
 
@@ -192,6 +195,7 @@ export class LandingUserResolver {
         return {
             status,
             errors,
+            ok,
         };
     }
 }

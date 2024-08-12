@@ -11,15 +11,15 @@ const storageConfig: S3ClientConfig = {
 
 const storageHelper = new S3Client(storageConfig);
 
-export async function getPresignedUrlForPutCommand(key: string) {
-    const command = new PutObjectCommand({ Bucket: process.env.STORAGE_BUCKET_NAME, Key: key });
+export async function getPresignedUrlForPutCommand(key: string, itemType: string) {
+    const command = new PutObjectCommand({ Bucket: itemType.includes("image") ? process.env.IMAGE_BUCKET_NAME : process.env.VIDEO_BUCKET_NAME, Key: key });
     const url = await getSignedUrl(storageHelper, command, { expiresIn: 3600 });
 
     return url;
 }
 
-export async function getPresignedUrlForDeleteCommand(key: string) {
-    const command = new DeleteObjectCommand({ Bucket: process.env.STORAGE_BUCKET_NAME, Key: key });
+export async function getPresignedUrlForDeleteCommand(key: string, itemType: string) {
+    const command = new DeleteObjectCommand({ Bucket: itemType.includes("image") ? process.env.IMAGE_BUCKET_NAME : process.env.VIDEO_BUCKET_NAME, Key: key });
     const url = await getSignedUrl(storageHelper, command, { expiresIn: 3600 });
 
     return url;

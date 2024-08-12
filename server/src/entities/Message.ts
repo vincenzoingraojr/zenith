@@ -42,10 +42,6 @@ export class Chat extends BaseEntity {
     @UpdateDateColumn({ nullable: false })
     updatedAt: Date;
 
-    @Field(() => Int, { defaultValue: 0 })
-    @Column("int", { default: 0 })
-    messagesCount: number;
-
     @Field(() => Boolean, { defaultValue: false })
     @Column({ default: false })
     visible: boolean;
@@ -72,6 +68,17 @@ export class MessageMedia {
     @Field(() => String, { nullable: true, defaultValue: null })
     @Column({ nullable: true, default: null })
     src: string;
+}
+
+@ObjectType()
+export class MessageItem {
+    @Field(() => String, { nullable: true, defaultValue: null })
+    @Column({ nullable: true, default: null })
+    type: string;
+
+    @Field(() => Int, { nullable: true, defaultValue: null })
+    @Column({ nullable: true, default: null })
+    id: number;
 }
 
 @ObjectType()
@@ -156,6 +163,10 @@ export class Message extends BaseEntity {
     @Field(() => MessageMedia)
     @Column(() => MessageMedia)
     media: MessageMedia;
+
+    @Field(() => MessageItem)
+    @Column(() => MessageItem)
+    item: MessageItem;
     
     @Field(() => [String], { nullable: true, defaultValue: [] })
     @Column({ type: "text", array: true, nullable: true, default: [] })

@@ -7,6 +7,7 @@ import { isAuth } from "../middleware/isAuth";
 import { AuthContext } from "../types";
 import { checkSensitiveContent } from "../helpers/checkSensitiveContent";
 import { LanguageCode } from "@aws-sdk/client-comprehend";
+import lumen from "@zenith-to/lumen-js";
 
 @ObjectType()
 export class SearchResult {
@@ -60,8 +61,8 @@ export class SearchResolver {
                 .createQueryBuilder("post")
                 .leftJoinAndSelect("post.author", "user");
 
-            const mentions: string[] = []; // extractMentions(keyword)
-            const hashtags: string[] = []; // extractHashtags(keyword)
+            const mentions: string[] = lumen.extractMentions(keyword);
+            const hashtags: string[] = lumen.extractHashtags(keyword);
 
             const contentConditions = keywords.map((kw, index) => {
                 const paramName = `keyword${index}`;
@@ -163,5 +164,3 @@ export class SearchResolver {
         }
     }
 }
-
-// implement advanced search

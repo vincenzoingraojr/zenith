@@ -21,10 +21,10 @@ import ejs from "ejs";
 import path from "path";
 import { FieldError } from "./common";
 import { isAuth } from "../middleware/isAuth";
-import { processBirthDate } from "../helpers/processBirthDate";
+import { processBirthDate, processDays } from "../helpers/dates";
 import { v4 as uuidv4 } from "uuid";
 import { Notification } from "../entities/Notification";
-import { authenticator } from "otplib";
+import { totp } from "otplib";
 import { decrypt, encrypt } from "../helpers/crypto";
 import appDataSource from "../dataSource";
 import { SendEmailCommand, SendEmailCommandInput } from "@aws-sdk/client-ses";
@@ -33,6 +33,7 @@ import { sendPushNotifications } from "../helpers/notifications";
 import { Notification as FirebaseNotification } from "firebase-admin/messaging";
 import { Topic } from "../entities/Topic";
 import mailHelper from "../helpers/mailHelper";
+import { Article, Post } from "../entities/Post";
 
 @ObjectType()
 export class UserResponse {
@@ -47,36 +48,43 @@ export class UserResponse {
 
     @Field(() => String, { nullable: true })
     status?: string;
+
+    @Field(() => Boolean)
+    ok: boolean;
 }
 
 @Resolver(User)
 export class UserResolver {
     private readonly userRepository: Repository<User>;
+    private readonly postRepository: Repository<Post>;
     private readonly sessionRepository: Repository<Session>;
     private readonly notificationRepository: Repository<Notification>;
     private readonly followRepository: Repository<Follow>;
     private readonly blockRepository: Repository<Block>;
     private readonly userDeviceTokenRepository: Repository<UserDeviceToken>;
     private readonly topicRepository: Repository<Topic>;
+    private readonly articleRepository: Repository<Article>;
 
     constructor() {
         this.userRepository = appDataSource.getRepository(User);
+        this.postRepository = appDataSource.getRepository(Post);
         this.sessionRepository = appDataSource.getRepository(Session);
         this.notificationRepository = appDataSource.getRepository(Notification);
         this.followRepository = appDataSource.getRepository(Follow);
         this.blockRepository = appDataSource.getRepository(Block);
         this.userDeviceTokenRepository = appDataSource.getRepository(UserDeviceToken);
         this.topicRepository = appDataSource.getRepository(Topic);
+        this.articleRepository = appDataSource.getRepository(Article);
     }
 
     @Query(() => User, { nullable: true })
     findUser(@Arg("username", { nullable: true }) username: string) {
-        return this.userRepository.findOne({ where: { username }, relations: ["posts"] });
+        return this.userRepository.findOne({ where: { username } });
     }
 
     @Query(() => User, { nullable: true })
     findUserById(@Arg("id", () => Int, { nullable: true }) id: number, @Arg("deleted", { nullable: true }) deleted?: boolean) {
-        return this.userRepository.findOne({ where: { id }, relations: ["posts"], withDeleted: deleted || false });
+        return this.userRepository.findOne({ where: { id }, withDeleted: deleted || false });
     }
 
     @Query(() => User, { nullable: true })
@@ -96,7 +104,6 @@ export class UserResolver {
             
             return this.userRepository.findOne({
                 where: { id: payload.id },
-                relations: ["sessions", "posts"],
             });
         } catch (error) {
             console.error(error);
@@ -118,7 +125,6 @@ export class UserResolver {
                     id: payload.id,
                 },
             },
-            relations: ["user"],
         });
 
         return currentSession;
@@ -141,15 +147,15 @@ export class UserResolver {
             order: {
                 creationDate: "DESC",
             },
-            relations: ["user"],
         });
 
         return sessions;
     }
 
     @Query(() => Session, { nullable: true })
-    findSession(@Arg("sessionId", { nullable: true }) sessionId: string) {
-        return this.sessionRepository.findOne({ where: { sessionId }, relations: ["user"] });
+    @UseMiddleware(isAuth)
+    findSession(@Arg("sessionId", { nullable: true }) sessionId: string, @Ctx() { payload }: AuthContext) {
+        return this.sessionRepository.findOne({ where: { sessionId, user: { id: payload?.id } }, relations: ["user"] });
     }
 
     @Query(() => [Topic])
@@ -162,19 +168,22 @@ export class UserResolver {
         @Arg("input") input: string,
     ): Promise<UserResponse> {
         let status = "";
+        let ok = true;
 
         const user = await this.userRepository.findOne({
             where: input.includes("@") ? { email: input } : { username: input },
-            relations: ["sessions", "posts"],
         });
         
         if (!user) {
             status = "Sorry, but we can't find your account.";
+
+            ok = false;
         }
 
         return {
             user,
             status,
+            ok,
         };
     }
 
@@ -192,18 +201,29 @@ export class UserResolver {
         let errors = [];
         let user;
         let accessToken;
-        let status;
+        let status = "";
+        let ok = false;
 
         user = await this.userRepository.findOne({
             where: input.includes("@") ? { email: input } : { username: input },
-            relations: ["sessions", "posts"],
+            withDeleted: true,
         });
 
-        if (!user) {
+        if (!user || (user && user.deletedAt !== null && processDays(user.deletedAt) > 90)) {
             errors.push({
                 field: "input",
                 message: "Sorry, but we can't find your account",
             });
+
+            if (user && user.deletedAt !== null && processDays(user.deletedAt) > 90) {
+                await this.userRepository.delete({ id: user.id });
+
+                await this.postRepository.delete({ authorId: user.id });
+
+                await this.articleRepository.delete({ authorId: user.id });
+            }
+        } else if (user && user.deletedAt !== null && processDays(user.deletedAt) <= 90) {
+            status = "This account has been deactivated.";
         } else {
             const valid = await argon2.verify(user.password, password);
 
@@ -229,10 +249,12 @@ export class UserResolver {
                         accessToken = createAccessToken(user, session);
     
                         status = "You are now logged in.";
+
+                        ok = true;
                     } else {
                         const decryptedSecretKey = decrypt(user.secretKey);
-                        authenticator.options = { epoch: Date.now() + 180 };
-                        const OTP = authenticator.generate(decryptedSecretKey);
+                        totp.options = { window: 1, step: 180 };
+                        const OTP = totp.generate(decryptedSecretKey);
                         const email = user.email;
                         const username = user.username;
 
@@ -287,6 +309,7 @@ export class UserResolver {
             errors,
             accessToken,
             status,
+            ok,
         };
     }
 
@@ -294,13 +317,13 @@ export class UserResolver {
     async signup(
         @Arg("email") email: string,
         @Arg("username") username: string,
-        @Arg("firstName") firstName: string,
-        @Arg("lastName") lastName: string,
+        @Arg("name") name: string,
         @Arg("password") password: string,
         @Arg("gender") gender: string,
         @Arg("birthDate") birthDate: Date
     ): Promise<UserResponse> {
         let errors = [];
+        let ok = false;
 
         if (!email.includes("@") || email === "" || email === null) {
             errors.push({
@@ -326,16 +349,10 @@ export class UserResolver {
                 message: "The password lenght must be greater than 2",
             });
         }
-        if (firstName === "" || firstName === null) {
+        if (name === "" || name === null) {
             errors.push({
-                field: "firstName",
-                message: "The first name field cannot be empty",
-            });
-        }
-        if (lastName === "" || lastName === null) {
-            errors.push({
-                field: "lastName",
-                message: "The last name field cannot be empty",
+                field: "name",
+                message: "The name field cannot be empty",
             });
         }
         if (gender === "Gender" || gender === "") {
@@ -367,7 +384,15 @@ export class UserResolver {
         });
 
         if (existingUser && existingUser.deletedAt !== null) {
-            status = "This account has been deactivated, please contact the support team to activate it again.";
+            if (processDays(existingUser.deletedAt) <= 90) {
+                status = "This account has been deactivated.";
+            } else {
+                await this.userRepository.delete({ id: existingUser.id });
+
+                await this.postRepository.delete({ authorId: existingUser.id });
+
+                await this.articleRepository.delete({ authorId: existingUser.id });
+            }
         }
 
         if (errors.length === 0) {
@@ -376,8 +401,7 @@ export class UserResolver {
                     username,
                     email,
                     password: hashedPassword,
-                    firstName,
-                    lastName,
+                    name,
                     gender,
                     birthDate: {
                         date: birthDate,
@@ -392,6 +416,8 @@ export class UserResolver {
                 sendVerificationEmail(email, token);
                 status =
                     "Check your inbox, we just sent you an email with the instructions to verify your account.";
+
+                ok = true;
             } catch (error) {
                 console.log(error);
 
@@ -413,6 +439,7 @@ export class UserResolver {
         return {
             errors,
             status,
+            ok,
         };
     }
 
@@ -432,6 +459,7 @@ export class UserResolver {
     ): Promise<UserResponse> {
         let accessToken;
         let status;
+        let ok = false;
 
         if (!payload) {
             status = "You're not authenticated.";
@@ -440,16 +468,14 @@ export class UserResolver {
         let me;
 
         if (payload) {
-            me = await this.userRepository.findOne({ where: { id: payload.id }, relations: ["sessions", "posts"] });
+            me = await this.userRepository.findOne({ where: { id: payload.id } });
         } else if (input.includes("@")) {
             me = await this.userRepository.findOne({
                 where: { email: input },
-                relations: ["sessions", "posts"],
             });
         } else {
             me = await this.userRepository.findOne({
                 where: { username: input },
-                relations: ["sessions", "posts"],
             });
         }
 
@@ -459,7 +485,7 @@ export class UserResolver {
             
             try {
                 if ((!me.userSettings.twoFactorAuth && payload) || (me.userSettings.twoFactorAuth && valid && isLogin)) {
-                    const isValid = authenticator.verify({ token: otp, secret: decryptedSecretKey });
+                    const isValid = totp.check(otp, decryptedSecretKey);
 
                     if (isValid) {
                         if (isLogin) {
@@ -477,11 +503,15 @@ export class UserResolver {
                             accessToken = createAccessToken(me, session);
         
                             status = "You are now logged in.";
+
+                            ok = true;
                         } else if (payload) {
                             me.userSettings.twoFactorAuth = true;
                             await me.save();
 
                             status = "The two-factor authentication is now enabled.";
+
+                            ok = true;
                         } else {
                             status = "An error has occurred. Please request a new OTP.";
                         }
@@ -489,7 +519,7 @@ export class UserResolver {
                         status = "This OTP is invalid. Please request a new OTP.";
                     }
                 }
-            } catch(error) {
+            } catch (error) {
                 console.log(error);
                 status = "An error has occurred during the OTP verification. Please request a new OTP.";
             }
@@ -501,6 +531,7 @@ export class UserResolver {
             status,
             accessToken,
             user: me,
+            ok,
         }
     }
 
@@ -530,15 +561,14 @@ export class UserResolver {
 
             if ((!me.userSettings.twoFactorAuth && payload) || (me.userSettings.twoFactorAuth && valid)) {
                 const decryptedSecretKey = decrypt(me.secretKey);
-                authenticator.options = { epoch: Date.now() + 180 };
-                const OTP = authenticator.generate(decryptedSecretKey);
+                totp.options = { window: 1, step: 180 };
+                const OTP = totp.generate(decryptedSecretKey);
                 const email = me.email;
                 const username = me.username;
 
                 ejs.renderFile(
                     path.join(__dirname, "../helpers/templates/ResendOTPEmail.ejs"),
-                    { otp: OTP, username },
-                     (error, data) => {
+                    { otp: OTP, username }, (error, data) => {
                         if (error) {
                             console.log(error);
                         } else {
@@ -603,25 +633,12 @@ export class UserResolver {
         return true;
     }
 
-    @Mutation(() => Boolean)
-    async revokeRefreshTokensForUser(@Arg("id", () => Number) id: number) {
-        try {
-            await this.userRepository
-                .increment({ id }, "tokenVersion", 1);
-
-            return true;
-        } catch (error) {
-            console.error(error);
-            
-            return false;
-        }
-    }
-
     @Mutation(() => UserResponse)
     async verifyEmailAddress(
         @Arg("token") token: string
     ): Promise<UserResponse> {
         let status = "";
+        let ok = false;
 
         try {
             const payload: any = verify(
@@ -637,13 +654,15 @@ export class UserResolver {
                 }
             );
             status = "Your email address is now verified.";
+
+            ok = true;
         } catch (error) {
             console.error(error);
             status =
                 "An error has occurred. Please repeat the email address verification.";
-        }
+                }
 
-        return { status };
+        return { status, ok };
     }
 
     @Mutation(() => UserResponse)
@@ -653,6 +672,7 @@ export class UserResolver {
         let errors = [];
         let user;
         let status = "";
+        let ok = false;
 
         if (!email.includes("@") || email === "" || email === null) {
             errors.push({
@@ -714,6 +734,8 @@ export class UserResolver {
 
                                         status =
                                             "Check your inbox, we just sent you an email with the instructions to recover your account password.";
+                                    
+                                        ok = true;
                                     })
                                     .catch((error) => {
                                         console.error(error);
@@ -737,6 +759,7 @@ export class UserResolver {
         return {
             errors,
             status,
+            ok,
         };
     }
 
@@ -747,6 +770,7 @@ export class UserResolver {
         @Arg("token") token: string
     ): Promise<UserResponse> {
         let errors = [];
+        let ok = false;
 
         if (password.length <= 2) {
             errors.push({
@@ -794,6 +818,8 @@ export class UserResolver {
                 );
 
                 status = "The password has been changed, now you can log in.";
+
+                ok = true;
             } catch (error) {
                 status =
                     "An error has occurred. Please repeat the password recovery operation.";
@@ -803,14 +829,14 @@ export class UserResolver {
         return {
             status,
             errors,
+            ok,
         };
     }
 
     @Mutation(() => UserResponse)
     @UseMiddleware(isAuth)
     async editProfile(
-        @Arg("firstName") firstName: string,
-        @Arg("lastName") lastName: string,
+        @Arg("name") name: string,
         @Arg("profilePicture") profilePicture: string,
         @Arg("profileBanner") profileBanner: string,
         @Arg("bio") bio: string,
@@ -820,17 +846,12 @@ export class UserResolver {
         let errors = [];
         let user;
         let status = "";
+        let ok = false;
 
-        if (firstName === "" || firstName === null) {
+        if (name === "" || name === null) {
             errors.push({
-                field: "firstName",
-                message: "The first name field cannot be empty",
-            });
-        }
-        if (lastName === "" || lastName === null) {
-            errors.push({
-                field: "lastName",
-                message: "The last name field cannot be empty",
+                field: "name",
+                message: "The name field cannot be empty",
             });
         }
 
@@ -844,8 +865,7 @@ export class UserResolver {
                             id: payload.id,
                         },
                         {
-                            firstName,
-                            lastName,
+                            name,
                             profile: {
                                 profilePicture,
                                 profileBanner,
@@ -857,9 +877,10 @@ export class UserResolver {
     
                     user = await this.userRepository.findOne({
                         where: { id: payload.id },
-                        relations: ["sessions", "posts"],
                     });
                     status = "Your profile has been updated.";
+
+                    ok = true;
                 } catch (error) {
                     console.log(error);
                     status =
@@ -872,6 +893,7 @@ export class UserResolver {
             errors,
             user,
             status,
+            ok,
         };
     }
 
@@ -888,12 +910,12 @@ export class UserResolver {
 
         const user = await this.userRepository.findOne({ where: { id: userId } });
         const follower = await this.userRepository.findOne({ where: { id: payload.id } });
-        const existingFollow = await this.followRepository.findOne({ where: { userId, followerId: payload.id } });
+        const existingFollow = await this.followRepository.findOne({ where: { user: { id: userId }, follower: { id: payload.id } }, relations: ["user", "follower"] });
 
         if (user && follower && !existingFollow) {
             const follow = await this.followRepository.create({
-                userId,
-                followerId: follower.id,
+                user,
+                follower,
                 origin,
             }).save();
 
@@ -904,7 +926,7 @@ export class UserResolver {
                 resourceId: follower.id,
                 type: "follow",
                 viewed: false,
-                content: `${follower.firstName} ${follower.lastName} (@${follower.username}) started following you.`,
+                content: `${follower.name} (@${follower.username}) started following you.`,
             }).save();
 
             pubSub.publish("NEW_NOTIFICATION", notification);
@@ -934,7 +956,7 @@ export class UserResolver {
             return false;
         }
 
-        await this.followRepository.delete({ userId, followerId: payload.id }).catch((error) => {
+        await this.followRepository.delete({ user: { id: userId }, follower: { id: payload.id } }).catch((error) => {
             console.error(error);
             return false;
         });
@@ -957,40 +979,42 @@ export class UserResolver {
         return true;
     }
 
-    @Query(() => [User], { nullable: true })
-    async getFollowers(@Arg("id", () => Int, { nullable: true }) id: number) {
-        const follow = await this.followRepository.find({ where: { userId: id } });
-        let users: User[] = [];
-        let user;
+    @Query(() => [User])
+    async getFollowers(
+        @Arg("id", () => Int, { nullable: true }) id: number,
+        @Arg("limit", () => Int, { nullable: true }) limit: number = 10,
+        @Arg("offset", () => Int, { nullable: true }) offset: number = 0
+    ) {
+        try {
+            const followRelations = await this.followRepository.find({ where: { user: { id } }, relations: ["follower", "user"], take: limit, skip: offset, order: { createdAt: "DESC" } });
 
-        await Promise.all(
-            follow.map(async (item) => {
-                user = await this.userRepository.findOne({ where: { id: item.followerId } });
-                if (user) {
-                    users.push(user);
-                }
-            }) 
-        );
+            const users = followRelations.map(follow => follow.follower);
 
-        return users;
+            return users;
+        } catch (error) {
+            console.error(error);
+
+            return [];
+        }
     }
 
-    @Query(() => [User], { nullable: true })
-    async getFollowing(@Arg("id", () => Int, { nullable: true }) id: number) {
-        const follow = await this.followRepository.find({ where: { followerId: id } });
-        let users: User[] = [];
-        let user;
+    @Query(() => [User])
+    async getFollowing(
+        @Arg("id", () => Int, { nullable: true }) id: number,
+        @Arg("limit", () => Int, { nullable: true }) limit: number = 10,
+        @Arg("offset", () => Int, { nullable: true }) offset: number = 0
+    ) {
+        try {
+            const followRelations = await this.followRepository.find({ where: { follower: { id } }, relations: ["user", "follower"], take: limit, skip: offset, order: { createdAt: "DESC" } });
 
-        await Promise.all(
-            follow.map(async (item) => {
-                user = await this.userRepository.findOne({ where: { id: item.userId } });
-                if (user) {
-                    users.push(user);
-                }
-            })
-        );
+            const users = followRelations.map(follow => follow.user);
 
-        return users;
+            return users;
+        } catch (error) {
+            console.error(error);
+
+            return [];
+        }
     }
 
     @Query(() => Boolean)
@@ -1003,7 +1027,7 @@ export class UserResolver {
             return false;
         }
 
-        const follow = await this.followRepository.findOne({ where: { followerId: payload.id, userId: id } });
+        const follow = await this.followRepository.findOne({ where: { follower: { id: payload.id }, user: { id } }, relations: ["user", "follower"] });
 
         if (follow) {
             return true;
@@ -1022,7 +1046,7 @@ export class UserResolver {
             return false;
         }
 
-        const follow = await this.followRepository.findOne({ where: { followerId: id, userId: payload.id } });
+        const follow = await this.followRepository.findOne({ where: { follower: { id }, user: { id: payload.id } }, relations: ["user", "follower"] });
 
         if (follow) {
             return true;
@@ -1040,6 +1064,7 @@ export class UserResolver {
         let errors = [];
         let user;
         let status;
+        let ok = false;
 
         if (username.includes("@")) {
             errors.push({
@@ -1075,21 +1100,26 @@ export class UserResolver {
                     message: "Username already taken",
                 });
             } else {
-                await this.userRepository.update(
-                    {
-                        id: payload.id,
-                    },
-                    {
-                        username
-                    },
-                );
+                try {
+                    await this.userRepository.update(
+                        {
+                            id: payload.id,
+                        },
+                        {
+                            username
+                        },
+                    );
+    
+                    user = await this.userRepository.findOne({
+                        where: { id: payload.id },
+                    });
+    
+                    status = "Your username has been changed.";
 
-                user = await this.userRepository.findOne({
-                    where: { id: payload.id },
-                    relations: ["sessions", "posts"],
-                });
-
-                status = "Your username has been changed.";
+                    ok = true;
+                } catch (error) {
+                    console.error(error);
+                }
             }
         }
 
@@ -1097,6 +1127,7 @@ export class UserResolver {
             errors,
             user,
             status,
+            ok,
         }
     }
 
@@ -1108,6 +1139,7 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext
     ): Promise<UserResponse> {
         let errors = [];
+        let ok = false;
 
         if (!email.includes("@") || email === "" || email === null) {
             errors.push({
@@ -1143,7 +1175,6 @@ export class UserResolver {
         } else if (errors.length === 0) {
             user = await this.userRepository.findOne({
                 where: { id: payload.id },
-                relations: ["posts", "sessions"],
             });
 
             if (user) {
@@ -1204,6 +1235,7 @@ export class UserResolver {
     
                                             status =
                                                 "Check your inbox, we just sent you an email with the instructions to verify your new email address.";
+                                            ok = true;
                                         })
                                         .catch((error) => {
                                             console.error(error);
@@ -1231,6 +1263,7 @@ export class UserResolver {
             status,
             errors,
             user,
+            ok,
         };
     }
 
@@ -1240,6 +1273,7 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext
     ): Promise<UserResponse> {
         let status = "";
+        let ok = false;
 
         if (!payload) {
             status = "You are not authenticated.";
@@ -1289,6 +1323,8 @@ export class UserResolver {
 
                                         status =
                                             "Check your inbox, we just sent you an email with the instructions to verify your email address.";
+
+                                        ok = true;
                                     })
                                     .catch((error) => {
                                         console.error(error);
@@ -1308,7 +1344,8 @@ export class UserResolver {
         }
 
         return {
-            status
+            status,
+            ok,
         };
     }
 
@@ -1321,6 +1358,7 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext
     ): Promise<UserResponse> {
         let errors = [];
+        let ok = false;
 
         if (currentPassword.length <= 2) {
             errors.push({
@@ -1389,6 +1427,8 @@ export class UserResolver {
                         );
         
                         status = "The password has been changed.";
+
+                        ok = true;
                     } catch (error) {
                         console.error(error);
         
@@ -1404,6 +1444,7 @@ export class UserResolver {
         return {
             status,
             errors,
+            ok,
         };
     }
 
@@ -1415,6 +1456,7 @@ export class UserResolver {
     ): Promise<UserResponse> {
         let errors = [];
         let status;
+        let ok = false;
 
         if (gender === "Gender" || gender === "") {
             errors.push({
@@ -1440,6 +1482,7 @@ export class UserResolver {
                     );
         
                     status = "Your gender has been updated.";
+                    ok = true;
                 } catch (error) {
                     console.error(error);
     
@@ -1454,6 +1497,7 @@ export class UserResolver {
         return {
             errors,
             status,
+            ok,
         }
     }
 
@@ -1467,6 +1511,7 @@ export class UserResolver {
     ): Promise<UserResponse> {
         let errors = [];
         let status;
+        let ok = false;
 
         if (monthAndDayVisibility === "") {
             errors.push({
@@ -1510,6 +1555,7 @@ export class UserResolver {
                     );
         
                     status = "Your changes have been saved.";
+                    ok = true;
                 } catch (error) {
                     console.error(error);
 
@@ -1524,6 +1570,7 @@ export class UserResolver {
         return {
             errors,
             status,
+            ok,
         }
     }
 
@@ -1571,6 +1618,7 @@ export class UserResolver {
     ): Promise<UserResponse> {
         let errors = [];
         let status;
+        let ok = false;
 
         if (incomingMessages === "") {
             errors.push({
@@ -1596,11 +1644,13 @@ export class UserResolver {
                     );
         
                     status = "Your changes have been saved.";
+
+                    ok = true;
                 } catch (error) {
                     console.error(error);
     
                     errors.push({
-                        field: "gender",
+                        field: "incomingMessages",
                         message: "An error has occurred. Please try again later to update your message settings",
                     });
                 }
@@ -1610,6 +1660,7 @@ export class UserResolver {
         return {
             errors,
             status,
+            ok,
         }
     }
 
@@ -1620,9 +1671,10 @@ export class UserResolver {
     ): Promise<UserResponse> {
         let me;
         let status = "";
+        let ok = false;
 
         if (payload) {
-            me = await this.userRepository.findOne({ where: { id: payload.id }, relations: ["posts", "sessions"] });
+            me = await this.userRepository.findOne({ where: { id: payload.id } });
         
             if (me) {
                 if (me.userSettings.twoFactorAuth) {
@@ -1631,10 +1683,12 @@ export class UserResolver {
                     await me.save();
     
                     status = "Two-factor authentication disabled.";
+
+                    ok = true;
                 } else {
                     const decryptedSecretKey = decrypt(me.secretKey);
-                    authenticator.options = { epoch: Date.now() + 180 };
-                    const OTP = authenticator.generate(decryptedSecretKey);
+                    totp.options = { window: 1, step: 180 };
+                    const OTP = totp.generate(decryptedSecretKey);
                     const email = me.email;
                     const username = me.username;
     
@@ -1667,6 +1721,8 @@ export class UserResolver {
                                 mailHelper.send(otpSESCommand)
                                     .then(() => {
                                         console.log("Email sent.");
+
+                                        ok = true;
                                     })
                                     .catch((error) => {
                                         console.error(error);
@@ -1687,6 +1743,7 @@ export class UserResolver {
         return {
             user: me,
             status,
+            ok,
         }
     }
  
@@ -1801,7 +1858,6 @@ export class UserResolver {
         @Arg("origin") origin: string,
         @Ctx() { payload }: AuthContext
     ): Promise<Block | null> {
-
         if (!payload) {
             return null;
         } else {            
@@ -1819,7 +1875,7 @@ export class UserResolver {
 
                     await this.unfollowUser(user.id, { payload } as  AuthContext);
 
-                    await this.followRepository.delete({ userId: me.id, followerId: user.id }).catch((error) => {
+                    await this.followRepository.delete({ user: { id: me.id }, follower: { id: user.id } }).catch((error) => {
                         console.error(error);
                         return null;
                     });

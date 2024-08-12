@@ -1,11 +1,20 @@
 import { isAuth } from "../middleware/isAuth";
 import { MessageNotification, Notification } from "../entities/Notification";
-import { Arg, Ctx, Int, Mutation, Query, Resolver, Root, Subscription, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, Field, Int, Mutation, ObjectType, Query, Resolver, Root, Subscription, UseMiddleware } from "type-graphql";
 import { AuthContext } from "../types";
-import { Repository } from "typeorm";
+import { LessThan, Repository } from "typeorm";
 import { Chat } from "../entities/Message";
 import appDataSource from "../dataSource";
 import { User } from "../entities/User";
+
+@ObjectType()
+export class PaginatedNotifications {
+    @Field(() => [Notification], { nullable: false })
+    notifications: Notification[];
+
+    @Field(() => String, { nullable: true })
+    nextCursor: string | null;
+}
 
 @Resolver(Notification)
 export class NotificationResolver {
@@ -17,19 +26,40 @@ export class NotificationResolver {
         this.userRepository = appDataSource.getRepository(User);
     }
 
-    @Query(() => [Notification])
+    @Query(() => PaginatedNotifications)
     @UseMiddleware(isAuth)
-    async notificationFeed(@Ctx() { payload }: AuthContext) {
-        if (payload) {
+    async notificationFeed(
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+        @Arg("limit", () => Int, { nullable: true }) limit: number,
+        @Ctx() { payload }: AuthContext
+    ): Promise<PaginatedNotifications> {
+        if (!payload) {
+            return {
+                notifications: [],
+                nextCursor: null,
+            };
+        }
+
+        try {
+            let dateCursor: Date | null = null;
+            if (cursor) {
+                const parsedDate = Date.parse(cursor);
+                if (!isNaN(parsedDate)) {
+                    dateCursor = new Date(parsedDate);
+                }
+            }
+
             const notifications = await this.notificationRepository.find({
+                where: {
+                    recipientId: payload.id,
+                    ...(dateCursor && { createdAt: LessThan(dateCursor) }),
+                },
                 order: {
                     createdAt: "DESC",
                 },
-                where: {
-                    recipientId: payload.id,
-                },
+                take: limit,
             });
-
+            
             const feed = [];
 
             for (const notification of notifications) {
@@ -40,9 +70,15 @@ export class NotificationResolver {
                 }
             }
 
-            return feed;
-        } else {
-            return [];
+            const nextCursor = notifications.length === limit
+                ? notifications[notifications.length - 1].createdAt.toISOString()
+                : null;
+
+            return { notifications: feed, nextCursor };
+        } catch (error) {
+            console.error(error);
+
+            return { notifications: [], nextCursor: null };
         }
     }
 
@@ -180,7 +216,7 @@ export class MessageNotificationResolver {
                 },
                 where: {
                     chatId,
-                    recipientId: payload?.id,
+                    recipientId: payload.id,
                     viewed: false,
                 },
             });
@@ -206,7 +242,7 @@ export class MessageNotificationResolver {
     async allUnseenMessageNotifications(
         @Ctx() { payload }: AuthContext
     ) {
-        const chats = await this.chatRepository.find({ relations: ["users", "messages", "events"], order: { updatedAt: "DESC" } });
+        const chats = await this.chatRepository.find({ relations: ["users"], order: { updatedAt: "DESC" } });
         
         if (payload) {
             const userChats: Chat[] = [];
@@ -255,7 +291,7 @@ export class MessageNotificationResolver {
     @Subscription(() => MessageNotification, {
         topics: "NEW_CHAT_NOTIFICATION",
         filter: async ({ payload, args }) => {
-            const chats = await Chat.find({ relations: ["users", "messages", "events"], order: { updatedAt: "DESC" } });
+            const chats = await Chat.find({ relations: ["users"], order: { updatedAt: "DESC" } });
             const userChats: Chat[] = [];
 
             for (const chat of chats) {
@@ -283,7 +319,7 @@ export class MessageNotificationResolver {
         topics: "DELETED_CHAT_NOTIFICATION",
         filter: async ({ payload, args }) => {
             const chatRepository = appDataSource.getRepository(Chat);
-            const chats = await chatRepository.find({ relations: ["users", "messages", "events"], order: { updatedAt: "DESC" } });
+            const chats = await chatRepository.find({ relations: ["users"], order: { updatedAt: "DESC" } });
             const userChats: Chat[] = [];
 
             for (const chat of chats) {

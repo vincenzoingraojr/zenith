@@ -11,7 +11,6 @@ export const createRefreshToken = (user: User, session: Session) => {
     return sign(
         {
             id: user.id,
-            tokenVersion: user.tokenVersion,
             sessionId: session.sessionId,
         },
         process.env.REFRESH_TOKEN_SECRET!,

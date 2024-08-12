@@ -8,9 +8,9 @@ import {
     ManyToOne,
     OneToMany,
     DeleteDateColumn,
+    UpdateDateColumn,
 } from "typeorm";
-import { Post } from "./Post";
-import { Article } from "./Article";
+import { Post, Article } from "./Post";
 
 @ObjectType()
 export class Profile {
@@ -86,11 +86,7 @@ export class User extends BaseEntity {
 
     @Field(() => String, { nullable: false })
     @Column({ nullable: false })
-    firstName: string;
-
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
-    lastName: string;
+    name: string;
 
     @Field(() => String, { nullable: false })
     @Column({ unique: true, nullable: false })
@@ -99,6 +95,10 @@ export class User extends BaseEntity {
     @Field(() => String, { nullable: false })
     @Column({ unique: true, nullable: false })
     email: string;
+
+    @Field(() => String, { nullable: false, defaultValue: "user" })
+    @Column({ nullable: false, default: "user" })
+    type: string;
 
     @Column({ nullable: false })
     password: string;
@@ -122,12 +122,17 @@ export class User extends BaseEntity {
     @Column(() => Profile)
     profile: Profile;
 
-    @Column("int", { default: 0 })
-    tokenVersion: number;
-
     @Field(() => [Session], { nullable: true, defaultValue: [] })
     @OneToMany(() => Session, (session) => session.user, { nullable: true, cascade: true })
     sessions: Session[];
+
+    @Field(() => [Follow], { nullable: true, defaultValue: [] })
+    @OneToMany(() => Follow, (follow) => follow.user, { nullable: true, cascade: true })
+    followers: Follow[];
+
+    @Field(() => [Follow], { nullable: true, defaultValue: [] })
+    @OneToMany(() => Follow, (follow) => follow.follower, { nullable: true, cascade: true })
+    following: Follow[];
 
     @Field(() => [Post], { nullable: true, defaultValue: [] })
     @OneToMany(() => Post, (post) => post.author, { nullable: true })
@@ -149,6 +154,10 @@ export class User extends BaseEntity {
     @Column({ type: "int", array: true, nullable: false, default: [] })
     topicsIds: number[];
 
+    @Field(() => String, { nullable: false })
+    @CreateDateColumn({ nullable: false })
+    createdAt: Date;
+
     @DeleteDateColumn()
     deletedAt: Date;
 }
@@ -160,13 +169,13 @@ export class Follow extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Field(() => Int, { nullable: false })
-    @Column({ nullable: false })
-    followerId: number;
+    @Field(() => User, { nullable: false })
+    @ManyToOne(() => User, (user) => user.following, { nullable: false })
+    follower: User;
 
-    @Field(() => Int, { nullable: false })
-    @Column({ nullable: false })
-    userId: number;
+    @Field(() => User, { nullable: false })
+    @ManyToOne(() => User, (user) => user.followers, { nullable: false })
+    user: User;
 
     @Field(() => String, { nullable: false })
     @Column({ nullable: false })
@@ -263,4 +272,44 @@ export class UserDeviceToken extends BaseEntity {
     @Field(() => String, { nullable: false })
     @CreateDateColumn({ nullable: false })
     createdAt: Date;
+}
+
+@ObjectType()
+@Entity("user-verifications")
+export class UserVerification extends BaseEntity {
+    @Field(() => Int)
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @Field(() => Int, { nullable: false })
+    @Column({ unique: true, nullable: false })
+    userId: number;
+
+    @Field(() => String, { nullable: false })
+    @CreateDateColumn({ nullable: false })
+    createdAt: Date;
+
+    @Field(() => String, { nullable: false })
+    @UpdateDateColumn({ nullable: false })
+    updatedAt: Date;
+
+    @Field(() => Boolean)
+    @Column()
+    verified: boolean;
+
+    @Field(() => String, { nullable: true, defaultValue: null })
+    @Column({ nullable: true, default: null })
+    verifiedSince: Date;
+
+    @Field(() => String, { nullable: true, defaultValue: null })
+    @Column({ nullable: true, default: null })
+    idUrl: string;
+
+    @Field(() => [String], { nullable: true, defaultValue: [] })
+    @Column({ type: "text", array: true, nullable: true, default: [] })
+    documents: string[];
+
+    @Field(() => String, { nullable: true, defaultValue: null })
+    @Column({ nullable: true, default: null })
+    outcome: string;
 }

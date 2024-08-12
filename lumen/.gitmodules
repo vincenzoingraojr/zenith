@@ -1,0 +1,3 @@
+[submodule "test/lumen-js-conformance"]
+	path = test/lumen-js-conformance
+	url = git://github.com/vincenzoingraojr/zenith.git
