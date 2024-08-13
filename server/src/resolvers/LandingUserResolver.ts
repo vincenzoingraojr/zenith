@@ -30,8 +30,7 @@ export class LandingUserResolver {
 
     @Mutation(() => UserResponse)
     async addLandingUser(
-        @Arg("firstName") firstName: string,
-        @Arg("lastName") lastName: string,
+        @Arg("name") name: string,
         @Arg("email") email: string,
         @Arg("username") username: string
     ): Promise<UserResponse> {
@@ -56,16 +55,10 @@ export class LandingUserResolver {
                 message: "The username lenght must be greater than 2",
             });
         }
-        if (firstName == "" || firstName == null) {
+        if (name == "" || name == null) {
             errors.push({
-                field: "firstName",
-                message: "The first name field cannot be empty",
-            });
-        }
-        if (lastName == "" || lastName == null) {
-            errors.push({
-                field: "lastName",
-                message: "The last name field cannot be empty",
+                field: "name",
+                message: "The name field cannot be empty",
             });
         }
 
@@ -91,15 +84,14 @@ export class LandingUserResolver {
         if (errors.length === 0) {
             try {
                 await this.landingUserRepository.create({
-                    firstName,
-                    lastName,
+                    name,
                     username,
                     email,
                 }).save();
 
                 ejs.renderFile(
                     path.join(__dirname, "../helpers/templates/WelcomeUser.ejs"),
-                    { firstName, lastName, username },
+                    { name, username },
                      (error, data) => {
                         if (error) {
                             console.log(error);
@@ -136,7 +128,7 @@ export class LandingUserResolver {
 
                 ejs.renderFile(
                     path.join(__dirname, "../helpers/templates/NotifyCreator.ejs"),
-                    { firstName, lastName, username, email },
+                    { name, username, email },
                      (error, data) => {
                         if (error) {
                             console.log(error);
@@ -182,12 +174,13 @@ export class LandingUserResolver {
                         field: "username",
                         message: "Username already taken",
                     });
-                }
-                if (error.detail.includes("email") && error.code === "23505") {
+                } else if (error.detail.includes("email") && error.code === "23505") {
                     errors.push({
                         field: "email",
                         message: "A user using this email already exists",
                     });
+                } else {
+                    status = "An unknown error has occured, please try again later.";
                 }
             }
         }

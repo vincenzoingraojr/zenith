@@ -1,0 +1,18 @@
+mutation addLandingUser(
+    $name: String!
+    $username: String!
+    $email: String!
+) {
+    addLandingUser(
+        name: $name
+        username: $username
+        email: $email
+    ) {
+        errors {
+            field
+            message
+        }
+        status
+        ok
+    }
+}

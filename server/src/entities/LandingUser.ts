@@ -16,11 +16,7 @@ export class LandingUser extends BaseEntity {
 
     @Field(() => String, { nullable: false })
     @Column({ nullable: false })
-    firstName: string;
-
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
-    lastName: string;
+    name: string;
 
     @Field(() => String, { nullable: false })
     @Column({ unique: true, nullable: false })

@@ -13,7 +13,7 @@ import { Notification as FirebaseNotification } from "firebase-admin/messaging";
 import { sendPushNotifications } from "../helpers/notifications";
 import { ComprehendClient, DetectDominantLanguageCommand } from "@aws-sdk/client-comprehend";
 import lumen from "@zenith-to/lumen-js";
-import { getPresignedUrlForDeleteCommand } from "src/helpers/getPresignedUrls";
+import { getPresignedUrlForDeleteCommand } from "../helpers/getPresignedUrls";
 import axios from "axios";
 
 @ObjectType()
