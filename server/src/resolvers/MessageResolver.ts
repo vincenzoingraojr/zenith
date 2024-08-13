@@ -8,7 +8,7 @@ import { Block, Follow, User, UserDeviceToken } from "../entities/User";
 import { mergeAndDeduplicateArrays } from "../helpers/mergeAndDeduplicateArrays";
 import { MessageStatus } from "../helpers/enums";
 import { MessageNotification } from "../entities/Notification";
-import { In, Repository } from "typeorm";
+import { In, IsNull, Repository } from "typeorm";
 import appDataSource from "../dataSource";
 import { pubSub } from "../helpers/createPubSub";
 import { Notification as FirebaseNotification } from "firebase-admin/messaging";
@@ -149,9 +149,9 @@ export class ChatResolver {
             const followRelations = await this.followRepository.find({ where: { user: { id: payload.id } }, relations: ["follower"] });
             const followers = followRelations.map(follow => follow.follower);
 
-            const everyoneUsers = await this.userRepository.find({ where: { userSettings: { incomingMessages: "everyone" } } });
+            const everyoneUsers = await this.userRepository.find({ where: { deletedAt: IsNull(), userSettings: { incomingMessages: "everyone" } } });
 
-            const users = mergeAndDeduplicateArrays(followers, everyoneUsers);
+            const users = mergeAndDeduplicateArrays(followers.filter((follower) => follower.deletedAt === null), everyoneUsers);
 
             const filteredUsers = users.filter((item) => item.id !== payload.id);
 
@@ -370,7 +370,7 @@ export class ChatResolver {
 
                 await Promise.all(
                     userIds.map(async (id) => {
-                        const user = await this.userRepository.findOne({ where: { id } });
+                        const user = await this.userRepository.findOne({ where: { id, deletedAt: IsNull() } });
                         const existingChatUser = existingChat.users.find((chatUser) => chatUser.userId === id);
                         
                         if (user) {

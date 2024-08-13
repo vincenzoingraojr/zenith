@@ -59,7 +59,8 @@ export class SearchResolver {
         if (type === "relevance" || type === "latest") {
             const postsQuery = this.postRepository
                 .createQueryBuilder("post")
-                .leftJoinAndSelect("post.author", "user");
+                .leftJoinAndSelect("post.author", "user")
+                .where("user.deletedAt IS NULL");
 
             const mentions: string[] = lumen.extractMentions(keyword);
             const hashtags: string[] = lumen.extractHashtags(keyword);
@@ -92,8 +93,7 @@ export class SearchResolver {
                 postsQuery.andWhere("post.hashtags && :hashtags", { hashtags });
             }
 
-            const authorFirstNameConditions = keywords.map((word) => `user.firstName ILIKE :${word}`).join(" AND ");
-            const authorLastNameConditions = keywords.map((word) => `user.lastName ILIKE :${word}`).join(" AND ");
+            const authorNameConditions = keywords.map((word) => `user.name ILIKE :${word}`).join(" AND ");
             const authorUsernameConditions = keywords.map((word) => `user.username ILIKE :${word}`).join(" AND ");
 
             if (type === "latest") {
@@ -101,8 +101,7 @@ export class SearchResolver {
             }
 
             const postsFeed = await postsQuery
-                .orWhere(`(${authorFirstNameConditions})`, parameterObject)
-                .orWhere(`(${authorLastNameConditions})`, parameterObject)
+                .orWhere(`(${authorNameConditions})`, parameterObject)
                 .orWhere(`(${authorUsernameConditions})`, parameterObject)
                 .getMany();
 
@@ -114,15 +113,13 @@ export class SearchResolver {
         }
 
         if (type === "relevance" || type === "user") {
-            const firstNameConditions = keywords.map((word) => `user.firstName ILIKE :${word}`).join(" OR ");
-            const lastNameConditions = keywords.map((word) => `user.lastName ILIKE :${word}`).join(" OR ");
+            const nameConditions = keywords.map((word) => `user.name ILIKE :${word}`).join(" OR ");
             const usernameConditions = keywords.map((word) => `user.username ILIKE :${word}`).join(" OR ");
             const bioConditions = keywords.map((word) => `user.profile.bio ILIKE :${word}`).join(" OR ");
 
             users = await this.userRepository
                 .createQueryBuilder("user")
-                .where(`(${firstNameConditions})`, parameterObject)
-                .orWhere(`(${lastNameConditions})`, parameterObject)
+                .where(`(${nameConditions})`, parameterObject)
                 .orWhere(`(${usernameConditions})`, parameterObject)
                 .orWhere(`(${bioConditions})`, parameterObject)
                 .getMany();

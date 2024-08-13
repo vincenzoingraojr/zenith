@@ -6,13 +6,15 @@ import { AuthContext } from "../types";
 import { v4 as uuidv4 } from "uuid";
 import { User, UserDeviceToken } from "../entities/User";
 import { Notification } from "../entities/Notification";
-import { In, Repository } from "typeorm";
+import { In, IsNull, Repository } from "typeorm";
 import appDataSource from "../dataSource";
 import { pubSub } from "../helpers/createPubSub";
 import { Notification as FirebaseNotification } from "firebase-admin/messaging";
 import { sendPushNotifications } from "../helpers/notifications";
 import { ComprehendClient, DetectDominantLanguageCommand } from "@aws-sdk/client-comprehend";
 import lumen from "@zenith-to/lumen-js";
+import { getPresignedUrlForDeleteCommand } from "src/helpers/getPresignedUrls";
+import axios from "axios";
 
 @ObjectType()
 export class PostResponse {
@@ -24,6 +26,9 @@ export class PostResponse {
 
     @Field(() => String, { nullable: true })
     status?: string;
+
+    @Field(() => Boolean)
+    ok: boolean;
 }
 
 @Resolver(Post)
@@ -96,13 +101,13 @@ export class PostResolver {
     async postFeed() {
         const posts = await this.postRepository.find({
             where: {
-                type: "post"
+                type: "post",
+                author: {
+                    deletedAt: IsNull(),
+                },
             },
             order: {
                 createdAt: "DESC",
-                author: {
-                    deletedAt: null
-                }
             },
             relations: ["author", "media"],
         });
@@ -162,6 +167,9 @@ export class PostResolver {
                 where: {
                     type: "comment",
                     isReplyTo: id,
+                    author: {
+                        deletedAt: IsNull(),
+                    }
                 }, 
                 skip: offset,
                 take: limit,
@@ -233,12 +241,21 @@ export class PostResolver {
     }
 
     @Query(() => Post, { nullable: true })
-    async findPostById(@Arg("id", () => Int, { nullable: true }) id: number) {
-        const post = await this.postRepository.findOne({ where: { id }, relations: ["author", "media"] });
+    async findPostById(@Arg("id", () => Int) id: number): Promise<Post | null> {
+        if (!id) {
+            return null;
+        }
 
-        if (post && post.author) {
-            return post;
-        } else {
+        try {
+            const post = await this.postRepository.findOne({
+                where: { id },
+                relations: ["author", "media"],
+            });
+
+            return post && post.author ? post : null;
+        } catch (error) {
+            console.error(error);
+
             return null;
         }
     }
@@ -251,7 +268,7 @@ export class PostResolver {
             },
             where: {
                 post: {
-                   postId, 
+                    postId,
                 },
             },
             relations: ["post"],
@@ -269,6 +286,7 @@ export class PostResolver {
     ): Promise<PostResponse> {
         let errors = [];
         let post;
+        let ok = false;
 
         let mediaArray = JSON.parse(media);
 
@@ -379,7 +397,6 @@ export class PostResolver {
 
                         const isReplyToPost = await this.postRepository.findOne({
                             where: { id: isReplyTo },
-                            relations: ["author", "media"],
                         });
 
                         if (isReplyToPost && (type === "comment") && (isReplyToPost.authorId !== payload.id)) {
@@ -406,6 +423,8 @@ export class PostResolver {
                         }
 
                         pubSub.publish("NEW_POST", post);
+
+                        ok = true;
                     } catch (error) {
                         console.log(error);
                         errors.push({
@@ -427,6 +446,7 @@ export class PostResolver {
         return {
             post,
             errors,
+            ok,
         };
     }
 
@@ -445,6 +465,7 @@ export class PostResolver {
         let mediaArray = JSON.parse(media);
         let deletedMediaIdsArray = JSON.parse(deletedMedia);
         let existingAltTextsArray = JSON.parse(existingAltTexts);
+        let ok = false;
 
         if (content === "" || content === null) {
             errors.push({
@@ -534,20 +555,6 @@ export class PostResolver {
                         }
 
                         if (post) {
-                            post.media = await this.mediaItemRepository.find({
-                                order: {
-                                    createdAt: "ASC",
-                                },
-                                where: {
-                                    post: {
-                                        postId, 
-                                    },
-                                },
-                                relations: ["post"],
-                            });
-
-                            await post.save();
-
                             const mentionedUsers: User[] = [];
 
                             if (post.mentions.length > 0) {
@@ -614,6 +621,8 @@ export class PostResolver {
                             }
 
                             pubSub.publish("EDITED_POST", post);
+
+                            ok = true;
                         } else {
                             errors.push({
                                 field: "content",
@@ -642,6 +651,7 @@ export class PostResolver {
         return {
             post,
             errors,
+            ok,
         };
     }
 
@@ -665,6 +675,20 @@ export class PostResolver {
         if (post.media.length > 0) {
             await Promise.all(
                 post.media.map(async (item) => {
+                    const existingKey =
+                        item.src.replace(
+                            `https://${item.type.includes("image") ? "img" : "vid"}.zncdn.net/`, ""
+                        );
+
+                    const url = await getPresignedUrlForDeleteCommand(existingKey, item.type);
+
+                    await axios.delete(url).then(() => {
+                        console.log("Media item successfully deleted.");
+                    })
+                    .catch((error) => {
+                        console.error(`An error occurred while deleting the media item. Error code: ${error.code}.`);
+                    });
+
                     await this.mediaItemRepository.delete({ id: item.id });
                 })
             );
@@ -753,16 +777,16 @@ export class PostResolver {
             return false;
         }
 
-        await this.likeRepository.delete({ userId: payload.id, likedPostId: postId }).catch((error) => {
-            console.error(error);
-            return false;
-        });
-
         const post = await this.postRepository.findOne({ where: { postId } });
         
         if (!post) {
             return false;
         }
+
+        await this.likeRepository.delete({ userId: payload.id, likedPostId: postId }).catch((error) => {
+            console.error(error);
+            return false;
+        });
 
         const notification = await this.notificationRepository.findOne({ 
             where: {
@@ -787,21 +811,35 @@ export class PostResolver {
         @Arg("offset", () => Int, { nullable: true }) offset?: number,
         @Arg("limit", () => Int, { nullable: true }) limit?: number,
     ) {
-        const likes = await this.likeRepository.find({ where: { userId: id }, skip: offset, take: limit, order: { createdAt: "DESC" } });
-        let posts: Post[] = [];
-        let post;
+        if (!id) {
+            return [];
+        }
+    
+        try {
+            const likes = await this.likeRepository.find({
+                where: { userId: id },
+                skip: offset,
+                take: limit,
+                order: { createdAt: "DESC" }
+            });
+    
+            if (likes.length === 0) {
+                return [];
+            }
+    
+            const likedPostIds = likes.map(like => like.likedPostId);
+            
+            const posts = await this.postRepository.find({
+                where: { postId: In(likedPostIds) },
+                relations: ["author", "media"],
+            });
+    
+            return posts;
+        } catch (error) {
+            console.error(error);
 
-        await Promise.all(
-            likes.map(async (item) => {
-                post = await this.postRepository.findOne({ where: { postId: item.likedPostId }, relations: ["author", "media"] });
-                
-                if (post) {
-                    posts.push(post);
-                }
-            }) 
-        );
-
-        return posts;
+            return [];
+        }
     }
 
     @Query(() => [User], { nullable: true })
@@ -810,20 +848,25 @@ export class PostResolver {
         @Arg("offset", () => Int, { nullable: true }) offset?: number,
         @Arg("limit", () => Int, { nullable: true }) limit?: number,
     ) {
-        const likes = await this.likeRepository.find({ where: { likedPostId: postId }, skip: offset, take: limit, order: { createdAt: "DESC" } });
-        let users: User[] = [];
-        let user;
-
-        await Promise.all(
-            likes.map(async (item) => {
-                user = await this.userRepository.findOne({ where: { id: item.userId } });
-                
-                if (user) {
-                    users.push(user);
-                }
-            }) 
-        );
-
+        if (!postId) {
+            return null;
+        }
+    
+        const likes = await this.likeRepository.find({
+            where: { likedPostId: postId },
+            skip: offset,
+            take: limit,
+            order: { createdAt: "DESC" }
+        });
+    
+        const userIds = likes.map(like => like.userId);
+    
+        if (userIds.length === 0) {
+            return [];
+        }
+    
+        const users = await this.userRepository.find({ where: { id: In(userIds) } });
+    
         return users;
     }
 

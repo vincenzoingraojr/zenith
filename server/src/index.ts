@@ -14,7 +14,7 @@ import { Session, User } from "./entities/User";
 import { createAccessToken, createRefreshToken } from "./auth/auth";
 import { sendRefreshToken } from "./auth/sendRefreshToken";
 import { PostResolver } from "./resolvers/PostResolver";
-import { getPresignedUrlForDeleteCommand, getPresignedUrlForPutCommand } from "./helpers/getPresignedUrl";
+import { getPresignedUrlForDeleteCommand, getPresignedUrlForPutCommand } from "./helpers/getPresignedUrls";
 import { MessageNotificationResolver, NotificationResolver } from "./resolvers/NotificationResolver";
 import { WebSocketServer } from "ws";
 import { useServer } from "graphql-ws/lib/use/ws";
