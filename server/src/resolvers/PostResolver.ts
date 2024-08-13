@@ -46,7 +46,7 @@ export class PostResolver {
         this.viewLogRepository = appDataSource.getRepository(ViewLog);
         this.userDeviceTokenRepository = appDataSource.getRepository(UserDeviceToken);
         this.comprehend = new ComprehendClient({ 
-            region: "us-west-2",
+            region: "us-west-1",
             credentials: {
                 accessKeyId: process.env.COMPREHEND_KEY_ID!,
                 secretAccessKey: process.env.COMPREHEND_SECRET_KEY!,
@@ -100,31 +100,32 @@ export class PostResolver {
             },
             order: {
                 createdAt: "DESC",
+                author: {
+                    deletedAt: null
+                }
             },
             relations: ["author", "media"],
         });
 
-        const feed = [];
-
-        for (const post of posts) {
-            if (post.author) {
-                feed.push(post);
-            }
-        }
+        const feed = posts.map(post => post.author);
 
         return feed;
     }
 
     @Query(() => [Post])
     async userPostFeed(
-        @Arg("userId", () => Int, { nullable: true }) userId: number,
-        @Arg("offset", () => Int, { nullable: true }) offset?: number,
-        @Arg("limit", () => Int, { nullable: true }) limit?: number,
-    ) {
-        const author = await this.userRepository.findOne({ where: { id: userId } });
-        
-        if (author) {
-            return this.postRepository.find({
+        @Arg("userId", () => Int) userId: number,
+        @Arg("offset", () => Int, { nullable: true }) offset: number,
+        @Arg("limit", () => Int, { nullable: true }) limit: number,
+    ): Promise<Post[]> {
+        try {
+            const author = await this.userRepository.findOne({ where: { id: userId } });
+            
+            if (!author) {
+                return [];
+            }
+
+            return await this.postRepository.find({
                 order: {
                     createdAt: "DESC",
                 },
@@ -136,51 +137,63 @@ export class PostResolver {
                 take: limit,
                 relations: ["author", "media"],
             });
-        } else {
+        } catch (error) {
+            console.error(error);
+
             return [];
         }
     }
 
     @Query(() => [Post])
     async postComments(
-        @Arg("id", () => Int, { nullable: true }) id: number,
-        @Arg("offset", () => Int, { nullable: true }) offset?: number,
-        @Arg("limit", () => Int, { nullable: true }) limit?: number,
+        @Arg("id", () => Int) id: number,
+        @Arg("offset", () => Int, { nullable: true }) offset: number,
+        @Arg("limit", () => Int, { nullable: true }) limit: number,
     ) {
-        const comments = await this.postRepository.find({
-            order: {
-                createdAt: "DESC",
-            },
-            where: {
-                type: "comment",
-                isReplyTo: id,
-            }, 
-            skip: offset,
-            take: limit,
-            relations: ["author", "media"],
-        });
-
-        const feed = [];
-
-        for (const comment of comments) {
-            if (comment.author) {
-                feed.push(comment);
-            }
+        if (!id) {
+            return [];
         }
+    
+        try {
+            const comments = await this.postRepository.find({
+                order: {
+                    createdAt: "DESC",
+                },
+                where: {
+                    type: "comment",
+                    isReplyTo: id,
+                }, 
+                skip: offset,
+                take: limit,
+                relations: ["author", "media"],
+            });
+    
+            return comments;
+        } catch (error) {
+            console.error(error);
 
-        return feed;
+            return [];
+        }
     }
 
     @Query(() => [Post])
     async userComments(
-        @Arg("userId", () => Int, { nullable: true }) userId: number,
-        @Arg("offset", () => Int, { nullable: true }) offset?: number,
-        @Arg("limit", () => Int, { nullable: true }) limit?: number,
+        @Arg("userId", () => Int) userId: number,
+        @Arg("offset", () => Int, { nullable: true }) offset: number,
+        @Arg("limit", () => Int, { nullable: true }) limit: number,
     ) {
-        const author = await this.userRepository.findOne({ where: { id: userId } });
-        
-        if (author) {
-            return this.postRepository.find({
+        if (!userId) {
+            return [];
+        }
+    
+        try {
+            const author = await this.userRepository.findOne({ where: { id: userId } });
+            
+            if (!author) {
+                return [];
+            }
+    
+            return await this.postRepository.find({
                 order: {
                     createdAt: "DESC",
                 },
@@ -192,18 +205,29 @@ export class PostResolver {
                 take: limit,
                 relations: ["author", "media"],
             });
-        } else {
+        } catch (error) {
+            console.error(error);
+
             return [];
         }
     }
 
     @Query(() => Post, { nullable: true })
-    async findPost(@Arg("postId", { nullable: true }) postId: string) {
-        const post = await this.postRepository.findOne({ where: { postId }, relations: ["author", "media"] });
+    async findPost(@Arg("postId") postId: string): Promise<Post | null> {
+        if (!postId) {
+            return null;
+        }
 
-        if (post && post.author) {
-            return post;
-        } else {
+        try {
+            const post = await this.postRepository.findOne({
+                where: { postId },
+                relations: ["author", "media"],
+            });
+
+            return post && post.author ? post : null;
+        } catch (error) {
+            console.error(error);
+
             return null;
         }
     }

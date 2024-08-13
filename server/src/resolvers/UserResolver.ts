@@ -443,6 +443,51 @@ export class UserResolver {
         };
     }
 
+    @Mutation(() => UserResponse, { nullable: true })
+    async reactivateAccount(
+        @Arg("input") input: string,
+        @Arg("password") password: string
+    ): Promise<UserResponse> {
+        let errors = [];
+        let status = "";
+        let ok = false;
+
+        const user = await this.userRepository.findOne({
+            where: input.includes("@") ? { email: input } : { username: input },
+            withDeleted: true,
+        });
+
+        if (user && user.deletedAt !== null && processDays(user.deletedAt) <= 90) {
+            const valid = await argon2.verify(user.password, password);
+
+            if (!valid) {
+                errors.push({
+                    field: "password",
+                    message: "Incorrect password",
+                });
+            } else {
+                try {
+                    await this.userRepository.restore({ id: user.id });
+
+                    status = "Your account has been restored. Now you can log in.";
+                    ok = true;
+                } catch (error) {
+                    console.error(error);
+
+                    status = "An error has occurred while trying to restore your account. Please try again later.";
+                }
+            }
+        } else {
+            status = "Can't find the user.";
+        }
+
+        return {
+            errors,
+            status,
+            ok,
+        }
+    }
+
     @Mutation(() => UserResponse)
     @UseMiddleware(isAuth)
     async verifyOTP(
@@ -982,8 +1027,8 @@ export class UserResolver {
     @Query(() => [User])
     async getFollowers(
         @Arg("id", () => Int, { nullable: true }) id: number,
-        @Arg("limit", () => Int, { nullable: true }) limit: number = 10,
-        @Arg("offset", () => Int, { nullable: true }) offset: number = 0
+        @Arg("limit", () => Int, { nullable: true }) limit: number,
+        @Arg("offset", () => Int, { nullable: true }) offset: number
     ) {
         try {
             const followRelations = await this.followRepository.find({ where: { user: { id } }, relations: ["follower", "user"], take: limit, skip: offset, order: { createdAt: "DESC" } });
@@ -1001,8 +1046,8 @@ export class UserResolver {
     @Query(() => [User])
     async getFollowing(
         @Arg("id", () => Int, { nullable: true }) id: number,
-        @Arg("limit", () => Int, { nullable: true }) limit: number = 10,
-        @Arg("offset", () => Int, { nullable: true }) offset: number = 0
+        @Arg("limit", () => Int, { nullable: true }) limit: number,
+        @Arg("offset", () => Int, { nullable: true }) offset: number
     ) {
         try {
             const followRelations = await this.followRepository.find({ where: { follower: { id } }, relations: ["user", "follower"], take: limit, skip: offset, order: { createdAt: "DESC" } });
@@ -1770,7 +1815,7 @@ export class UserResolver {
                     console.error(error);
 
                     return false;
-                })
+                });
 
                 return true;
             } catch (error) {
