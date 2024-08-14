@@ -1,0 +1,70 @@
+html {
+    font-family: "Inter", sans-serif;
+    font-size: 18px;
+    color: #000000;
+    background-color: #FFFFFF;
+}
+
+body {
+    overflow: auto;
+}
+
+.not-scrolling {
+    overflow: hidden;
+}
+
+* {
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+*:focus {
+    outline: none;
+}
+
+a {
+    font-weight: 400;
+    font-size: inherit;
+    color: #386BD9;
+    text-decoration: none;
+}
+
+a:hover, a:active {
+    text-decoration: underline;
+}
+
+img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+input[type="text"],
+input[type="email"] {
+    display: block;
+    background-color: transparent;
+    color: #000000;
+    padding: 0;
+    width: 100%;
+    border: none;
+}
+
+textarea {
+    display: block;
+    background-color: transparent;
+    color: #000000;
+    padding: 0;
+    width: 100%;
+    border: none;
+    resize: none;
+}
+
+code {
+    background-color: #3E3636;
+    padding-left: 6px;
+    padding-right: 6px;
+    border-radius: 4px;
+    color: #386BD9;
+}
