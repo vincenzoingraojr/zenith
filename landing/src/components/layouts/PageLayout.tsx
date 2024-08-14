@@ -23,8 +23,8 @@ const MainComponent = styled.main`
     width: 100%;
 
     @media ${devices.mobileS} {
-        padding-left: 32px;
-        padding-right: 32px;
+        padding-left: 36px;
+        padding-right: 36px;
     }
 
     @media ${devices.mobileL} {
@@ -53,14 +53,16 @@ const FooterComponent = styled.footer`
     font-size: 14px;
     column-gap: 12px;
     row-gap: 4px;
-    height: 80px;
+    min-height: 80px;
+    padding-top: 12px;
     padding-left: 24px;
     padding-right: 24px;
+    padding-bottom: 12px;
     width: 100%;
 
     @media ${devices.mobileS} {
-        padding-left: 32px;
-        padding-right: 32px;
+        padding-left: 36px;
+        padding-right: 36px;
     }
 
     @media ${devices.mobileL} {

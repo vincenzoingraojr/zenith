@@ -3,7 +3,7 @@
 html {
     font-family: "Inter", sans-serif;
     font-size: 18px;
-    color: #ffffff;
+    color: #FFFFFF;
     background-color: #141313;
 }
 
@@ -51,4 +51,8 @@ textarea {
 input::placeholder {
     color: #D6CDCD;
     opacity: 1;
+}
+
+.not-scrolling {
+    overflow: hidden;
 }

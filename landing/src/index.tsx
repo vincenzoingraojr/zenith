@@ -3,6 +3,7 @@ import App from "./App";
 import "./styles/index.css";
 import "./styles/style.css";
 import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";
+import { BrowserRouter } from "react-router-dom";
 
 const client = new ApolloClient({
     uri: `${process.env.REACT_APP_SERVER_ORIGIN}/graphql`,
@@ -11,7 +12,9 @@ const client = new ApolloClient({
 
 ReactDOM.render(
     <ApolloProvider client={client}>
-        <App />
+        <BrowserRouter>
+            <App />
+        </BrowserRouter>
     </ApolloProvider>,
     document.getElementById("root")
 );

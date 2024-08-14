@@ -79,8 +79,8 @@ export const ControlContainer = styled.div.attrs(
 
 export const PageTitle = styled.div`
     display: block;
-    font-weight: 700;
-    font-size: 32px;
+    font-weight: 800;
+    font-size: 36px;
 
     @media ${devices.mobileL} {
         font-size: 42px;

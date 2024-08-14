@@ -3,7 +3,7 @@
 html {
     font-family: "Inter", sans-serif;
     font-size: 18px;
-    color: #ffffff;
+    color: #FFFFFF;
     background-color: #141313;
 }
 
@@ -44,7 +44,7 @@ header.page-header {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 18px;
+    gap: 12px;
     padding-top: 48px;
 }
 
@@ -76,7 +76,7 @@ header.page-header a div.site-logo svg {
 
 header.page-header div.site-title {
     display: block;
-    font-size: 30px;
+    font-size: 32px;
     font-weight: 700;
 }
 
@@ -115,12 +115,13 @@ div.footer-item {
 
 @media only screen and (max-width: 400px) {
     body {
-        margin-left: 18px;
-        margin-right: 18px;
+        margin-left: 24px;
+        margin-right: 24px;
     }
 
     header.page-header {
         padding-top: 24px;
+        gap: 8.5px;
     }
 
     header.page-header a {

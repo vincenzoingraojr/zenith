@@ -9,8 +9,8 @@ export interface LogoProps {
 const LogoContainer = styled(SvgIcon).attrs(
     (props: { isIndexLogo: boolean }) => props
 )`
-    width: ${(props) => (props.isIndexLogo ? "76px" : "38px")};
-    height: ${(props) => (props.isIndexLogo ? "76px" : "38px")};
+    width: ${(props) => (props.isIndexLogo ? "48px" : "38px")};
+    height: ${(props) => (props.isIndexLogo ? "48px" : "38px")};
     fill: none;
     stroke: none;
 `;

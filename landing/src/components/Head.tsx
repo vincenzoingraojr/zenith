@@ -1,6 +1,5 @@
-import { FunctionComponent, useEffect } from "react";
+import { FunctionComponent } from "react";
 import { Helmet } from "react-helmet";
-import { useLocation } from "react-router-dom";
 
 interface HeadProps {
     title: string;
@@ -8,12 +7,6 @@ interface HeadProps {
 }
 
 const Head: FunctionComponent<HeadProps> = ({ title, description }) => {
-    const { pathname } = useLocation();
-
-    useEffect(() => {
-        window.scrollTo(0, 0);
-    }, [pathname]);
-
     return (
         <Helmet>
             <title>{title}</title>
