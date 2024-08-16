@@ -77,18 +77,18 @@ export const ControlContainer = styled.div.attrs(
 export const PageTitle = styled.div`
     display: block;
     font-weight: 800;
-    font-size: 42px;
+    font-size: 32px;
 
     @media ${devices.mobileL} {
-        font-size: 48px;
+        font-size: 42px;
     }
 
     @media ${devices.tablet} {
-        font-size: 60px;
+        font-size: 52px;
     }
 
     @media ${devices.laptopS} {
-        font-size: 72px;
+        font-size: 64px;
     }
 `;
 
