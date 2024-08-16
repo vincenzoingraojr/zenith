@@ -77,7 +77,7 @@ const ContactPage = () => {
                     </PageText>
                     <PageBlock>
                         <form
-                            name="contact-form"
+                            name="blog-contact-form"
                             method="POST"
                             data-netlify="true"
                             action="/response/"
@@ -86,7 +86,7 @@ const ContactPage = () => {
                                 <input
                                     type="hidden"
                                     name="form-name"
-                                    value="contact-form"
+                                    value="blog-contact-form"
                                 />
                                 <InputField>
                                     <InputFieldLabel htmlFor="name">
