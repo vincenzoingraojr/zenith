@@ -1,0 +1,52 @@
+{
+    "expo": {
+        "name": "Zenith",
+        "slug": "zenith",
+        "version": "1.0.0",
+        "orientation": "default",
+        "icon": "./assets/icon.png",
+        "userInterfaceStyle": "automatic",
+        "assetBundlePatterns": [
+            "**/*"
+        ],
+        "ios": {
+            "supportsTablet": true,
+            "splash": {
+                "image": "./assets/splash.png",
+                "resizeMode": "contain",
+                "backgroundColor": "#FFFFFF",
+                "dark": {
+                    "image": "./assets/splash.png",
+                    "resizeMode": "contain",
+                    "backgroundColor": "#141313"
+                }
+            }
+        },
+        "android": {
+            "package": "com.vincenzoingraojr.zenith",
+            "adaptiveIcon": {
+                "foregroundImage": "./assets/adaptive-icon.png",
+                "backgroundColor": "#141313"
+            },
+            "splash": {
+                "image": "./assets/splash.png",
+                "resizeMode": "contain",
+                "backgroundColor": "#FFFFFF",
+                "dark": {
+                    "image": "./assets/splash.png",
+                    "resizeMode": "contain",
+                    "backgroundColor": "#141313"
+                }
+            }
+        },
+        "web": {
+            "favicon": "./assets/favicon.png"
+        },
+        "owner": "vincenzoingraojr",
+        "extra": {
+            "eas": {
+                "projectId": "921801f4-474b-469e-8a2a-a4137e5c37fd"
+            }
+        }
+    }
+}
