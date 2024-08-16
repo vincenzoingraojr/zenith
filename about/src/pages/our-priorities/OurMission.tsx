@@ -11,69 +11,38 @@ function OurMission() {
                 <PageContentLayout
                     children={
                         <PageBaseContainer>
-                            <PageTitle>Our vision and values</PageTitle>
+                            <PageTitle>Our mission</PageTitle>
                             <PageDescription>
                                 Connecting the world with Zenith.
                             </PageDescription>
                             <PageText>
-                                Welcome to Zenith, where we're not just building an application; we're shaping a new world. A world that's transparent, connected, secure, and open. Our commitment to these values drives every aspect of our platform, ensuring that you have a revolutionary experience that goes beyond the ordinary.
+                                With Zenith, the super-app we are building, we aim to create a new ecosystem of features and opportunities that will allow users to participate in public conversation in a safe and transparent manner, to communicate in multiple ways with family and friends, and to send and receive money easily and securely. <br />
+                                Our mission will be carried out according to a few values that are very important to us: <b>transparency</b>, <b>user safety and protection</b>, and <b>neutrality</b>.
                             </PageText>
                             <PageText>
                                 <PageSmallTitle>
-                                    Transparency: see the world unfold in real-time
+                                    Transparency
                                 </PageSmallTitle>
                                 <PageText>
-                                    In an open world, information flows freely. With Zenith, you will gain access to real-time updates and news from across the globe. You will have a powerful tool to stay informed about events, trends, and developments as they happen. Our real-time news feeds, event tracking, and live updates will empower you to be in the know, always.
+                                    Transparency is the foundation of every trust-based relationship: in our case, between us and the users. To fund Zenith, we will need to allow companies and users to insert advertisements, and in the not-too-distant future, users will be able to earn money by posting content and videos, with a small portion of the earnings going to the company. All of this is to say that we will let every user know why they are seeing a particular advertisement, and based on which data they were targeted by it. <br />
+                                    Additionally, the algorithms for recommending posts and content to users will be made public from day one.
                                 </PageText>
                             </PageText>
                             <PageText>
                                 <PageSmallTitle>
-                                    Bringing people together: connect and collaborate anywhere, anytime
+                                    User safety and protection
                                 </PageSmallTitle>
                                 <PageText>
-                                    Zenith is more than just an app – it's a nexus of connections that transcend borders. We're building a platform that fosters solidarity by bringing people together, no matter where they are. Through group chats, seamless video calls, and community forums, we're forging meaningful connections and enabling collaboration among users from all walks of life.
+                                    Users must feel safe while using Zenith. We will employ technologies and methods that ensure significant security for their data, and we will implement features (automatic, but in some cases supervised by people) that will prevent the spread of hate of any kind through all types of content that can be created and published on Zenith. Of course, our decisions to remove content may, in many cases, be subject to appeal. But some decisions, concerning rather delicate issues, will be permanent.
                                 </PageText>
                             </PageText>
                             <PageText>
                                 <PageSmallTitle>
-                                    Security and privacy: your safety is paramount
+                                    Neutrality
                                 </PageSmallTitle>
                                 <PageText>
-                                    Security and privacy are paramount in an open world, and we take this responsibility seriously. With end-to-end encryption, secure payment processing, and robust data protection measures, Zenith ensures that your personal information and communications remain confidential and safeguarded from prying eyes.
+                                    On Zenith, users will be able to express their opinions and talk about their passions in a free and unrestricted environment — content removal will only occur in very serious contexts, when the published material is humanly unacceptable. We and Zenith will remain neutral: we won't care about the political orientation or other opinions of users; we will only care that users contribute to creating an inclusive and safe environment.
                                 </PageText>
-                            </PageText>
-                            <PageText>
-                                <PageSmallTitle>
-                                    Openness: your experience, your way
-                                </PageSmallTitle>
-                                <PageText>
-                                    An open world thrives on diversity and inclusivity. Zenith is your canvas for self-expression. Customize your user profile to reflect your unique personality. Our open API access empowers developers to innovate, resulting in a dynamic and evolving platform that adapts to your needs.
-                                </PageText>
-                            </PageText>
-                            <PageText>
-                                <PageSmallTitle>
-                                    Embracing the benefits of an open world
-                                </PageSmallTitle>
-                                <PageText>
-                                    An open world is fertile ground for innovation, understanding, and collaboration. By breaking down barriers and embracing diversity, we can collectively tackle challenges and seize opportunities on a global scale. With Zenith as your digital companion, you'll have the tools to explore, learn, and contribute to a more open and interconnected world.
-                                </PageText>
-                            </PageText>
-                            <PageText>
-                                <PageSmallTitle>
-                                    Our commitment to an open world
-                                </PageSmallTitle>
-                                <PageText>
-                                    At Zenith, our commitment to an open world goes beyond just words. We are actively involved in initiatives that promote transparency, solidarity, security, privacy, and openness. As we continue to develop and refine our app, we're driven by our dedication to creating an environment that reflects these core values.
-                                </PageText>
-                            </PageText>
-                            <PageText>
-                                While our app is still in development, we invite you to be a part of our journey. Follow our progress on social media, and get ready to experience firsthand the transformative power of an open world with Zenith.<br />
-                                <br />
-                                Together, we can redefine how we connect, communicate, and collaborate. Join us in building a world that is truly open – a world powered by Zenith.
-                            </PageText>
-                            <PageText>
-                                <b>Exciting news for 2024</b><br />
-                                We're thrilled to announce that Zenith will be available on multiple platforms! Whether you're an Android enthusiast, an iOS aficionado, a web devotee, or a Windows, macOS, or Linux user, you'll be able to experience the open world of Zenith on your preferred device. Get ready to join the movement and explore the new era of connectivity and engagement. Stay tuned for the official launch in 2024!
                             </PageText>
                         </PageBaseContainer>
                     }  

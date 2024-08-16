@@ -18,6 +18,7 @@ const IndexPage = styled.div`
     display: flex;
     flex-direction: column;
     gap: 48px;
+    margin-top: 72px;
     padding-bottom: 48px;
 `;
 
@@ -29,8 +30,6 @@ const MainFeed = styled.div`
 
 const FeedItemContainer = styled.div`
     display: block;
-    padding-bottom: 48px;
-    border-bottom: 3px solid #386BD9;
 
     :last-child {
         padding-bottom: 0px;
@@ -130,17 +129,17 @@ const IndexGrid = styled.div`
     grid-template-columns: none;
     row-gap: 48px;
     column-gap: 0px;
-    padding-left: 16px;
-    padding-right: 16px;
-
-    @media ${devices.mobileS} {
-        padding-left: 24px;
-        padding-right: 24px;
-    }
+    padding-left: 24px;
+    padding-right: 24px;
 
     @media ${devices.mobileL} {
-        padding-left: 12%;
-        padding-right: 12%;
+        padding-left: 48px;
+        padding-right: 48px;
+    }
+
+    @media (min-width: 600px) {
+        padding-left: 96px;
+        padding-right: 96px;
     }
 
     @media ${devices.tablet} {
@@ -172,7 +171,7 @@ const MainBlockContainer = styled.div`
     @media ${devices.laptopS} {
         position: sticky;
         top: 120px;
-        height: calc(100vh - 120px - 72px);
+        height: calc(100vh - 168px);
     }
 `;
 
@@ -190,18 +189,18 @@ const PinnedPost = styled.div`
     object-fit: cover;
     object-position: center;
     width: 100%;
-    height: 100vh;
+    height: calc(100vh - 72px);
 `;
 
 const PinnedPostImage = styled.div`
     display: block;
     width: 100%;
-    height: 100vh;
+    height: calc(100vh - 72px);
     position: absolute;
 
     img {
         width: 100vw;
-        height: 100vh;
+        height: calc(100vh - 72px);
         object-fit: cover;
         object-position: center;
     }
@@ -210,14 +209,9 @@ const PinnedPostImage = styled.div`
 const PinnedPostInfoContainer = styled.div`
     display: block;
     z-index: 100;
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-left: 24px;
+    padding-right: 24px;
     padding-bottom: 48px;
-
-    @media ${devices.mobileS} {
-        padding-left: 24px;
-        padding-right: 24px;
-    }
 
     @media ${devices.mobileL} {
         padding-left: 48px;
@@ -258,7 +252,7 @@ const PinnedPostInfoInnerContainer = styled.div`
 const PinnedPostTitle = styled.div`
     display: block;
     font-size: 32px;
-    color: #ffffff;
+    color: #FFFFFF;
     font-weight: 700;
     opacity: 1;
 
@@ -296,13 +290,12 @@ const PinnedPostAuthor = styled.div`
 `;
 
 const BlogIndex = ({ data }) => {
-    const siteTitle = data.site.siteMetadata?.title || `Title`;
     const posts = data.allMdx.nodes;
 
     if (posts.length === 0) {
         return (
             <>
-                <Header title={siteTitle} isNavbarChanging={false} />
+                <Header />
                 <Layout>
                     <Seo title="Home" />
                     <PageContent>
@@ -318,7 +311,7 @@ const BlogIndex = ({ data }) => {
     const pinnedPostImage = getImage(pinnedPost.frontmatter.image.src);
     return (
         <>
-            <Header title={siteTitle} isNavbarChanging={true} />
+            <Header />
             <Layout>
                 <Seo title="Home" />
                 <IndexPage>
@@ -445,11 +438,6 @@ export default BlogIndex;
 
 export const pageQuery = graphql`
     query {
-        site {
-            siteMetadata {
-                title
-            }
-        }
         allMdx(sort: { fields: [frontmatter___date], order: DESC }) {
             nodes {
                 excerpt

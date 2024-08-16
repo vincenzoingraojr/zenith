@@ -56,7 +56,7 @@ export const SvgIcon = styled.div`
 `;
 
 export const ControlContainer = styled.div.attrs(
-    (props: { size?: number; isBackgroundGrey?: boolean }) => props
+    (props: { size?: number }) => props
 )`
     display: flex;
     align-items: center;
@@ -70,10 +70,7 @@ export const ControlContainer = styled.div.attrs(
 
     &:hover,
     &:focus {
-        background-color: ${(props) =>
-            props.isBackgroundGrey
-                ? "rgba(20, 19, 19, 0.6)"
-                : "rgba(62, 54, 54, 0.6)"};
+        background-color: rgba(62, 54, 54, 0.6);
     }
 `;
 

@@ -77,8 +77,6 @@ const SearchResultText = styled.div`
 `;
 
 const SearchPage = () => {
-    const siteTitle = "Zenith Blog";
-
     const { allMdx } = useStaticQuery(
         graphql`
             query {
@@ -136,14 +134,14 @@ const SearchPage = () => {
 
     return (
         <>
-            <Header title={siteTitle} isNavbarChanging={false} />
+            <Header />
             <Layout>
                 <Seo title="Search for a blog post" />
                 <PageContent>
                     <PageTitle>Search</PageTitle>
                     <SearchBox>
                         <SearchBoxHeader>
-                            <Magnifier />
+                            <Magnifier color={"#000000"} />
                             <SearchInputContainer>
                                 <input
                                     type="text"
@@ -169,9 +167,13 @@ const SearchPage = () => {
                                     aria-label="Clear search input"
                                     onMouseDown={() => {
                                         setValue("");
+                                        setState({
+                                            filteredData: [],
+                                            query: emptyQuery,
+                                        });
                                     }}
                                 >
-                                    <Close type="small" />
+                                    <Close type="small" color={"#000000"} />
                                 </CloseButtonContainer>
                             )}
                         </SearchBoxHeader>
@@ -191,7 +193,7 @@ const SearchPage = () => {
                                                 {post.frontmatter.title}
                                             </SearchResultText>
                                             <SearchResultIcon>
-                                                <Arrow />
+                                                <Arrow color={"#000000"} />
                                             </SearchResultIcon>
                                         </SearchResult>
                                     </PageBlock>

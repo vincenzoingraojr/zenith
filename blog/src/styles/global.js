@@ -58,41 +58,28 @@ export const PageContent = styled.div`
     display: flex;
     flex-direction: column;
     gap: 48px;
-    padding-top: 120px;
+    margin-top: 72px;
+    padding-top: 48px;
     padding-bottom: 48px;
     min-height: calc(100vh - 72px);
-    margin-left: 12px;
-    margin-right: 12px;
-
-    @media ${devices.mobileS} {
-        margin-left: 24px;
-        margin-right: 24px;
+    padding-left: 24px;
+    padding-right: 24px;
+    width: 100%;
+    
+    @media ${devices.mobileL} {
+        width: 380px;
     }
 
-    @media ${devices.mobileL} {
-        margin-left: 48px;
-        margin-right: 48px;
+    @media (min-width: 600px) {
+        width: 440px;
     }
 
     @media ${devices.tablet} {
-        margin-left: 16%;
-        margin-right: 16%;
-        min-height: calc(100vh - 72px);
+        width: 520px;
     }
-
-    @media ${devices.laptopS} {
-        margin-left: 22%;
-        margin-right: 22%;
-    }
-
+    
     @media ${devices.laptopM} {
-        margin-left: 28%;
-        margin-right: 28%;
-    }
-
-    @media ${devices.desktop} {
-        margin-left: 30%;
-        margin-right: 30%;
+        width: 640px;
     }
 `;
 
@@ -111,5 +98,22 @@ export const PageTitle = styled.div`
 
     @media ${devices.tablet} {
         font-size: 60px;
+    }
+`;
+
+export const ControlContainer = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    width: ${(props) => (props.size ? `${props.size}px` : `36px`)};
+    height: ${(props) => (props.size ? `${props.size}px` : `36px`)};
+    border-radius: 9999px;
+    background-color: transparent;
+    transition: background-color ease 0.2s;
+
+    &:hover,
+    &:focus {
+        background-color: rgba(214, 205, 205, 0.4);
     }
 `;

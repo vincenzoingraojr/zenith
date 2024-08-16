@@ -6,6 +6,7 @@ import Menu from "./icons/menu";
 import { devices } from "../styles/devices";
 import Close from "./icons/close";
 import Magnifier from "./icons/magnifier";
+import { ControlContainer } from "../styles/global";
 
 const HeaderContainer = styled.header`
     position: fixed;
@@ -16,38 +17,17 @@ const HeaderContainer = styled.header`
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: ${props => props.hasBackgroundColor ? "#FFFFFF" : "transparent"};
+    background-color: #FFFFFF;
     z-index: 1000;
     gap: 24px;
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-left: 24px;
+    padding-right: 24px;
     height: 72px;
     overflow: auto;
-
-    @media ${devices.mobileS} {
-        padding-left: 24px;
-        padding-right: 24px;
-    }
-
-    @media ${devices.mobileL} {
-        padding-left: 48px;
-        padding-right: 48px;
-    }
-
-    @media ${devices.tablet} {
-        padding-left: 96px;
-        padding-right: 96px;
-        overflow: hidden;
-    }
 
     @media ${devices.laptopS} {
         padding-left: 48px;
         padding-right: 48px;
-    }
-
-    @media ${devices.desktop} {
-        padding-left: 6%;
-        padding-right: 6%;
     }
 `;
 
@@ -55,11 +35,7 @@ const BrandContainer = styled.div`
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 24px;
-
-    @media (max-width: 425px) {
-        gap: 12px;
-    }
+    gap: 12px; 
 `;
 
 const LogoContainer = styled.div`
@@ -80,24 +56,8 @@ const LogoContainer = styled.div`
 const SiteTitle = styled.div`
     display: block;
     font-weight: 700;
-    font-size: 26px;
-    color: #000000;
-    text-transform: lowercase;
-
-    @media (max-width: 768px) {
-        display: none;
-    }
-`;
-
-const SiteTitleMobile = styled.div`
-    display: none;
-    font-weight: 700;
     font-size: 24px;
     color: #000000;
-
-    @media (max-width: 768px) {
-        display: block;
-    }
 `;
 
 const NavContainer = styled.nav`
@@ -110,21 +70,11 @@ const NavContainer = styled.nav`
     bottom: 0;
     gap: 24px;
     padding-top: 48px;
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-left: 24px;
+    padding-right: 24px;
     padding-bottom: 48px;
     overflow-y: auto;
     background-color: #FFFFFF;
-
-    @media ${devices.mobileS} {
-        padding-left: 24px;
-        padding-right: 24px;
-    }
-
-    @media ${devices.mobileL} {
-        padding-left: 48px;
-        padding-right: 48px;
-    }
 
     @media ${devices.tablet} {
         position: relative;
@@ -176,6 +126,10 @@ const NavEntry = styled.div`
             border-radius: 9999px;
         }
 
+        a:hover {
+            background-color: rgba(214, 205, 205, 0.4);
+        }
+
         a.active {
             color: #FFFFFF;
             background-color: #386BD9;
@@ -199,18 +153,7 @@ const HeaderRightSide = styled.div`
     }
 `;
 
-const MenuButton = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    padding: 6px;
-    border-radius: 9999px;
-
-    &:hover, &:focus {
-        background-color: rgba(214, 205, 205, 0.4);
-    }
-
+const MenuButton = styled(ControlContainer)`
     @media ${devices.tablet} {
         display: none;
     }
@@ -221,8 +164,8 @@ const SearchButton = styled(Link)`
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    width: 42px;
-    height: 42px;
+    width: 36px;
+    height: 36px;
     border-radius: 9999px;
 
     &:hover, &:focus {
@@ -230,9 +173,8 @@ const SearchButton = styled(Link)`
     }
 `;
 
-const Header = ({ title, isNavbarChanging }) => {
+const Header = () => {
     const [menu, setMenu] = React.useState(false);
-    const [background, setBackground] = React.useState(false);
 
     React.useEffect(() => {
         if (window.innerWidth > 768 && !menu) {
@@ -248,7 +190,6 @@ const Header = ({ title, isNavbarChanging }) => {
         window.addEventListener("resize", () => {
             if ((window.innerWidth > 768 && !menu) || (menu && window.innerWidth > 768)) {
                 setMenu(true);
-                setBackground(false);
                 document.body.classList.remove("not-scrolling");
             }
     
@@ -259,46 +200,27 @@ const Header = ({ title, isNavbarChanging }) => {
         });
     }, [menu]);
 
-    React.useEffect(() => {
-        const changeBackground = () => {
-            if (isNavbarChanging) {
-                if (window.scrollY >= 50 || (menu && window.innerWidth < 768)) {
-                    setBackground(true);
-                } else if (window.scrollY < 50) {
-                    setBackground(false);
-                }
-            } else {
-                setBackground(true);
-            }
-        }
-
-        changeBackground();
-
-        window.addEventListener("scroll", changeBackground);
-    }, [menu, isNavbarChanging]);
-
     return (
-        <HeaderContainer hasBackgroundColor={background}>
+        <HeaderContainer>
             <BrandContainer>
                 <LogoContainer>
                     <Link to="/" title="Home">
                         <Logo />
                     </Link>
                 </LogoContainer>
-                <SiteTitle>{title}</SiteTitle>
-                <SiteTitleMobile>Blog</SiteTitleMobile>
+                <SiteTitle>Blog</SiteTitle>
             </BrandContainer>
             <HeaderRightSide>
                 <SearchButton to="/search" title="Search for a blog post" aria-label="Search for a blog post">
-                    <Magnifier type="normal" />
+                    <Magnifier color={"#000000"} />
                 </SearchButton>
                 <MenuButton role="button" tabIndex={0} title="Open menu" aria-label="Open menu" onClick={() => {
                     setMenu(!menu);
                 }}>
                     {menu ? (
-                        <Close type="normal" />
+                        <Close type="normal" color={"#000000"} />
                     ) : (
-                        <Menu />
+                        <Menu color={"#000000"} />
                     )}
                 </MenuButton>
                 {menu && (

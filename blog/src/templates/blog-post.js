@@ -7,11 +7,11 @@ import Arrow from "../components/icons/arrow";
 import { MDXRenderer } from "gatsby-plugin-mdx";
 import styled from "styled-components";
 import { devices } from "../styles/devices";
-import { useState, useEffect } from "react";
 import Header from "../components/header";
 
 const PostPage = styled.div`
     display: block;
+    margin-top: 72px;
     margin-bottom: 48px;
 `;
 
@@ -105,7 +105,6 @@ const PostPageContent = styled.div`
     margin-left: 16px;
     margin-right: 16px;
     padding-bottom: 24px;
-    border-bottom: 3px solid #000000;
 
     @media ${devices.mobileS} {
         margin-left: 24px;
@@ -137,7 +136,7 @@ const Pagination = styled.nav`
     display: grid;
     grid-template-rows: auto auto;
     grid-template-columns: none;
-    row-gap: ${(props) => (props.hasOnlyChild ? "0px" : "24px")};
+    row-gap: 24px;
     padding-left: 16px;
     padding-right: 16px;
     padding-bottom: 48px;
@@ -236,26 +235,14 @@ const NextIcon = styled.div`
 
 const BlogPostTemplate = ({ data }) => {
     const post = data.mdx;
-    const siteTitle = data.site.siteMetadata?.title || `Title`;
     const { previous, next } = data;
     const image = getImage(post.frontmatter.image.src);
     const author =
         data.site.siteMetadata.author.name || post.frontmatter.author;
 
-    const [hasOnlyChild, setHasOnlyChild] = useState(false);
-    useEffect(() => {
-        if (previous && !next) {
-            setHasOnlyChild(true);
-        } else if (!previous && next) {
-            setHasOnlyChild(true);
-        } else {
-            setHasOnlyChild(false);
-        }
-    }, [previous, next]);
-
     return (
         <>
-            <Header title={siteTitle} isNavbarChanging={true} />
+            <Header />
             <Layout>
                 <Seo
                     title={post.frontmatter.title}
@@ -290,32 +277,34 @@ const BlogPostTemplate = ({ data }) => {
                         </MDXRenderer>
                     </PostPageContent>
                 </PostPage>
-                <Pagination hasOnlyChild={hasOnlyChild}>
-                    {previous && (
-                        <PreviousPaginationItem>
-                            <PaginationTitle>Previous</PaginationTitle>
-                            <Link to={previous.fields.slug} title={previous.frontmatter.title} aria-label={previous.frontmatter.title} rel="prev">
-                                <Arrow />
-                                <PaginationLinkText>
-                                    {previous.frontmatter.title}
-                                </PaginationLinkText>
-                            </Link>
-                        </PreviousPaginationItem>
-                    )}
-                    {next && (
-                        <NextPaginationItem>
-                            <PaginationTitle>Next</PaginationTitle>
-                            <Link to={next.fields.slug} title={next.frontmatter.title} aria-label={next.frontmatter.title} rel="next">
-                                <PaginationLinkText>
-                                    {next.frontmatter.title}
-                                </PaginationLinkText>
-                                <NextIcon>
-                                    <Arrow />
-                                </NextIcon>
-                            </Link>
-                        </NextPaginationItem>
-                    )}
-                </Pagination>
+                {(next || previous) && (
+                    <Pagination>
+                        {previous && (
+                            <PreviousPaginationItem>
+                                <PaginationTitle>Previous</PaginationTitle>
+                                <Link to={previous.fields.slug} title={previous.frontmatter.title} aria-label={previous.frontmatter.title} rel="prev">
+                                    <Arrow color={"#000000"} />
+                                    <PaginationLinkText>
+                                        {previous.frontmatter.title}
+                                    </PaginationLinkText>
+                                </Link>
+                            </PreviousPaginationItem>
+                        )}
+                        {next && (
+                            <NextPaginationItem>
+                                <PaginationTitle>Next</PaginationTitle>
+                                <Link to={next.fields.slug} title={next.frontmatter.title} aria-label={next.frontmatter.title} rel="next">
+                                    <PaginationLinkText>
+                                        {next.frontmatter.title}
+                                    </PaginationLinkText>
+                                    <NextIcon>
+                                        <Arrow color={"#000000"} />
+                                    </NextIcon>
+                                </Link>
+                            </NextPaginationItem>
+                        )}
+                    </Pagination>
+                )}
             </Layout>
         </>
     );
@@ -331,7 +320,6 @@ export const pageQuery = graphql`
     ) {
         site {
             siteMetadata {
-                title
                 author {
                     name
                 }

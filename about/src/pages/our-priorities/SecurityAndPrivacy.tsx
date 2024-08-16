@@ -31,7 +31,7 @@ function SecurityAndPrivacy() {
                                     Secure communication
                                 </PageSmallTitle>
                                 <PageText>
-                                    Rest assured, your conversations and video calls will be shielded by end-to-end encryption. This level of protection ensures that your private discussions remain just that – private.
+                                    Rest assured, your conversations and video calls will be shielded by end-to-end encryption. This level of protection ensures that your private discussions remain just that — private.
                                 </PageText>
                             </PageText>
                             <PageText>
@@ -91,7 +91,7 @@ function SecurityAndPrivacy() {
                                 </PageText>
                             </PageText>
                             <PageText>
-                                Remember, this is just a sneak peek into what's coming. As we finalize our app, these security and privacy measures will be seamlessly integrated, creating a safe and private space for your interactions. <br />
+                                Remember, this is just a sneak peek into what's coming. As we finalize our apps, these security and privacy measures will be seamlessly integrated, creating a safe and private space for your interactions. <br />
                                 <br />
                                 Thank you for your interest in Zenith. We're excited to unveil the full experience soon!
                             </PageText>

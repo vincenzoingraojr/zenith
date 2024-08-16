@@ -116,17 +116,6 @@ const Footer = () => {
                         </FooterItemContent>
                     </FooterItem>
                     <FooterItem>
-                        <FooterTitle>Resources</FooterTitle>
-                        <FooterItemContent>
-                            <FooterText>
-                                <a href="https://help.zenith.to" title="Help center" aria-label="Help center" target="_blank" rel="noreferrer">Help center</a>
-                            </FooterText>
-                            <FooterText>
-                                <Link to="/contact-us" title="Contact us" aria-label="Contact us">Contact us</Link>
-                            </FooterText>
-                        </FooterItemContent>
-                    </FooterItem>
-                    <FooterItem>
                         <FooterTitle>Platform</FooterTitle>
                         <FooterItemContent>
                             <FooterText>
@@ -134,6 +123,17 @@ const Footer = () => {
                             </FooterText>
                             <FooterText>
                                 <a href="https://about.zenith.to/security-and-privacy" target="_blank" title="Security and privacy" aria-label="Security and privacy">Security and privacy</a>
+                            </FooterText>
+                        </FooterItemContent>
+                    </FooterItem>
+                    <FooterItem>
+                        <FooterTitle>Resources</FooterTitle>
+                        <FooterItemContent>
+                            <FooterText>
+                                <a href="https://help.zenith.to" title="Help center" aria-label="Help center" target="_blank" rel="noreferrer">Help center</a>
+                            </FooterText>
+                            <FooterText>
+                                <Link to="/contact-us" title="Contact us" aria-label="Contact us">Contact us</Link>
                             </FooterText>
                         </FooterItemContent>
                     </FooterItem>

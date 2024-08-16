@@ -1,16 +1,13 @@
 import * as React from "react";
-import { graphql } from "gatsby";
 import Layout from "../components/layout";
 import Seo from "../components/seo";
 import { PageContent, PageText, PageTitle } from "../styles/global";
 import Header from "../components/header";
 
-const AboutPage = ({ data }) => {
-    const siteTitle = data.site.siteMetadata.title;
-
+const AboutPage = () => {
     return (
         <>
-            <Header title={siteTitle} isNavbarChanging={false} />
+            <Header />
             <Layout>
                 <Seo
                     title="About us"
@@ -29,13 +26,3 @@ const AboutPage = ({ data }) => {
 };
 
 export default AboutPage;
-
-export const pageQuery = graphql`
-    query {
-        site {
-            siteMetadata {
-                title
-            }
-        }
-    }
-`;

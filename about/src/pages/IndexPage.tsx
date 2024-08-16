@@ -4,7 +4,7 @@ import { PageLayout } from "../components/PageLayout";
 import { SEO } from "../components/Seo";
 import styled from "styled-components";
 import { devices } from "../styles/devices";
-import { LinkButton, PageBlock, PageText } from "../styles/global";
+import { LinkButton, PageBlock } from "../styles/global";
 
 const IndexPageContainer = styled.div`
     display: flex;
@@ -87,24 +87,6 @@ function IndexPage() {
                                 aria-label="Coming soon"
                             >
                                 Coming soon
-                            </IndexLinkButton>
-                        </PageBlock>
-                    </MainBlockContainer>
-                    <MainBlockContainer>
-                        <IndexTitle>
-                            Work with us.
-                        </IndexTitle>
-                        <PageText>
-                            Here, we will help you unleash your full potential as we try to unite the world and make things easier.
-                        </PageText>
-                        <PageBlock>
-                            <IndexLinkButton
-                                title="Careers"
-                                to="/careers"
-                                role="button"
-                                aria-label="Careers"
-                            >
-                                Careers
                             </IndexLinkButton>
                         </PageBlock>
                     </MainBlockContainer>

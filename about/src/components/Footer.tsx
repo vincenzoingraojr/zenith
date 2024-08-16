@@ -111,6 +111,17 @@ function Footer() {
                         </FooterItemContent>
                     </FooterItem>
                     <FooterItem>
+                        <FooterTitle>Platform</FooterTitle>
+                        <FooterItemContent>
+                            <PageText>
+                                <Link to="/our-mission" title="Our mission" aria-label="Our mission">Our mission</Link>
+                            </PageText>
+                            <PageText>
+                                <Link to="/security-and-privacy" title="Security and privacy" aria-label="Security and privacy">Security and privacy</Link>
+                            </PageText>
+                        </FooterItemContent>
+                    </FooterItem>
+                    <FooterItem>
                         <FooterTitle>Resources</FooterTitle>
                         <FooterItemContent>
                             <PageText>
@@ -121,17 +132,6 @@ function Footer() {
                             </PageText>
                             <PageText>
                                 <Link to="/contact-us" title="Contact us" aria-label="Contact us">Contact us</Link>
-                            </PageText>
-                        </FooterItemContent>
-                    </FooterItem>
-                    <FooterItem>
-                        <FooterTitle>Platform</FooterTitle>
-                        <FooterItemContent>
-                            <PageText>
-                                <Link to="/our-mission" title="Our mission" aria-label="Our mission">Our mission</Link>
-                            </PageText>
-                            <PageText>
-                                <Link to="/security-and-privacy" title="Security and privacy" aria-label="Security and privacy">Security and privacy</Link>
                             </PageText>
                         </FooterItemContent>
                     </FooterItem>

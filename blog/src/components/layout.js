@@ -7,7 +7,10 @@ const PageContainer = styled.div`
 `;
 
 const MainContainer = styled.main`
-    display: block;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
 `;
 
 const Layout = ({ children }) => {

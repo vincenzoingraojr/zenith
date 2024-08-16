@@ -1,16 +1,14 @@
 import * as React from "react";
-import { Link, graphql } from "gatsby";
+import { Link } from "gatsby";
 import { PageContent, PageText, PageTitle } from "../styles/global";
 import Layout from "../components/layout";
 import Seo from "../components/seo";
 import Header from "../components/header";
 
-const ResponsePage = ({ data }) => {
-    const siteTitle = data.site.siteMetadata.title;
-
+const ResponsePage = () => {
     return (
         <>
-            <Header title={siteTitle} isNavbarChanging={false} />
+            <Header/>
             <Layout>
                 <Seo title="Response" />
                 <PageContent>
@@ -26,13 +24,3 @@ const ResponsePage = ({ data }) => {
 };
 
 export default ResponsePage;
-
-export const pageQuery = graphql`
-    query {
-        site {
-            siteMetadata {
-                title
-            }
-        }
-    }
-`;

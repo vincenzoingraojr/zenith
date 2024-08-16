@@ -3,6 +3,7 @@ import { PageLayout } from "../../components/PageLayout";
 import { SEO } from "../../components/Seo";
 import { PageContentLayout } from "../../components/sublayouts/PageContentLayout";
 import { LinkButton, PageBaseContainer, PageBlock, PageDescription, PageText, PageTitle } from "../../styles/global";
+import Download from "../../components/icons/Download";
 
 const DownloadButton = styled(LinkButton)`
     background-color: #386BD9;
@@ -39,6 +40,7 @@ function BrandToolkit() {
                                     aria-label="Download brand assets"
                                 >
                                     <ButtonFlexContent>
+                                        <Download />
                                         <PageText>
                                             Download brand assets
                                         </PageText>

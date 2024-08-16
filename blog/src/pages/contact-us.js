@@ -1,5 +1,4 @@
 import * as React from "react";
-import { graphql } from "gatsby";
 import {
     PageBlock,
     PageContent,
@@ -53,12 +52,10 @@ const InputFieldLabel = styled.label`
     vertical-align: text-top;
 `;
 
-const ContactPage = ({ data }) => {
-    const siteTitle = data.site.siteMetadata.title;
-
+const ContactPage = () => {
     return (
         <>
-            <Header title={siteTitle} isNavbarChanging={false} />
+            <Header />
             <Layout>
                 <Seo
                     title="Contact us"
@@ -154,12 +151,3 @@ const ContactPage = ({ data }) => {
 
 export default ContactPage;
 
-export const pageQuery = graphql`
-    query {
-        site {
-            siteMetadata {
-                title
-            }
-        }
-    }
-`;

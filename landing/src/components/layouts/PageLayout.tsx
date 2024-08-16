@@ -103,6 +103,28 @@ export const PageLayout: React.FC<PageLayoutProps> = ({ children }) => {
                 </PageText>
                 <PageText>
                     <a
+                        href="https://about.zenith.to/privacy-policy"
+                        target="_blank"
+                        title="Zenith's privacy policy"
+                        rel="noreferrer"
+                        aria-label="Zenith's privacy policy"
+                    >
+                        Privacy policy
+                    </a>
+                </PageText>
+                <PageText>
+                    <a
+                        href="https://about.zenith.to/tos"
+                        target="_blank"
+                        title="Zenith's terms of service"
+                        rel="noreferrer"
+                        aria-label="Zenith's terms of service"
+                    >
+                        Terms of service
+                    </a>
+                </PageText>
+                <PageText>
+                    <a
                         href="https://blog.zenith.to"
                         target="_blank"
                         title="The blog about Zenith"
@@ -110,6 +132,17 @@ export const PageLayout: React.FC<PageLayoutProps> = ({ children }) => {
                         aria-label="The blog about Zenith"
                     >
                         Blog
+                    </a>
+                </PageText>
+                <PageText>
+                    <a
+                        href="https://help.zenith.to"
+                        target="_blank"
+                        title="Help center"
+                        rel="noreferrer"
+                        aria-label="Help center"
+                    >
+                        Help center
                     </a>
                 </PageText>
             </FooterComponent>

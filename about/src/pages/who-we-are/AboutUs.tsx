@@ -37,7 +37,7 @@ function AboutUs() {
                                 <PageText>
                                     Zenith will be built for all the available platforms. Firstly, we will release the web version, users will be able to test and use the app practically everywhere. Secondly, we will release the Android and iOS versions, along with the desktop apps (for Windows, macOS and Linux). <br />
                                     <br />
-                                    With the release of the web version, we will reveal to the public <b>the source code of all the algorithms</b> behind the recommendation of posts and content to the users. The algorithms behid the payment system will not be shared for obvious reasons.
+                                    With the release of the web version, we will reveal to the public <b>the source code of all the algorithms</b> behind the recommendation of posts and content to the users. The algorithms behid the payment system will not be shared for security reasons.
                                 </PageText>
                             </PageText>
                         </PageBaseContainer>
