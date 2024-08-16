@@ -2,7 +2,7 @@
 
 A JavaScript utility that provides text processing routines for post content.
 
-I'm creating Lumen to lay the foundations of a social networking platform that I have in mind. And, as you can easily guess, users in a social network interact mainly through a component that allows them to publish text, links, images, emoji and much more. The library provides autolinking and extraction for URLs, usernames, lists, and hashtags.
+I'm creating Lumen to lay the foundations of a social networking platform that I have in mind. And, as you can easily guess, users in a social network interact mainly through a component that allows them to publish text, links, images, emoji and much more. This library provides autolinking and extraction for URLs, usernames, lists, and hashtags.
 
 Based on [twitter-text](https://github.com/twitter/twitter-text).
 
