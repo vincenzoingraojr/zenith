@@ -27,6 +27,16 @@ const JoinLinkButton = styled(LinkButton)`
     color: #141313;
 `;
 
+const BrandTitle = styled.div`
+    display: block;
+    font-weight: 800;
+    font-size: 64px;
+
+    @media ${devices.mobileL} {
+        font-size: 72px;
+    }
+`;
+
 function HomePage() {
     const location = useLocation();
 
@@ -41,7 +51,7 @@ function HomePage() {
                                 <Logo type="index-logo" />
                                 <BrandName>Zenith</BrandName>
                             </IndexBrandGroup>
-                            <PageTitle>The everything app.</PageTitle>
+                            <BrandTitle>The everything app.</BrandTitle>
                             <PageText>
                                 With Zenith, you'll be able to find out what's happening in the world in real time, chat and make video calls with whoever you want, and send and receive money directly within the app.
                             </PageText>
