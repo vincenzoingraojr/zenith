@@ -7,6 +7,7 @@ import Head from "../components/Head";
 import { PageLayout } from "../components/layouts/PageLayout";
 import { PageContentLayout } from "../components/layouts/sublayouts/PageContentLayout";
 import { Outlet, useLocation } from "react-router-dom";
+import { devices } from "../styles/devices";
 
 const IndexBrandGroup = styled.div`
     display: flex;
