@@ -1,6 +1,6 @@
 import "../styles/index.css";
 import "../styles/style.css";
-import { LinkButton, PageBaseContainer, PageBlock, PageText, PageTitle } from "../styles/global";
+import { LinkButton, PageBaseContainer, PageBlock, PageText } from "../styles/global";
 import styled from "styled-components";
 import Logo from "../components/icons/Logo";
 import Head from "../components/Head";
