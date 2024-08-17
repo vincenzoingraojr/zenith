@@ -39,12 +39,14 @@ const LogInScreen = () => {
     const color = textColorProp();
 
     const [userLocation, setUserLocation] = useState("");
+    const [country, setCountry] = useState("");
 
     useEffect(() => {
         const response = getUserLocationFromAPI();
 
         response.then((response) => {
             setUserLocation(`${response.data.city}, ${response.data.country}`);
+            setCountry(response.data.country);
         });
     }, []);
 
@@ -57,6 +59,7 @@ const LogInScreen = () => {
                 clientOS: Platform.OS,
                 clientType: Platform.OS === "web" ? "browser" : "native",
                 deviceLocation: userLocation,
+                country,
             },
             update: (store, { data }) => {
                 if (data && data.login && data.login.user) {

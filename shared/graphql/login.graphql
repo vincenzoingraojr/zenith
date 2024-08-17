@@ -1,0 +1,55 @@
+mutation Login(
+    $input: String!
+    $password: String!
+    $clientOS: String!
+    $clientType: String!
+    $clientName: String!
+    $deviceLocation: String!
+    $country: String!
+) {
+    login(
+        input: $input
+        password: $password
+        clientOS: $clientOS
+        clientType: $clientType
+        clientName: $clientName
+        deviceLocation: $deviceLocation
+        country: $country
+    ) {
+        user {
+            id
+            name
+            username
+            email
+            type
+            gender
+            birthDate {
+                date
+                monthAndDayVisibility
+                yearVisibility
+            }
+            emailVerified
+            profile {
+                profilePicture
+                profileBanner
+                bio
+                website
+            }
+            userSettings {
+                incomingMessages
+                twoFactorAuth
+            }
+            searchSettings {
+                hideSensitiveContent
+                hideBlockedAccounts
+            }
+        }
+        errors {
+            field
+            message
+        }
+        accessToken
+        status
+        ok
+    }
+}

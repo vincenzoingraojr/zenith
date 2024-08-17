@@ -44,7 +44,7 @@ const DrawerContent: FunctionComponent<DrawerContentComponentProps> = (props) =>
                         <View style={drawerStyles.profile}>
                             <Image source={imageUrl} style={drawerStyles.profileImage} />
                             <View style={drawerStyles.profileInfo}>
-                                <Text style={[styles.text, globalStyles.boldText]}>{data.me.firstName}{" "}{data.me.lastName}</Text>
+                                <Text style={[styles.text, globalStyles.boldText]}>{data.me.name}</Text>
                                 <Text style={[styles.text, drawerStyles.username, { color: colorScheme === "dark" ? COLORS.lightGrey : COLORS.grey }]}>@{data.me.username}</Text>
                             </View>
                         </View>

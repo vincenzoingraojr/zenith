@@ -23,8 +23,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "SignUp">;
 
 const SignUpScreen = ({ navigation }: Props) => {
     const styles = theme();
-    const [firstName, setFirstName] = useState("");
-    const [lastName, setLastName] = useState("");
+    const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
@@ -45,8 +44,7 @@ const SignUpScreen = ({ navigation }: Props) => {
     const handleSignUp = async () => {
         const response = await signup({
             variables: {
-                firstName,
-                lastName,
+                name,
                 email,
                 username,
                 password,
@@ -88,8 +86,7 @@ const SignUpScreen = ({ navigation }: Props) => {
                                     <DatePicker value={birthDate} onUpdateValue={(date) => setBirthDate(date)} />
                                 </View>
                                 <DropDownPickerField field="gender" errors={errors} value={gender} onUpdateValue={setGender} options={genderOptions} />
-                                <InputField field="firstName" errors={errors} placeholder="First name" value={firstName} onUpdateValue={(text) => setFirstName(text)} />
-                                <InputField field="lastName" errors={errors} placeholder="Last name" value={lastName} onUpdateValue={(text) => setLastName(text)} />
+                                <InputField field="name" errors={errors} placeholder="Full name" value={name} onUpdateValue={(text) => setName(text)} />
                                 <InputField field="email" errors={errors} placeholder="Email" value={email} onUpdateValue={(text) => setEmail(text)} keyboardType="email-address" />
                                 <InputField field="username" errors={errors} placeholder="Username" value={username} onUpdateValue={(text) => setUsername(text)} />
                                 <InputField field="password" errors={errors} placeholder="Password" value={password} onUpdateValue={(text) => setPassword(text)} type="password" />
@@ -99,7 +96,7 @@ const SignUpScreen = ({ navigation }: Props) => {
                     bottomNav={
                         <View style={globalStyles.authBottomNav}>
                             <Button buttonStyle={{ backgroundColor: globalStyles.smallButton.backgroundColor, borderRadius: globalStyles.smallButton.borderRadius, borderWidth: globalStyles.smallButton.borderWidth, color, borderColor: color }} smallButton={true} text="Log in" onPress={() => { navigation.navigate("FindUserBeforeLogIn") }} />
-                            <Button buttonStyle={globalStyles.standardButton} text="Sign up" onPress={handleSignUp} disabled={email.length <= 2 || firstName.length === 0 || lastName.length === 0 || username.length <= 2 || password.length <= 2} />
+                            <Button buttonStyle={globalStyles.standardButton} text="Sign up" onPress={handleSignUp} disabled={email.length <= 2 || name.length === 0 || username.length <= 2 || password.length <= 2} />
                         </View>
                     }
                 />

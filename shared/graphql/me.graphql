@@ -1,0 +1,30 @@
+query Me {
+    me {
+        id
+        name
+        username
+        email
+        type
+        gender
+        birthDate {
+            date
+            monthAndDayVisibility
+            yearVisibility
+        }
+        emailVerified
+        profile {
+            profilePicture
+            profileBanner
+            bio
+            website
+        }
+        userSettings {
+            incomingMessages
+            twoFactorAuth
+        }
+        searchSettings {
+            hideSensitiveContent
+            hideBlockedAccounts
+        }
+    }
+}

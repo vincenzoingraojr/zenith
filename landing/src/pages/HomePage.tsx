@@ -13,13 +13,13 @@ const IndexBrandGroup = styled.div`
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 12px;
+    gap: 8.5px;
     padding-bottom: 12px;
 `;
 
 const BrandName = styled.div`
     display: block;
-    font-size: 32px;
+    font-size: 24px;
     font-weight: 700;
 `;
 
@@ -30,11 +30,23 @@ const JoinLinkButton = styled(LinkButton)`
 
 const BrandTitle = styled.div`
     display: block;
+    font-size: 42px;
     font-weight: 800;
-    font-size: 64px;
+
+    @media ${devices.mobileS} {
+        font-size: 52px;
+    }
 
     @media ${devices.mobileL} {
-        font-size: 72px;
+        font-size: 58px;
+    }
+
+    @media ${devices.tablet} {
+        font-size: 62px;
+    }
+
+    @media ${devices.laptopM} {
+        font-size: 64px;
     }
 `;
 
@@ -49,7 +61,7 @@ function HomePage() {
                     children={
                         <PageBaseContainer>
                             <IndexBrandGroup>
-                                <Logo type="index-logo" />
+                                <Logo type="inline" />
                                 <BrandName>Zenith</BrandName>
                             </IndexBrandGroup>
                             <BrandTitle>The everything app.</BrandTitle>
