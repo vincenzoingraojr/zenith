@@ -2,8 +2,7 @@ import { FunctionComponent, useState } from "react";
 import { Pressable, SafeAreaView } from "react-native";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { globalStyles } from "../../constants/global";
-import { Ionicons } from "@expo/vector-icons";
-import { COLORS } from "../../constants/colors";
+import Calendar from "../icons/Calendar";
 
 interface DatePickerProps {
     value: Date;
@@ -25,7 +24,7 @@ const DatePicker: FunctionComponent<DatePickerProps> = ({ value, onUpdateValue }
     return (
         <SafeAreaView>
             <Pressable style={globalStyles.calendarButton} onPress={() => setShow(true)}>
-                <Ionicons name={"calendar-outline"} size={24} color={COLORS.white} />
+                <Calendar />
             </Pressable>
             {show && (
                 <DateTimePicker

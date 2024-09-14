@@ -9,19 +9,7 @@ import { createClient } from "graphql-ws";
 import { getMainDefinition } from "@apollo/client/utilities";
 import { onError } from "apollo-link-error";
 
-const cache = new InMemoryCache({
-    typePolicies: {
-        User: {
-            fields: {
-                sessions: {
-                    merge: (_existing = [], incoming) => {
-                        return incoming;
-                    },
-                },
-            },
-        },
-    }
-});
+const cache = new InMemoryCache();
 
 const refreshLink = new TokenRefreshLink({
     accessTokenField: "accessToken",
