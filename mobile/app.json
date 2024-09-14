@@ -6,9 +6,7 @@
         "orientation": "default",
         "icon": "./assets/icon.png",
         "userInterfaceStyle": "automatic",
-        "assetBundlePatterns": [
-            "**/*"
-        ],
+        "assetBundlePatterns": ["**/*"],
         "ios": {
             "supportsTablet": true,
             "splash": {
@@ -47,6 +45,7 @@
             "eas": {
                 "projectId": "921801f4-474b-469e-8a2a-a4137e5c37fd"
             }
-        }
+        },
+        "plugins": ["expo-font", "expo-secure-store"]
     }
 }
