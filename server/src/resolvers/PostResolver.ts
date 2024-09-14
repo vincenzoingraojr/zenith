@@ -387,7 +387,7 @@ export class PostResolver {
                                     const pushNotification: FirebaseNotification = {
                                         title: `@${post.author.username} mentioned you ${(type === "comment") ? "comment" : "post"} (for @${mentionedUser.username})`,
                                         body: notification.content,
-                                        imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/brand/profile-picture.png",
+                                        imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
                                     };
                                     const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.postId}?n_id=${notification.notificationId}`;
                                     await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: mentionedUser.username, type: notification.type });
@@ -416,7 +416,7 @@ export class PostResolver {
                             const pushNotification: FirebaseNotification = {
                                 title: `@${post.author.username} commented your post (for @${isReplyToPost.author.username})`,
                                 body: notification.content,
-                                imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/brand/profile-picture.png",
+                                imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
                             };
                             const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.postId}?n_id=${notification.notificationId}`;
                             await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: isReplyToPost.author.username, type: notification.type });
@@ -595,7 +595,7 @@ export class PostResolver {
                                         const pushNotification: FirebaseNotification = {
                                             title: `@${post.author.username} mentioned you ${(post.type === "comment") ? "comment" : "post"} (for @${mentionedUser.username})`,
                                             body: newNotification.content,
-                                            imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/brand/profile-picture.png",
+                                            imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
                                         };
                                         const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.postId}?n_id=${newNotification.notificationId}`;
                                         await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: mentionedUser.username, type: newNotification.type });
@@ -755,7 +755,7 @@ export class PostResolver {
                 const pushNotification: FirebaseNotification = {
                     title: `@${user.username} liked your ${(post.type === "comment") ? "comment" : "post"} (for @${post.author.username})`,
                     body: notification.content,
-                    imageUrl: user.profile.profilePicture.length > 0 ? user.profile.profilePicture : "https://img.zncdn.net/brand/profile-picture.png",
+                    imageUrl: user.profile.profilePicture.length > 0 ? user.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
                 };
                 const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.postId}?n_id=${notification.notificationId}`;
                 await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: post.author.username, type: notification.type });

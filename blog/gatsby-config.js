@@ -92,19 +92,14 @@ module.exports = {
                     {
                         serialize: ({ query: { site, allMdx } }) => {
                             return allMdx.nodes.map((node) => {
-                                return Object.assign({}, node.frontmatter, {
-                                    description: node.excerpt,
+                                return {
+                                    title: node.frontmatter.title,
+                                    description: node.frontmatter.description,
                                     date: node.frontmatter.date,
-                                    url:
-                                        site.siteMetadata.siteUrl +
-                                        node.fields.slug,
-                                    guid:
-                                        site.siteMetadata.siteUrl +
-                                        node.fields.slug,
-                                    custom_elements: [
-                                        { "content:encoded": node.body },
-                                    ],
-                                });
+                                    url: `${site.siteMetadata.siteUrl}${node.fields.slug}`,
+                                    guid: `${site.siteMetadata.siteUrl}${node.fields.slug}`,
+                                    custom_elements: [{ "content:encoded": node.body }],
+                                };
                             });
                         },
                         query: `
@@ -113,7 +108,6 @@ module.exports = {
                                     sort: { order: DESC, fields: [frontmatter___date] },
                                 ) {
                                     nodes {
-                                        excerpt
                                         body
                                         fields {
                                             slug
@@ -121,6 +115,8 @@ module.exports = {
                                         frontmatter {
                                             title
                                             date
+                                            author
+                                            description
                                         }
                                     }
                                 }

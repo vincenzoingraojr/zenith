@@ -1175,7 +1175,7 @@ export class UserResolver {
             const pushNotification: FirebaseNotification = {
                 title: `New follower on Zenith (for @${user.username})`,
                 body: notification.content,
-                imageUrl: follower.profile.profilePicture.length > 0 ? follower.profile.profilePicture : "https://img.zncdn.net/brand/profile-picture.png",
+                imageUrl: follower.profile.profilePicture.length > 0 ? follower.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
             };
             const link = `${process.env.CLIENT_ORIGIN}/${follower.username}?n_id=${notification.notificationId}`;
             await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: user.username, type: notification.type });

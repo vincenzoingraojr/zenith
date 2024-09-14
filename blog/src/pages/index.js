@@ -414,8 +414,7 @@ const BlogIndex = ({ data }) => {
                                                             dangerouslySetInnerHTML={{
                                                                 __html:
                                                                     post.frontmatter
-                                                                        .description ||
-                                                                    post.excerpt,
+                                                                        .description
                                                             }}
                                                             itemProp="description"
                                                         />

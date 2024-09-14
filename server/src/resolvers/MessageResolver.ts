@@ -871,7 +871,7 @@ export class MessageResolver {
                                 const pushNotification: FirebaseNotification = {
                                     title: `${me.name} (@${me.username})`,
                                     body: notification.content,
-                                    imageUrl: me.profile.profilePicture.length > 0 ? me.profile.profilePicture : "https://img.zncdn.net/brand/profile-picture.png",
+                                    imageUrl: me.profile.profilePicture.length > 0 ? me.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
                                 };
                                 const link = `${process.env.CLIENT_ORIGIN}/messages/${chatId}`;
                                 await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: chatUser.username, type: notification.itemType });

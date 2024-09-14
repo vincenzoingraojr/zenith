@@ -90,6 +90,8 @@ exports.createSchemaCustomization = ({ actions }) => {
             title: String
             description: String
             date: Date @dateformat
+            author: String
+            pinned: Boolean
         }
 
         type Fields {
