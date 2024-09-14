@@ -9,7 +9,7 @@ To start the development server properly, follow these instructions:
 -   Run `yarn` to install all of the dependencies
 -   Create a `.env` file in the root of the `server` folder
 -   Copy the content of the existent `.env.example` file inside the `.env` file
--   Assign a value to the environment variables you find inside the `.env` file.
+-   Assign a value to the environment variables you find inside the `.env` file
 -   Run `yarn dev`
 
 Now you can start the local front-end development. As for the email services, you can configure the back-end to work with other methods as well.

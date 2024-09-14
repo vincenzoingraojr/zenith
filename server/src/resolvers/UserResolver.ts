@@ -82,13 +82,53 @@ export class UserResolver {
     }
 
     @Query(() => User, { nullable: true })
-    findUser(@Arg("username", { nullable: true }) username: string) {
-        return this.userRepository.findOne({ where: { username } });
+    async findUser(@Arg("username", { nullable: true }) username: string): Promise<User | null> {
+        if (!username) {
+            console.warn("Username not provided.");
+
+            return null;
+        }
+    
+        try {
+            const user = await this.userRepository.findOne({ where: { username } });
+            
+            if (!user) {
+                console.warn(`User with username "${username}" not found.`);
+
+                return null;
+            }
+    
+            return user;
+        } catch (error) {
+            console.error(error);
+
+            return null;
+        }    
     }
 
     @Query(() => User, { nullable: true })
-    findUserById(@Arg("id", () => Int, { nullable: true }) id: number, @Arg("deleted", { nullable: true }) deleted?: boolean) {
-        return this.userRepository.findOne({ where: { id }, withDeleted: deleted || false });
+    async findUserById(@Arg("id", () => Int, { nullable: true }) id: number, @Arg("deleted", { nullable: true }) deleted?: boolean): Promise<User | null> {
+        if (!id) {
+            console.warn("Id not provided.");
+
+            return null;
+        }
+
+        try {
+            const user = await this.userRepository.findOne({ where: { id }, withDeleted: deleted || false });
+
+            if (!user) {
+                console.warn(`User with id "${id}" not found.`);
+
+                return null;
+            }
+
+            return user;
+        } catch (error) {
+            console.error(error);
+
+            return null;
+        }
     }
 
     @Query(() => User, { nullable: true })
@@ -96,6 +136,8 @@ export class UserResolver {
         const authorization = context.req.headers["authorization"];
 
         if (!authorization) {
+            console.warn("Context not provided.");
+
             return null;
         }
 
@@ -105,55 +147,84 @@ export class UserResolver {
                 token,
                 process.env.ACCESS_TOKEN_SECRET!
             );
+
+            if (!payload) {
+                console.warn("Couldn't retrieve the payload from the authorization token.");
+
+                return null;
+            }
             
             return this.userRepository.findOne({
                 where: { id: payload.id },
             });
         } catch (error) {
             console.error(error);
+
             return null;
         }
     }
 
     @Query(() => Session, { nullable: true })
     @UseMiddleware(isAuth)
-    async currentSession(@Ctx() { payload }: AuthContext) {
+    async currentSession(@Ctx() { payload }: AuthContext): Promise<Session | null> {
         if (!payload) {
+            console.warn("Payload not provided.");
+
             return null;
         }
 
-        const currentSession = await this.sessionRepository.findOne({
-            where: { 
-                sessionId: payload.sessionId,
-                user: {
-                    id: payload.id,
+        try {
+            const currentSession = await this.sessionRepository.findOne({
+                where: { 
+                    sessionId: payload.sessionId,
+                    user: {
+                        id: payload.id,
+                    },
                 },
-            },
-        });
+            });
 
-        return currentSession;
+            if (!currentSession) {
+                console.warn(`Current session for user with "${payload.id}" not found.`);
+
+                return null;
+            }
+
+            return currentSession;
+        } catch (error) {
+            console.error(error);
+
+            return null;
+        }
     }
 
     @Query(() => [Session], { nullable: true })
     @UseMiddleware(isAuth)
-    async otherSessions(@Ctx() { payload }: AuthContext) {
+    async otherSessions(@Ctx() { payload }: AuthContext): Promise<Session[] | null> {
         if (!payload) {
+            console.warn("Payload not provided.");
+
             return null;
         }
 
-        const sessions = await this.sessionRepository.find({
-            where: { 
-                user: {
-                    id: payload.id,
+        try {
+            const sessions = await this.sessionRepository.find({
+                where: { 
+                    user: {
+                        id: payload.id,
+                    },
+                    sessionId: Not(payload.sessionId),
                 },
-                sessionId: Not(payload.sessionId),
-            },
-            order: {
-                creationDate: "DESC",
-            },
-        });
+                order: {
+                    creationDate: "DESC",
+                },
+            });
 
-        return sessions;
+            return sessions;
+        } catch (error) {
+            console.error(error);
+
+            return null;
+        }
     }
 
     @Query(() => Session, { nullable: true })
