@@ -74,7 +74,10 @@ export const globalStyles = StyleSheet.create({
     },
     calendarButton: {
         flex: 0,
-        padding: 6,
+        alignItems: "center",
+        justifyContent: "center",
+        width: 32,
+        height: 32,
         borderRadius: 9999,
         backgroundColor: COLORS.blue,
     },

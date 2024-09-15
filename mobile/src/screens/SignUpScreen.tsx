@@ -33,7 +33,6 @@ const SignUpScreen = ({ navigation }: Props) => {
     const color = textColorProp();
 
     const genderOptions = [
-        { value: "Gender", label: "Gender" },
         { value: "Female", label: "Female" },
         { value: "Male", label: "Male" },
         { value: "Non-binary", label: "Non-binary" },
@@ -85,7 +84,7 @@ const SignUpScreen = ({ navigation }: Props) => {
                                     </View>
                                     <DatePicker value={birthDate} onUpdateValue={(date) => setBirthDate(date)} />
                                 </View>
-                                <DropDownPickerField field="gender" errors={errors} value={gender} onUpdateValue={setGender} options={genderOptions} />
+                                <DropDownPickerField field="gender" placeholder="Gender" errors={errors} value={gender} onUpdateValue={setGender} options={genderOptions} />
                                 <InputField field="name" errors={errors} placeholder="Full name" value={name} onUpdateValue={(text) => setName(text)} />
                                 <InputField field="email" errors={errors} placeholder="Email" value={email} onUpdateValue={(text) => setEmail(text)} keyboardType="email-address" />
                                 <InputField field="username" errors={errors} placeholder="Username" value={username} onUpdateValue={(text) => setUsername(text)} />

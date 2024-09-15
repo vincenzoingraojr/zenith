@@ -3,7 +3,7 @@ import { COLORS } from "../../constants/colors";
 
 const Calendar = () => {
     return (
-        <Svg width="24" height="24" viewBox="0 0 24 24" fill={COLORS.white} stroke={"none"}>
+        <Svg width="20" height="20" viewBox="0 0 24 24" fill={COLORS.white} stroke={"none"}>
             <Path d="M18 10C17.4477 10 17 10.4477 17 11C17 11.5523 17.4477 12 18 12C18.5523 12 19 11.5523 19 11C19 10.4477 18.5523 10 18 10Z" />
             <Path d="M14 18C13.4477 18 13 18.4477 13 19C13 19.5523 13.4477 20 14 20C14.5523 20 15 19.5523 15 19C15 18.4477 14.5523 18 14 18Z" />
             <Path d="M5 15C5 14.4477 5.44772 14 6 14C6.55228 14 7 14.4477 7 15C7 15.5523 6.55228 16 6 16C5.44772 16 5 15.5523 5 15Z" />
