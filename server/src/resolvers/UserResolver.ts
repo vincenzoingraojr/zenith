@@ -184,7 +184,7 @@ export class UserResolver {
             });
 
             if (!currentSession) {
-                console.warn(`Current session for user with "${payload.id}" not found.`);
+                console.warn(`Current session for user with id "${payload.id}" not found.`);
 
                 return null;
             }
@@ -229,13 +229,47 @@ export class UserResolver {
 
     @Query(() => Session, { nullable: true })
     @UseMiddleware(isAuth)
-    findSession(@Arg("sessionId", { nullable: true }) sessionId: string, @Ctx() { payload }: AuthContext) {
-        return this.sessionRepository.findOne({ where: { sessionId, user: { id: payload?.id } }, relations: ["user"] });
+    async findSession(@Arg("sessionId", { nullable: true }) sessionId: string, @Ctx() { payload }: AuthContext): Promise<Session | null> {
+        if (!sessionId) {
+            console.warn("Session id not provided.");
+
+            return null;
+        }
+
+        if (!payload) {
+            console.warn("Payload not provided.");
+
+            return null;
+        }
+
+        try {
+            const session = await this.sessionRepository.findOne({ where: { sessionId, user: { id: payload.id } }, relations: ["user"] });
+
+            if (!session) {
+                console.warn(`Session for user with id "${payload.id}" not found.`);
+
+                return null;
+            }
+
+            return session;
+        } catch (error) {
+            console.error(error);
+
+            return null;
+        }
     }
 
-    @Query(() => [Topic])
-    topics() {
-        return this.topicRepository.find();
+    @Query(() => [Topic], { nullable: true })
+    async topics(): Promise<Topic[] | null> {
+        try {
+            const topics = await this.topicRepository.find();
+
+            return topics;
+        } catch (error) {
+            console.error(error);
+
+            return null;
+        }
     }
 
     @Mutation(() => UserResponse, { nullable: true })
@@ -243,16 +277,21 @@ export class UserResolver {
         @Arg("input") input: string,
     ): Promise<UserResponse> {
         let status = "";
-        let ok = true;
+        let ok = false;
+        let user: User | null = null;
 
-        const user = await this.userRepository.findOne({
-            where: input.includes("@") ? { email: input } : { username: input },
-        });
-        
-        if (!user) {
-            status = "Sorry, but we can't find your account.";
+        try {
+            user = await this.userRepository.findOne({
+                where: input.includes("@") ? { email: input } : { username: input },
+            });
 
-            ok = false;
+            if (!user) {
+                status = "Sorry, but we can't find your account.";
+            } else {
+                ok = true;
+            }
+        } catch (error) {
+            console.error(error);
         }
 
         return {
@@ -279,166 +318,170 @@ export class UserResolver {
         let status = "";
         let ok = false;
 
-        user = await this.userRepository.findOne({
-            where: input.includes("@") ? { email: input } : { username: input },
-            withDeleted: true,
-        });
-
-        if (!user || (user && user.deletedAt !== null && processDays(user.deletedAt) > 90)) {
-            errors.push({
-                field: "input",
-                message: "Sorry, but we can't find your account",
+        try {
+            user = await this.userRepository.findOne({
+                where: input.includes("@") ? { email: input } : { username: input },
+                withDeleted: true,
             });
 
-            if (user && user.deletedAt !== null && processDays(user.deletedAt) > 90) {
-                await this.userRepository.delete({ id: user.id }).then(async () => {
-                    if (user) {
-                        const existingProfilePictureKey =
-                            user.profile.profilePicture.replace(
-                                `https://img.zncdn.net/`, ""
-                            );
-
-                        const profilePictureUrl = await getPresignedUrlForDeleteCommand(existingProfilePictureKey, "image");
-
-                        await axios.delete(profilePictureUrl).then(() => {
-                            console.log("Profile picture successfully deleted.");
-                        })
-                        .catch((error) => {
-                            console.error(`An error occurred while deleting the profile picture. Error code: ${error.code}.`);
-                        });
-
-                        const existingProfileBannerKey =
-                            user.profile.profileBanner.replace(
-                                `https://img.zncdn.net/`, ""
-                            );
-
-                        const profileBannerUrl = await getPresignedUrlForDeleteCommand(existingProfileBannerKey, "image");
-
-                        await axios.delete(profileBannerUrl).then(() => {
-                            console.log("Profile banner successfully deleted.");
-                        })
-                        .catch((error) => {
-                            console.error(`An error occurred while deleting the profile banner. Error code: ${error.code}.`);
-                        });
-                    }
+            if (!user || (user && user.deletedAt !== null && processDays(user.deletedAt) > 90)) {
+                errors.push({
+                    field: "input",
+                    message: "Sorry, but we can't find your account",
                 });
-
-                await this.postRepository.delete({ authorId: user.id }).then(async () => {
-                    if (user) {
-                        const items = await this.mediaItemRepository.find({
-                            order: {
-                                createdAt: "ASC",
-                            },
-                            where: {
-                                post: {
-                                    authorId: user.id,
-                                },
-                            },
-                            relations: ["post"],
-                        });
     
-                        for (const item of items) {
-                            const existingKey =
-                                item.src.replace(
-                                    `https://${item.type.includes("image") ? "img" : "vid"}.zncdn.net/`, ""
+                if (user && user.deletedAt !== null && processDays(user.deletedAt) > 90) {
+                    await this.userRepository.delete({ id: user.id }).then(async () => {
+                        if (user) {
+                            const existingProfilePictureKey =
+                                user.profile.profilePicture.replace(
+                                    `https://img.zncdn.net/`, ""
                                 );
     
-                            const url = await getPresignedUrlForDeleteCommand(existingKey, item.type);
+                            const profilePictureUrl = await getPresignedUrlForDeleteCommand(existingProfilePictureKey, "image");
     
-                            await axios.delete(url).then(() => {
-                                console.log("Media item successfully deleted.");
+                            await axios.delete(profilePictureUrl).then(() => {
+                                console.log("Profile picture successfully deleted.");
                             })
                             .catch((error) => {
-                                console.error(`An error occurred while deleting the media item. Error code: ${error.code}.`);
+                                console.error(`An error occurred while deleting the profile picture. Error code: ${error.code}.`);
                             });
     
-                            await this.mediaItemRepository.delete({ id: item.id });
+                            const existingProfileBannerKey =
+                                user.profile.profileBanner.replace(
+                                    `https://img.zncdn.net/`, ""
+                                );
+    
+                            const profileBannerUrl = await getPresignedUrlForDeleteCommand(existingProfileBannerKey, "image");
+    
+                            await axios.delete(profileBannerUrl).then(() => {
+                                console.log("Profile banner successfully deleted.");
+                            })
+                            .catch((error) => {
+                                console.error(`An error occurred while deleting the profile banner. Error code: ${error.code}.`);
+                            });
                         }
-                    }
-                });
-
-                await this.articleRepository.delete({ authorId: user.id });
-            }
-        } else if (user && user.deletedAt !== null && processDays(user.deletedAt) <= 90) {
-            status = "This account has been deactivated.";
-        } else {
-            const valid = await argon2.verify(user.password, password);
-
-            if (!valid) {
-                errors.push({
-                    field: "password",
-                    message: "Incorrect password",
-                });
+                    });
+    
+                    await this.postRepository.delete({ authorId: user.id }).then(async () => {
+                        if (user) {
+                            const items = await this.mediaItemRepository.find({
+                                order: {
+                                    createdAt: "ASC",
+                                },
+                                where: {
+                                    post: {
+                                        authorId: user.id,
+                                    },
+                                },
+                                relations: ["post"],
+                            });
+        
+                            for (const item of items) {
+                                const existingKey =
+                                    item.src.replace(
+                                        `https://${item.type.includes("image") ? "img" : "vid"}.zncdn.net/`, ""
+                                    );
+        
+                                const url = await getPresignedUrlForDeleteCommand(existingKey, item.type);
+        
+                                await axios.delete(url).then(() => {
+                                    console.log("Media item successfully deleted.");
+                                })
+                                .catch((error) => {
+                                    console.error(`An error occurred while deleting the media item. Error code: ${error.code}.`);
+                                });
+        
+                                await this.mediaItemRepository.delete({ id: item.id });
+                            }
+                        }
+                    });
+    
+                    await this.articleRepository.delete({ authorId: user.id });
+                }
+            } else if (user && user.deletedAt !== null && processDays(user.deletedAt) <= 90) {
+                status = "This account has been deactivated.";
             } else {
-                if (user.emailVerified) {
-                    if (!user.userSettings.twoFactorAuth) {
-                        let session = await this.sessionRepository.create({
-                            user,
-                            sessionId: uuidv4(),
-                            clientOS,
-                            clientType,
-                            clientName,
-                            deviceLocation,
-                            country,
-                        }).save();
+                const valid = await argon2.verify(user.password, password);
     
-                        sendRefreshToken(res, createRefreshToken(user, session));
-                        accessToken = createAccessToken(user, session);
+                if (!valid) {
+                    errors.push({
+                        field: "password",
+                        message: "Incorrect password",
+                    });
+                } else {
+                    if (user.emailVerified) {
+                        if (!user.userSettings.twoFactorAuth) {
+                            let session = await this.sessionRepository.create({
+                                user,
+                                sessionId: uuidv4(),
+                                clientOS,
+                                clientType,
+                                clientName,
+                                deviceLocation,
+                                country,
+                            }).save();
+        
+                            sendRefreshToken(res, createRefreshToken(user, session));
+                            accessToken = createAccessToken(user, session);
+        
+                            status = "You are now logged in.";
     
-                        status = "You are now logged in.";
-
-                        ok = true;
-                    } else {
-                        const decryptedSecretKey = decrypt(user.secretKey);
-                        totp.options = { window: 1, step: 180 };
-                        const OTP = totp.generate(decryptedSecretKey);
-                        const email = user.email;
-                        const username = user.username;
-
-                        ejs.renderFile(
-                            path.join(__dirname, "../helpers/templates/OTPEmail.ejs"),
-                            { otp: OTP, username },
-                             (error, data) => {
-                                if (error) {
-                                    console.log(error);
-                                } else {
-                                    const params: SendEmailCommandInput = {
-                                        Destination: {
-                                            ToAddresses: [email],
-                                        },
-                                        Message: {
-                                            Body: {
-                                                Html: {
-                                                    Data: data,
+                            ok = true;
+                        } else {
+                            const decryptedSecretKey = decrypt(user.secretKey);
+                            totp.options = { window: 1, step: 180 };
+                            const OTP = totp.generate(decryptedSecretKey);
+                            const email = user.email;
+                            const username = user.username;
+    
+                            ejs.renderFile(
+                                path.join(__dirname, "../helpers/templates/OTPEmail.ejs"),
+                                { otp: OTP, username },
+                                 (error, data) => {
+                                    if (error) {
+                                        console.log(error);
+                                    } else {
+                                        const params: SendEmailCommandInput = {
+                                            Destination: {
+                                                ToAddresses: [email],
+                                            },
+                                            Message: {
+                                                Body: {
+                                                    Html: {
+                                                        Data: data,
+                                                    },
+                                                },
+                                                Subject: {
+                                                    Data: "OTP for logging in to your Zenith account",
                                                 },
                                             },
-                                            Subject: {
-                                                Data: "OTP for logging in to your Zenith account",
-                                            },
-                                        },
-                                        Source: "noreply@zenith.to",
-                                    };
-                    
-                                    const otpSESCommand = new SendEmailCommand(params);
-
-                                    mailHelper.send(otpSESCommand)
-                                        .then(() => {
-                                            console.log("Email sent.");
-                                        })
-                                        .catch((error) => {
-                                            console.error(error);
-                                        });
+                                            Source: "noreply@zenith.to",
+                                        };
+                        
+                                        const otpSESCommand = new SendEmailCommand(params);
+    
+                                        mailHelper.send(otpSESCommand)
+                                            .then(() => {
+                                                console.log("Email sent.");
+                                            })
+                                            .catch((error) => {
+                                                console.error(error);
+                                            });
+                                    }
                                 }
-                            }
-                        );
+                            );
+                        }
+                    } else {
+                        status =
+                            "Your email address is not verified. We just sent you an email containing the instructions for verification.";
+                        const verifyToken = createAccessToken(user);
+                        sendVerificationEmail(user.email, verifyToken);
                     }
-                } else {
-                    status =
-                        "Your email address is not verified. We just sent you an email containing the instructions for verification.";
-                    const verifyToken = createAccessToken(user);
-                    sendVerificationEmail(user.email, verifyToken);
                 }
             }
+        } catch (error) {
+            console.error(error);
         }
 
         return {
@@ -2201,14 +2244,22 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
+            console.warn("Payload not provided.");
+
             return false;
         }
 
-        const block = await this.blockRepository.findOne({ where: { blockedId: id, userId: payload.id } });
+        try {
+            const block = await this.blockRepository.findOne({ where: { blockedId: id, userId: payload.id } });
 
-        if (block) {
-            return true;
-        } else {
+            if (block) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (error) {
+            console.error(error);
+
             return false;
         }
     }
@@ -2220,36 +2271,134 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
+            console.warn("Payload not provided.");
+
             return false;
         }
 
-        const block = await this.blockRepository.findOne({ where: { blockedId: payload.id, userId: id } });
+        try {
+            const block = await this.blockRepository.findOne({ where: { blockedId: payload.id, userId: id } });
 
-        if (block) {
-            return true;
-        } else {
+            if (block) {
+                return true;
+            } else {
+                return false;
+            }   
+        } catch (error) {
+            console.error(error);
+
             return false;
         }
     }
 
     @Query(() => UserDeviceToken, { nullable: true })
-    findUserDeviceTokenById(@Arg("id", () => Int, { nullable: true }) id: number, @Arg("userId", () => Int, { nullable: true }) userId: number) {
-        return this.userDeviceTokenRepository.findOne({ where: { id, userId } });
+    async findUserDeviceTokenById(@Arg("id", () => Int, { nullable: true }) id: number, @Arg("userId", () => Int, { nullable: true }) userId: number): Promise<UserDeviceToken | null> {
+        if (!id) {
+            console.warn("Id not provided.");
+
+            return null;
+        }
+
+        if (!userId) {
+            console.warn("User id not provided.");
+
+            return null;
+        }
+
+        try {
+            const userToken = await this.userDeviceTokenRepository.findOne({ where: { id, userId } });
+
+            if (!userToken) {
+                console.warn(`Token with id "${id}" not found.`);
+
+                return null;
+            }
+
+            return userToken;
+        } catch (error) {
+            console.error(error);
+
+            return null;
+        }
     }
     
     @Query(() => [UserDeviceToken], { nullable: true })
-    findUserDeviceTokensByUserId(@Arg("userId", () => Int, { nullable: true }) userId: number) {
-        return this.userDeviceTokenRepository.find({ where: { userId } });
+    async findUserDeviceTokensByUserId(@Arg("userId", () => Int, { nullable: true }) userId: number): Promise<UserDeviceToken[] | null> {
+        if (!userId) {
+            return null;
+        }
+
+        try {
+            const tokens = await this.userDeviceTokenRepository.find({ where: { userId } });
+
+            return tokens;
+        } catch (error) {
+            console.error(error);
+
+            return null;
+        }
     }
 
     @Query(() => UserDeviceToken, { nullable: true })
-    findUserDeviceTokenByToken(@Arg("token", { nullable: true }) token: string, @Arg("userId", () => Int, { nullable: true }) userId: number) {
-        return this.userDeviceTokenRepository.findOne({ where: { token, userId } });
+    async findUserDeviceTokenByToken(@Arg("token", { nullable: true }) token: string, @Arg("userId", () => Int, { nullable: true }) userId: number): Promise<UserDeviceToken | null> {
+        if (!token) {
+            console.warn("Token not provided.");
+
+            return null;
+        }
+
+        if (!userId) {
+            console.warn("User id not provided.");
+
+            return null;
+        }
+
+        try {
+            const userToken = await this.userDeviceTokenRepository.findOne({ where: { token, userId } });
+
+            if (!userToken) {
+                console.warn(`Token with token "${token}" not found.`);
+
+                return null;
+            }
+
+            return userToken;
+        } catch (error) {
+            console.error(error);
+
+            return null;
+        }
     }
 
     @Query(() => UserDeviceToken, { nullable: true })
-    findUserDeviceTokenBySessionId(@Arg("sessionId", { nullable: true }) sessionId: string, @Arg("userId", () => Int, { nullable: true }) userId: number) {
-        return this.userDeviceTokenRepository.findOne({ where: { sessionId, userId } });
+    async findUserDeviceTokenBySessionId(@Arg("sessionId", { nullable: true }) sessionId: string, @Arg("userId", () => Int, { nullable: true }) userId: number): Promise<UserDeviceToken | null> {
+        if (!sessionId) {
+            console.warn("Session id not provided.");
+
+            return null;
+        }
+
+        if (!userId) {
+            console.warn("User id not provided.");
+
+            return null;
+        }
+
+        try {
+            const token = await this.userDeviceTokenRepository.findOne({ where: { sessionId, userId } });
+
+            if (!token) {
+                console.warn(`Token for session with id "${sessionId}" not found.`);
+
+                return null;
+            }
+
+            return token;
+        } catch (error) {
+            console.error(error);
+
+            return null;
+        }        
     }
 
     @Mutation(() => Boolean)
@@ -2258,7 +2407,13 @@ export class UserResolver {
         @Arg("token", { nullable: true }) token: string,
         @Ctx() { payload }: AuthContext
     ) {
-        if (payload) {
+        if (!payload) {
+            console.warn("Payload not provided.");
+
+            return false;
+        }
+
+        try {
             const existingToken = await this.findUserDeviceTokenBySessionId(payload.sessionId, payload.id);
 
             if (existingToken) {
@@ -2266,23 +2421,21 @@ export class UserResolver {
             }
 
             if (token && token.length > 0) {
-                try {
-                    await this.userDeviceTokenRepository.create({
-                        token,
-                        userId: payload.id,
-                        sessionId: payload.sessionId,
-                    }).save();
-    
-                    return true;
-                } catch (error) {
-                    console.error(error);
-    
-                    return false;
-                }
+                await this.userDeviceTokenRepository.create({
+                    token,
+                    userId: payload.id,
+                    sessionId: payload.sessionId,
+                }).save();
+
+                return true;
             } else {
+                console.warn("Token not provided.");
+
                 return false;
             }
-        } else {
+        } catch (error) {
+            console.error(error);
+
             return false;
         }
     }
@@ -2294,15 +2447,20 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
+            console.warn("Payload not provided.");
+
             return false;
         }
 
-        await this.userDeviceTokenRepository.delete({ id, userId: payload.id }).catch((error) => {
-            console.error(error);
-            return false;
-        });
+        try {
+            await this.userDeviceTokenRepository.delete({ id, userId: payload.id });
 
-        return true;
+            return true;
+        } catch (error) {
+            console.error(error);
+
+            return false;
+        }
     }
 
     @Mutation(() => Boolean)
@@ -2311,14 +2469,19 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
+            console.warn("Payload not provided.");
+
             return false;
         }
 
-        await this.userDeviceTokenRepository.delete({ userId: payload.id }).catch((error) => {
+        try {
+            await this.userDeviceTokenRepository.delete({ userId: payload.id });
+    
+            return true;
+        } catch (error) {
             console.error(error);
-            return false;
-        });
 
-        return true;
+            return false;
+        }
     }
 }

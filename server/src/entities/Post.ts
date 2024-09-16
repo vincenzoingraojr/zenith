@@ -30,6 +30,10 @@ export class Post extends BaseEntity {
     @Column({ nullable: true })
     isReplyTo: number;
 
+    @Field(() => Number, { nullable: true })
+    @Column({ nullable: true })
+    quotedPostId: number;
+
     @Field(() => User)
     @ManyToOne(() => User, (user) => user.posts)
     author: User;
@@ -229,4 +233,28 @@ export class Article extends BaseEntity {
     @Field(() => [Int], { nullable: false, defaultValue: [] })
     @Column({ type: "int", array: true, nullable: false, default: [] })
     topicsIds: number[];
+}
+
+@ObjectType()
+@Entity("reposts")
+export class Repost extends BaseEntity {
+    @Field(() => Int)
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @Field(() => String, { nullable: false })
+    @Column({ type: "uuid", unique: true, nullable: false })
+    repostId: string;
+
+    @Field(() => Number, { nullable: false })
+    @Column({ nullable: false })
+    postId: number;
+
+    @Field(() => Number, { nullable: false })
+    @Column({ nullable: false })
+    authorId: number;
+
+    @Field(() => String, { nullable: false })
+    @CreateDateColumn({ nullable: false })
+    createdAt: Date;    
 }
