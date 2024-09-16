@@ -1,8 +1,10 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useState } from "react";
 import { StyleSheet, Text, useColorScheme, View } from "react-native";
-import { theme } from "../../constants/theme";
+import { textColorProp, theme } from "../../constants/theme";
 import { Dropdown } from "react-native-element-dropdown";
 import { COLORS } from "../../constants/colors";
+import Down from "../icons/Down";
+import { globalStyles } from "../../constants/global";
 
 interface DropDownPickerProps {
     field: string;
@@ -16,11 +18,13 @@ interface DropDownPickerProps {
 const DropDownPickerField: FunctionComponent<DropDownPickerProps> = ({ field, value, placeholder, onUpdateValue, options, errors }) => {
     const colorScheme = useColorScheme();
     const styles = theme();
+    const [isFocus, setIsFocus] = useState(false);
+    const color = textColorProp();
 
     return (
-        <View>
+        <View style={dropDownStyles.wrapper}>
             {(errors && errors[field]) && (
-                <Text style={styles.text}>{errors[field]}</Text>
+                <Text style={[styles.text, globalStyles.error]}>{errors[field]}</Text>
             )}
             <Dropdown
                 style={[dropDownStyles.dropDownContainer, { backgroundColor: colorScheme === "dark" ? COLORS.grey : COLORS.lightGrey }]}
@@ -35,15 +39,27 @@ const DropDownPickerField: FunctionComponent<DropDownPickerProps> = ({ field, va
                 valueField="value"
                 placeholder={placeholder}
                 value={value}
+                onFocus={() => setIsFocus(true)}
+                onBlur={() => setIsFocus(false)}
                 onChange={item => {
                     onUpdateValue(item.value);
+                    setIsFocus(false);
                 }}
+                renderRightIcon={() => (
+                    <Down mode={isFocus} color={color} />
+                )}
             />
         </View>
     );
 }
 
 const dropDownStyles = StyleSheet.create({
+    wrapper: {
+        flex: 1,
+        width: "100%",
+        flexDirection: "column",
+        gap: 12,
+    },
     dropDownContainer: {
         height: 60,
         paddingLeft: 12,

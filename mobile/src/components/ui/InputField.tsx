@@ -3,6 +3,7 @@ import { Animated, KeyboardTypeOptions, NativeSyntheticEvent, Pressable, StyleSh
 import { theme } from "../../constants/theme";
 import { COLORS } from "../../constants/colors";
 import Eye from "../icons/Eye";
+import { globalStyles } from "../../constants/global";
 
 type InputType = "text" | "password";
 
@@ -84,7 +85,7 @@ const InputField: FunctionComponent<InputFieldProps> = ({
     return (
         <View style={inputStyles.wrapper}>
             {(errors && errors[field]) && (
-                <Text style={[styles.text, inputStyles.error]}>{errors[field]}</Text>
+                <Text style={[styles.text, globalStyles.error]}>{errors[field]}</Text>
             )}
             <Pressable
                 onPress={() => {
@@ -179,10 +180,6 @@ const inputStyles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 12,
-    },
-    error: {
-        fontSize: 16,
-        color: COLORS.red,
     },
     inputBox: {
         flex: 1,

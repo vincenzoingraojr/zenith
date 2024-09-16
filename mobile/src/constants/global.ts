@@ -81,6 +81,12 @@ export const globalStyles = StyleSheet.create({
         borderRadius: 9999,
         backgroundColor: COLORS.blue,
     },
+    birthDateWrapper: {
+        flex: 1,
+        width: "100%",
+        flexDirection: "column",
+        gap: 12,
+    },
     birthDateContainer: {
         flex: 1,
         flexDirection: "row",
@@ -105,5 +111,9 @@ export const globalStyles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 18,
-    }
+    },
+    error: {
+        fontSize: 16,
+        color: COLORS.red,
+    },
 });

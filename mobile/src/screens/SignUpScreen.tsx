@@ -77,12 +77,17 @@ const SignUpScreen = ({ navigation }: Props) => {
                                 Sign up
                             </Text>
                             <View style={globalStyles.authForm}>
-                                <View style={globalStyles.birthDateContainer}>
-                                    <View style={globalStyles.birthDateInfo}>
-                                        <Text style={[styles.text, globalStyles.birthDateLabel]}>Birthdate</Text>
-                                        <Text style={[styles.text, globalStyles.birthDateString]}>{birthDate.toLocaleDateString("en-us", { month: "long", day: "numeric", year: "numeric" })}</Text>
+                                <View style={globalStyles.birthDateWrapper}>
+                                    {(errors && errors["birthDate"]) && (
+                                        <Text style={[styles.text, globalStyles.error]}>{errors["birthDate"]}</Text>
+                                    )}
+                                    <View style={globalStyles.birthDateContainer}>
+                                        <View style={globalStyles.birthDateInfo}>
+                                            <Text style={[styles.text, globalStyles.birthDateLabel]}>Birthdate</Text>
+                                            <Text style={[styles.text, globalStyles.birthDateString]}>{birthDate.toLocaleDateString("en-us", { month: "long", day: "numeric", year: "numeric" })}</Text>
+                                        </View>
+                                        <DatePicker value={birthDate} onUpdateValue={(date) => setBirthDate(date)} />
                                     </View>
-                                    <DatePicker value={birthDate} onUpdateValue={(date) => setBirthDate(date)} />
                                 </View>
                                 <DropDownPickerField field="gender" placeholder="Gender" errors={errors} value={gender} onUpdateValue={setGender} options={genderOptions} />
                                 <InputField field="name" errors={errors} placeholder="Full name" value={name} onUpdateValue={(text) => setName(text)} />
