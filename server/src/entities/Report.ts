@@ -18,7 +18,7 @@ export class Report extends BaseEntity {
     @Column({ type: "uuid", unique: true, nullable: false })
     reportId: string;
 
-    @Field(() => Number, { nullable: false })
+    @Field(() => Int, { nullable: false })
     @Column({ nullable: false })
     authorId: number;
 

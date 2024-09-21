@@ -31,6 +31,8 @@ import { ReportResolver } from "./resolvers/ReportResolver";
 import * as admin from "firebase-admin";
 import { seedTopics } from "./helpers/topics";
 import { LandingUserResolver } from "./resolvers/LandingUserResolver";
+import { initAccounts } from "./helpers/initAccounts";
+import { logger } from "./helpers/logger";
 
 const serviceAccount = require("../serviceAccountKey.json");
 
@@ -61,10 +63,10 @@ async function main() {
 
     await appDataSource.initialize()
         .then(() => {
-            console.log("Data source ready.");
+            logger.info("Data source ready.");
         })
         .catch((error) => {
-            console.error("Error during data source initialization", error);
+            logger.error("Error during data source initialization", error);
         });
 
     const userRepository = appDataSource.getRepository(User);
@@ -176,12 +178,14 @@ async function main() {
     );
 
     httpServer.listen({ port: process.env.PORT || 4000 }, () => {
-        console.log("Zenith server started.");
+        logger.info("Zenith server started.");
     });
 
     await seedTopics();
+
+    await initAccounts();
 }
 
 main().catch((error) => {
-    console.error(error);
+    logger.error(error);
 });

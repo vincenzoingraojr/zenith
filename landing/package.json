@@ -13,6 +13,7 @@
         "graphql": "^16.6.0",
         "react": "^17.0.2",
         "react-dom": "^17.0.2",
+        "react-ga4": "^2.1.0",
         "react-helmet": "^6.1.0",
         "react-router-dom": "^6.2.1",
         "react-scripts": "5.0.0",
@@ -47,16 +48,16 @@
         ]
     },
     "devDependencies": {
+        "@graphql-codegen/cli": "5.0.2",
+        "@graphql-codegen/typescript": "4.0.6",
+        "@graphql-codegen/typescript-operations": "4.2.0",
+        "@graphql-codegen/typescript-react-apollo": "4.3.0",
         "@types/jest": "^27.4.0",
         "@types/node": "^16.11.19",
         "@types/react": "^18.0.12",
         "@types/react-dom": "^17.0.11",
         "@types/react-helmet": "^6.1.5",
         "@types/styled-components": "^5.1.25",
-        "@graphql-codegen/cli": "5.0.2",
-        "@graphql-codegen/typescript": "4.0.6",
-        "@graphql-codegen/typescript-operations": "4.2.0",
-        "@graphql-codegen/typescript-react-apollo": "4.3.0",
         "prettier": "^2.5.1"
     },
     "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"

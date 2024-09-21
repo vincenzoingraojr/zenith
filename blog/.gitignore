@@ -36,7 +36,7 @@ typings/
 
 *.tgz
 
-.env*
+.env
 
 .cache/
 public

@@ -160,6 +160,10 @@ export class User extends BaseEntity {
 
     @DeleteDateColumn()
     deletedAt: Date;
+
+    @Field(() => Int, { nullable: true })
+    @Column({ nullable: true })
+    isAffiliatedTo: number;
 }
 
 @ObjectType()
@@ -296,6 +300,10 @@ export class UserVerification extends BaseEntity {
     @Field(() => Boolean)
     @Column()
     verified: boolean;
+
+    @Field(() => String, { nullable: false, defaultValue: "user" })
+    @Column({ nullable: false, default: "user" })
+    type: string;
 
     @Field(() => String, { nullable: true, defaultValue: null })
     @Column({ nullable: true, default: null })

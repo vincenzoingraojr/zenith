@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 module.exports = {
     siteMetadata: {
         title: `Zenith Blog`,
@@ -58,20 +60,20 @@ module.exports = {
         `gatsby-transformer-sharp`,
         `gatsby-plugin-sharp`,
         {
-            resolve: `gatsby-plugin-google-analytics`,
+            resolve: `gatsby-plugin-google-gtag`,
             options: {
-                trackingId: `G-LK7NJ759CT`,
-                head: false,
-                anonymize: true,
-                respectDNT: true,
-                exclude: [`/preview/**`, `/do-not-track/me/too/`],
-                pageTransitionDelay: 0,
-                defer: false,
-                sampleRate: 5,
-                siteSpeedSampleRate: 10,
-                cookieDomain: "blog.zenith.to",
-                enableWebVitalsTracking: true,
+                trackingIds: [
+                    process.env.GATSBY_GOOGLE_ANALYTICS_TRACKING_ID,
+                ],
+                pluginConfig: {
+                    head: false,
+                    respectDNT: true,
+                    exclude: ["/preview/**", "/do-not-track/me/too/"],
+                    origin: "blog.zenith.to",
+                    delayOnRouteUpdate: 0,
+                },
             },
+
         },
         {
             resolve: `gatsby-plugin-feed`,

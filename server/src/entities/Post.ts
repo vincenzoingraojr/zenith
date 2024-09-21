@@ -22,15 +22,15 @@ export class Post extends BaseEntity {
     @Column({ type: "uuid", unique: true, nullable: false })
     postId: string;
 
-    @Field(() => Number, { nullable: false })
+    @Field(() => Int, { nullable: false })
     @Column({ nullable: false })
     authorId: number;
 
-    @Field(() => Number, { nullable: true })
+    @Field(() => Int, { nullable: true })
     @Column({ nullable: true })
     isReplyTo: number;
 
-    @Field(() => Number, { nullable: true })
+    @Field(() => Int, { nullable: true })
     @Column({ nullable: true })
     quotedPostId: number;
 
@@ -186,7 +186,7 @@ export class Article extends BaseEntity {
     @Column({ type: "uuid", unique: true, nullable: false })
     articleId: string;
 
-    @Field(() => Number, { nullable: false })
+    @Field(() => Int, { nullable: false })
     @Column({ nullable: false })
     authorId: number;
 
@@ -246,11 +246,11 @@ export class Repost extends BaseEntity {
     @Column({ type: "uuid", unique: true, nullable: false })
     repostId: string;
 
-    @Field(() => Number, { nullable: false })
+    @Field(() => Int, { nullable: false })
     @Column({ nullable: false })
     postId: number;
 
-    @Field(() => Number, { nullable: false })
+    @Field(() => Int, { nullable: false })
     @Column({ nullable: false })
     authorId: number;
 

@@ -18,7 +18,7 @@ export class Chat extends BaseEntity {
     @Column({ type: "uuid", unique: true, nullable: false })
     chatId: string;
 
-    @Field(() => Number, { nullable: false })
+    @Field(() => Int, { nullable: false })
     @Column({ nullable: false })
     creatorId: number;
 
@@ -128,11 +128,11 @@ export class Message extends BaseEntity {
     @Column({ type: "uuid", unique: true, nullable: false })
     messageId: string;
 
-    @Field(() => Number, { nullable: false })
+    @Field(() => Int, { nullable: false })
     @Column({ nullable: false })
     authorId: number;
 
-    @Field(() => Number, { nullable: true })
+    @Field(() => Int, { nullable: true })
     @Column({ nullable: true })
     isReplyTo: number;
 
@@ -196,7 +196,7 @@ export class MessageViewLog extends BaseEntity {
     @Column({ type: "uuid", unique: false, nullable: false })
     messageId: string;
 
-    @Field(() => Number, { nullable: false })
+    @Field(() => Int, { nullable: false })
     @Column({ nullable: false })
     userId: number;
     
@@ -212,11 +212,11 @@ export class Event extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Field(() => Number, { nullable: false })
+    @Field(() => Int, { nullable: false })
     @Column({ nullable: false })
     userId: number;
 
-    @Field(() => Number, { nullable: true })
+    @Field(() => Int, { nullable: true })
     @Column({ nullable: true })
     resourceId: number;
 

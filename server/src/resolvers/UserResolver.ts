@@ -36,6 +36,7 @@ import mailHelper from "../helpers/mailHelper";
 import { Article, MediaItem, Post } from "../entities/Post";
 import axios from "axios";
 import { getPresignedUrlForDeleteCommand } from "../helpers/getPresignedUrls";
+import { logger } from "../helpers/logger";
 
 @ObjectType()
 export class UserResponse {
@@ -84,7 +85,7 @@ export class UserResolver {
     @Query(() => User, { nullable: true })
     async findUser(@Arg("username", { nullable: true }) username: string): Promise<User | null> {
         if (!username) {
-            console.warn("Username not provided.");
+            logger.warn("Username not provided.");
 
             return null;
         }
@@ -93,14 +94,14 @@ export class UserResolver {
             const user = await this.userRepository.findOne({ where: { username } });
             
             if (!user) {
-                console.warn(`User with username "${username}" not found.`);
+                logger.warn(`User with username "${username}" not found.`);
 
                 return null;
             }
     
             return user;
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
             return null;
         }    
@@ -109,7 +110,7 @@ export class UserResolver {
     @Query(() => User, { nullable: true })
     async findUserById(@Arg("id", () => Int, { nullable: true }) id: number, @Arg("deleted", { nullable: true }) deleted?: boolean): Promise<User | null> {
         if (!id) {
-            console.warn("Id not provided.");
+            logger.warn("Id not provided.");
 
             return null;
         }
@@ -118,14 +119,14 @@ export class UserResolver {
             const user = await this.userRepository.findOne({ where: { id }, withDeleted: deleted || false });
 
             if (!user) {
-                console.warn(`User with id "${id}" not found.`);
+                logger.warn(`User with id "${id}" not found.`);
 
                 return null;
             }
 
             return user;
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
             return null;
         }
@@ -136,7 +137,7 @@ export class UserResolver {
         const authorization = context.req.headers["authorization"];
 
         if (!authorization) {
-            console.warn("Context not provided.");
+            logger.warn("Context not provided.");
 
             return null;
         }
@@ -149,7 +150,7 @@ export class UserResolver {
             );
 
             if (!payload) {
-                console.warn("Couldn't retrieve the payload from the authorization token.");
+                logger.warn("Couldn't retrieve the payload from the authorization token.");
 
                 return null;
             }
@@ -158,7 +159,7 @@ export class UserResolver {
                 where: { id: payload.id },
             });
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
             return null;
         }
@@ -168,7 +169,7 @@ export class UserResolver {
     @UseMiddleware(isAuth)
     async currentSession(@Ctx() { payload }: AuthContext): Promise<Session | null> {
         if (!payload) {
-            console.warn("Payload not provided.");
+            logger.warn("Payload not provided.");
 
             return null;
         }
@@ -184,14 +185,14 @@ export class UserResolver {
             });
 
             if (!currentSession) {
-                console.warn(`Current session for user with id "${payload.id}" not found.`);
+                logger.warn(`Current session for user with id "${payload.id}" not found.`);
 
                 return null;
             }
 
             return currentSession;
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
             return null;
         }
@@ -201,7 +202,7 @@ export class UserResolver {
     @UseMiddleware(isAuth)
     async otherSessions(@Ctx() { payload }: AuthContext): Promise<Session[] | null> {
         if (!payload) {
-            console.warn("Payload not provided.");
+            logger.warn("Payload not provided.");
 
             return null;
         }
@@ -221,7 +222,7 @@ export class UserResolver {
 
             return sessions;
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
             return null;
         }
@@ -231,13 +232,13 @@ export class UserResolver {
     @UseMiddleware(isAuth)
     async findSession(@Arg("sessionId", { nullable: true }) sessionId: string, @Ctx() { payload }: AuthContext): Promise<Session | null> {
         if (!sessionId) {
-            console.warn("Session id not provided.");
+            logger.warn("Session id not provided.");
 
             return null;
         }
 
         if (!payload) {
-            console.warn("Payload not provided.");
+            logger.warn("Payload not provided.");
 
             return null;
         }
@@ -246,14 +247,14 @@ export class UserResolver {
             const session = await this.sessionRepository.findOne({ where: { sessionId, user: { id: payload.id } }, relations: ["user"] });
 
             if (!session) {
-                console.warn(`Session for user with id "${payload.id}" not found.`);
+                logger.warn(`Session for user with id "${payload.id}" not found.`);
 
                 return null;
             }
 
             return session;
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
             return null;
         }
@@ -266,7 +267,7 @@ export class UserResolver {
 
             return topics;
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
             return null;
         }
@@ -291,7 +292,7 @@ export class UserResolver {
                 ok = true;
             }
         } catch (error) {
-            console.error(error);
+            logger.error(error);
         }
 
         return {
@@ -300,6 +301,8 @@ export class UserResolver {
             ok,
         };
     }
+
+    // Si parte da qui (verso il basso)
 
     @Mutation(() => UserResponse, { nullable: true })
     async login(
@@ -2237,6 +2240,8 @@ export class UserResolver {
         }
     }
 
+    // Si parte da qui (verso l'alto)
+
     @Query(() => Boolean)
     @UseMiddleware(isAuth)
     async isUserBlockedByMe(
@@ -2244,7 +2249,7 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
-            console.warn("Payload not provided.");
+            logger.warn("Payload not provided.");
 
             return false;
         }
@@ -2258,7 +2263,7 @@ export class UserResolver {
                 return false;
             }
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
             return false;
         }
@@ -2271,7 +2276,7 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
-            console.warn("Payload not provided.");
+            logger.warn("Payload not provided.");
 
             return false;
         }
@@ -2285,7 +2290,7 @@ export class UserResolver {
                 return false;
             }   
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
             return false;
         }
@@ -2294,13 +2299,13 @@ export class UserResolver {
     @Query(() => UserDeviceToken, { nullable: true })
     async findUserDeviceTokenById(@Arg("id", () => Int, { nullable: true }) id: number, @Arg("userId", () => Int, { nullable: true }) userId: number): Promise<UserDeviceToken | null> {
         if (!id) {
-            console.warn("Id not provided.");
+            logger.warn("Id not provided.");
 
             return null;
         }
 
         if (!userId) {
-            console.warn("User id not provided.");
+            logger.warn("User id not provided.");
 
             return null;
         }
@@ -2309,14 +2314,14 @@ export class UserResolver {
             const userToken = await this.userDeviceTokenRepository.findOne({ where: { id, userId } });
 
             if (!userToken) {
-                console.warn(`Token with id "${id}" not found.`);
+                logger.warn(`Token with id "${id}" not found.`);
 
                 return null;
             }
 
             return userToken;
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
             return null;
         }
@@ -2333,7 +2338,7 @@ export class UserResolver {
 
             return tokens;
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
             return null;
         }
@@ -2342,13 +2347,13 @@ export class UserResolver {
     @Query(() => UserDeviceToken, { nullable: true })
     async findUserDeviceTokenByToken(@Arg("token", { nullable: true }) token: string, @Arg("userId", () => Int, { nullable: true }) userId: number): Promise<UserDeviceToken | null> {
         if (!token) {
-            console.warn("Token not provided.");
+            logger.warn("Token not provided.");
 
             return null;
         }
 
         if (!userId) {
-            console.warn("User id not provided.");
+            logger.warn("User id not provided.");
 
             return null;
         }
@@ -2357,14 +2362,14 @@ export class UserResolver {
             const userToken = await this.userDeviceTokenRepository.findOne({ where: { token, userId } });
 
             if (!userToken) {
-                console.warn(`Token with token "${token}" not found.`);
+                logger.warn(`Token with token "${token}" not found.`);
 
                 return null;
             }
 
             return userToken;
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
             return null;
         }
@@ -2373,13 +2378,13 @@ export class UserResolver {
     @Query(() => UserDeviceToken, { nullable: true })
     async findUserDeviceTokenBySessionId(@Arg("sessionId", { nullable: true }) sessionId: string, @Arg("userId", () => Int, { nullable: true }) userId: number): Promise<UserDeviceToken | null> {
         if (!sessionId) {
-            console.warn("Session id not provided.");
+            logger.warn("Session id not provided.");
 
             return null;
         }
 
         if (!userId) {
-            console.warn("User id not provided.");
+            logger.warn("User id not provided.");
 
             return null;
         }
@@ -2388,14 +2393,14 @@ export class UserResolver {
             const token = await this.userDeviceTokenRepository.findOne({ where: { sessionId, userId } });
 
             if (!token) {
-                console.warn(`Token for session with id "${sessionId}" not found.`);
+                logger.warn(`Token for session with id "${sessionId}" not found.`);
 
                 return null;
             }
 
             return token;
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
             return null;
         }        
@@ -2408,7 +2413,7 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
-            console.warn("Payload not provided.");
+            logger.warn("Payload not provided.");
 
             return false;
         }
@@ -2429,12 +2434,12 @@ export class UserResolver {
 
                 return true;
             } else {
-                console.warn("Token not provided.");
+                logger.warn("Token not provided.");
 
                 return false;
             }
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
             return false;
         }
@@ -2447,7 +2452,7 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
-            console.warn("Payload not provided.");
+            logger.warn("Payload not provided.");
 
             return false;
         }
@@ -2457,7 +2462,7 @@ export class UserResolver {
 
             return true;
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
             return false;
         }
@@ -2469,7 +2474,7 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
-            console.warn("Payload not provided.");
+            logger.warn("Payload not provided.");
 
             return false;
         }
@@ -2479,7 +2484,7 @@ export class UserResolver {
     
             return true;
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
             return false;
         }
