@@ -69,7 +69,7 @@ module.exports = {
                     head: false,
                     respectDNT: true,
                     exclude: ["/preview/**", "/do-not-track/me/too/"],
-                    origin: "blog.zenith.to",
+                    origin: "zenith.to",
                     delayOnRouteUpdate: 0,
                 },
             },

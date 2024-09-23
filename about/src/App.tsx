@@ -10,10 +10,18 @@ import PrivacyPolicy from "./pages/policies/PrivacyPolicy";
 import TermsOfService from "./pages/policies/TermsOfService";
 import OurMission from "./pages/our-priorities/OurMission";
 import SecurityAndPrivacy from "./pages/our-priorities/SecurityAndPrivacy";
+import Tracking from "./analytics/Tracking";
+import { initGA } from "./analytics/analytics";
+import { useEffect } from "react";
 
 function App() {
+    useEffect(() => {
+        initGA();
+    }, []);
+
     return (
         <>
+            <Tracking />
             <Routes>
                 <Route
                     path="/"

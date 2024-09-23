@@ -11,12 +11,35 @@ import Header from "../components/header";
 
 const PostPage = styled.div`
     display: block;
-    margin-top: 72px;
-    margin-bottom: 48px;
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-bottom: 48px;
+    width: 100%;
+    
+    @media ${devices.mobileL} {
+        width: 380px;
+    }
+
+    @media (min-width: 600px) {
+        width: 440px;
+    }
+
+    @media ${devices.tablet} {
+        width: 520px;
+    }
+    
+    @media ${devices.laptopM} {
+        width: 640px;
+    }
+
+    @media ${devices.laptopL} {
+        width: 720px;
+    }
 `;
 
 const PostPageImage = styled.div`
     display: block;
+    margin-top: 72px;
     margin-bottom: 48px;
 `;
 
@@ -24,34 +47,7 @@ const PostPageHeader = styled.div`
     display: flex;
     flex-direction: column;
     gap: 24px;
-    padding-left: 16px;
-    padding-right: 16px;
     padding-bottom: 48px;
-
-    @media ${devices.mobileS} {
-        padding-left: 24px;
-        padding-right: 24px;
-    }
-
-    @media ${devices.mobileL} {
-        padding-left: 12%;
-        padding-right: 12%;
-    }
-
-    @media ${devices.tablet} {
-        padding-left: 172px;
-        padding-right: 172px;
-    }
-
-    @media ${devices.laptopS} {
-        padding-left: 10%;
-        padding-right: 10%;
-    }
-
-    @media ${devices.desktop} {
-        padding-left: 20%;
-        padding-right: 20%;
-    }
 `;
 
 const PostPageTitle = styled.div`
@@ -102,34 +98,7 @@ const PostPageAuthor = styled.div`
 
 const PostPageContent = styled.div`
     display: block;
-    margin-left: 16px;
-    margin-right: 16px;
     padding-bottom: 24px;
-
-    @media ${devices.mobileS} {
-        margin-left: 24px;
-        margin-right: 24px;
-    }
-
-    @media ${devices.mobileL} {
-        margin-left: 16%;
-        margin-right: 16%;
-    }
-
-    @media ${devices.tablet} {
-        margin-left: 192px;
-        margin-right: 192px;
-    }
-
-    @media ${devices.laptopS} {
-        margin-left: 20%;
-        margin-right: 20%;
-    }
-
-    @media ${devices.desktop} {
-        margin-left: 32%;
-        margin-right: 32%;
-    }
 `;
 
 const Pagination = styled.nav`
@@ -137,6 +106,7 @@ const Pagination = styled.nav`
     grid-template-rows: auto auto;
     grid-template-columns: none;
     row-gap: 24px;
+    padding-top: 24px;
     padding-left: 16px;
     padding-right: 16px;
     padding-bottom: 48px;
@@ -249,14 +219,14 @@ const BlogPostTemplate = ({ data }) => {
                     description={post.frontmatter.description || post.excerpt}
                     image={image.images.fallback.src}
                 />
+                <PostPageImage>
+                    <GatsbyImage
+                        image={image}
+                        itemProp="image"
+                        alt={post.frontmatter.image.alt}
+                    />
+                </PostPageImage>
                 <PostPage itemScope itemType="http://schema.org/Article">
-                    <PostPageImage>
-                        <GatsbyImage
-                            image={image}
-                            itemProp="image"
-                            alt={post.frontmatter.image.alt}
-                        />
-                    </PostPageImage>
                     <PostPageHeader>
                         <PostPageTitle itemProp="headline">
                             {post.frontmatter.title}
