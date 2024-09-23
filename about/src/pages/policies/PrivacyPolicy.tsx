@@ -20,10 +20,10 @@ function PrivacyPolicy() {
                             </PageText>
                             <PageText>
                                 <PageSmallTitle>
-                                    What about this website?
+                                    What about the Zenith websites?
                                 </PageSmallTitle>
                                 <PageText>
-                                    This website doesn't use cookies or external services to measure and acquire user-related information. Moreover, this website does not use persistent identifiers to identify users for advertising purposes.
+                                    All websites under the zenith.to domain (including zenith.to, about.zenith.to, blog.zenith.to, and help.zenith.to) use Google Analytics to track and analyze visitor data. This tool helps us understand user interactions, measure performance, and enhance the user experience. Google Analytics collects anonymous information, such as page visits and time spent on the site. You can opt out by adjusting your browser's cookie settings or using Google's opt-out tools.
                                 </PageText>
                             </PageText>
                         </PageBaseContainer>
