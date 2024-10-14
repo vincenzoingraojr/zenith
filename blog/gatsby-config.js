@@ -66,10 +66,9 @@ module.exports = {
                     process.env.GATSBY_GOOGLE_ANALYTICS_TRACKING_ID,
                 ],
                 pluginConfig: {
-                    head: false,
+                    head: true,
                     respectDNT: true,
                     exclude: ["/preview/**", "/do-not-track/me/too/"],
-                    origin: "zenith.to",
                     delayOnRouteUpdate: 0,
                 },
             },
