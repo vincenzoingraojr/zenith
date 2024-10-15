@@ -171,7 +171,7 @@ const MainBlockContainer = styled.div`
     @media ${devices.laptopS} {
         position: sticky;
         top: 120px;
-        height: calc(100vh - 168px);
+        height: calc(100% - 168px);
     }
 `;
 
