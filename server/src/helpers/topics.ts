@@ -1,5 +1,6 @@
 import { Topic } from "../entities/Topic";
 import appDataSource from "../dataSource";
+import { logger } from "./logger";
 
 export async function seedTopics() {
     const topicRepository = appDataSource.getRepository(Topic);
@@ -27,11 +28,15 @@ export async function seedTopics() {
     ];
     
     for (const topicName of initialTopics) {
-        let topic = await topicRepository.findOne({ where: { name: topicName } });
+        try {
+            let topic = await topicRepository.findOne({ where: { name: topicName } });
 
-        if (!topic) {
-            topic = topicRepository.create({ name: topicName });
-            await topicRepository.save(topic);
+            if (!topic) {
+                topic = topicRepository.create({ name: topicName });
+                await topicRepository.save(topic);
+            }
+        } catch (error) {
+            logger.error(error);
         }
     }
 }

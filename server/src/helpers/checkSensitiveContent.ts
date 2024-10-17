@@ -1,4 +1,5 @@
 import { ComprehendClient, DetectSentimentCommand, DetectSentimentCommandInput, LanguageCode } from "@aws-sdk/client-comprehend";
+import { logger } from "./logger";
 
 export async function checkSensitiveContent(text: string, lang: LanguageCode | undefined): Promise<boolean> {
     const client = new ComprehendClient({ 
@@ -21,7 +22,7 @@ export async function checkSensitiveContent(text: string, lang: LanguageCode | u
 
         return sentiment === "NEGATIVE";
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         return false;
     }
 }

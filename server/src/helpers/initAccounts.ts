@@ -3,6 +3,7 @@ import { User, UserVerification } from "../entities/User";
 import argon2 from "argon2";
 import { v4 as uuidv4 } from "uuid";
 import { encrypt } from "./crypto";
+import { logger } from "./logger";
 
 export async function initAccounts() {
     const userRepository = appDataSource.getRepository(User);
@@ -16,7 +17,7 @@ export async function initAccounts() {
 
     if (!generalAccount) {     
         try {
-            console.log("Creating the general account (@zenith)...");
+            logger.warn("Creating the general account (@zenith)...");
 
             const encriptedGeneralSecretKey = encrypt(uuidv4());
 
@@ -52,9 +53,9 @@ export async function initAccounts() {
                 outcome: "Account verified automatically.",
             }).save();
 
-            console.log("General account created successfully.");
+            logger.warn("General account created successfully.");
         } catch (error) {
-            console.error(error);
+            logger.error(error);
         }
     }
 
@@ -72,7 +73,7 @@ export async function initAccounts() {
 
     if (!personalAccount && companyAccount) {
         try {
-            console.log("Creating the personal account (@vincent)...");
+            logger.warn("Creating the personal account (@vincent)...");
 
             const encriptedPersonalSecretKey = encrypt(uuidv4());
 
@@ -107,9 +108,9 @@ export async function initAccounts() {
                 outcome: "Account verified automatically.",
             }).save();
 
-            console.log("Personal account created successfully.");
+            logger.warn("Personal account created successfully.");
         } catch (error) {
-            console.error(error);
+            logger.error(error);
         }
     }
 
@@ -121,7 +122,7 @@ export async function initAccounts() {
 
     if (!supportAccount && companyAccount) {
         try {
-            console.log("Creating the support account (@support)...");
+            logger.warn("Creating the support account (@support)...");
 
             const encriptedSupportSecretKey = encrypt(uuidv4());
 
@@ -158,9 +159,9 @@ export async function initAccounts() {
                 outcome: "Account verified automatically.",
             }).save();
 
-            console.log("Support account created successfully.");
+            logger.warn("Support account created successfully.");
         } catch (error) {
-            console.error(error);
+            logger.error(error);
         }
     }
 }

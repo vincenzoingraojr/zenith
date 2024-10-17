@@ -292,6 +292,8 @@ export class UserResolver {
                 ok = true;
             }
         } catch (error) {
+            status = "An error has occurred, please try again later.";
+
             logger.error(error);
         }
 

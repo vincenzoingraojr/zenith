@@ -2,6 +2,7 @@ import ejs from "ejs";
 import path from "path";
 import { SendEmailCommand, SendEmailCommandInput } from "@aws-sdk/client-ses";
 import mailHelper from "./mailHelper";
+import { logger } from "./logger";
 
 export const sendVerificationEmail = (
     email: string,
@@ -14,7 +15,7 @@ export const sendVerificationEmail = (
         { link },
         function (error, data) {
             if (error) {
-                console.log(error);
+                logger.error(error);
             } else {
                 const params: SendEmailCommandInput = {
                     Destination: {
@@ -37,10 +38,10 @@ export const sendVerificationEmail = (
 
                 mailHelper.send(sesCommand)
                     .then(() => {
-                        console.log("Email sent.");
+                        logger.warn("Email sent.");
                     })
                     .catch((error) => {
-                        console.error(error);
+                        logger.error(error);
                     });
             }
         }

@@ -2,6 +2,7 @@ import { BatchResponse, MulticastMessage } from "firebase-admin/lib/messaging/me
 import * as admin from "firebase-admin";
 import { UserDeviceToken } from "../entities/User";
 import { Notification } from "firebase-admin/messaging";
+import { logger } from "./logger";
 
 const sendMulticastPushNotifications = async (
     message: MulticastMessage,
@@ -11,7 +12,7 @@ const sendMulticastPushNotifications = async (
 
         return response;
     } catch (error) {
-        console.error(error);
+        logger.error(error);
 
         return undefined;
     }
