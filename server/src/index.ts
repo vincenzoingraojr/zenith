@@ -31,7 +31,7 @@ import { ReportResolver } from "./resolvers/ReportResolver";
 import * as admin from "firebase-admin";
 import { seedTopics } from "./helpers/topics";
 import { LandingUserResolver } from "./resolvers/LandingUserResolver";
-import { initAccounts } from "./helpers/initAccounts";
+import { initAccounts } from "./helpers/user/initAccounts";
 import { logger } from "./helpers/logger";
 
 const serviceAccount = require("../serviceAccountKey.json");

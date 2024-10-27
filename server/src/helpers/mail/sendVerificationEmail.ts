@@ -2,7 +2,7 @@ import ejs from "ejs";
 import path from "path";
 import { SendEmailCommand, SendEmailCommandInput } from "@aws-sdk/client-ses";
 import mailHelper from "./mailHelper";
-import { logger } from "./logger";
+import { logger } from "../logger";
 
 export const sendVerificationEmail = (
     email: string,

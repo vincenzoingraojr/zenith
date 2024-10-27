@@ -1,9 +1,9 @@
-import appDataSource from "../dataSource";
-import { User, UserVerification } from "../entities/User";
+import appDataSource from "../../dataSource";
+import { User, UserVerification } from "../../entities/User";
 import argon2 from "argon2";
 import { v4 as uuidv4 } from "uuid";
-import { encrypt } from "./crypto";
-import { logger } from "./logger";
+import { encrypt } from "../crypto";
+import { logger } from "../logger";
 
 export async function initAccounts() {
     const userRepository = appDataSource.getRepository(User);

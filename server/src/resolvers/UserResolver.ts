@@ -16,7 +16,7 @@ import { AuthContext } from "../types";
 import { sendRefreshToken } from "../auth/sendRefreshToken";
 import { createAccessToken, createRefreshToken } from "../auth/auth";
 import { verify } from "jsonwebtoken";
-import { sendVerificationEmail } from "../helpers/sendVerificationEmail";
+import { sendVerificationEmail } from "../helpers/mail/sendVerificationEmail";
 import ejs from "ejs";
 import path from "path";
 import { FieldError } from "./common";
@@ -32,7 +32,7 @@ import { pubSub } from "../helpers/createPubSub";
 import { sendPushNotifications } from "../helpers/notifications";
 import { Notification as FirebaseNotification } from "firebase-admin/messaging";
 import { Topic } from "../entities/Topic";
-import mailHelper from "../helpers/mailHelper";
+import mailHelper from "../helpers/mail/mailHelper";
 import { Article, MediaItem, Post } from "../entities/Post";
 import axios from "axios";
 import { getPresignedUrlForDeleteCommand } from "../helpers/getPresignedUrls";
@@ -83,7 +83,7 @@ export class UserResolver {
     }
 
     @Query(() => User, { nullable: true })
-    async findUser(@Arg("username", { nullable: true }) username: string): Promise<User | null> {
+    async findUser(@Arg("username", { nullable: true }) username: string, @Arg("deleted", { nullable: true }) deleted?: boolean): Promise<User | null> {
         if (!username) {
             logger.warn("Username not provided.");
 
@@ -91,7 +91,7 @@ export class UserResolver {
         }
     
         try {
-            const user = await this.userRepository.findOne({ where: { username } });
+            const user = await this.userRepository.findOne({ where: { username }, withDeleted: deleted || false });
             
             if (!user) {
                 logger.warn(`User with username "${username}" not found.`);
@@ -133,6 +133,31 @@ export class UserResolver {
     }
 
     @Query(() => User, { nullable: true })
+    async findUserByEmail(@Arg("email", { nullable: true }) email: string, @Arg("deleted", { nullable: true }) deleted?: boolean): Promise<User | null> {
+        if (!email) {
+            logger.warn("Email not provided.");
+
+            return null;
+        }
+
+        try {
+            const user = await this.userRepository.findOne({ where: { email }, withDeleted: deleted || false });
+
+            if (!user) {
+                logger.warn(`User with email "${email}" not found.`);
+
+                return null;
+            }
+
+            return user;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
+    }
+
+    @Query(() => User, { nullable: true })
     me(@Ctx() context: AuthContext) {
         const authorization = context.req.headers["authorization"];
 
@@ -155,9 +180,7 @@ export class UserResolver {
                 return null;
             }
             
-            return this.userRepository.findOne({
-                where: { id: payload.id },
-            });
+            return this.findUserById(payload.id);
         } catch (error) {
             logger.error(error);
 
