@@ -13,7 +13,6 @@
         "noEmit": true,
         "jsx": "react-jsx",
         "experimentalDecorators": true,
-        "suppressImplicitAnyIndexErrors": true,
         "forceConsistentCasingInFileNames": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,

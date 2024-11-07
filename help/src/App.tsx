@@ -1,33 +1,38 @@
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
 import IndexPage from "./pages/IndexPage";
 import NotFoundPage from "./pages/404";
 import { useEffect } from "react";
-import { initGA } from "./analytics/analytics";
-import Tracking from "./analytics/Tracking";
+import { analytics } from "./firebaseConfig";
+import { logEvent } from "firebase/analytics";
 
 function App() {
+    const location = useLocation();
+
     useEffect(() => {
-        initGA();
-    }, []);
+        if (process.env.REACT_APP_ENV === "production") {
+            logEvent(analytics, "page_view", {
+                page_path: location.pathname,
+                page_title: document.title,
+                page_location: window.location.href
+            });
+        }
+    }, [location]);
 
     return (
-        <>
-            <Tracking />
-            <Routes>
-                <Route
-                    path="/"
-                    element={
-                        <IndexPage />
-                    }
-                />
-                <Route
-                    path="*"
-                    element={
-                        <NotFoundPage />
-                    }
-                />
-            </Routes>
-        </>
+        <Routes>
+            <Route
+                path="/"
+                element={
+                    <IndexPage />
+                }
+            />
+            <Route
+                path="*"
+                element={
+                    <NotFoundPage />
+                }
+            />
+        </Routes>
     );
 }
 

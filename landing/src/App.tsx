@@ -3,9 +3,9 @@ import HomePage from "./pages/HomePage";
 import JoinWaitingList from "./pages/JoinWaitingList";
 import NotFoundPage from "./pages/NotFoundPage";
 import Modal from "./components/layouts/modal/Modal";
-import Tracking from "./analytics/Tracking";
 import { useEffect } from "react";
-import { initGA } from "./analytics/analytics";
+import { analytics } from "./firebaseConfig";
+import { logEvent } from "firebase/analytics";
 
 function App() {
     const location = useLocation();
@@ -15,12 +15,17 @@ function App() {
     let state = location.state as { backgroundLocation: Location };
 
     useEffect(() => {
-        initGA();
-    }, []);
+        if (process.env.REACT_APP_ENV === "production") {
+            logEvent(analytics, "page_view", {
+                page_path: location.pathname,
+                page_title: document.title,
+                page_location: window.location.href
+            });
+        }
+    }, [location]);
 
     return (
         <>
-            <Tracking />
             <Routes location={state ? state.backgroundLocation : location}>
                 <Route path="/" element={<HomePage />} />
                 <Route 
