@@ -376,7 +376,7 @@ function Nav() {
                         <PageBlock ref={ref1}>
                             <DropDown
                                 title="Who we are"
-                                isOpen={activeDropDown === 0}
+                                isOpen={activeDropDown === 0 ? true : false}
                                 toggleDropDown={() => handleDropDownClick(0)}
                                 children={
                                     <>
@@ -423,7 +423,7 @@ function Nav() {
                         <PageBlock ref={ref2}>
                             <DropDown
                                 title="Our priorities"
-                                isOpen={activeDropDown === 1}
+                                isOpen={activeDropDown === 1 ? true : false}
                                 toggleDropDown={() => handleDropDownClick(1)}
                                 children={
                                     <>
@@ -458,7 +458,7 @@ function Nav() {
                         <PageBlock ref={ref3}>
                             <DropDown
                                 title="Resources"
-                                isOpen={activeDropDown === 2}
+                                isOpen={activeDropDown === 2 ? true : false}
                                 toggleDropDown={() => handleDropDownClick(2)}
                                 children={
                                     <>
