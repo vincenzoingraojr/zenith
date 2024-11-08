@@ -9,6 +9,7 @@
         "assetBundlePatterns": ["**/*"],
         "ios": {
             "supportsTablet": true,
+            "bundleIdentifier": "com.vincenzoingraojr.zenith",
             "splash": {
                 "image": "./assets/splash.png",
                 "resizeMode": "contain",
