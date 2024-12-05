@@ -31,7 +31,6 @@ const DatePicker: FunctionComponent<DatePickerProps> = ({ value, onUpdateValue }
                     testID="dateTimePicker"
                     value={value}
                     mode={"date"}
-                    is24Hour={true}
                     onChange={onChange}
                 />
             )}

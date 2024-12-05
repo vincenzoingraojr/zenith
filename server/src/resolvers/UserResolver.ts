@@ -359,73 +359,7 @@ export class UserResolver {
                 });
     
                 if (user && user.deletedAt !== null && processDays(user.deletedAt) > 90) {
-                    await this.userRepository.delete({ id: user.id }).then(async () => {
-                        if (user) {
-                            const existingProfilePictureKey =
-                                user.profile.profilePicture.replace(
-                                    `https://img.zncdn.net/`, ""
-                                );
-    
-                            const profilePictureUrl = await getPresignedUrlForDeleteCommand(existingProfilePictureKey, "image");
-    
-                            await axios.delete(profilePictureUrl).then(() => {
-                                console.log("Profile picture successfully deleted.");
-                            })
-                            .catch((error) => {
-                                console.error(`An error occurred while deleting the profile picture. Error code: ${error.code}.`);
-                            });
-    
-                            const existingProfileBannerKey =
-                                user.profile.profileBanner.replace(
-                                    `https://img.zncdn.net/`, ""
-                                );
-    
-                            const profileBannerUrl = await getPresignedUrlForDeleteCommand(existingProfileBannerKey, "image");
-    
-                            await axios.delete(profileBannerUrl).then(() => {
-                                console.log("Profile banner successfully deleted.");
-                            })
-                            .catch((error) => {
-                                console.error(`An error occurred while deleting the profile banner. Error code: ${error.code}.`);
-                            });
-                        }
-                    });
-    
-                    await this.postRepository.delete({ authorId: user.id }).then(async () => {
-                        if (user) {
-                            const items = await this.mediaItemRepository.find({
-                                order: {
-                                    createdAt: "ASC",
-                                },
-                                where: {
-                                    post: {
-                                        authorId: user.id,
-                                    },
-                                },
-                                relations: ["post"],
-                            });
-        
-                            for (const item of items) {
-                                const existingKey =
-                                    item.src.replace(
-                                        `https://${item.type.includes("image") ? "img" : "vid"}.zncdn.net/`, ""
-                                    );
-        
-                                const url = await getPresignedUrlForDeleteCommand(existingKey, item.type);
-        
-                                await axios.delete(url).then(() => {
-                                    console.log("Media item successfully deleted.");
-                                })
-                                .catch((error) => {
-                                    console.error(`An error occurred while deleting the media item. Error code: ${error.code}.`);
-                                });
-        
-                                await this.mediaItemRepository.delete({ id: item.id });
-                            }
-                        }
-                    });
-    
-                    await this.articleRepository.delete({ authorId: user.id });
+                    await this.deleteAccountData(user.id);
                 }
             } else if (user && user.deletedAt !== null && processDays(user.deletedAt) <= 90) {
                 status = "This account has been deactivated.";
@@ -440,22 +374,31 @@ export class UserResolver {
                 } else {
                     if (user.emailVerified) {
                         if (!user.userSettings.twoFactorAuth) {
-                            let session = await this.sessionRepository.create({
-                                user,
-                                sessionId: uuidv4(),
-                                clientOS,
-                                clientType,
-                                clientName,
-                                deviceLocation,
-                                country,
-                            }).save();
+                            try {
+                                let session = await this.sessionRepository.create({
+                                    user,
+                                    sessionId: uuidv4(),
+                                    clientOS,
+                                    clientType,
+                                    clientName,
+                                    deviceLocation,
+                                    country,
+                                }).save();
+            
+                                sendRefreshToken(res, createRefreshToken(user, session));
+                                accessToken = createAccessToken(user, session);
+            
+                                status = "You are now logged in.";
         
-                            sendRefreshToken(res, createRefreshToken(user, session));
-                            accessToken = createAccessToken(user, session);
-        
-                            status = "You are now logged in.";
-    
-                            ok = true;
+                                ok = true;
+                            } catch (error) {
+                                logger.error(error);
+
+                                errors.push({
+                                    field: "input",
+                                    message: "Failed to create a new session, please try again later",
+                                });
+                            }
                         } else {
                             const decryptedSecretKey = decrypt(user.secretKey);
                             totp.options = { window: 1, step: 180 };
@@ -468,7 +411,7 @@ export class UserResolver {
                                 { otp: OTP, username },
                                  (error, data) => {
                                     if (error) {
-                                        console.log(error);
+                                        logger.error(error);
                                     } else {
                                         const params: SendEmailCommandInput = {
                                             Destination: {
@@ -491,10 +434,10 @@ export class UserResolver {
     
                                         mailHelper.send(otpSESCommand)
                                             .then(() => {
-                                                console.log("Email sent.");
+                                                logger.info(`Email sent to ${email}`);
                                             })
                                             .catch((error) => {
-                                                console.error(error);
+                                                logger.error(error);
                                             });
                                     }
                                 }
@@ -509,7 +452,7 @@ export class UserResolver {
                 }
             }
         } catch (error) {
-            console.error(error);
+            logger.error(error);
         }
 
         return {
@@ -533,7 +476,7 @@ export class UserResolver {
         let errors = [];
         let ok = false;
 
-        if (!email.includes("@") || email === "" || email === null) {
+        if (!email.includes("@") || email === "" || email === null) { // creare un regex test per le email
             errors.push({
                 field: "email",
                 message: "Invalid email",
@@ -595,69 +538,7 @@ export class UserResolver {
             if (processDays(existingUser.deletedAt) <= 90) {
                 status = "This account has been deactivated.";
             } else {
-                await this.userRepository.delete({ id: existingUser.id }).then(async () => {
-                    const existingProfilePictureKey =
-                        existingUser.profile.profilePicture.replace(
-                            `https://img.zncdn.net/`, ""
-                        );
-
-                    const profilePictureUrl = await getPresignedUrlForDeleteCommand(existingProfilePictureKey, "image");
-
-                    await axios.delete(profilePictureUrl).then(() => {
-                        console.log("Profile picture successfully deleted.");
-                    })
-                    .catch((error) => {
-                        console.error(`An error occurred while deleting the profile picture. Error code: ${error.code}.`);
-                    });
-
-                    const existingProfileBannerKey =
-                        existingUser.profile.profileBanner.replace(
-                            `https://img.zncdn.net/`, ""
-                        );
-
-                    const profileBannerUrl = await getPresignedUrlForDeleteCommand(existingProfileBannerKey, "image");
-
-                    await axios.delete(profileBannerUrl).then(() => {
-                        console.log("Profile banner successfully deleted.");
-                    })
-                    .catch((error) => {
-                        console.error(`An error occurred while deleting the profile banner. Error code: ${error.code}.`);
-                    });
-                });
-
-                await this.postRepository.delete({ authorId: existingUser.id }).then(async () => {
-                    const items = await this.mediaItemRepository.find({
-                        order: {
-                            createdAt: "ASC",
-                        },
-                        where: {
-                            post: {
-                                authorId: existingUser.id,
-                            },
-                        },
-                        relations: ["post"],
-                    });
-
-                    for (const item of items) {
-                        const existingKey =
-                            item.src.replace(
-                                `https://${item.type.includes("image") ? "img" : "vid"}.zncdn.net/`, ""
-                            );
-
-                        const url = await getPresignedUrlForDeleteCommand(existingKey, item.type);
-
-                        await axios.delete(url).then(() => {
-                            console.log("Media item successfully deleted.");
-                        })
-                        .catch((error) => {
-                            console.error(`An error occurred while deleting the media item. Error code: ${error.code}.`);
-                        });
-
-                        await this.mediaItemRepository.delete({ id: item.id });
-                    }
-                });
-
-                await this.articleRepository.delete({ authorId: existingUser.id });
+                await this.deleteAccountData(existingUser.id);
             }
         }
 
@@ -751,6 +632,122 @@ export class UserResolver {
             errors,
             status,
             ok,
+        }
+    }
+
+    @Mutation(() => Boolean)
+    async deleteAccountData(
+        @Arg("id", () => Int, { nullable: true }) id: number
+    ) {
+        if (!id) {
+            logger.warn("Id not provided.");
+
+            return false;
+        }
+
+        try {
+            const user = await this.findUserById(id, true);
+
+            if (user) {
+                await this.userRepository.delete({ id: user.id }).then(async () => {
+                    if (user.profile.profilePicture.length > 0) {
+                        const existingProfilePictureKey =
+                            user.profile.profilePicture.replace(
+                                `https://img.zncdn.net/`, ""
+                            );
+
+                        try {
+                            const profilePictureUrl = await getPresignedUrlForDeleteCommand(existingProfilePictureKey, "image");
+        
+                            await axios.delete(profilePictureUrl).then(() => {
+                                logger.warn("Profile picture successfully deleted.");
+                            })
+                            .catch((error) => {
+                                logger.warn(`An error occurred while deleting the profile picture. Error code: ${error.code}.`);
+                            });
+                        } catch (error) {
+                            logger.error(error);
+                        }
+                    }
+
+                    if (user.profile.profileBanner.length > 0) {
+                        const existingProfileBannerKey =
+                            user.profile.profileBanner.replace(
+                                `https://img.zncdn.net/`, ""
+                            );
+        
+                        try {
+                            const profileBannerUrl = await getPresignedUrlForDeleteCommand(existingProfileBannerKey, "image");
+        
+                            await axios.delete(profileBannerUrl).then(() => {
+                                logger.warn("Profile banner successfully deleted.");
+                            })
+                            .catch((error) => {
+                                logger.warn(`An error occurred while deleting the profile banner. Error code: ${error.code}.`);
+                            });
+                        } catch (error) {
+                            logger.error(error);
+                        }
+                    }
+                });
+
+                try {
+                    await this.postRepository.delete({ authorId: user.id }).then(async () => {
+                        const items = await this.mediaItemRepository.find({
+                            order: {
+                                createdAt: "ASC",
+                            },
+                            where: {
+                                post: {
+                                    authorId: user.id,
+                                },
+                            },
+                            relations: ["post"],
+                        });
+        
+                        for (const item of items) {
+                            const existingKey =
+                                item.src.replace(
+                                    `https://${item.type.includes("image") ? "img" : "vid"}.zncdn.net/`, ""
+                                );
+        
+
+                            try {
+                                const url = await getPresignedUrlForDeleteCommand(existingKey, item.type);
+        
+                                await axios.delete(url).then(() => {
+                                    logger.warn("Media item successfully deleted.");
+                                })
+                                .catch((error) => {
+                                    logger.warn(`An error occurred while deleting the media item. Error code: ${error.code}.`);
+                                });
+            
+                                await this.mediaItemRepository.delete({ id: item.id });
+                            } catch (error) {
+                                logger.error(error);
+                            }
+                        }
+                    });
+                } catch (error) {
+                    logger.warn(`Encountered an error while trying to delete posts with authorId "${id}". Error message: ${error.message}`);
+                }
+
+                try {
+                    await this.articleRepository.delete({ authorId: user.id });
+                } catch (error) {
+                    logger.warn(`Error encountered while trying to delete articles with authorId "${id}". Error message: ${error.message}`);
+                }
+
+                return true;
+            } else {
+                logger.warn(`Error encountered while trying to delete account data: user with id "${id}" not found.`);
+
+                return false;
+            }
+        } catch (error) {
+            logger.error(error);
+
+            return false;
         }
     }
 

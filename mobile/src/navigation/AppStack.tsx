@@ -113,6 +113,8 @@ const AppStack = () => {
                 headerShadowVisible: false,
                 headerTitleStyle: { fontFamily: styles.header.fontFamily, fontSize: styles.header.fontSize },
                 animation: "simple_push",
+                headerBackVisible: true,
+                headerBackTitle: "Back",
             }}
             initialRouteName="DrawerTabStack"
         >

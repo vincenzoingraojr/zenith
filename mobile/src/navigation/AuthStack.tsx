@@ -21,6 +21,7 @@ const AuthStack = () => {
                 headerShadowVisible: false,
                 headerTitleAlign: "center",
                 animation: "simple_push",
+                headerBackTitle: "Back",
                 headerTitle: () => <Logo />,
             }}
             initialRouteName="Index"

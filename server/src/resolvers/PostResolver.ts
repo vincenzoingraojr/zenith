@@ -34,7 +34,7 @@ export class PostResponse {
 
 @Resolver(Post)
 export class PostResolver {
-    private readonly UserResolver: UserResolver;
+    private readonly userResolver: UserResolver;
     private readonly userRepository: Repository<User>;
     private readonly postRepository: Repository<Post>;
     private readonly mediaItemRepository: Repository<MediaItem>;
@@ -45,7 +45,7 @@ export class PostResolver {
     private readonly comprehend: ComprehendClient;
 
     constructor() {
-        this.UserResolver = new UserResolver();
+        this.userResolver = new UserResolver();
         this.userRepository = appDataSource.getRepository(User);
         this.postRepository = appDataSource.getRepository(Post);
         this.mediaItemRepository = appDataSource.getRepository(MediaItem);
@@ -125,7 +125,7 @@ export class PostResolver {
         @Arg("limit", () => Int, { nullable: true }) limit: number,
     ): Promise<Post[]> {
         try {
-            const author = await this.UserResolver.findUserById(userId);
+            const author = await this.userResolver.findUserById(userId);
 
             if (!author) {
                 return [];
@@ -196,7 +196,7 @@ export class PostResolver {
         }
     
         try {
-            const author = await this.UserResolver.findUserById(userId);
+            const author = await this.userResolver.findUserById(userId);
             
             if (!author) {
                 return [];
@@ -312,7 +312,7 @@ export class PostResolver {
             });
         } else {
             if (errors.length === 0) {
-                const user = await this.UserResolver.findUserById(payload.id);
+                const user = await this.userResolver.findUserById(payload.id);
                 
                 if (user) {
                     let mentions: string[] = lumen.extractMentions(content);
@@ -363,7 +363,7 @@ export class PostResolver {
                             let mentionedUsers = [];
 
                             for (const mention of post.mentions) {
-                                const user = await this.UserResolver.findUser(mention);
+                                const user = await this.userResolver.findUser(mention);
                                 
                                 if (user) {
                                     mentionedUsers.push(user);
@@ -482,7 +482,7 @@ export class PostResolver {
             });
         } else {
             if (errors.length === 0) {
-                const user = await this.UserResolver.findUserById(payload.id);
+                const user = await this.userResolver.findUserById(payload.id);
                 
                 if (user) {
                     let mentions: string[] = lumen.extractMentions(content);
@@ -560,7 +560,7 @@ export class PostResolver {
 
                             if (post.mentions.length > 0) {
                                 for (const mention of post.mentions) {
-                                    const user = await this.UserResolver.findUser(mention);
+                                    const user = await this.userResolver.findUser(mention);
                                     
                                     if (user) {
                                         mentionedUsers.push(user);
@@ -733,7 +733,7 @@ export class PostResolver {
                 postOpened,
             }).save();
 
-            const user = await this.UserResolver.findUserById(payload.id);
+            const user = await this.userResolver.findUserById(payload.id);
 
             if (!user) {
                 return null;
@@ -902,7 +902,7 @@ export class PostResolver {
             
             if (post.mentions.length > 0) {
                 for (const mention of post.mentions) {
-                    const user = await this.UserResolver.findUser(mention);
+                    const user = await this.userResolver.findUser(mention);
     
                     if (user) {
                         mentions.push(user);
