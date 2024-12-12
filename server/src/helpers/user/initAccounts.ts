@@ -9,18 +9,18 @@ export async function initAccounts() {
     const userRepository = appDataSource.getRepository(User);
     const userVerificationRepository = appDataSource.getRepository(UserVerification);
 
-    const generalAccount = await userRepository.findOne({ 
-        where: {
-            email: process.env.GENERAL_EMAIL,
-        }    
-    });
-
-    if (!generalAccount) {     
-        try {
+    try {
+        const generalAccount = await userRepository.findOne({ 
+            where: {
+                email: process.env.GENERAL_EMAIL,
+            }    
+        });
+    
+        if (!generalAccount) {     
             logger.warn("Creating the general account (@zenith)...");
-
+    
             const encriptedGeneralSecretKey = encrypt(uuidv4());
-
+    
             const newGeneralAccount = await userRepository.create({
                 username: "zenith",
                 email: process.env.GENERAL_EMAIL,
@@ -52,31 +52,27 @@ export async function initAccounts() {
                 verifiedSince: new Date(),
                 outcome: "Account verified automatically.",
             }).save();
-
+    
             logger.warn("General account created successfully.");
-        } catch (error) {
-            logger.error(error);
         }
-    }
-
-    const personalAccount = await userRepository.findOne({ 
-        where: {
-            email: process.env.PERSONAL_EMAIL,
-        }    
-    });
-
-    const companyAccount = await userRepository.findOne({ 
-        where: {
-            email: process.env.GENERAL_EMAIL,
-        }    
-    });
-
-    if (!personalAccount && companyAccount) {
-        try {
+    
+        const personalAccount = await userRepository.findOne({ 
+            where: {
+                email: process.env.PERSONAL_EMAIL,
+            }    
+        });
+    
+        const companyAccount = await userRepository.findOne({ 
+            where: {
+                email: process.env.GENERAL_EMAIL,
+            }    
+        });
+    
+        if (!personalAccount && companyAccount) {
             logger.warn("Creating the personal account (@vincent)...");
-
+    
             const encriptedPersonalSecretKey = encrypt(uuidv4());
-
+    
             const newPersonalAccount = await userRepository.create({
                 username: "vincent",
                 email: process.env.PERSONAL_EMAIL,
@@ -107,25 +103,21 @@ export async function initAccounts() {
                 verifiedSince: new Date(),
                 outcome: "Account verified automatically.",
             }).save();
-
+    
             logger.warn("Personal account created successfully.");
-        } catch (error) {
-            logger.error(error);
         }
-    }
-
-    const supportAccount = await userRepository.findOne({ 
-        where: {
-            email: process.env.SUPPORT_EMAIL,
-        }    
-    });
-
-    if (!supportAccount && companyAccount) {
-        try {
+    
+        const supportAccount = await userRepository.findOne({ 
+            where: {
+                email: process.env.SUPPORT_EMAIL,
+            }    
+        });
+    
+        if (!supportAccount && companyAccount) {
             logger.warn("Creating the support account (@support)...");
-
+    
             const encriptedSupportSecretKey = encrypt(uuidv4());
-
+    
             const newSupportAccount = await userRepository.create({
                 username: "support",
                 email: process.env.SUPPORT_EMAIL,
@@ -158,10 +150,10 @@ export async function initAccounts() {
                 verifiedSince: new Date(),
                 outcome: "Account verified automatically.",
             }).save();
-
+    
             logger.warn("Support account created successfully.");
-        } catch (error) {
-            logger.error(error);
         }
+    } catch (error) {
+        logger.error(error);
     }
 }

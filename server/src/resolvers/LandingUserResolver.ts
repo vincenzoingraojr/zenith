@@ -7,6 +7,8 @@ import path from "path";
 import appDataSource from "../dataSource";
 import { SendEmailCommand, SendEmailCommandInput } from "@aws-sdk/client-ses";
 import mailHelper from "../helpers/mail/mailHelper";
+import { isValidEmailAddress } from "../helpers/mail/isValidEmail";
+import { logger } from "../helpers/logger";
 
 @Resolver(LandingUser)
 export class LandingUserResolver {
@@ -36,7 +38,7 @@ export class LandingUserResolver {
         let errors = [];
         let ok = false;
 
-        if (!email.includes("@") || email === "" || email === null) {
+        if (email === "" || email === null || !isValidEmailAddress(email)) {
             errors.push({
                 field: "email",
                 message: "Invalid email",
@@ -63,125 +65,108 @@ export class LandingUserResolver {
 
         let status;
 
-        const existingUserWithUsername = await this.userResolver.findUser(username);
-        const existingUserWithEmail = await this.userResolver.findUserByEmail(email);
+        try {
+            const existingUserWithUsername = await this.userResolver.findUser(username);
+            const existingUserWithEmail = await this.userResolver.findUserByEmail(email);
 
-        if (existingUserWithEmail) {
-            errors.push({
-                field: "email",
-                message: "A user using this email already exists",
-            });
-        }
+            if (existingUserWithEmail) {
+                errors.push({
+                    field: "email",
+                    message: "A user using this email already exists",
+                });
+            }
 
-        if (existingUserWithUsername) {
-            errors.push({
-                field: "username",
-                message: "Username already taken",
-            });
-        }
+            if (existingUserWithUsername) {
+                errors.push({
+                    field: "username",
+                    message: "Username already taken",
+                });
+            }
 
-        if (errors.length === 0) {
-            try {
-                await this.landingUserRepository.create({
-                    name,
-                    username,
-                    email,
-                }).save();
+            if (errors.length === 0) {
+                try {
+                    await this.landingUserRepository.create({
+                        name,
+                        username,
+                        email,
+                    }).save();
 
-                ejs.renderFile(
-                    path.join(__dirname, "../helpers/templates/WelcomeUser.ejs"),
-                    { name, username },
-                     (error, data) => {
-                        if (error) {
-                            console.log(error);
-                        } else {
-                            const params: SendEmailCommandInput = {
-                                Destination: {
-                                    ToAddresses: [email],
+                    const welcomeUserData = await ejs.renderFile(
+                        path.join(__dirname, "../helpers/templates/WelcomeUser.ejs"),
+                        { name, username }
+                    );
+
+                    const welcomeUserParams: SendEmailCommandInput = {
+                        Destination: {
+                            ToAddresses: [email],
+                        },
+                        Message: {
+                            Body: {
+                                Html: {
+                                    Data: welcomeUserData,
                                 },
-                                Message: {
-                                    Body: {
-                                        Html: {
-                                            Data: data,
-                                        },
-                                    },
-                                    Subject: {
-                                        Data: "Welcome to Zenith",
-                                    },
-                                },
-                                Source: "noreply@zenith.to",
-                            };
-            
-                            const otpSESCommand = new SendEmailCommand(params);
+                            },
+                            Subject: {
+                                Data: "Welcome to Zenith",
+                            },
+                        },
+                        Source: "noreply@zenith.to",
+                    };
 
-                            mailHelper.send(otpSESCommand)
-                                .then(() => {
-                                    console.log("Email sent.");
-                                })
-                                .catch((error) => {
-                                    console.error(error);
-                                });
-                        }
+                    const welcomeUserSESCommand = new SendEmailCommand(welcomeUserParams);
+
+                    await mailHelper.send(welcomeUserSESCommand);
+
+                    const notifyCreatorData = await ejs.renderFile(
+                        path.join(__dirname, "../helpers/templates/NotifyCreator.ejs"),
+                        { name, username }
+                    );
+
+                    const notifyCreatorParams: SendEmailCommandInput = {
+                        Destination: {
+                            ToAddresses: [process.env.PERSONAL_EMAIL as string],
+                        },
+                        Message: {
+                            Body: {
+                                Html: {
+                                    Data: notifyCreatorData,
+                                },
+                            },
+                            Subject: {
+                                Data: "Another user has signed up to the platform",
+                            },
+                        },
+                        Source: "noreply@zenith.to",
+                    };
+    
+                    const notifyCreatorSESCommand = new SendEmailCommand(notifyCreatorParams);
+
+                    await mailHelper.send(notifyCreatorSESCommand);
+
+                    status = "You are now signed up. You will be notified when the platform is completed.";
+
+                    ok = true;
+                } catch (error) {
+                    logger.error(error);
+
+                    if (error.detail.includes("username") && error.code === "23505") {
+                        errors.push({
+                            field: "username",
+                            message: "Username already taken",
+                        });
                     }
-                );
-
-                ejs.renderFile(
-                    path.join(__dirname, "../helpers/templates/NotifyCreator.ejs"),
-                    { name, username, email },
-                     (error, data) => {
-                        if (error) {
-                            console.log(error);
-                        } else {
-                            const params: SendEmailCommandInput = {
-                                Destination: {
-                                    ToAddresses: [process.env.PERSONAL_EMAIL as string],
-                                },
-                                Message: {
-                                    Body: {
-                                        Html: {
-                                            Data: data,
-                                        },
-                                    },
-                                    Subject: {
-                                        Data: "Another user has signed up to the platform",
-                                    },
-                                },
-                                Source: "noreply@zenith.to",
-                            };
-            
-                            const otpSESCommand = new SendEmailCommand(params);
-
-                            mailHelper.send(otpSESCommand)
-                                .then(() => {
-                                    console.log("Email sent.");
-                                })
-                                .catch((error) => {
-                                    console.error(error);
-                                });
-                        }
+                    if (error.detail.includes("email") && error.code === "23505") {
+                        errors.push({
+                            field: "email",
+                            message: "A user using this email already exists",
+                        });
                     }
-                );
-
-                status = "You are now signed up. You will be notified when the platform is completed.";
-
-                ok = true;
-            } catch (error) {
-                console.log(error);
-
-                if (error.detail.includes("username") && error.code === "23505") {
-                    errors.push({
-                        field: "username",
-                        message: "Username already taken",
-                    });
-                } else if (error.detail.includes("email") && error.code === "23505") {
-                    errors.push({
-                        field: "email",
-                        message: "A user using this email already exists",
-                    });
-                } else {
-                    status = "An unknown error has occured, please try again later.";
                 }
             }
+        } catch (error) {
+            logger.error(error);
+
+            status = "An unknown error has occured, please try again later.";
         }
 
         return {

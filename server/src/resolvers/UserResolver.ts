@@ -496,7 +496,7 @@ export class UserResolver {
         let errors = [];
         let ok = false;
 
-        if (email === "" || email === null || isValidEmailAddress(email)) {
+        if (email === "" || email === null || !isValidEmailAddress(email)) {
             errors.push({
                 field: "email",
                 message: "Invalid email",
@@ -621,8 +621,6 @@ export class UserResolver {
         };
     }
 
-    // Si parte da qui
-
     @Mutation(() => UserResponse, { nullable: true })
     async reactivateAccount(
         @Arg("input") input: string,
@@ -631,34 +629,38 @@ export class UserResolver {
         let errors = [];
         let status = "";
         let ok = false;
+        let user: User | null = null;
 
-        const user = await this.userRepository.findOne({
-            where: input.includes("@") ? { email: input } : { username: input },
-            withDeleted: true,
-        });
+        try {
+            const isEmailAddress = isValidEmailAddress(input);
 
-        if (user && user.deletedAt !== null && processDays(user.deletedAt) <= 90) {
-            const valid = await argon2.verify(user.password, password);
-
-            if (!valid) {
-                errors.push({
-                    field: "password",
-                    message: "Incorrect password",
-                });
+            if (isEmailAddress) {
+                user = await this.findUserByEmail(input, true);
             } else {
-                try {
+                user = await this.findUser(input, true);
+            }
+    
+            if (user && user.deletedAt !== null && processDays(user.deletedAt) <= 90) {
+                const valid = await argon2.verify(user.password, password);
+    
+                if (!valid) {
+                    errors.push({
+                        field: "password",
+                        message: "Incorrect password",
+                    });
+                } else {
                     await this.userRepository.restore({ id: user.id });
 
                     status = "Your account has been restored. Now you can log in.";
                     ok = true;
-                } catch (error) {
-                    console.error(error);
-
-                    status = "An error has occurred while trying to restore your account. Please try again later.";
                 }
+            } else {
+                status = "Can't find the user.";
             }
-        } else {
-            status = "Can't find the user.";
+        } catch (error) {
+            logger.error(error);
+
+            status = "An error has occurred while trying to restore your account. Please try again later.";
         }
 
         return {
@@ -693,7 +695,7 @@ export class UserResolver {
                             const profilePictureUrl = await getPresignedUrlForDeleteCommand(existingProfilePictureKey, "image");
         
                             await axios.delete(profilePictureUrl).then(() => {
-                                logger.warn("Profile picture successfully deleted.");
+                                logger.info("Profile picture successfully deleted.");
                             })
                             .catch((error) => {
                                 logger.warn(`An error occurred while deleting the profile picture. Error code: ${error.code}.`);
@@ -713,7 +715,7 @@ export class UserResolver {
                             const profileBannerUrl = await getPresignedUrlForDeleteCommand(existingProfileBannerKey, "image");
         
                             await axios.delete(profileBannerUrl).then(() => {
-                                logger.warn("Profile banner successfully deleted.");
+                                logger.info("Profile banner successfully deleted.");
                             })
                             .catch((error) => {
                                 logger.warn(`An error occurred while deleting the profile banner. Error code: ${error.code}.`);
@@ -749,7 +751,7 @@ export class UserResolver {
                                 const url = await getPresignedUrlForDeleteCommand(existingKey, item.type);
         
                                 await axios.delete(url).then(() => {
-                                    logger.warn("Media item successfully deleted.");
+                                    logger.info("Media item successfully deleted.");
                                 })
                                 .catch((error) => {
                                     logger.warn(`An error occurred while deleting the media item. Error code: ${error.code}.`);
@@ -801,30 +803,25 @@ export class UserResolver {
         let accessToken;
         let status;
         let ok = false;
-
+        let me: User | null = null;
+        
         if (!payload) {
             status = "You're not authenticated.";
         }
 
-        let me;
+        try {
+            if (payload) {
+                me = await this.findUserById(payload.id);
+            } else if (isValidEmailAddress(input)) {
+                me = await this.findUserByEmail(input);
+            } else {
+                me = await this.findUser(input);
+            }
 
-        if (payload) {
-            me = await this.userRepository.findOne({ where: { id: payload.id } });
-        } else if (input.includes("@")) {
-            me = await this.userRepository.findOne({
-                where: { email: input },
-            });
-        } else {
-            me = await this.userRepository.findOne({
-                where: { username: input },
-            });
-        }
-
-        if (me) {
-            const decryptedSecretKey = decrypt(me.secretKey);
-            const valid = await argon2.verify(me.password, password);
-            
-            try {
+            if (me) {
+                const decryptedSecretKey = decrypt(me.secretKey);
+                const valid = await argon2.verify(me.password, password);
+                
                 if ((!me.userSettings.twoFactorAuth && payload) || (me.userSettings.twoFactorAuth && valid && isLogin)) {
                     const isValid = totp.check(otp, decryptedSecretKey);
 
@@ -860,12 +857,13 @@ export class UserResolver {
                         status = "This OTP is invalid. Please request a new OTP.";
                     }
                 }
-            } catch (error) {
-                console.log(error);
-                status = "An error has occurred during the OTP verification. Please request a new OTP.";
+            } else {
+                status = "Sorry, we couldn't find your account.";
             }
-        } else {
-            status = "Sorry, we couldn't find your account.";
+        } catch (error) {
+            logger.error(error);
+
+            status = "An error has occurred during the OTP verification. Please request a new OTP.";
         }
 
         return {
@@ -883,71 +881,63 @@ export class UserResolver {
         @Arg("password", { nullable: true }) password: string,
         @Ctx() { payload }: AuthContext,
     ) {
-        let me;
+        let me: User | null = null;
 
-        if (payload) {
-            me = await this.userRepository.findOne({ where: { id: payload.id } });
-        } else if (input.includes("@")) {
-            me = await this.userRepository.findOne({
-                where: { email: input },
-            });
-        } else {
-            me = await this.userRepository.findOne({
-                where: { username: input },
-            });
-        }
+        try {
+            if (payload) {
+                me = await this.findUserById(payload.id);
+            } else if (isValidEmailAddress(input)) {
+                me = await this.findUserByEmail(input);
+            } else {
+                me = await this.findUser(input);
+            }
 
-        if (me) {
-            const valid = await argon2.verify(me.password, password);
+            if (me) {
+                const valid = await argon2.verify(me.password, password);
+    
+                if ((!me.userSettings.twoFactorAuth && payload) || (me.userSettings.twoFactorAuth && valid)) {
+                    const decryptedSecretKey = decrypt(me.secretKey);
+                    totp.options = { window: 1, step: 180 };
+                    const OTP = totp.generate(decryptedSecretKey);
+                    const email = me.email;
+                    const username = me.username;
 
-            if ((!me.userSettings.twoFactorAuth && payload) || (me.userSettings.twoFactorAuth && valid)) {
-                const decryptedSecretKey = decrypt(me.secretKey);
-                totp.options = { window: 1, step: 180 };
-                const OTP = totp.generate(decryptedSecretKey);
-                const email = me.email;
-                const username = me.username;
+                    const data = await ejs.renderFile(
+                        path.join(__dirname, "../helpers/templates/ResendOTPEmail.ejs"),
+                        { otp: OTP, username }
+                    );
 
-                ejs.renderFile(
-                    path.join(__dirname, "../helpers/templates/ResendOTPEmail.ejs"),
-                    { otp: OTP, username }, (error, data) => {
-                        if (error) {
-                            console.log(error);
-                        } else {
-                            const params: SendEmailCommandInput = {
-                                Destination: {
-                                    ToAddresses: [email],
+                    const params: SendEmailCommandInput = {
+                        Destination: {
+                            ToAddresses: [email],
+                        },
+                        Message: {
+                            Body: {
+                                Html: {
+                                    Data: data,
                                 },
-                                Message: {
-                                    Body: {
-                                        Html: {
-                                            Data: data,
-                                        },
-                                    },
-                                    Subject: {
-                                        Data: "OTP for logging in to your Zenith account",
-                                    },
-                                },
-                                Source: "noreply@zenith.to",
-                            };
-            
-                            const otpSESCommand = new SendEmailCommand(params);
+                            },
+                            Subject: {
+                                Data: "OTP for your Zenith account",
+                            },
+                        },
+                        Source: "noreply@zenith.to",
+                    };
 
-                            mailHelper.send(otpSESCommand)
-                                .then(() => {
-                                    console.log("Email sent.");
-                                })
-                                .catch((error) => {
-                                    console.error(error);
-                                });
-                        }
-                    }
-                );
+                    const otpSESCommand = new SendEmailCommand(params);
 
-                return true;
+                    await mailHelper.send(otpSESCommand);
+    
+                    return true;
+                } else {
+                    return false;
+                }
             } else {
                 return false;
             }
-        } else {
+        } catch (error) {
+            logger.error(error);
+
             return false;
         }
     }
@@ -959,19 +949,25 @@ export class UserResolver {
             return false;
         }
 
-        const existingToken = await this.findUserDeviceTokenBySessionId(payload.sessionId, payload.id);
+        try {
+            const existingToken = await this.findUserDeviceTokenBySessionId(payload.sessionId, payload.id);
 
-        if (existingToken) {
-            await this.deleteDeviceToken(existingToken.id, { payload } as AuthContext);
-        }
+            if (existingToken) {
+                await this.deleteDeviceToken(existingToken.id, { payload } as AuthContext);
+            }
 
-        await this.sessionRepository.delete({ sessionId: payload.sessionId }).catch((error) => {
-            console.error(error);
+            await this.sessionRepository.delete({ sessionId: payload.sessionId }).catch((error) => {
+                console.error(error);
+                return false;
+            });
+
+            sendRefreshToken(res, "");
+            return true;
+        } catch (error) {
+            logger.error(error);
+
             return false;
-        });
-
-        sendRefreshToken(res, "");
-        return true;
+        }
     }
 
     @Mutation(() => UserResponse)
@@ -998,13 +994,19 @@ export class UserResolver {
 
             ok = true;
         } catch (error) {
-            console.error(error);
+            logger.error(error);
+
             status =
                 "An error has occurred. Please repeat the email address verification.";
-                }
+        }
 
-        return { status, ok };
+        return { 
+            status, 
+            ok 
+        };
     }
+
+    // Si parte da qui
 
     @Mutation(() => UserResponse)
     async sendRecoveryEmail(

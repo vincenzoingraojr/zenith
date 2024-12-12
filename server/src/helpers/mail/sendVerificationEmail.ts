@@ -36,12 +36,12 @@ export const sendVerificationEmail = async (
         const sesCommand = new SendEmailCommand(params);
         await mailHelper.send(sesCommand);
 
-        logger.warn("Email sent.");
+        logger.info("Email sent.");
 
         return true;
     } catch (error) {
         logger.error(error);
-        
+
         return false;
     }
 };
