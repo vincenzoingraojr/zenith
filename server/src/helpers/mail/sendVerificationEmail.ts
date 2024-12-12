@@ -4,46 +4,44 @@ import { SendEmailCommand, SendEmailCommandInput } from "@aws-sdk/client-ses";
 import mailHelper from "./mailHelper";
 import { logger } from "../logger";
 
-export const sendVerificationEmail = (
+export const sendVerificationEmail = async (
     email: string,
     token: string
-) => {
+): Promise<boolean> => {
     const link = `${process.env.CLIENT_ORIGIN}/verify/${token}`;
 
-    ejs.renderFile(
-        path.join(__dirname, "./templates/VerifyEmail.ejs"),
-        { link },
-        function (error, data) {
-            if (error) {
-                logger.error(error);
-            } else {
-                const params: SendEmailCommandInput = {
-                    Destination: {
-                        ToAddresses: [email],
-                    },
-                    Message: {
-                        Body: {
-                            Html: {
-                                Data: data,
-                            },
-                        },
-                        Subject: {
-                            Data: "Verify your account",
-                        },
-                    },
-                    Source: "noreply@zenith.to",
-                };
+    try {
+        const data = await ejs.renderFile(
+            path.join(__dirname, "./templates/VerifyEmail.ejs"),
+            { link }
+        );
 
-                const sesCommand = new SendEmailCommand(params);
+        const params: SendEmailCommandInput = {
+            Destination: {
+                ToAddresses: [email],
+            },
+            Message: {
+                Body: {
+                    Html: {
+                        Data: data,
+                    },
+                },
+                Subject: {
+                    Data: "Verify your account",
+                },
+            },
+            Source: "noreply@zenith.to",
+        };
 
-                mailHelper.send(sesCommand)
-                    .then(() => {
-                        logger.warn("Email sent.");
-                    })
-                    .catch((error) => {
-                        logger.error(error);
-                    });
-            }
-        }
-    );
+        const sesCommand = new SendEmailCommand(params);
+        await mailHelper.send(sesCommand);
+
+        logger.warn("Email sent.");
+
+        return true;
+    } catch (error) {
+        logger.error(error);
+        
+        return false;
+    }
 };

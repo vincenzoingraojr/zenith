@@ -37,6 +37,8 @@ import { Article, MediaItem, Post } from "../entities/Post";
 import axios from "axios";
 import { getPresignedUrlForDeleteCommand } from "../helpers/getPresignedUrls";
 import { logger } from "../helpers/logger";
+import { isValidEmailAddress } from "../helpers/mail/isValidEmail";
+import { isValidUUID } from "../helpers/isValidUUID";
 
 @ObjectType()
 export class UserResponse {
@@ -136,6 +138,14 @@ export class UserResolver {
     async findUserByEmail(@Arg("email", { nullable: true }) email: string, @Arg("deleted", { nullable: true }) deleted?: boolean): Promise<User | null> {
         if (!email) {
             logger.warn("Email not provided.");
+
+            return null;
+        }
+
+        const valid = isValidEmailAddress(email);
+
+        if (!valid) {
+            logger.warn("The provided email address is not valid.");
 
             return null;
         }
@@ -266,6 +276,14 @@ export class UserResolver {
             return null;
         }
 
+        const validSessionId = isValidUUID(sessionId);
+
+        if (!validSessionId) {
+            logger.warn("Invalid sessionId provided.");
+
+            return null;
+        }
+
         try {
             const session = await this.sessionRepository.findOne({ where: { sessionId, user: { id: payload.id } }, relations: ["user"] });
 
@@ -305,9 +323,13 @@ export class UserResolver {
         let user: User | null = null;
 
         try {
-            user = await this.userRepository.findOne({
-                where: input.includes("@") ? { email: input } : { username: input },
-            });
+            const isEmailAddress = isValidEmailAddress(input);
+
+            if (isEmailAddress) {
+                user = await this.findUserByEmail(input);
+            } else {
+                user = await this.findUser(input);
+            }
 
             if (!user) {
                 status = "Sorry, but we can't find your account.";
@@ -327,8 +349,6 @@ export class UserResolver {
         };
     }
 
-    // Si parte da qui (verso il basso)
-
     @Mutation(() => UserResponse, { nullable: true })
     async login(
         @Arg("input") input: string,
@@ -347,10 +367,13 @@ export class UserResolver {
         let ok = false;
 
         try {
-            user = await this.userRepository.findOne({
-                where: input.includes("@") ? { email: input } : { username: input },
-                withDeleted: true,
-            });
+            const isEmailAddress = isValidEmailAddress(input);
+
+            if (isEmailAddress) {
+                user = await this.findUserByEmail(input);
+            } else {
+                user = await this.findUser(input);
+            }
 
             if (!user || (user && user.deletedAt !== null && processDays(user.deletedAt) > 90)) {
                 errors.push({
@@ -362,7 +385,7 @@ export class UserResolver {
                     await this.deleteAccountData(user.id);
                 }
             } else if (user && user.deletedAt !== null && processDays(user.deletedAt) <= 90) {
-                status = "This account has been deactivated.";
+                status = "account_deactivated";
             } else {
                 const valid = await argon2.verify(user.password, password);
     
@@ -406,53 +429,50 @@ export class UserResolver {
                             const email = user.email;
                             const username = user.username;
     
-                            ejs.renderFile(
+                            const data = await ejs.renderFile(
                                 path.join(__dirname, "../helpers/templates/OTPEmail.ejs"),
-                                { otp: OTP, username },
-                                 (error, data) => {
-                                    if (error) {
-                                        logger.error(error);
-                                    } else {
-                                        const params: SendEmailCommandInput = {
-                                            Destination: {
-                                                ToAddresses: [email],
-                                            },
-                                            Message: {
-                                                Body: {
-                                                    Html: {
-                                                        Data: data,
-                                                    },
-                                                },
-                                                Subject: {
-                                                    Data: "OTP for logging in to your Zenith account",
-                                                },
-                                            },
-                                            Source: "noreply@zenith.to",
-                                        };
-                        
-                                        const otpSESCommand = new SendEmailCommand(params);
-    
-                                        mailHelper.send(otpSESCommand)
-                                            .then(() => {
-                                                logger.info(`Email sent to ${email}`);
-                                            })
-                                            .catch((error) => {
-                                                logger.error(error);
-                                            });
-                                    }
-                                }
+                                { otp: OTP, username }
                             );
+
+                            const params: SendEmailCommandInput = {
+                                Destination: {
+                                    ToAddresses: [email],
+                                },
+                                Message: {
+                                    Body: {
+                                        Html: {
+                                            Data: data,
+                                        },
+                                    },
+                                    Subject: {
+                                        Data: "OTP for logging in to your Zenith account",
+                                    },
+                                },
+                                Source: "noreply@zenith.to",
+                            };
+
+                            const otpSESCommand = new SendEmailCommand(params);
+
+                            await mailHelper.send(otpSESCommand);
+
+                            status = "otp_sent";
                         }
                     } else {
-                        status =
-                            "Your email address is not verified. We just sent you an email containing the instructions for verification.";
                         const verifyToken = createAccessToken(user);
-                        sendVerificationEmail(user.email, verifyToken);
+                        const emailStatus = await sendVerificationEmail(user.email, verifyToken);
+
+                        if (emailStatus) {
+                            status = "Your email address is not verified. We just sent you an email containing the instructions for verification.";
+                        } else {
+                            status = "An error has occurred while trying to send the verification email. Please try again later.";
+                        }
                     }
                 }
             }
         } catch (error) {
             logger.error(error);
+
+            status = "An error has occurred, please try again later.";
         }
 
         return {
@@ -476,7 +496,7 @@ export class UserResolver {
         let errors = [];
         let ok = false;
 
-        if (!email.includes("@") || email === "" || email === null) { // creare un regex test per le email
+        if (email === "" || email === null || isValidEmailAddress(email)) {
             errors.push({
                 field: "email",
                 message: "Invalid email",
@@ -523,64 +543,75 @@ export class UserResolver {
         }
 
         let status;
-        const hashedPassword = await argon2.hash(password);
-        const encriptedSecretKey = encrypt(uuidv4());
 
-        const existingUser = await this.userRepository.findOne({
-            where: {
-                email,
-                username,
-            },
-            withDeleted: true,
-        });
+        try {
+            const hashedPassword = await argon2.hash(password);
+            const encriptedSecretKey = encrypt(uuidv4());
 
-        if (existingUser && existingUser.deletedAt !== null) {
-            if (processDays(existingUser.deletedAt) <= 90) {
-                status = "This account has been deactivated.";
-            } else {
-                await this.deleteAccountData(existingUser.id);
-            }
-        }
-
-        if (errors.length === 0) {
-            try {
-                const user = await this.userRepository.create({
-                    username,
+            const existingUser = await this.userRepository.findOne({
+                where: {
                     email,
-                    password: hashedPassword,
-                    name,
-                    gender,
-                    birthDate: {
-                        date: birthDate,
-                        monthAndDayVisibility: "public",
-                        yearVisibility: "public",
-                    },
-                    secretKey: encriptedSecretKey,
-                    emailVerified: false,
-                }).save();
+                    username,
+                },
+                withDeleted: true,
+            });
 
-                const token = createAccessToken(user);
-                sendVerificationEmail(email, token);
-                status =
-                    "Check your inbox, we just sent you an email with the instructions to verify your account.";
-
-                ok = true;
-            } catch (error) {
-                console.log(error);
-
-                if (error.detail.includes("username") && error.code === "23505") {
-                    errors.push({
-                        field: "username",
-                        message: "Username already taken",
-                    });
-                }
-                if (error.detail.includes("email") && error.code === "23505") {
-                    errors.push({
-                        field: "email",
-                        message: "A user using this email already exists",
-                    });
+            if (existingUser && existingUser.deletedAt !== null) {
+                if (processDays(existingUser.deletedAt) <= 90) {
+                    status = "account_deactivated";
+                } else {
+                    await this.deleteAccountData(existingUser.id);
                 }
             }
+
+            if (errors.length === 0) {
+                try {
+                    const user = await this.userRepository.create({
+                        username,
+                        email,
+                        password: hashedPassword,
+                        name,
+                        gender,
+                        birthDate: {
+                            date: birthDate,
+                            monthAndDayVisibility: "public",
+                            yearVisibility: "public",
+                        },
+                        secretKey: encriptedSecretKey,
+                        emailVerified: false,
+                    }).save();
+
+                    const token = createAccessToken(user);
+                    const emailStatus = await sendVerificationEmail(user.email, token);
+
+                    if (emailStatus) {
+                        status = "Check your inbox, we just sent you an email with the instructions to verify your account.";
+                    } else {
+                        status = "An error has occurred while trying to send the verification email. Please try again later.";
+                    }
+                    
+                    ok = true;
+                } catch (error) {
+                    logger.error(error);
+
+                    if (error.detail.includes("username") && error.code === "23505") {
+                        errors.push({
+                            field: "username",
+                            message: "Username already taken",
+                        });
+                    }
+                    if (error.detail.includes("email") && error.code === "23505") {
+                        errors.push({
+                            field: "email",
+                            message: "A user using this email already exists",
+                        });
+                    }
+                }
+            }
+        } catch (error) {
+            logger.error(error);
+
+            status = "An unknown error has occurred, please try again later.";
         }
 
         return {
@@ -589,6 +620,8 @@ export class UserResolver {
             ok,
         };
     }
+
+    // Si parte da qui
 
     @Mutation(() => UserResponse, { nullable: true })
     async reactivateAccount(
