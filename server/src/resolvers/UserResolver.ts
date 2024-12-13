@@ -1877,25 +1877,25 @@ export class UserResolver {
         }
     }
 
-    // Si parte da qui (verso il basso)
-
     @Mutation(() => Boolean)
     @UseMiddleware(isAuth)
     async deleteSession(
         @Arg("sessionId") sessionId: string,
         @Ctx() { payload }: AuthContext
     ) {
-        
         if (!payload) {
             return false;
         }
 
-        await this.sessionRepository.delete({ sessionId, user: { id: payload.id } }).catch((error) => {
-            console.error(error);
-            return false;
-        });
+        try {
+            await this.sessionRepository.delete({ sessionId, user: { id: payload.id } });
 
-        return true;
+            return true;
+        } catch (error) {
+            logger.error(error);
+
+            return false;
+        }
     }
 
     @Mutation(() => Boolean)
@@ -1907,12 +1907,15 @@ export class UserResolver {
             return false;
         }
 
-        await this.sessionRepository.delete({ sessionId: Not(payload.sessionId), user: { id: payload.id } }).catch((error) => {
-            console.error(error);
-            return false;
-        });
+        try {
+            await this.sessionRepository.delete({ sessionId: Not(payload.sessionId), user: { id: payload.id } });
 
-        return true;
+            return true;
+        } catch (error) {
+            logger.error(error);
+
+            return false;
+        }
     }
 
     @Mutation(() => UserResponse)
@@ -1952,7 +1955,7 @@ export class UserResolver {
 
                     ok = true;
                 } catch (error) {
-                    console.error(error);
+                    logger.error(error);
     
                     errors.push({
                         field: "incomingMessages",
@@ -1979,67 +1982,62 @@ export class UserResolver {
         let ok = false;
 
         if (payload) {
-            me = await this.userRepository.findOne({ where: { id: payload.id } });
+            try {
+                me = await this.userRepository.findOne({ where: { id: payload.id } });
         
-            if (me) {
-                if (me.userSettings.twoFactorAuth) {
-                    me.userSettings.twoFactorAuth = false;
-    
-                    await me.save();
-    
-                    status = "Two-factor authentication disabled.";
+                if (me) {
+                    if (me.userSettings.twoFactorAuth) {
+                        me.userSettings.twoFactorAuth = false;
+        
+                        await me.save();
+        
+                        status = "Two-factor authentication disabled.";
 
-                    ok = true;
+                        ok = true;
+                    } else {
+                        const decryptedSecretKey = decrypt(me.secretKey);
+                        totp.options = { window: 1, step: 180 };
+                        const OTP = totp.generate(decryptedSecretKey);
+                        const email = me.email;
+                        const username = me.username;
+        
+                        const data = await ejs.renderFile(
+                            path.join(__dirname, "../helpers/templates/EnableTFA.ejs"),
+                            { otp: OTP, username }
+                        );
+
+                        const params: SendEmailCommandInput = {
+                            Destination: {
+                                ToAddresses: [email],
+                            },
+                            Message: {
+                                Body: {
+                                    Html: {
+                                        Data: data,
+                                    },
+                                },
+                                Subject: {
+                                    Data: "Enable two-factor authentication for your Zenith account",
+                                },
+                            },
+                            Source: "noreply@zenith.to",
+                        };
+        
+                        const otpSESCommand = new SendEmailCommand(params);
+                        
+                        await mailHelper.send(otpSESCommand);
+        
+                        me = undefined;
+
+                        ok = true;
+                    }
                 } else {
-                    const decryptedSecretKey = decrypt(me.secretKey);
-                    totp.options = { window: 1, step: 180 };
-                    const OTP = totp.generate(decryptedSecretKey);
-                    const email = me.email;
-                    const username = me.username;
-    
-                    ejs.renderFile(
-                        path.join(__dirname, "../helpers/templates/EnableTFA.ejs"),
-                        { otp: OTP, username },
-                         (error, data) => {
-                            if (error) {
-                                console.log(error);
-                            } else {
-                                const params: SendEmailCommandInput = {
-                                    Destination: {
-                                        ToAddresses: [email],
-                                    },
-                                    Message: {
-                                        Body: {
-                                            Html: {
-                                                Data: data,
-                                            },
-                                        },
-                                        Subject: {
-                                            Data: "Enable two-factor authentication for your Zenith account",
-                                        },
-                                    },
-                                    Source: "noreply@zenith.to",
-                                };
-                
-                                const otpSESCommand = new SendEmailCommand(params);
-                                
-                                mailHelper.send(otpSESCommand)
-                                    .then(() => {
-                                        console.log("Email sent.");
-
-                                        ok = true;
-                                    })
-                                    .catch((error) => {
-                                        console.error(error);
-                                    });
-                            }
-                        }
-                    );
-    
-                    me = undefined;
+                    status = "An error has occurred while trying to fetch user data. Please try again later.";
                 }
-            } else {
-                status = "An error has occurred, please try again.";
+            } catch (error) {
+                logger.error(error);
+
+                status = "An error has occurred, please try again later.";
             }
         } else {
             status = "You're not authenticated.";
@@ -2061,97 +2059,79 @@ export class UserResolver {
             return false;
         }
 
-        const me = await this.userRepository.findOne({ where: { id: payload.id }, relations: ["posts", "sessions"] });
+        try {
+            const me = await this.userRepository.findOne({ where: { id: payload.id }, relations: ["posts", "sessions"] });
 
-        if (!me) {
-            return false;
-        } else {
-            try {
+            if (!me) {
+                return false;
+            } else {
                 await this.userRepository.softDelete({ id: me.id });
+    
+                await this.sessionRepository.delete({ user: { id: me.id } });
 
                 sendRefreshToken(res, "");
-
-                await this.sessionRepository.delete({ user: { id: me.id } }).catch((error) => {
-                    console.error(error);
-
-                    return false;
-                });
-
+    
                 return true;
-            } catch (error) {
-                console.error(error);
-
-                return false;
             }
+        } catch (error) {
+            logger.error(error);
+
+            return false;
         }
     }
 
-    @Mutation(() => Boolean)
+    @Mutation(() => Boolean, { nullable: true })
     @UseMiddleware(isAuth)
     async editHideSensitiveContentSetting(
         @Ctx() { payload }: AuthContext
-    ) {
+    ): Promise<Boolean | null> {
         if (!payload) {
-            return false;
+            return null;
         } else {
             try {
                 const me = await this.findUserById(payload.id);
                 
                 if (me) {
-                    await this.userRepository.update(
-                        {
-                            id: payload.id,
-                        },
-                        {
-                            searchSettings: {
-                                hideSensitiveContent: !me.searchSettings.hideSensitiveContent,
-                            },
-                        },
-                    );
-                } else {
-                    return false;
-                }
-    
-                return true;
-            } catch (error) {
-                console.error(error);
+                    me.searchSettings.hideSensitiveContent = !me.searchSettings.hideSensitiveContent;
 
-                return false;
+                    await me.save();
+
+                    return me.searchSettings.hideSensitiveContent;
+                } else {
+                    return null;
+                }
+            } catch (error) {
+                logger.error(error);
+
+                return null;
             }
         }
     }
 
-    @Mutation(() => Boolean)
+    @Mutation(() => Boolean, { nullable: true })
     @UseMiddleware(isAuth)
     async editHideBlockedAccountsSetting(
         @Ctx() { payload }: AuthContext
-    ) {
+    ): Promise<Boolean | null> {
         if (!payload) {
-            return false;
+            return null;
         } else {
             try {
                 const me = await this.findUserById(payload.id);
 
                 if (me) {
-                    await this.userRepository.update(
-                        {
-                            id: payload.id,
-                        },
-                        {
-                            searchSettings: {
-                                hideBlockedAccounts: !me.searchSettings.hideBlockedAccounts,
-                            },
-                        },
-                    );
-                } else {
-                    return false;
-                }
-    
-                return true;
-            } catch (error) {
-                console.error(error);
+                    me.searchSettings.hideBlockedAccounts = !me.searchSettings.hideBlockedAccounts;
+                    
+                    await me.save();
 
-                return false;
+                    return me.searchSettings.hideBlockedAccounts;
+                } else {
+                    return null;
+                }    
+            } catch (error) {
+                logger.error(error);
+
+                return null;
             }
         }
     }
@@ -2165,46 +2145,49 @@ export class UserResolver {
     ): Promise<Block | null> {
         if (!payload) {
             return null;
-        } else {            
-            const me = await this.findUserById(payload.id);
+        } else {
+            try {
+                const me = await this.findUserById(payload.id);
 
-            if (me) {
-                const user = await this.findUserById(userId);
+                if (me) {
+                    const user = await this.findUserById(userId);
 
-                if (user) {
-                    const block = await this.blockRepository.create({
-                        blockedId: user.id,
-                        userId: me.id,
-                        origin,
-                    }).save();
+                    if (user) {
+                        const block = await this.blockRepository.create({
+                            blockedId: user.id,
+                            userId: me.id,
+                            origin,
+                        }).save();
 
-                    await this.unfollowUser(user.id, { payload } as  AuthContext);
+                        await this.unfollowUser(user.id, { payload } as  AuthContext);
 
-                    await this.followRepository.delete({ user: { id: me.id }, follower: { id: user.id } }).catch((error) => {
-                        console.error(error);
-                        return null;
-                    });
-            
-                    const notification = await this.notificationRepository.findOne({
-                        where: {
-                            resourceId: user.id, 
-                            type: "follow", 
-                            creatorId: user.id, 
-                            recipientId: me.id
+                        await this.followRepository.delete({ user: { id: me.id }, follower: { id: user.id } });
+                
+                        const notification = await this.notificationRepository.findOne({
+                            where: {
+                                resourceId: user.id, 
+                                type: "follow", 
+                                creatorId: user.id, 
+                                recipientId: me.id
+                            }
+                        });
+                
+                        await this.notificationRepository.delete({ resourceId: user.id, type: "follow", creatorId: user.id, recipientId: me.id });
+                
+                        if (notification) {
+                            pubSub.publish("DELETED_NOTIFICATION", notification);
                         }
-                    });
-            
-                    await this.notificationRepository.delete({ resourceId: user.id, type: "follow", creatorId: user.id, recipientId: me.id });
-            
-                    if (notification) {
-                        pubSub.publish("DELETED_NOTIFICATION", notification);
-                    }
 
-                    return block;
+                        return block;
+                    } else {
+                        return null;
+                    }
                 } else {
                     return null;
                 }
-            } else {
+            } catch (error) {
+                logger.error(error);
+
                 return null;
             }
         }
@@ -2220,46 +2203,55 @@ export class UserResolver {
             return false;
         }
 
-        await this.blockRepository.delete({ blockedId, userId: payload.id }).catch((error) => {
-            console.error(error);
+        try {
+            await this.blockRepository.delete({ blockedId, userId: payload.id });
+
+            return true;
+        } catch (error) {
+            logger.error(error);
+
             return false;
-        });
-
-        return true;
-    }
-
-    @Query(() => [User])
-    @UseMiddleware(isAuth)
-    async blockedUsers(
-        @Ctx() { payload }: AuthContext,
-    ) {
-        if (!payload) {
-            return [];
-        } else {
-            const me = await this.findUserById(payload.id);
-            const users: User[] = [];
-
-            if (me) {
-                const blockActions = await this.blockRepository.find({ where: { userId: payload.id } });
-
-                await Promise.all(
-                    blockActions.map(async (item) => {
-                        const user = await this.userRepository.findOne({ where: { id: item.blockedId } });
-
-                        if (user) {
-                            users.push(user);
-                        }
-                    })
-                );
-
-                return users;
-            } else {
-                return [];
-            }
         }
     }
 
-    // Si parte da qui (verso l'alto)
+    @Query(() => [User], { nullable: true })
+    @UseMiddleware(isAuth)
+    async blockedUsers(
+        @Ctx() { payload }: AuthContext,
+        @Arg("limit", () => Int, { nullable: true }) limit: number,
+        @Arg("offset", () => Int, { nullable: true }) offset: number
+    ): Promise<User[] | null> {
+        if (!payload) {
+            return null;
+        } else {
+            try {
+                const me = await this.findUserById(payload.id);
+                const users: User[] = [];
+
+                if (me) {
+                    const blockActions = await this.blockRepository.find({ where: { userId: payload.id }, take: limit, skip: offset, order: { createdAt: "DESC" } });
+
+                    await Promise.all(
+                        blockActions.map(async (item) => {
+                            const user = await this.findUserById(item.blockedId);
+
+                            if (user) {
+                                users.push(user);
+                            }
+                        })
+                    );
+
+                    return users;
+                } else {
+                    return null;
+                }
+            } catch (error) {
+                logger.error(error);
+
+                return null;
+            }
+        }
+    }
 
     @Query(() => Boolean)
     @UseMiddleware(isAuth)
