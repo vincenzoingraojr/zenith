@@ -22,7 +22,7 @@ export type Article = {
   __typename?: 'Article';
   articleId: Scalars['String']['output'];
   author: User;
-  authorId: Scalars['Float']['output'];
+  authorId: Scalars['Int']['output'];
   content: Scalars['String']['output'];
   cover: Scalars['String']['output'];
   createdAt: Scalars['String']['output'];
@@ -58,7 +58,7 @@ export type Chat = {
   chatImage?: Maybe<Scalars['String']['output']>;
   chatTitle?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
-  creatorId: Scalars['Float']['output'];
+  creatorId: Scalars['Int']['output'];
   events?: Maybe<Array<Event>>;
   id: Scalars['Int']['output'];
   messages?: Maybe<Array<Message>>;
@@ -94,8 +94,8 @@ export type Event = {
   eventMessage: Scalars['String']['output'];
   eventType: Scalars['String']['output'];
   id: Scalars['Int']['output'];
-  resourceId?: Maybe<Scalars['Float']['output']>;
-  userId: Scalars['Float']['output'];
+  resourceId?: Maybe<Scalars['Int']['output']>;
+  userId: Scalars['Int']['output'];
 };
 
 export type FieldError = {
@@ -144,14 +144,14 @@ export type MediaItem = {
 
 export type Message = {
   __typename?: 'Message';
-  authorId: Scalars['Float']['output'];
+  authorId: Scalars['Int']['output'];
   chat: Chat;
   content?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
   hashtags?: Maybe<Array<Scalars['String']['output']>>;
   id: Scalars['Int']['output'];
   isEdited: Scalars['Boolean']['output'];
-  isReplyTo?: Maybe<Scalars['Float']['output']>;
+  isReplyTo?: Maybe<Scalars['Int']['output']>;
   item: MessageItem;
   media: MessageMedia;
   mentions?: Maybe<Array<Scalars['String']['output']>>;
@@ -210,6 +210,7 @@ export type Mutation = {
   createPost: PostResponse;
   createReport: ReportResponse;
   deactivateAccount: Scalars['Boolean']['output'];
+  deleteAccountData: Scalars['Boolean']['output'];
   deleteDeviceToken: Scalars['Boolean']['output'];
   deleteDeviceTokens: Scalars['Boolean']['output'];
   deleteMeFromGroup: Scalars['Boolean']['output'];
@@ -321,6 +322,11 @@ export type MutationCreateReportArgs = {
   contentId: Scalars['String']['input'];
   contentType: Scalars['String']['input'];
   subCategoryId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationDeleteAccountDataArgs = {
+  id?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -573,17 +579,18 @@ export type PaginatedNotifications = {
 export type Post = {
   __typename?: 'Post';
   author: User;
-  authorId: Scalars['Float']['output'];
+  authorId: Scalars['Int']['output'];
   content: Scalars['String']['output'];
   createdAt: Scalars['String']['output'];
   hashtags?: Maybe<Array<Scalars['String']['output']>>;
   id: Scalars['Int']['output'];
   isEdited: Scalars['Boolean']['output'];
-  isReplyTo?: Maybe<Scalars['Float']['output']>;
+  isReplyTo?: Maybe<Scalars['Int']['output']>;
   lang: Scalars['String']['output'];
   media?: Maybe<Array<MediaItem>>;
   mentions?: Maybe<Array<Scalars['String']['output']>>;
   postId: Scalars['String']['output'];
+  quotedPostId?: Maybe<Scalars['Int']['output']>;
   topicsIds: Array<Scalars['Int']['output']>;
   type: Scalars['String']['output'];
   updatedAt: Scalars['String']['output'];
@@ -620,13 +627,14 @@ export type Query = {
   findPostById?: Maybe<Post>;
   findSession?: Maybe<Session>;
   findUser?: Maybe<User>;
+  findUserByEmail?: Maybe<User>;
   findUserById?: Maybe<User>;
   findUserDeviceTokenById?: Maybe<UserDeviceToken>;
   findUserDeviceTokenBySessionId?: Maybe<UserDeviceToken>;
   findUserDeviceTokenByToken?: Maybe<UserDeviceToken>;
   findUserDeviceTokensByUserId?: Maybe<Array<UserDeviceToken>>;
-  getFollowers: Array<User>;
-  getFollowing: Array<User>;
+  getFollowers?: Maybe<Array<User>>;
+  getFollowing?: Maybe<Array<User>>;
   getLikedPosts?: Maybe<Array<Post>>;
   getPostLikes?: Maybe<Array<User>>;
   hasUserBlockedMe: Scalars['Boolean']['output'];
@@ -646,7 +654,7 @@ export type Query = {
   relevantPeople: Array<User>;
   reportOptions: Array<ReportOption>;
   search: SearchResult;
-  topics: Array<Topic>;
+  topics?: Maybe<Array<Topic>>;
   unseenMessageNotifications: Array<MessageNotification>;
   unseenNotifications: Array<Notification>;
   userComments: Array<Post>;
@@ -693,7 +701,14 @@ export type QueryFindSessionArgs = {
 
 
 export type QueryFindUserArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
   username?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryFindUserByEmailArgs = {
+  deleted?: InputMaybe<Scalars['Boolean']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -845,7 +860,7 @@ export type Report = {
   __typename?: 'Report';
   additionalContentIds?: Maybe<Array<Scalars['Int']['output']>>;
   additionalContentType?: Maybe<Scalars['String']['output']>;
-  authorId: Scalars['Float']['output'];
+  authorId: Scalars['Int']['output'];
   categoryId: Scalars['Int']['output'];
   contentId: Scalars['String']['output'];
   contentType: Scalars['String']['output'];
@@ -1040,6 +1055,7 @@ export type User = {
   following?: Maybe<Array<Follow>>;
   gender: Scalars['String']['output'];
   id: Scalars['Int']['output'];
+  isAffiliatedTo?: Maybe<Scalars['Int']['output']>;
   name: Scalars['String']['output'];
   posts?: Maybe<Array<Post>>;
   profile: Profile;

@@ -565,53 +565,48 @@ export class UserResolver {
             }
 
             if (errors.length === 0) {
-                try {
-                    const user = await this.userRepository.create({
-                        username,
-                        email,
-                        password: hashedPassword,
-                        name,
-                        gender,
-                        birthDate: {
-                            date: birthDate,
-                            monthAndDayVisibility: "public",
-                            yearVisibility: "public",
-                        },
-                        secretKey: encriptedSecretKey,
-                        emailVerified: false,
-                    }).save();
+                const user = await this.userRepository.create({
+                    username,
+                    email,
+                    password: hashedPassword,
+                    name,
+                    gender,
+                    birthDate: {
+                        date: birthDate,
+                        monthAndDayVisibility: "public",
+                        yearVisibility: "public",
+                    },
+                    secretKey: encriptedSecretKey,
+                    emailVerified: false,
+                }).save();
 
-                    const token = createAccessToken(user);
-                    const emailStatus = await sendVerificationEmail(user.email, token);
+                const token = createAccessToken(user);
+                const emailStatus = await sendVerificationEmail(user.email, token);
 
-                    if (emailStatus) {
-                        status = "Check your inbox, we just sent you an email with the instructions to verify your account.";
-                    } else {
-                        status = "An error has occurred while trying to send the verification email. Please try again later.";
-                    }
-                    
-                    ok = true;
-                } catch (error) {
-                    logger.error(error);
-
-                    if (error.detail.includes("username") && error.code === "23505") {
-                        errors.push({
-                            field: "username",
-                            message: "Username already taken",
-                        });
-                    }
-                    if (error.detail.includes("email") && error.code === "23505") {
-                        errors.push({
-                            field: "email",
-                            message: "A user using this email already exists",
-                        });
-                    }
+                if (emailStatus) {
+                    status = "Check your inbox, we just sent you an email with the instructions to verify your account.";
+                } else {
+                    status = "An error has occurred while trying to send the verification email. Please try again later.";
                 }
+                
+                ok = true;
             }
         } catch (error) {
             logger.error(error);
 
-            status = "An unknown error has occurred, please try again later.";
+            if (error.detail.includes("username") && error.code === "23505") {
+                errors.push({
+                    field: "username",
+                    message: "Username already taken",
+                });
+            } else if (error.detail.includes("email") && error.code === "23505") {
+                errors.push({
+                    field: "email",
+                    message: "A user using this email already exists",
+                });
+            } else {
+                status = "An unknown error has occurred, please try again later.";
+            }
         }
 
         return {
@@ -950,16 +945,13 @@ export class UserResolver {
         }
 
         try {
+            await this.sessionRepository.delete({ sessionId: payload.sessionId });
+
             const existingToken = await this.findUserDeviceTokenBySessionId(payload.sessionId, payload.id);
 
             if (existingToken) {
                 await this.deleteDeviceToken(existingToken.id, { payload } as AuthContext);
             }
-
-            await this.sessionRepository.delete({ sessionId: payload.sessionId }).catch((error) => {
-                console.error(error);
-                return false;
-            });
 
             sendRefreshToken(res, "");
             return true;
@@ -1006,8 +998,6 @@ export class UserResolver {
         };
     }
 
-    // Si parte da qui
-
     @Mutation(() => UserResponse)
     async sendRecoveryEmail(
         @Arg("email") email: string
@@ -1017,85 +1007,72 @@ export class UserResolver {
         let status = "";
         let ok = false;
 
-        if (!email.includes("@") || email === "" || email === null) {
+        if (email === "" || email === null || !isValidEmailAddress(email)) {
             errors.push({
                 field: "email",
                 message: "Invalid email",
             });
         } else {
-            user = await this.userRepository.findOne({ where: { email } });
+            try {
+                user = await this.findUserByEmail(email);
 
-            if (!user) {
-                errors.push({
-                    field: "email",
-                    message:
-                        "This email address is not associated with any account",
-                });
-            } else if (!user.emailVerified) {
-                status =
-                    "Your email address is not verified. We just sent you an email containing the instructions for verification.";
-                const verifyToken = createAccessToken(user);
-                sendVerificationEmail(user.email, verifyToken);
-            } else {
-                const token = createAccessToken(user);
-                const link = `${process.env.CLIENT_ORIGIN}/modify-password/${token}`;
-
-                try {
-                    ejs.renderFile(
-                        path.join(
-                            __dirname,
-                            "../helpers/templates/RecoveryEmail.ejs"
-                        ),
-                        { link },
-                         (error, data) => {
-                            if (error) {
-                                console.log(error);
-                            } else {
-                                const params: SendEmailCommandInput = {
-                                    Destination: {
-                                        ToAddresses: [email],
-                                    },
-                                    ReplyToAddresses: [process.env.SUPPORT_EMAIL!],
-                                    Message: {
-                                        Body: {
-                                            Html: {
-                                                Data: data,
-                                            },
-                                        },
-                                        Subject: {
-                                            Data: "Recover your password",
-                                        },
-                                    },
-                                    Source: "noreply@zenith.to",
-                                };
-            
-                                const sesCommand = new SendEmailCommand(params);
-
-                                mailHelper.send(sesCommand)
-                                    .then(() => {
-                                        console.log("Email sent.");
-
-                                        status =
-                                            "Check your inbox, we just sent you an email with the instructions to recover your account password.";
-                                    
-                                        ok = true;
-                                    })
-                                    .catch((error) => {
-                                        console.error(error);
-
-                                        status = "Could not send the email, please try again later.";
-                                    });
-                            }
-                        }
-                    );
-                } catch (error) {
-                    console.error(error);
+                if (!user) {
                     errors.push({
                         field: "email",
                         message:
-                            "Could not send the email, please try again later",
+                            "This email address is not associated with any account",
                     });
+                } else if (!user.emailVerified) {
+                    const verifyToken = createAccessToken(user);
+                    const emailStatus = await sendVerificationEmail(user.email, verifyToken);
+
+                    if (emailStatus) {
+                        status = "Your email address is not verified. We just sent you an email containing the instructions for verification.";
+                    } else {
+                        status = "An error has occurred while trying to send the verification email. Please try again later.";
+                    }
+                } else {
+                    const token = createAccessToken(user);
+                    const link = `${process.env.CLIENT_ORIGIN}/modify-password/${token}`;
+
+                    const data = await ejs.renderFile(
+                        path.join(__dirname, "./templates/RecoveryEmail.ejs"),
+                        { link }
+                    );
+
+                    const params: SendEmailCommandInput = {
+                        Destination: {
+                            ToAddresses: [email],
+                        },
+                        ReplyToAddresses: [process.env.SUPPORT_EMAIL!],
+                        Message: {
+                            Body: {
+                                Html: {
+                                    Data: data,
+                                },
+                            },
+                            Subject: {
+                                Data: "Recover your password",
+                            },
+                        },
+                        Source: "noreply@zenith.to",
+                    };
+            
+                    const sesCommand = new SendEmailCommand(params);
+                    await mailHelper.send(sesCommand);
+
+                    status = "Check your inbox, we just sent you an email with the instructions to recover your account password.";
+
+                    ok = true;
                 }
+            } catch (error) {
+                logger.error(error);
+
+                errors.push({
+                    field: "email",
+                    message:
+                        "Could not send the email, please try again later",
+                });
             }
         }
 
@@ -1130,7 +1107,7 @@ export class UserResolver {
             });
         }
 
-        if (password != confirmPassword) {
+        if (password !== confirmPassword) {
             errors.push(
                 {
                     field: "password",
@@ -1218,16 +1195,15 @@ export class UserResolver {
                         },
                     );
     
-                    user = await this.userRepository.findOne({
-                        where: { id: payload.id },
-                    });
+                    user = await this.findUserById(payload.id);
                     status = "Your profile has been updated.";
 
                     ok = true;
                 } catch (error) {
-                    console.log(error);
+                    logger.error(error);
+
                     status =
-                        "An error has occurred. Please try again later to edit your profile";
+                        "An error has occurred. Please try again later to edit your profile.";
                 }
             }
         }
@@ -1251,40 +1227,46 @@ export class UserResolver {
             return null;
         }
 
-        const user = await this.userRepository.findOne({ where: { id: userId } });
-        const follower = await this.userRepository.findOne({ where: { id: payload.id } });
-        const existingFollow = await this.followRepository.findOne({ where: { user: { id: userId }, follower: { id: payload.id } }, relations: ["user", "follower"] });
+        try {
+            const user = await this.findUserById(userId);
+            const follower = await this.findUserById(payload.id);
+            const existingFollow = await this.followRepository.findOne({ where: { user: { id: userId }, follower: { id: payload.id } }, relations: ["user", "follower"] });
 
-        if (user && follower && !existingFollow) {
-            const follow = await this.followRepository.create({
-                user,
-                follower,
-                origin,
-            }).save();
+            if (user && follower && !existingFollow) {
+                const follow = await this.followRepository.create({
+                    user,
+                    follower,
+                    origin,
+                }).save();
 
-            const notification = await this.notificationRepository.create({
-                notificationId: uuidv4(),
-                creatorId: follower.id,
-                recipientId: user.id,
-                resourceId: follower.id,
-                type: "follow",
-                viewed: false,
-                content: `${follower.name} (@${follower.username}) started following you.`,
-            }).save();
+                const notification = await this.notificationRepository.create({
+                    notificationId: uuidv4(),
+                    creatorId: follower.id,
+                    recipientId: user.id,
+                    resourceId: follower.id,
+                    type: "follow",
+                    viewed: false,
+                    content: `${follower.name} (@${follower.username}) started following you.`,
+                }).save();
 
-            pubSub.publish("NEW_NOTIFICATION", notification);
-            
-            const tokens = await this.findUserDeviceTokensByUserId(user.id);
-            const pushNotification: FirebaseNotification = {
-                title: `New follower on Zenith (for @${user.username})`,
-                body: notification.content,
-                imageUrl: follower.profile.profilePicture.length > 0 ? follower.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
-            };
-            const link = `${process.env.CLIENT_ORIGIN}/${follower.username}?n_id=${notification.notificationId}`;
-            await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: user.username, type: notification.type });
+                pubSub.publish("NEW_NOTIFICATION", notification);
+                
+                const tokens = await this.findUserDeviceTokensByUserId(user.id);
+                const pushNotification: FirebaseNotification = {
+                    title: `New follower on Zenith (for @${user.username})`,
+                    body: notification.content,
+                    imageUrl: follower.profile.profilePicture.length > 0 ? follower.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
+                };
+                const link = `${process.env.CLIENT_ORIGIN}/${follower.username}?n_id=${notification.notificationId}`;
+                await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: user.username, type: notification.type });
 
-            return follow;
-        } else {
+                return follow;
+            } else {
+                return null;
+            }
+        } catch (error) {
+            logger.error(error);
+
             return null;
         }
     }
@@ -1299,35 +1281,38 @@ export class UserResolver {
             return false;
         }
 
-        await this.followRepository.delete({ user: { id: userId }, follower: { id: payload.id } }).catch((error) => {
-            console.error(error);
-            return false;
-        });
-
-        const notification = await this.notificationRepository.findOne({
-            where: {
-                resourceId: payload.id, 
-                type: "follow", 
-                creatorId: payload.id, 
-                recipientId: userId
+        try {
+            await this.followRepository.delete({ user: { id: userId }, follower: { id: payload.id } });
+    
+            const notification = await this.notificationRepository.findOne({
+                where: {
+                    resourceId: payload.id, 
+                    type: "follow", 
+                    creatorId: payload.id, 
+                    recipientId: userId
+                }
+            });
+    
+            await this.notificationRepository.delete({ resourceId: payload.id, type: "follow", creatorId: payload.id, recipientId: userId });
+    
+            if (notification) {
+                pubSub.publish("DELETED_NOTIFICATION", notification);
             }
-        });
+    
+            return true;
+        } catch (error) {
+            logger.error(error);
 
-        await this.notificationRepository.delete({ resourceId: payload.id, type: "follow", creatorId: payload.id, recipientId: userId });
-
-        if (notification) {
-            pubSub.publish("DELETED_NOTIFICATION", notification);
+            return false;
         }
-
-        return true;
     }
 
-    @Query(() => [User])
+    @Query(() => [User], { nullable: true })
     async getFollowers(
         @Arg("id", () => Int, { nullable: true }) id: number,
         @Arg("limit", () => Int, { nullable: true }) limit: number,
         @Arg("offset", () => Int, { nullable: true }) offset: number
-    ) {
+    ): Promise<User[] | null> {
         try {
             const followRelations = await this.followRepository.find({ where: { user: { id } }, relations: ["follower", "user"], take: limit, skip: offset, order: { createdAt: "DESC" } });
 
@@ -1335,18 +1320,18 @@ export class UserResolver {
 
             return users;
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
-            return [];
+            return null;
         }
     }
 
-    @Query(() => [User])
+    @Query(() => [User], { nullable: true })
     async getFollowing(
         @Arg("id", () => Int, { nullable: true }) id: number,
         @Arg("limit", () => Int, { nullable: true }) limit: number,
         @Arg("offset", () => Int, { nullable: true }) offset: number
-    ) {
+    ): Promise<User[] | null> {
         try {
             const followRelations = await this.followRepository.find({ where: { follower: { id } }, relations: ["user", "follower"], take: limit, skip: offset, order: { createdAt: "DESC" } });
 
@@ -1354,9 +1339,9 @@ export class UserResolver {
 
             return users;
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
-            return [];
+            return null;
         }
     }
 
@@ -1370,11 +1355,17 @@ export class UserResolver {
             return false;
         }
 
-        const follow = await this.followRepository.findOne({ where: { follower: { id: payload.id }, user: { id } }, relations: ["user", "follower"] });
+        try {
+            const follow = await this.followRepository.findOne({ where: { follower: { id: payload.id }, user: { id } }, relations: ["user", "follower"] });
 
-        if (follow) {
-            return true;
-        } else {
+            if (follow) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (error) {
+            logger.error(error);
+
             return false;
         }
     }
@@ -1389,11 +1380,17 @@ export class UserResolver {
             return false;
         }
 
-        const follow = await this.followRepository.findOne({ where: { follower: { id }, user: { id: payload.id } }, relations: ["user", "follower"] });
+        try {
+            const follow = await this.followRepository.findOne({ where: { follower: { id }, user: { id: payload.id } }, relations: ["user", "follower"] });
 
-        if (follow) {
-            return true;
-        } else {
+            if (follow) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (error) {
+            logger.error(error);
+
             return false;
         }
     }
@@ -1429,21 +1426,21 @@ export class UserResolver {
         }
 
         if (errors.length === 0 && payload) {
-            const existingUserWithUsername = await this.userRepository.findOne({ where: { username } });
-            const authenticatedUser = await this.userRepository.findOne({ where: { id: payload.id } });
-            
-            if (authenticatedUser && username === authenticatedUser.username) {
-                errors.push({
-                    field: "username",
-                    message: "The username you entered is the one you are already using",
-                });
-            } else if (existingUserWithUsername) {
-                errors.push({
-                    field: "username",
-                    message: "Username already taken",
-                });
-            } else {
-                try {
+            try {
+                const existingUserWithUsername = await this.findUser(username);
+                const authenticatedUser = await this.findUserById(payload.id);
+                
+                if (authenticatedUser && username === authenticatedUser.username) {
+                    errors.push({
+                        field: "username",
+                        message: "The username you entered is the one you are already using",
+                    });
+                } else if (existingUserWithUsername) {
+                    errors.push({
+                        field: "username",
+                        message: "Username already taken",
+                    });
+                } else {
                     await this.userRepository.update(
                         {
                             id: payload.id,
@@ -1452,17 +1449,17 @@ export class UserResolver {
                             username
                         },
                     );
-    
-                    user = await this.userRepository.findOne({
-                        where: { id: payload.id },
-                    });
-    
+
+                    user = await this.findUserById(payload.id);
+
                     status = "Your username has been changed.";
 
                     ok = true;
-                } catch (error) {
-                    console.error(error);
                 }
+            } catch (error) {
+                logger.error(error);
+
+                status = "An error has occurred. Please try again later to change your username.";
             }
         }
 
@@ -1484,20 +1481,20 @@ export class UserResolver {
         let errors = [];
         let ok = false;
 
-        if (!email.includes("@") || email === "" || email === null) {
+        if (email === "" || email === null || !isValidEmailAddress(email)) {
             errors.push({
                 field: "email",
                 message: "Invalid email",
             });
         }
-        if (!confirmEmail.includes("@") || confirmEmail === "" || confirmEmail === null) {
+        if (confirmEmail === "" || confirmEmail === null || !isValidEmailAddress(confirmEmail)) {
             errors.push({
                 field: "confirmEmail",
                 message: "Invalid confirmation email",
             });
         }
 
-        if (email != confirmEmail) {
+        if (email !== confirmEmail) {
             errors.push(
                 {
                     field: "email",
@@ -1516,21 +1513,19 @@ export class UserResolver {
         if (!payload) {
             status = "You are not authenticated.";
         } else if (errors.length === 0) {
-            user = await this.userRepository.findOne({
-                where: { id: payload.id },
-            });
-
-            if (user) {
-                if (user.email === email && user.emailVerified) {
-                    errors.push({
-                        field: "email",
-                        message: "The email address you entered is the one you are already using",
-                    });
-                } else {
-                    const token = createAccessToken(user);
-                    const link = `${process.env.CLIENT_ORIGIN}/settings/account/verify-email/${token}`;
-        
-                    try {
+            try {
+                user = await this.findUserById(payload.id);
+    
+                if (user) {
+                    if (user.email === email && user.emailVerified) {
+                        errors.push({
+                            field: "email",
+                            message: "The email address you entered is the one you are already using",
+                        });
+                    } else {
+                        const token = createAccessToken(user);
+                        const link = `${process.env.CLIENT_ORIGIN}/settings/account/verify-email/${token}`;
+            
                         await this.userRepository.update(
                             {
                                 id: payload.id,
@@ -1540,66 +1535,51 @@ export class UserResolver {
                                 emailVerified: false,
                             },
                         );
-        
-                        ejs.renderFile(
-                            path.join(
-                                __dirname,
-                                "../helpers/templates/VerifyNewEmail.ejs"
-                            ),
-                            { link: link },
-                             (error, data) => {
-                                if (error) {
-                                    console.log(error);
-                                    status = "Could not send the email, please try again later.";
-                                } else {
-                                    const params: SendEmailCommandInput = {
-                                        Destination: {
-                                            ToAddresses: [email],
-                                        },
-                                        ReplyToAddresses: [process.env.SUPPORT_EMAIL!],
-                                        Message: {
-                                            Body: {
-                                                Html: {
-                                                    Data: data,
-                                                },
-                                            },
-                                            Subject: {
-                                                Data: "Verify your new email address",
-                                            },
-                                        },
-                                        Source: "noreply@zenith.to",
-                                    };
-                
-                                    const sesCommand = new SendEmailCommand(params);
-    
-                                    mailHelper.send(sesCommand)
-                                        .then(() => {
-                                            console.log("Email sent.");
-    
-                                            status =
-                                                "Check your inbox, we just sent you an email with the instructions to verify your new email address.";
-                                            ok = true;
-                                        })
-                                        .catch((error) => {
-                                            console.error(error);
-    
-                                            status = "Could not send the email, please try again later.";
-                                        });
-                                }
-                            }
+                        
+                        const data = await ejs.renderFile(
+                            path.join(__dirname, "./templates/VerifyNewEmail.ejs"),
+                            { link }
                         );
-                    } catch (error) {
-                        console.error(error);
-                        if (error.code === "23505") {
-                            status = "A user using this email address already exists.";
-                        } else {
-                            status = "An error has occurred. Please try again later to edit your email address.";
-                        }
+
+                        const params: SendEmailCommandInput = {
+                            Destination: {
+                                ToAddresses: [email],
+                            },
+                            ReplyToAddresses: [process.env.SUPPORT_EMAIL!],
+                            Message: {
+                                Body: {
+                                    Html: {
+                                        Data: data,
+                                    },
+                                },
+                                Subject: {
+                                    Data: "Verify your new email address",
+                                },
+                            },
+                            Source: "noreply@zenith.to",
+                        };
+    
+                        const sesCommand = new SendEmailCommand(params);
+
+                        await mailHelper.send(sesCommand);
+
+                        status = "Check your inbox, we just sent you an email with the instructions to verify your new email address.";
+                    
+                        ok = true;
                     }
+                } else {
+                    status = "Can't find the user.";
                 }
-            } else {
-                status = "Can't find the user.";
+            } catch (error) {
+                logger.error(error);
+
+                if (error.code === "23505") {
+                    status = "A user using this email address already exists.";
+                } else {
+                    status = "An error has occurred. Please try again later to edit your email address.";
+                }
             }
+            
         }
 
         return {
@@ -1621,68 +1601,53 @@ export class UserResolver {
         if (!payload) {
             status = "You are not authenticated.";
         } else {
-            const user = await this.userRepository.findOne({
-                where: { id: payload.id },
-            });
-            
-            if (user) {
-                const token = createAccessToken(user);
-                const link = `${process.env.CLIENT_ORIGIN}/settings/account/verify-email/${token}`;
-    
-                try {
-                    ejs.renderFile(
+            try {
+                const user = await this.findUserById(payload.id);
+                
+                if (user) {
+                    const token = createAccessToken(user);
+                    const link = `${process.env.CLIENT_ORIGIN}/settings/account/verify-email/${token}`;
+        
+                    const data = await ejs.renderFile(
                         path.join(
                             __dirname,
                             "../helpers/templates/VerifyEmail.ejs"
                         ),
-                        { link },
-                         (error, data) => {
-                            if (error) {
-                                console.log(error);
-                            } else {
-                                const params: SendEmailCommandInput = {
-                                    Destination: {
-                                        ToAddresses: [user.email],
-                                    },
-                                    ReplyToAddresses: [process.env.SUPPORT_EMAIL!],
-                                    Message: {
-                                        Body: {
-                                            Html: {
-                                                Data: data,
-                                            },
-                                        },
-                                        Subject: {
-                                            Data: "Verify your email address",
-                                        },
-                                    },
-                                    Source: "noreply@zenith.to",
-                                };
-            
-                                const sesCommand = new SendEmailCommand(params);
-
-                                mailHelper.send(sesCommand)
-                                    .then(() => {
-                                        console.log("Email sent.");
-
-                                        status =
-                                            "Check your inbox, we just sent you an email with the instructions to verify your email address.";
-
-                                        ok = true;
-                                    })
-                                    .catch((error) => {
-                                        console.error(error);
-
-                                        status = "Could not send the email, please try again later.";
-                                    });
-                            }
-                        }
+                        { link }
                     );
-                } catch (error) {
-                    console.error(error);
-                    status = "Could not send the email, please try again later.";
+
+                    const params: SendEmailCommandInput = {
+                        Destination: {
+                            ToAddresses: [user.email],
+                        },
+                        ReplyToAddresses: [process.env.SUPPORT_EMAIL!],
+                        Message: {
+                            Body: {
+                                Html: {
+                                    Data: data,
+                                },
+                            },
+                            Subject: {
+                                Data: "Verify your email address",
+                            },
+                        },
+                        Source: "noreply@zenith.to",
+                    };
+
+                    const sesCommand = new SendEmailCommand(params);
+
+                    await mailHelper.send(sesCommand);
+
+                    status = "Check your inbox, we just sent you an email with the instructions to verify your email address.";
+
+                    ok = true;
+                } else {
+                    status = "Can't find the user.";
                 }
-            } else {
-                status = "Can't find the user.";
+            } catch (error) {
+                logger.error(error);
+
+                status = "Could not send the email, please try again later.";
             }
         }
 
@@ -1743,23 +1708,18 @@ export class UserResolver {
         if (!payload) {
             status = "You are not authenticated.";
         } else {
-            const user = await this.userRepository.findOne({
-                where: { id: payload.id },
-            });
-    
-            let valid = false;
-    
-            if (user) {
-                valid = await argon2.verify(user.password, currentPassword);
-            
-                if (!valid) {
-                    errors.push({
-                        field: "currentPassword",
-                        message: "Incorrect password",
-                    });
-                } else if (errors.length === 0) {
-                    try {
-                        
+            try {
+                const user = await this.findUserById(payload.id);
+        
+                if (user) {
+                    const valid = await argon2.verify(user.password, currentPassword);
+                
+                    if (!valid) {
+                        errors.push({
+                            field: "currentPassword",
+                            message: "Incorrect password",
+                        });
+                    } else if (errors.length === 0) {
                         await this.userRepository.update(
                             {
                                 id: payload.id,
@@ -1772,15 +1732,15 @@ export class UserResolver {
                         status = "The password has been changed.";
 
                         ok = true;
-                    } catch (error) {
-                        console.error(error);
-        
-                        status =
-                            "An error has occurred. Please try again later to change your account password";
                     }
+                } else {
+                    status = "Can't find the user.";
                 }
-            } else {
-                status = "Can't find the user.";
+            } catch (error) {
+                logger.error(error);
+            
+                status =
+                    "An error has occurred. Please try again later to change your account password.";
             }
         }
 
@@ -1827,7 +1787,7 @@ export class UserResolver {
                     status = "Your gender has been updated.";
                     ok = true;
                 } catch (error) {
-                    console.error(error);
+                    logger.error(error);
     
                     errors.push({
                         field: "gender",
@@ -1900,7 +1860,7 @@ export class UserResolver {
                     status = "Your changes have been saved.";
                     ok = true;
                 } catch (error) {
-                    console.error(error);
+                    logger.error(error);
 
                     errors.push({
                         field: "gender",
@@ -1916,6 +1876,8 @@ export class UserResolver {
             ok,
         }
     }
+
+    // Si parte da qui (verso il basso)
 
     @Mutation(() => Boolean)
     @UseMiddleware(isAuth)
