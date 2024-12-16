@@ -1,5 +1,5 @@
 import { FunctionComponent, useState } from "react";
-import { Pressable, SafeAreaView } from "react-native";
+import { Platform, Pressable, SafeAreaView } from "react-native";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { globalStyles } from "../../constants/global";
 import Calendar from "../icons/Calendar";
@@ -23,10 +23,12 @@ const DatePicker: FunctionComponent<DatePickerProps> = ({ value, onUpdateValue }
 
     return (
         <SafeAreaView>
-            <Pressable style={globalStyles.calendarButton} onPress={() => setShow(true)}>
-                <Calendar />
-            </Pressable>
-            {show && (
+            {Platform.OS !== "ios" && (
+                <Pressable style={globalStyles.calendarButton} onPress={() => setShow(true)}>
+                    <Calendar />
+                </Pressable>
+            )}
+            {(show || Platform.OS === "ios") && (
                 <DateTimePicker
                     testID="dateTimePicker"
                     value={value}

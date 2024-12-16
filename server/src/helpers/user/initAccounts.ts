@@ -1,5 +1,5 @@
 import appDataSource from "../../dataSource";
-import { User, UserVerification } from "../../entities/User";
+import { Affiliation, User, UserVerification } from "../../entities/User";
 import argon2 from "argon2";
 import { v4 as uuidv4 } from "uuid";
 import { encrypt } from "../crypto";
@@ -8,16 +8,17 @@ import { logger } from "../logger";
 export async function initAccounts() {
     const userRepository = appDataSource.getRepository(User);
     const userVerificationRepository = appDataSource.getRepository(UserVerification);
+    const affiliationRepository = appDataSource.getRepository(Affiliation);
 
     try {
         const generalAccount = await userRepository.findOne({ 
             where: {
                 email: process.env.GENERAL_EMAIL,
-            }    
+            }
         });
     
-        if (!generalAccount) {     
-            logger.warn("Creating the general account (@zenith)...");
+        if (!generalAccount) {
+            logger.info("Creating the general account (@zenith)...");
     
             const encriptedGeneralSecretKey = encrypt(uuidv4());
     
@@ -28,9 +29,9 @@ export async function initAccounts() {
                 name: "Zenith",
                 gender: "Non-binary",
                 birthDate: {
-                    date: "2002-01-24",
-                    monthAndDayVisibility: "Only you",
-                    yearVisibility: "Only you",
+                    date: "2025-01-24",
+                    monthAndDayVisibility: "Public",
+                    yearVisibility: "Public",
                 },
                 type: "organization",
                 secretKey: encriptedGeneralSecretKey,
@@ -53,7 +54,7 @@ export async function initAccounts() {
                 outcome: "Account verified automatically.",
             }).save();
     
-            logger.warn("General account created successfully.");
+            logger.info("General account created successfully.");
         }
     
         const personalAccount = await userRepository.findOne({ 
@@ -65,11 +66,11 @@ export async function initAccounts() {
         const companyAccount = await userRepository.findOne({ 
             where: {
                 email: process.env.GENERAL_EMAIL,
-            }    
+            }
         });
     
         if (!personalAccount && companyAccount) {
-            logger.warn("Creating the personal account (@vincent)...");
+            logger.info("Creating the personal account (@vincent)...");
     
             const encriptedPersonalSecretKey = encrypt(uuidv4());
     
@@ -93,7 +94,13 @@ export async function initAccounts() {
                     bio: "Founder at @zenith",
                     website: "https://blog.zenith.to",
                 },
-                isAffiliatedTo: companyAccount.id,
+            }).save();
+
+            await affiliationRepository.create({
+                affiliationId: uuidv4(),
+                organizationId: companyAccount.id,
+                userId: newPersonalAccount.id,
+                status: true,
             }).save();
     
             await userVerificationRepository.create({
@@ -104,17 +111,17 @@ export async function initAccounts() {
                 outcome: "Account verified automatically.",
             }).save();
     
-            logger.warn("Personal account created successfully.");
+            logger.info("Personal account created successfully.");
         }
     
         const supportAccount = await userRepository.findOne({ 
             where: {
                 email: process.env.SUPPORT_EMAIL,
-            }    
+            }
         });
     
         if (!supportAccount && companyAccount) {
-            logger.warn("Creating the support account (@support)...");
+            logger.info("Creating the support account (@support)...");
     
             const encriptedSupportSecretKey = encrypt(uuidv4());
     
@@ -123,11 +130,10 @@ export async function initAccounts() {
                 email: process.env.SUPPORT_EMAIL,
                 password: await argon2.hash(process.env.SUPPORT_ACCOUNT_PASSWORD!),
                 name: "Support",
-                gender: "Non-binary",
                 birthDate: {
-                    date: "2002-01-24",
-                    monthAndDayVisibility: "Only you",
-                    yearVisibility: "Only you",
+                    date: "2025-01-24",
+                    monthAndDayVisibility: "Public",
+                    yearVisibility: "Public",
                 },
                 type: "organization",
                 secretKey: encriptedSupportSecretKey,
@@ -140,7 +146,13 @@ export async function initAccounts() {
                     bio: "We're here to help.",
                     website: "https://help.zenith.to",
                 },
-                isAffiliatedTo: companyAccount.id,
+            }).save();
+
+            await affiliationRepository.create({
+                affiliationId: uuidv4(),
+                organizationId: companyAccount.id,
+                userId: newSupportAccount.id,
+                status: true,
             }).save();
     
             await userVerificationRepository.create({
@@ -151,7 +163,7 @@ export async function initAccounts() {
                 outcome: "Account verified automatically.",
             }).save();
     
-            logger.warn("Support account created successfully.");
+            logger.info("Support account created successfully.");
         }
     } catch (error) {
         logger.error(error);

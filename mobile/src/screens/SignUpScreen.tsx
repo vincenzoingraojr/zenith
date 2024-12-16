@@ -1,4 +1,4 @@
-import { Text, View } from "react-native";
+import { Platform, Text, View } from "react-native";
 import { Layout } from "../components/Layout";
 import AuthLayout from "../components/layouts/AuthLayout";
 import { globalStyles } from "../constants/global";
@@ -84,7 +84,9 @@ const SignUpScreen = ({ navigation }: Props) => {
                                     <View style={globalStyles.birthDateContainer}>
                                         <View style={globalStyles.birthDateInfo}>
                                             <Text style={[styles.text, globalStyles.birthDateLabel]}>Birthdate</Text>
-                                            <Text style={[styles.text, globalStyles.birthDateString]}>{birthDate.toLocaleDateString("en-us", { month: "long", day: "numeric", year: "numeric" })}</Text>
+                                            {Platform.OS !== "ios" && (
+                                                <Text style={[styles.text, globalStyles.birthDateString]}>{birthDate.toLocaleDateString("en-us", { month: "long", day: "numeric", year: "numeric" })}</Text>
+                                            )}
                                         </View>
                                         <DatePicker value={birthDate} onUpdateValue={(date) => setBirthDate(date)} />
                                     </View>

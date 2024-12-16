@@ -1,4 +1,4 @@
-import { Block, Follow, Session, User, UserDeviceToken } from "../entities/User";
+import { Affiliation, Block, Follow, Session, User, UserDeviceToken, UserVerification } from "../entities/User";
 import {
     Arg,
     Ctx,
@@ -58,6 +58,18 @@ export class UserResponse {
     ok: boolean;
 }
 
+@ObjectType()
+export class UserVerificationResponse {
+    @Field(() => UserVerification, { nullable: true })
+    userVerification?: UserVerification | null;
+
+    @Field(() => String, { nullable: true })
+    status?: string;
+
+    @Field(() => Boolean)
+    ok: boolean;
+}
+
 @Resolver(User)
 export class UserResolver {
     private readonly userRepository: Repository<User>;
@@ -70,6 +82,8 @@ export class UserResolver {
     private readonly topicRepository: Repository<Topic>;
     private readonly articleRepository: Repository<Article>;
     private readonly mediaItemRepository: Repository<MediaItem>;
+    private readonly affiliationRepository: Repository<Affiliation>;
+    private readonly userVerificationRepository: Repository<UserVerification>;
 
     constructor() {
         this.userRepository = appDataSource.getRepository(User);
@@ -82,6 +96,8 @@ export class UserResolver {
         this.topicRepository = appDataSource.getRepository(Topic);
         this.articleRepository = appDataSource.getRepository(Article);
         this.mediaItemRepository = appDataSource.getRepository(MediaItem);
+        this.affiliationRepository = appDataSource.getRepository(Affiliation);
+        this.userVerificationRepository = appDataSource.getRepository(UserVerification);
     }
 
     @Query(() => User, { nullable: true })
@@ -110,7 +126,7 @@ export class UserResolver {
     }
 
     @Query(() => User, { nullable: true })
-    async findUserById(@Arg("id", () => Int, { nullable: true }) id: number, @Arg("deleted", { nullable: true }) deleted?: boolean): Promise<User | null> {
+    async findUserById(@Arg("id", () => Int, { nullable: true }) id: number, @Arg("deleted", { nullable: true }) deleted?: boolean, @Arg("type", { nullable: true }) type?: string): Promise<User | null> {
         if (!id) {
             logger.warn("Id not provided.");
 
@@ -118,7 +134,7 @@ export class UserResolver {
         }
 
         try {
-            const user = await this.userRepository.findOne({ where: { id }, withDeleted: deleted || false });
+            const user = await this.userRepository.findOne({ where: { id, type: type || "user" }, withDeleted: deleted || false });
 
             if (!user) {
                 logger.warn(`User with id "${id}" not found.`);
@@ -314,7 +330,7 @@ export class UserResolver {
         }
     }
 
-    @Mutation(() => UserResponse, { nullable: true })
+    @Mutation(() => UserResponse)
     async findUserBeforeLogIn(
         @Arg("input") input: string,
     ): Promise<UserResponse> {
@@ -349,7 +365,7 @@ export class UserResolver {
         };
     }
 
-    @Mutation(() => UserResponse, { nullable: true })
+    @Mutation(() => UserResponse)
     async login(
         @Arg("input") input: string,
         @Arg("password") password: string,
@@ -484,7 +500,7 @@ export class UserResolver {
         };
     }
 
-    @Mutation(() => UserResponse, { nullable: true })
+    @Mutation(() => UserResponse)
     async signup(
         @Arg("email") email: string,
         @Arg("username") username: string,
@@ -573,8 +589,8 @@ export class UserResolver {
                     gender,
                     birthDate: {
                         date: birthDate,
-                        monthAndDayVisibility: "public",
-                        yearVisibility: "public",
+                        monthAndDayVisibility: "Public",
+                        yearVisibility: "Public",
                     },
                     secretKey: encriptedSecretKey,
                     emailVerified: false,
@@ -616,7 +632,7 @@ export class UserResolver {
         };
     }
 
-    @Mutation(() => UserResponse, { nullable: true })
+    @Mutation(() => UserResponse)
     async reactivateAccount(
         @Arg("input") input: string,
         @Arg("password") password: string
@@ -954,6 +970,7 @@ export class UserResolver {
             }
 
             sendRefreshToken(res, "");
+
             return true;
         } catch (error) {
             logger.error(error);
@@ -2499,5 +2516,508 @@ export class UserResolver {
 
             return false;
         }
+    }
+
+    @Mutation(() => UserResponse)
+    @UseMiddleware(isAuth)
+    async createOrganization(
+        @Arg("email") email: string,
+        @Arg("username") username: string,
+        @Arg("name") name: string,
+        @Arg("password") password: string,
+        @Arg("birthDate") birthDate: Date,
+        @Ctx() { payload }: AuthContext
+    ): Promise<UserResponse> {
+        let errors = [];
+        let ok = false;
+
+        if (email === "" || email === null || !isValidEmailAddress(email)) {
+            errors.push({
+                field: "email",
+                message: "Invalid email",
+            });
+        }
+        if (username.includes("@")) {
+            errors.push({
+                field: "username",
+                message: "The username field cannot contain @",
+            });
+        }
+        if (username.length <= 2) {
+            errors.push({
+                field: "username",
+                message: "The username lenght must be greater than 2",
+            });
+        }
+        if (password.length <= 2) {
+            errors.push({
+                field: "password",
+                message: "The password lenght must be greater than 2",
+            });
+        }
+        if (name === "" || name === null) {
+            errors.push({
+                field: "name",
+                message: "The name field cannot be empty",
+            });
+        }
+
+        let status;
+
+        if (!payload) {
+            status = "You're not authenticated.";
+        } else {
+            try {
+                const hashedPassword = await argon2.hash(password);
+                const encriptedSecretKey = encrypt(uuidv4());
+    
+                const existingOrg = await this.userRepository.findOne({
+                    where: {
+                        email,
+                        username,
+                        type: "organization"
+                    },
+                    withDeleted: true,
+                });
+    
+                if (existingOrg && existingOrg.deletedAt !== null) {
+                    if (processDays(existingOrg.deletedAt) <= 90) {
+                        status = "account_deactivated";
+                    } else {
+                        await this.deleteAccountData(existingOrg.id);
+                    }
+                }
+    
+                if (errors.length === 0) {
+                    const organization = await this.userRepository.create({
+                        username,
+                        email,
+                        password: hashedPassword,
+                        name,
+                        type: "organization",
+                        birthDate: {
+                            date: birthDate,
+                            monthAndDayVisibility: "Public",
+                            yearVisibility: "Public",
+                        },
+                        secretKey: encriptedSecretKey,
+                        emailVerified: false,
+                    }).save();
+
+                    await this.affiliationRepository.create({
+                        affiliationId: uuidv4(),
+                        organizationId: organization.id,
+                        userId: payload.id,
+                        status: true,
+                    }).save();
+    
+                    const token = createAccessToken(organization);
+                    const emailStatus = await sendVerificationEmail(organization.email, token);
+    
+                    if (emailStatus) {
+                        status = "Check your inbox, we just sent you an email with the instructions to verify your organization account.";
+                    } else {
+                        status = "An error has occurred while trying to send the verification email. Please try again later.";
+                    }
+                    
+                    ok = true;
+                }
+            } catch (error) {
+                logger.error(error);
+    
+                if (error.detail.includes("username") && error.code === "23505") {
+                    errors.push({
+                        field: "username",
+                        message: "Username already taken",
+                    });
+                } else if (error.detail.includes("email") && error.code === "23505") {
+                    errors.push({
+                        field: "email",
+                        message: "An organization using this email already exists",
+                    });
+                } else {
+                    status = "An unknown error has occurred, please try again later.";
+                }
+            }
+        }
+
+        return {
+            errors,
+            status,
+            ok,
+        };
+    }
+
+    @Query(() => Affiliation, { nullable: true })
+    @UseMiddleware(isAuth)
+    async findAffiliationRequest(@Arg("affiliationId", { nullable: true }) affiliationId: string, @Ctx() { payload }: AuthContext): Promise<Affiliation | null> {
+        if (!affiliationId) {
+            logger.warn("Affiliation id not provided.");
+
+            return null;
+        }
+    
+        if (!payload) {
+            logger.warn("Payload not provided.");
+
+            return null;
+        }
+
+        try {
+            const affiliation = await this.affiliationRepository.findOne({ where: { affiliationId, userId: payload.id } });
+            
+            if (!affiliation) {
+                logger.warn(`Affiliation with affiliationId "${affiliationId}" not found.`);
+
+                return null;
+            }
+    
+            return affiliation;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }    
+    }
+
+    @Query(() => Affiliation, { nullable: true })
+    async findAffiliationByUserId(@Arg("userId", () => Int, { nullable: true }) userId: number): Promise<Affiliation | null> {
+        if (!userId) {
+            logger.warn("User id not provided.");
+
+            return null;
+        }
+    
+        try {
+            const affiliation = await this.affiliationRepository.findOne({ where: { userId } });
+            
+            if (!affiliation) {
+                logger.warn(`User with id "${userId}" not found.`);
+
+                return null;
+            }
+    
+            return affiliation;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }    
+    }
+
+    @Query(() => User, { nullable: true })
+    async isAffiliatedTo(
+        @Arg("id", () => Int, { nullable: true }) id: number,
+    ): Promise<User | null> {
+        if (!id) {
+            logger.warn("User id not provided.");
+
+            return null;
+        }
+
+        try {
+            const affiliation = await this.findAffiliationByUserId(id);
+
+            if (!affiliation) {
+                logger.warn(`User with id "${id}" not found.`);
+
+                return null;
+            }
+
+            const organization = await this.findUserById(affiliation.organizationId, false, "organization");
+
+            if (!organization) {
+                logger.warn(`Organization with id "${affiliation.organizationId}" not found.`);
+
+                return null;
+            }
+
+            return organization;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
+    }
+
+    @Query(() => [User], { nullable: true })
+    async affiliates(
+        @Arg("id", () => Int, { nullable: true }) id: number,
+        @Arg("limit", () => Int, { nullable: true }) limit: number,
+        @Arg("offset", () => Int, { nullable: true }) offset: number
+    ): Promise<User[] | null> {
+        if (!id) {
+            return null;
+        } else {
+            try {
+                const organization = await this.findUserById(id, false, "organization");
+                const users: User[] = [];
+
+                if (organization) {
+                    const affiliations = await this.affiliationRepository.find({ where: { organizationId: organization.id }, take: limit, skip: offset, order: { createdAt: "DESC" } });
+
+                    await Promise.all(
+                        affiliations.map(async (item) => {
+                            const user = await this.findUserById(item.userId);
+
+                            if (user) {
+                                users.push(user);
+                            }
+                        })
+                    );
+
+                    return users;
+                } else {
+                    return null;
+                }
+            } catch (error) {
+                logger.error(error);
+
+                return null;
+            }
+        }
+    }
+
+    @Mutation(() => Affiliation, { nullable: true })
+    @UseMiddleware(isAuth)
+    async createAffiliation(
+        @Arg("userId", () => Int,  { nullable: true }) userId: number,
+        @Ctx() { payload }: AuthContext,
+    ): Promise<Affiliation | null> {
+        if (!payload) {
+            return null;
+        }
+
+        if (!userId) {
+            return null;
+        }
+
+        try {
+            const user = await this.findUserById(userId);
+            const organization = await this.findUserById(payload.id, false, "organization");
+            const existingAffiliation = await this.findAffiliationByUserId(userId);
+
+            if (user && organization && !existingAffiliation) {
+                const affiliation = await this.affiliationRepository.create({
+                    affiliationId: uuidv4(),
+                    organizationId: organization.id,
+                    userId: user.id,
+                    status: false,
+                }).save();
+
+                const notification = await this.notificationRepository.create({
+                    notificationId: uuidv4(),
+                    creatorId: organization.id,
+                    recipientId: user.id,
+                    resourceId: affiliation.id,
+                    type: "affiliation",
+                    viewed: false,
+                    content: `${organization.name} (@${organization.username}) wants you to become an affiliated account.`,
+                }).save();
+
+                pubSub.publish("NEW_NOTIFICATION", notification);
+                
+                const tokens = await this.findUserDeviceTokensByUserId(user.id);
+                const pushNotification: FirebaseNotification = {
+                    title: `New affiliation request on Zenith (for @${user.username})`,
+                    body: notification.content,
+                    imageUrl: organization.profile.profilePicture.length > 0 ? organization.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
+                };
+                const link = `${process.env.CLIENT_ORIGIN}/affiliation/${affiliation.affiliationId}?n_id=${notification.notificationId}`;
+                await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: user.username, type: notification.type });
+
+                return affiliation;
+            } else {
+                return null;
+            }
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
+    }
+
+    @Mutation(() => Affiliation, { nullable: true })
+    @UseMiddleware(isAuth)
+    async manageAffiliation(
+        @Arg("affiliationId", { nullable: true }) affiliationId: string,
+        @Arg("accepted", { nullable: true }) accepted: boolean,
+        @Ctx() { payload }: AuthContext,
+    ): Promise<Affiliation | null> {
+        if (!payload) {
+            return null;
+        }
+
+        if (!affiliationId) {
+            return null;
+        }
+
+        if (!accepted) {
+            return null;
+        }
+
+        try {
+            const me = await this.findUserById(payload.id);
+            const affiliation = await this.findAffiliationRequest(affiliationId, { payload } as AuthContext);
+
+            if (me && affiliation) {
+                affiliation.status = accepted;
+
+                await affiliation.save();
+
+                return affiliation;
+            } else {
+                return null;
+            }
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
+    }
+
+    @Mutation(() => Boolean)
+    @UseMiddleware(isAuth)
+    async removeAffiliation(
+        @Arg("affiliationId", { nullable: true }) affiliationId: string,
+        @Ctx() { payload }: AuthContext,
+    ) {
+        if (!payload) {
+            return false;
+        }
+
+        if (!affiliationId) {
+            return false;
+        }
+
+        try {
+            const affiliation = await this.findAffiliationRequest(affiliationId, { payload } as AuthContext);
+
+            if (affiliation) {
+                await this.affiliationRepository.delete({ affiliationId, userId: payload.id });
+
+                const notification = await this.notificationRepository.findOne({
+                    where: {
+                        resourceId: affiliation.id, 
+                        type: "affiliation", 
+                        creatorId: affiliation.organizationId, 
+                        recipientId: payload.id,
+                    }
+                });
+        
+                await this.notificationRepository.delete({ resourceId: affiliation.id, type: "affiliation", creatorId: affiliation.organizationId, recipientId: payload.id });
+        
+                if (notification) {
+                    pubSub.publish("DELETED_NOTIFICATION", notification);
+                }
+
+                return true;
+            } else {
+                return false;
+            }
+        } catch (error) {
+            logger.error(error);
+
+            return false;
+        }
+    }
+
+    @Query(() => UserVerification, { nullable: true })
+    async findVerificationRequest(
+        @Arg("id", () => Int, { nullable: true }) id: number,
+        @Arg("type", { nullable: true }) type: string,
+    ): Promise<UserVerification | null> {
+        if (!id) {
+            logger.warn("User id not provided.");
+
+            return null;
+        }
+
+        if (!type) {
+            logger.warn("User type not provided.");
+
+            return null;
+        }
+
+        try {
+            const user = await this.findUserById(id, false, type);
+
+            if (!user) {
+                logger.warn(`User with id "${id}" not found.`);
+
+                return null;
+            }
+
+            const userVerification = await this.userVerificationRepository.findOne({ where: { userId: user.id, type } });
+
+            if (!userVerification) {
+                logger.warn(`Verification request for user with id "${user.id}" not found.`);
+
+                return null;
+            }
+
+            return userVerification;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
+    }
+
+    @Mutation(() => UserVerificationResponse)
+    @UseMiddleware(isAuth)
+    async requestVerification(
+        @Arg("idUrl") idUrl: string,
+        @Arg("documents", () => [String]) documents: string[],
+        @Ctx() { payload }: AuthContext
+    ): Promise<UserVerificationResponse> {
+        let userVerification: UserVerification | null = null;
+        let status = "";
+        let ok = false;
+
+        if (!payload) {
+            status = "You are not authenticated.";
+        } else {
+            try {
+                const me = await this.findUserById(payload.id);
+
+                if (me) {
+                    const verification = await this.findVerificationRequest(me.id, me.type);
+                    
+                    if (verification) {
+                        if (verification.verified) {
+                            status = "You're already verified.";
+                        } else {
+                            status = "You've already submitted a verification request for your account."
+                        }
+                    } else {
+                        userVerification = await this.userVerificationRepository.create({
+                            userId: me.id,
+                            verified: false,
+                            type: me.type,
+                            idUrl,
+                            documents,
+                        }).save();
+
+                        status = "Verification request submitted.";
+                        
+                        ok = true;
+                    }
+                } else {
+                    status = "This user doesn't exist.";
+                }
+            } catch (error) {
+                logger.error(error);
+
+                status =
+                    "An error has occurred. Please try again later.";
+            }
+        }
+
+        return {
+            userVerification,
+            status,
+            ok,
+        };
     }
 }

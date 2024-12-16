@@ -106,8 +106,8 @@ export class User extends BaseEntity {
     @Column(() => SecretKey)
     secretKey: SecretKey;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String, { nullable: true })
+    @Column({ nullable: true })
     gender: string;
 
     @Field(() => BirthDate, { nullable: true })
@@ -160,10 +160,6 @@ export class User extends BaseEntity {
 
     @DeleteDateColumn()
     deletedAt: Date;
-
-    @Field(() => Int, { nullable: true })
-    @Column({ nullable: true })
-    isAffiliatedTo: number;
 }
 
 @ObjectType()
@@ -320,4 +316,36 @@ export class UserVerification extends BaseEntity {
     @Field(() => String, { nullable: true, defaultValue: null })
     @Column({ nullable: true, default: null })
     outcome: string;
+}
+
+@ObjectType()
+@Entity("block-actions")
+export class Affiliation extends BaseEntity {
+    @Field(() => Int)
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @Field(() => String, { nullable: false })
+    @Column({ type: "uuid", unique: true, nullable: false })
+    affiliationId: string;
+
+    @Field(() => Int, { nullable: false })
+    @Column({ nullable: false })
+    organizationId: number;
+
+    @Field(() => Int, { nullable: false })
+    @Column({ unique: true, nullable: false })
+    userId: number;
+
+    @Field(() => Boolean, { defaultValue: false })
+    @Column({ default: false })
+    status: boolean;
+
+    @Field(() => String, { nullable: false })
+    @CreateDateColumn({ nullable: false })
+    createdAt: Date;
+
+    @Field(() => String, { nullable: false })
+    @UpdateDateColumn({ nullable: false })
+    updatedAt: Date;
 }
