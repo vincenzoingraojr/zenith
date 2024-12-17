@@ -2984,12 +2984,20 @@ export class UserResolver {
                 if (me) {
                     const verification = await this.findVerificationRequest(me.id, me.type);
                     
-                    if (verification) {
+                    if (verification && (verification.createdAt === verification.updatedAt || verification.verified)) {
                         if (verification.verified) {
                             status = "You're already verified.";
                         } else {
                             status = "You've already submitted a verification request for your account."
                         }
+                    } else if (verification && verification.outcome !== null && !verification.verified && verification.createdAt < verification.updatedAt) {
+                        verification.outcome = null;
+                        verification.idUrl = idUrl;
+                        verification.documents = documents;
+
+                        await verification.save();
+
+                        userVerification = verification;
                     } else {
                         userVerification = await this.userVerificationRepository.create({
                             userId: me.id,
