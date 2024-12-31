@@ -337,6 +337,14 @@ export class UserResolver {
         let status = "";
         let ok = false;
         let user: User | null = null;
+        let errors = [];
+
+        if (!input || input.length === 0) {
+            errors.push({
+                field: "input",
+                message: "This field can't be empty",
+            });
+        }
 
         try {
             const isEmailAddress = isValidEmailAddress(input);
@@ -362,6 +370,7 @@ export class UserResolver {
             user,
             status,
             ok,
+            errors,
         };
     }
 
@@ -382,6 +391,13 @@ export class UserResolver {
         let status = "";
         let ok = false;
 
+        if (!input || input.length === 0) {
+            errors.push({
+                field: "input",
+                message: "This field can't be empty",
+            });
+        }
+
         try {
             const isEmailAddress = isValidEmailAddress(input);
 
@@ -392,10 +408,7 @@ export class UserResolver {
             }
 
             if (!user || (user && user.deletedAt !== null && processDays(user.deletedAt) > 90)) {
-                errors.push({
-                    field: "input",
-                    message: "Sorry, but we can't find your account",
-                });
+                status = "Sorry, but we can't find your account.";
     
                 if (user && user.deletedAt !== null && processDays(user.deletedAt) > 90) {
                     await this.deleteAccountData(user.id);
@@ -431,12 +444,9 @@ export class UserResolver {
         
                                 ok = true;
                             } catch (error) {
-                                logger.error(error);
+                                status = "Failed to create a new session, please try again later.";
 
-                                errors.push({
-                                    field: "input",
-                                    message: "Failed to create a new session, please try again later",
-                                });
+                                logger.error(error);
                             }
                         } else {
                             const decryptedSecretKey = decrypt(user.secretKey);
@@ -894,6 +904,12 @@ export class UserResolver {
     ) {
         let me: User | null = null;
 
+        if (!input && !payload) {
+            logger.warn("Bad request.");
+
+            return false;
+        }
+
         try {
             if (payload) {
                 me = await this.findUserById(payload.id);
@@ -957,6 +973,8 @@ export class UserResolver {
     @UseMiddleware(isAuth)
     async logout(@Ctx() { res, payload }: AuthContext) {
         if (!payload) {
+            logger.warn("Payload not provided.");
+
             return false;
         }
 
@@ -985,6 +1003,10 @@ export class UserResolver {
     ): Promise<UserResponse> {
         let status = "";
         let ok = false;
+
+        if (!token) {
+            logger.warn("Token not provided.");
+        }
 
         try {
             const payload: any = verify(
@@ -1085,11 +1107,7 @@ export class UserResolver {
             } catch (error) {
                 logger.error(error);
 
-                errors.push({
-                    field: "email",
-                    message:
-                        "Could not send the email, please try again later",
-                });
+                status = "Could not send the email, please try again later.";
             }
         }
 
@@ -1108,6 +1126,10 @@ export class UserResolver {
     ): Promise<UserResponse> {
         let errors = [];
         let ok = false;
+
+        if (!token) {
+            logger.warn("Token not provided.");
+        }
 
         if (password.length <= 2) {
             errors.push({
@@ -1158,6 +1180,8 @@ export class UserResolver {
 
                 ok = true;
             } catch (error) {
+                logger.error(error);
+
                 status =
                     "An error has occurred. Please repeat the password recovery operation.";
             }
@@ -1241,6 +1265,8 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext,
     ): Promise<Follow | null> {
         if (!payload) {
+            logger.warn("Payload not provided.");
+
             return null;
         }
 
@@ -1279,6 +1305,8 @@ export class UserResolver {
 
                 return follow;
             } else {
+                logger.warn(`followUserData: [{ userId: ${user ? user.id : undefined} }, { followerId: ${follower ? follower.id : undefined} }, { existingFollowId: ${existingFollow ? existingFollow.id : undefined} }]`);
+
                 return null;
             }
         } catch (error) {
@@ -1295,6 +1323,14 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext,
     ) {
         if (!payload) {
+            logger.warn("Payload not provided.");
+
+            return false;
+        }
+
+        if (!userId) {
+            logger.warn("User id not provided.");
+
             return false;
         }
 
@@ -1330,6 +1366,12 @@ export class UserResolver {
         @Arg("limit", () => Int, { nullable: true }) limit: number,
         @Arg("offset", () => Int, { nullable: true }) offset: number
     ): Promise<User[] | null> {
+        if (!id) {
+            logger.warn("User id not provided.");
+
+            return null;
+        }
+
         try {
             const followRelations = await this.followRepository.find({ where: { user: { id } }, relations: ["follower", "user"], take: limit, skip: offset, order: { createdAt: "DESC" } });
 
@@ -1349,6 +1391,10 @@ export class UserResolver {
         @Arg("limit", () => Int, { nullable: true }) limit: number,
         @Arg("offset", () => Int, { nullable: true }) offset: number
     ): Promise<User[] | null> {
+        if (!id) {
+            logger.warn("User id not provided.");
+        }
+
         try {
             const followRelations = await this.followRepository.find({ where: { follower: { id } }, relations: ["user", "follower"], take: limit, skip: offset, order: { createdAt: "DESC" } });
 
@@ -1369,6 +1415,14 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
+            logger.warn("Payload not provided.");
+
+            return false;
+        }
+
+        if (!id) {
+            logger.warn("User id not provided.");
+
             return false;
         }
 
@@ -1394,6 +1448,14 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
+            logger.warn("Payload not provided.");
+
+            return false;
+        }
+
+        if (!id) {
+            logger.warn("User id not provided.");
+
             return false;
         }
 
@@ -1436,47 +1498,44 @@ export class UserResolver {
             });
         }
         if (!payload) {
-            errors.push({
-                field: "username",
-                message: "You are not authenticated",
-            });
-        }
-
-        if (errors.length === 0 && payload) {
-            try {
-                const existingUserWithUsername = await this.findUser(username);
-                const authenticatedUser = await this.findUserById(payload.id);
-                
-                if (authenticatedUser && username === authenticatedUser.username) {
-                    errors.push({
-                        field: "username",
-                        message: "The username you entered is the one you are already using",
-                    });
-                } else if (existingUserWithUsername) {
-                    errors.push({
-                        field: "username",
-                        message: "Username already taken",
-                    });
-                } else {
-                    await this.userRepository.update(
-                        {
-                            id: payload.id,
-                        },
-                        {
-                            username
-                        },
-                    );
-
-                    user = await this.findUserById(payload.id);
-
-                    status = "Your username has been changed.";
-
-                    ok = true;
+            status = "You're not authenticated.";
+        } else {
+            if (errors.length === 0) {
+                try {
+                    const existingUserWithUsername = await this.findUser(username);
+                    const authenticatedUser = await this.findUserById(payload.id);
+                    
+                    if (authenticatedUser && username === authenticatedUser.username) {
+                        errors.push({
+                            field: "username",
+                            message: "The username you entered is the one you are already using",
+                        });
+                    } else if (existingUserWithUsername) {
+                        errors.push({
+                            field: "username",
+                            message: "Username already taken",
+                        });
+                    } else {
+                        await this.userRepository.update(
+                            {
+                                id: payload.id,
+                            },
+                            {
+                                username
+                            },
+                        );
+    
+                        user = await this.findUserById(payload.id);
+    
+                        status = "Your username has been changed.";
+    
+                        ok = true;
+                    }
+                } catch (error) {
+                    logger.error(error);
+    
+                    status = "An error has occurred. Please try again later to change your username.";
                 }
-            } catch (error) {
-                logger.error(error);
-
-                status = "An error has occurred. Please try again later to change your username.";
             }
         }
 
@@ -1529,74 +1588,76 @@ export class UserResolver {
 
         if (!payload) {
             status = "You are not authenticated.";
-        } else if (errors.length === 0) {
-            try {
-                user = await this.findUserById(payload.id);
+        } else {
+            if (errors.length === 0) {
+                try {
+                    user = await this.findUserById(payload.id);
+        
+                    if (user) {
+                        if (user.email === email && user.emailVerified) {
+                            errors.push({
+                                field: "email",
+                                message: "The email address you entered is the one you are already using",
+                            });
+                        } else {
+                            const token = createAccessToken(user);
+                            const link = `${process.env.CLIENT_ORIGIN}/settings/account/verify-email/${token}`;
+                
+                            await this.userRepository.update(
+                                {
+                                    id: payload.id,
+                                },
+                                {
+                                    email,
+                                    emailVerified: false,
+                                },
+                            );
+                            
+                            const data = await ejs.renderFile(
+                                path.join(__dirname, "./templates/VerifyNewEmail.ejs"),
+                                { link }
+                            );
     
-                if (user) {
-                    if (user.email === email && user.emailVerified) {
-                        errors.push({
-                            field: "email",
-                            message: "The email address you entered is the one you are already using",
-                        });
-                    } else {
-                        const token = createAccessToken(user);
-                        const link = `${process.env.CLIENT_ORIGIN}/settings/account/verify-email/${token}`;
-            
-                        await this.userRepository.update(
-                            {
-                                id: payload.id,
-                            },
-                            {
-                                email,
-                                emailVerified: false,
-                            },
-                        );
-                        
-                        const data = await ejs.renderFile(
-                            path.join(__dirname, "./templates/VerifyNewEmail.ejs"),
-                            { link }
-                        );
-
-                        const params: SendEmailCommandInput = {
-                            Destination: {
-                                ToAddresses: [email],
-                            },
-                            ReplyToAddresses: [process.env.SUPPORT_EMAIL!],
-                            Message: {
-                                Body: {
-                                    Html: {
-                                        Data: data,
+                            const params: SendEmailCommandInput = {
+                                Destination: {
+                                    ToAddresses: [email],
+                                },
+                                ReplyToAddresses: [process.env.SUPPORT_EMAIL!],
+                                Message: {
+                                    Body: {
+                                        Html: {
+                                            Data: data,
+                                        },
+                                    },
+                                    Subject: {
+                                        Data: "Verify your new email address",
                                     },
                                 },
-                                Subject: {
-                                    Data: "Verify your new email address",
-                                },
-                            },
-                            Source: "noreply@zenith.to",
-                        };
+                                Source: "noreply@zenith.to",
+                            };
+        
+                            const sesCommand = new SendEmailCommand(params);
     
-                        const sesCommand = new SendEmailCommand(params);
-
-                        await mailHelper.send(sesCommand);
-
-                        status = "Check your inbox, we just sent you an email with the instructions to verify your new email address.";
-                    
-                        ok = true;
+                            await mailHelper.send(sesCommand);
+    
+                            status = "Check your inbox, we just sent you an email with the instructions to verify your new email address.";
+                        
+                            ok = true;
+                        }
+                    } else {
+                        status = "Can't find the user.";
                     }
-                } else {
-                    status = "Can't find the user.";
+                } catch (error) {
+                    logger.error(error);
+    
+                    if (error.code === "23505") {
+                        status = "A user using this email address already exists.";
+                    } else {
+                        status = "An error has occurred. Please try again later to edit your email address.";
+                    }
                 }
-            } catch (error) {
-                logger.error(error);
-
-                if (error.code === "23505") {
-                    status = "A user using this email address already exists.";
-                } else {
-                    status = "An error has occurred. Please try again later to edit your email address.";
-                }
+                
             }
-            
         }
 
         return {
@@ -1771,7 +1832,7 @@ export class UserResolver {
     @Mutation(() => UserResponse)
     @UseMiddleware(isAuth)
     async updateGender(
-        @Arg("gender", { nullable: true }) gender: string,
+        @Arg("gender") gender: string,
         @Ctx() { payload }: AuthContext
     ): Promise<UserResponse> {
         let errors = [];
@@ -1795,6 +1856,7 @@ export class UserResolver {
                     await this.userRepository.update(
                         {
                             id: payload.id,
+                            type: Not("organization"),
                         },
                         {
                             gender
@@ -1850,39 +1912,37 @@ export class UserResolver {
         if (!payload) {
             status = "You are not authenticated.";
         } else {
-            let age = processBirthDate(birthDate);
-    
-            if (age < 13) {
-                errors.push({
-                    field: "birthDate",
-                    message: "Users under the age of 13 cannot use the platform",
-                });
-            }
-
             if (errors.length === 0) {
                 try {
-                    await this.userRepository.update(
-                        {
-                            id: payload.id,
-                        },
-                        {
-                            birthDate: {
-                                date: birthDate,
-                                monthAndDayVisibility,
-                                yearVisibility,
-                            },
-                        },
-                    );
-        
-                    status = "Your changes have been saved.";
-                    ok = true;
+                    const user = await this.findUserById(payload.id);
+    
+                    if (user) {
+                        if (user.type !== "organization") {
+                            let age = processBirthDate(birthDate);
+
+                            if (age < 13) {
+                                errors.push({
+                                    field: "birthDate",
+                                    message: "Users under the age of 13 cannot sign up to the platform",
+                                });
+                            }
+                        }
+
+                        user.birthDate.date = birthDate;
+                        user.birthDate.monthAndDayVisibility = monthAndDayVisibility;
+                        user.birthDate.yearVisibility = yearVisibility;
+
+                        await user.save();
+
+                        status = "Your changes have been saved.";
+                        ok = true;
+                    } else {
+                        status = "Can't find this user.";
+                    }
                 } catch (error) {
                     logger.error(error);
 
-                    errors.push({
-                        field: "gender",
-                        message: "An error has occurred. Please try again later to update your birth date",
-                    });
+                    status = "An error has occurred. Please try again later to update your birth date.";
                 }
             }
         }
@@ -1901,7 +1961,13 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
+            logger.warn("Payload not provided.");
+
             return false;
+        }
+
+        if (!sessionId) {
+            logger.warn("Session id not provided.");
         }
 
         try {
@@ -1921,6 +1987,8 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
+            logger.warn("Payload not provided.");
+
             return false;
         }
 
@@ -2991,7 +3059,7 @@ export class UserResolver {
                             status = "You've already submitted a verification request for your account."
                         }
                     } else if (verification && verification.outcome !== null && !verification.verified && verification.createdAt < verification.updatedAt) {
-                        verification.outcome = null;
+                        verification.outcome = "";
                         verification.idUrl = idUrl;
                         verification.documents = documents;
 

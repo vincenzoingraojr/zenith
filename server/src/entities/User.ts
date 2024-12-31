@@ -108,7 +108,7 @@ export class User extends BaseEntity {
 
     @Field(() => String, { nullable: true })
     @Column({ nullable: true })
-    gender: string | null;
+    gender: string;
 
     @Field(() => BirthDate)
     @Column(() => BirthDate)
@@ -315,7 +315,7 @@ export class UserVerification extends BaseEntity {
 
     @Field(() => String, { nullable: true, defaultValue: null })
     @Column({ nullable: true, default: null })
-    outcome: string | null;
+    outcome: string;
 }
 
 @ObjectType()
