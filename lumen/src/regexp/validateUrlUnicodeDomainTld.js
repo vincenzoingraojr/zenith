@@ -1,4 +1,4 @@
-// Copyright 2024 Zenith
+// Copyright 2025 Zenith
 // Licensed under the CC-BY-NC-ND-1.0 License
 
 // Unencoded internationalized domains - this doesn't check for invalid UTF-8 sequences
