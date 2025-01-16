@@ -127,7 +127,7 @@ export class UserResolver {
     }
 
     @Query(() => User, { nullable: true })
-    async findUserById(@Arg("id", () => Int, { nullable: true }) id: number, @Arg("deleted", { nullable: true }) deleted: boolean = false, @Arg("type", { nullable: true }) type: string = "user"): Promise<User | null> {
+    async findUserById(@Arg("id", () => Int, { nullable: true }) id: number, @Arg("deleted", { nullable: true }) deleted: boolean = false): Promise<User | null> {
         if (!id) {
             logger.warn("Id not provided.");
 
@@ -135,7 +135,7 @@ export class UserResolver {
         }
 
         try {
-            const user = await this.userRepository.findOne({ where: { id, type }, withDeleted: deleted });
+            const user = await this.userRepository.findOne({ where: { id }, withDeleted: deleted });
 
             if (!user) {
                 logger.warn(`User with id "${id}" not found.`);
@@ -2812,9 +2812,9 @@ export class UserResolver {
                 return null;
             }
 
-            const organization = await this.findUserById(affiliation.organizationId, false, USER_TYPES.ORGANIZATION);
+            const organization = await this.findUserById(affiliation.organizationId, false);
 
-            if (!organization) {
+            if (!organization || organization.type !== USER_TYPES.ORGANIZATION) {
                 logger.warn(`Organization with id "${affiliation.organizationId}" not found.`);
 
                 return null;
@@ -2840,10 +2840,10 @@ export class UserResolver {
             return null;
         } else {
             try {
-                const organization = await this.findUserById(id, false, USER_TYPES.ORGANIZATION);
+                const organization = await this.findUserById(id, false);
                 const users: User[] = [];
 
-                if (organization) {
+                if (organization && organization.type === USER_TYPES.ORGANIZATION) {
                     const affiliations = await this.affiliationRepository.find({ where: { organizationId: organization.id }, take: limit, skip: offset, order: { createdAt: "DESC" } });
 
                     await Promise.all(
@@ -2888,10 +2888,10 @@ export class UserResolver {
 
         try {
             const user = await this.findUserById(userId);
-            const organization = await this.findUserById(payload.id, false, USER_TYPES.ORGANIZATION);
+            const organization = await this.findUserById(payload.id, false);
             const existingAffiliation = await this.findAffiliationByUserId(userId);
 
-            if (user && organization && !existingAffiliation) {
+            if (user && organization && organization.type === USER_TYPES.ORGANIZATION && !existingAffiliation) {
                 const affiliation = await this.affiliationRepository.create({
                     affiliationId: uuidv4(),
                     organizationId: organization.id,
@@ -3042,7 +3042,7 @@ export class UserResolver {
         }
 
         try {
-            const user = await this.findUserById(id, false, type);
+            const user = await this.findUserById(id, false);
 
             if (!user) {
                 logger.warn(`User with id "${id}" not found.`);

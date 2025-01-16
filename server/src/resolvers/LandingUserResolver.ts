@@ -9,7 +9,7 @@ import { SendEmailCommand, SendEmailCommandInput } from "@aws-sdk/client-ses";
 import mailHelper from "../helpers/mail/mailHelper";
 import { logger } from "../helpers/logger";
 import { isEmail } from "class-validator";
-import { isValidUserInput } from "src/helpers/user/isValidUserInput";
+import { isValidUserInput } from "../helpers/user/isValidUserInput";
 
 @Resolver(LandingUser)
 export class LandingUserResolver {
