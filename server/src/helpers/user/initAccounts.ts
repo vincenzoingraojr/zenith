@@ -4,6 +4,7 @@ import argon2 from "argon2";
 import { v4 as uuidv4 } from "uuid";
 import { encrypt } from "../crypto";
 import { logger } from "../logger";
+import { USER_TYPES } from "./userTypes";
 
 export async function initAccounts() {
     const userRepository = appDataSource.getRepository(User);
@@ -27,13 +28,10 @@ export async function initAccounts() {
                 email: process.env.GENERAL_EMAIL,
                 password: await argon2.hash(process.env.GENERAL_ACCOUNT_PASSWORD!),
                 name: "Zenith",
-                gender: "Non-binary",
                 birthDate: {
                     date: "2025-01-24",
-                    monthAndDayVisibility: "Public",
-                    yearVisibility: "Public",
                 },
-                type: "organization",
+                type: USER_TYPES.ORGANIZATION,
                 secretKey: encriptedGeneralSecretKey,
                 emailVerified: true,
                 userSettings: {
@@ -82,8 +80,6 @@ export async function initAccounts() {
                 gender: "Male",
                 birthDate: {
                     date: "2002-01-24",
-                    monthAndDayVisibility: "Public",
-                    yearVisibility: "Public",
                 },
                 secretKey: encriptedPersonalSecretKey,
                 emailVerified: true,
@@ -132,10 +128,8 @@ export async function initAccounts() {
                 name: "Support",
                 birthDate: {
                     date: "2025-01-24",
-                    monthAndDayVisibility: "Public",
-                    yearVisibility: "Public",
                 },
-                type: "organization",
+                type: USER_TYPES.ORGANIZATION,
                 secretKey: encriptedSupportSecretKey,
                 emailVerified: true,
                 userSettings: {

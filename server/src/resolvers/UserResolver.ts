@@ -37,8 +37,9 @@ import { Article, MediaItem, Post } from "../entities/Post";
 import axios from "axios";
 import { getPresignedUrlForDeleteCommand } from "../helpers/getPresignedUrls";
 import { logger } from "../helpers/logger";
-import { isValidEmailAddress } from "../helpers/mail/isValidEmail";
-import { isValidUUID } from "../helpers/isValidUUID";
+import { isEmail, isJWT, isUUID } from "class-validator";
+import { isValidUserInput } from "../helpers/user/isValidUserInput";
+import { USER_TYPES } from "../helpers/user/userTypes";
 
 @ObjectType()
 export class UserResponse {
@@ -101,15 +102,15 @@ export class UserResolver {
     }
 
     @Query(() => User, { nullable: true })
-    async findUser(@Arg("username", { nullable: true }) username: string, @Arg("deleted", { nullable: true }) deleted?: boolean): Promise<User | null> {
-        if (!username) {
-            logger.warn("Username not provided.");
+    async findUser(@Arg("username") username: string, @Arg("deleted", { nullable: true }) deleted: boolean = false): Promise<User | null> {
+        if (!isValidUserInput(username)) {
+            logger.warn("Invalid username.");
 
             return null;
         }
     
         try {
-            const user = await this.userRepository.findOne({ where: { username }, withDeleted: deleted || false });
+            const user = await this.userRepository.findOne({ where: { username }, withDeleted: deleted });
             
             if (!user) {
                 logger.warn(`User with username "${username}" not found.`);
@@ -126,7 +127,7 @@ export class UserResolver {
     }
 
     @Query(() => User, { nullable: true })
-    async findUserById(@Arg("id", () => Int, { nullable: true }) id: number, @Arg("deleted", { nullable: true }) deleted?: boolean, @Arg("type", { nullable: true }) type?: string): Promise<User | null> {
+    async findUserById(@Arg("id", () => Int, { nullable: true }) id: number, @Arg("deleted", { nullable: true }) deleted: boolean = false, @Arg("type", { nullable: true }) type: string = "user"): Promise<User | null> {
         if (!id) {
             logger.warn("Id not provided.");
 
@@ -134,7 +135,7 @@ export class UserResolver {
         }
 
         try {
-            const user = await this.userRepository.findOne({ where: { id, type: type || "user" }, withDeleted: deleted || false });
+            const user = await this.userRepository.findOne({ where: { id, type }, withDeleted: deleted });
 
             if (!user) {
                 logger.warn(`User with id "${id}" not found.`);
@@ -151,14 +152,8 @@ export class UserResolver {
     }
 
     @Query(() => User, { nullable: true })
-    async findUserByEmail(@Arg("email", { nullable: true }) email: string, @Arg("deleted", { nullable: true }) deleted?: boolean): Promise<User | null> {
-        if (!email) {
-            logger.warn("Email not provided.");
-
-            return null;
-        }
-
-        const valid = isValidEmailAddress(email);
+    async findUserByEmail(@Arg("email") email: string, @Arg("deleted", { nullable: true }) deleted: boolean = false): Promise<User | null> {
+        const valid = isEmail(email);
 
         if (!valid) {
             logger.warn("The provided email address is not valid.");
@@ -279,20 +274,14 @@ export class UserResolver {
 
     @Query(() => Session, { nullable: true })
     @UseMiddleware(isAuth)
-    async findSession(@Arg("sessionId", { nullable: true }) sessionId: string, @Ctx() { payload }: AuthContext): Promise<Session | null> {
-        if (!sessionId) {
-            logger.warn("Session id not provided.");
-
-            return null;
-        }
-
+    async findSession(@Arg("sessionId") sessionId: string, @Ctx() { payload }: AuthContext): Promise<Session | null> {
         if (!payload) {
             logger.warn("Payload not provided.");
 
             return null;
         }
 
-        const validSessionId = isValidUUID(sessionId);
+        const validSessionId = isUUID(sessionId);
 
         if (!validSessionId) {
             logger.warn("Invalid sessionId provided.");
@@ -339,7 +328,7 @@ export class UserResolver {
         let user: User | null = null;
         let errors = [];
 
-        if (!input || input.length === 0) {
+        if (!isValidUserInput(input)) {
             errors.push({
                 field: "input",
                 message: "This field can't be empty",
@@ -347,7 +336,7 @@ export class UserResolver {
         }
 
         try {
-            const isEmailAddress = isValidEmailAddress(input);
+            const isEmailAddress = isEmail(input);
 
             if (isEmailAddress) {
                 user = await this.findUserByEmail(input);
@@ -391,7 +380,7 @@ export class UserResolver {
         let status = "";
         let ok = false;
 
-        if (!input || input.length === 0) {
+        if (!isValidUserInput(input)) {
             errors.push({
                 field: "input",
                 message: "This field can't be empty",
@@ -399,7 +388,7 @@ export class UserResolver {
         }
 
         try {
-            const isEmailAddress = isValidEmailAddress(input);
+            const isEmailAddress = isEmail(input);
 
             if (isEmailAddress) {
                 user = await this.findUserByEmail(input);
@@ -522,31 +511,25 @@ export class UserResolver {
         let errors = [];
         let ok = false;
 
-        if (email === "" || email === null || !isValidEmailAddress(email)) {
+        if (!isEmail(email)) {
             errors.push({
                 field: "email",
                 message: "Invalid email",
             });
         }
-        if (username.includes("@")) {
+        if (!isValidUserInput(username) || username.includes("@")) {
             errors.push({
                 field: "username",
-                message: "The username field cannot contain @",
+                message: "Invalid username",
             });
         }
-        if (username.length <= 2) {
-            errors.push({
-                field: "username",
-                message: "The username lenght must be greater than 2",
-            });
-        }
-        if (password.length <= 2) {
+        if (!isValidUserInput(password) || password.length <= 2) {
             errors.push({
                 field: "password",
                 message: "The password lenght must be greater than 2",
             });
         }
-        if (name === "" || name === null) {
+        if (!isValidUserInput(name)) {
             errors.push({
                 field: "name",
                 message: "The name field cannot be empty",
@@ -599,11 +582,8 @@ export class UserResolver {
                     gender,
                     birthDate: {
                         date: birthDate,
-                        monthAndDayVisibility: "Public",
-                        yearVisibility: "Public",
                     },
                     secretKey: encriptedSecretKey,
-                    emailVerified: false,
                 }).save();
 
                 const token = createAccessToken(user);
@@ -652,8 +632,15 @@ export class UserResolver {
         let ok = false;
         let user: User | null = null;
 
+        if (!isValidUserInput(input)) {
+            errors.push({
+                field: "input",
+                message: "This field can't be empty",
+            });
+        }
+
         try {
-            const isEmailAddress = isValidEmailAddress(input);
+            const isEmailAddress = isEmail(input);
 
             if (isEmailAddress) {
                 user = await this.findUserByEmail(input, true);
@@ -669,7 +656,9 @@ export class UserResolver {
                         field: "password",
                         message: "Incorrect password",
                     });
-                } else {
+                }
+                
+                if (errors.length === 0) {
                     await this.userRepository.restore({ id: user.id });
 
                     status = "Your account has been restored. Now you can log in.";
@@ -825,18 +814,20 @@ export class UserResolver {
         let status;
         let ok = false;
         let me: User | null = null;
-        
-        if (!payload) {
-            status = "You're not authenticated.";
-        }
 
         try {
             if (payload) {
                 me = await this.findUserById(payload.id);
-            } else if (isValidEmailAddress(input)) {
-                me = await this.findUserByEmail(input);
             } else {
-                me = await this.findUser(input);
+                if (isValidUserInput(input)) {
+                    if (isEmail(input)) {
+                        me = await this.findUserByEmail(input);
+                    } else {
+                        me = await this.findUser(input);
+                    }
+                } else {
+                    status = "Invalid input.";
+                }
             }
 
             if (me) {
@@ -898,13 +889,13 @@ export class UserResolver {
     @Mutation(() => Boolean)
     @UseMiddleware(isAuth)
     async resendOTP(
-        @Arg("input", { nullable: true }) input: string,
-        @Arg("password", { nullable: true }) password: string,
+        @Arg("input") input: string,
+        @Arg("password") password: string,
         @Ctx() { payload }: AuthContext,
     ) {
         let me: User | null = null;
 
-        if (!input && !payload) {
+        if (!isValidUserInput(input) && !payload) {
             logger.warn("Bad request.");
 
             return false;
@@ -913,10 +904,16 @@ export class UserResolver {
         try {
             if (payload) {
                 me = await this.findUserById(payload.id);
-            } else if (isValidEmailAddress(input)) {
-                me = await this.findUserByEmail(input);
             } else {
-                me = await this.findUser(input);
+                if (isValidUserInput(input)) {
+                    if (isEmail(input)) {
+                        me = await this.findUserByEmail(input);
+                    } else {
+                        me = await this.findUser(input);
+                    }
+                } else {
+                    logger.warn("Invalid input.");
+                }
             }
 
             if (me) {
@@ -1004,26 +1001,28 @@ export class UserResolver {
         let status = "";
         let ok = false;
 
-        if (!token) {
-            logger.warn("Token not provided.");
-        }
-
         try {
-            const payload: any = verify(
-                token,
-                process.env.ACCESS_TOKEN_SECRET!
-            );
-            await this.userRepository.update(
-                {
-                    id: payload.id,
-                },
-                {
-                    emailVerified: true,
-                }
-            );
-            status = "Your email address is now verified.";
+            if (isJWT(token)) {
+                const payload: any = verify(
+                    token,
+                    process.env.ACCESS_TOKEN_SECRET!
+                );
+                await this.userRepository.update(
+                    {
+                        id: payload.id,
+                    },
+                    {
+                        emailVerified: true,
+                    }
+                );
+                status = "Your email address is now verified.";
+    
+                ok = true;
+            } else {
+                logger.warn("Invalid token.");
 
-            ok = true;
+                status = "Invalid token.";
+            }
         } catch (error) {
             logger.error(error);
 
@@ -1046,7 +1045,7 @@ export class UserResolver {
         let status = "";
         let ok = false;
 
-        if (email === "" || email === null || !isValidEmailAddress(email)) {
+        if (!isEmail(email)) {
             errors.push({
                 field: "email",
                 message: "Invalid email",
@@ -1127,18 +1126,14 @@ export class UserResolver {
         let errors = [];
         let ok = false;
 
-        if (!token) {
-            logger.warn("Token not provided.");
-        }
-
-        if (password.length <= 2) {
+        if (!isValidUserInput(password) || password.length <= 2) {
             errors.push({
                 field: "password",
                 message: "The password lenght must be greater than 2",
             });
         }
 
-        if (confirmPassword.length <= 2) {
+        if (!isValidUserInput(confirmPassword) || confirmPassword.length <= 2) {
             errors.push({
                 field: "confirmPassword",
                 message:
@@ -1163,22 +1158,28 @@ export class UserResolver {
 
         if (errors.length === 0) {
             try {
-                const payload: any = verify(
-                    token,
-                    process.env.ACCESS_TOKEN_SECRET!
-                );
-                await this.userRepository.update(
-                    {
-                        id: payload.id,
-                    },
-                    {
-                        password: await argon2.hash(password),
-                    }
-                );
+                if (isJWT(token)) {
+                    const payload: any = verify(
+                        token,
+                        process.env.ACCESS_TOKEN_SECRET!
+                    );
+                    await this.userRepository.update(
+                        {
+                            id: payload.id,
+                        },
+                        {
+                            password: await argon2.hash(password),
+                        }
+                    );
+    
+                    status = "The password has been changed, now you can log in.";
+    
+                    ok = true;
+                } else {
+                    logger.warn("Invalid token.");
 
-                status = "The password has been changed, now you can log in.";
-
-                ok = true;
+                    status = "Invalid token.";
+                }
             } catch (error) {
                 logger.error(error);
 
@@ -1209,17 +1210,15 @@ export class UserResolver {
         let status = "";
         let ok = false;
 
-        if (name === "" || name === null) {
-            errors.push({
-                field: "name",
-                message: "The name field cannot be empty",
-            });
-        }
-
         if (!payload) {
             status = "You are not authenticated.";
         } else {
-            if (errors.length === 0) {
+            if (!isValidUserInput(name)) {
+                errors.push({
+                    field: "name",
+                    message: "The name field cannot be empty",
+                });
+            } else {
                 try {
                     await this.userRepository.update(
                         {
@@ -1260,12 +1259,18 @@ export class UserResolver {
     @Mutation(() => Follow, { nullable: true })
     @UseMiddleware(isAuth)
     async followUser(
-        @Arg("userId", () => Int) userId: number,
+        @Arg("userId", () => Int, { nullable: true }) userId: number,
         @Arg("origin") origin: string,
         @Ctx() { payload }: AuthContext,
     ): Promise<Follow | null> {
         if (!payload) {
             logger.warn("Payload not provided.");
+
+            return null;
+        }
+
+        if (!userId) {
+            logger.warn("User id not provided.");
 
             return null;
         }
@@ -1477,30 +1482,23 @@ export class UserResolver {
     @Mutation(() => UserResponse)
     @UseMiddleware(isAuth)
     async changeUsername(
-        @Arg("username", { nullable: true }) username: string,
+        @Arg("username") username: string,
         @Ctx() { payload }: AuthContext
     ): Promise<UserResponse> {
         let errors = [];
         let user;
         let status;
         let ok = false;
-
-        if (username.includes("@")) {
-            errors.push({
-                field: "username",
-                message: "The username field cannot contain @",
-            });
-        }
-        if (username.length <= 2) {
-            errors.push({
-                field: "username",
-                message: "The username lenght must be greater than 2",
-            });
-        }
+        
         if (!payload) {
             status = "You're not authenticated.";
         } else {
-            if (errors.length === 0) {
+            if (!isValidUserInput(username) || username.includes("@")) {
+                errors.push({
+                    field: "username",
+                    message: "Invalid username",
+                });
+            } else {
                 try {
                     const existingUserWithUsername = await this.findUser(username);
                     const authenticatedUser = await this.findUserById(payload.id);
@@ -1557,38 +1555,38 @@ export class UserResolver {
         let errors = [];
         let ok = false;
 
-        if (email === "" || email === null || !isValidEmailAddress(email)) {
-            errors.push({
-                field: "email",
-                message: "Invalid email",
-            });
-        }
-        if (confirmEmail === "" || confirmEmail === null || !isValidEmailAddress(confirmEmail)) {
-            errors.push({
-                field: "confirmEmail",
-                message: "Invalid confirmation email",
-            });
-        }
-
-        if (email !== confirmEmail) {
-            errors.push(
-                {
-                    field: "email",
-                    message: "The two email addresses do not match",
-                },
-                {
-                    field: "confirmEmail",
-                    message: "The two email addresses do not match",
-                }
-            );
-        }
-
         let status = "";
         let user;
 
         if (!payload) {
             status = "You are not authenticated.";
         } else {
+            if (!isEmail(email)) {
+                errors.push({
+                    field: "email",
+                    message: "Invalid email",
+                });
+            }
+            if (!isEmail(confirmEmail)) {
+                errors.push({
+                    field: "confirmEmail",
+                    message: "Invalid confirmation email",
+                });
+            }
+    
+            if (email !== confirmEmail) {
+                errors.push(
+                    {
+                        field: "email",
+                        message: "The two email addresses do not match",
+                    },
+                    {
+                        field: "confirmEmail",
+                        message: "The two email addresses do not match",
+                    }
+                );
+            }
+
             if (errors.length === 0) {
                 try {
                     user = await this.findUserById(payload.id);
@@ -1746,46 +1744,46 @@ export class UserResolver {
         let errors = [];
         let ok = false;
 
-        if (currentPassword.length <= 2) {
-            errors.push({
-                field: "currentPassword",
-                message: "The current password lenght must be greater than 2",
-            });
-        }
-
-        if (password.length <= 2) {
-            errors.push({
-                field: "password",
-                message: "The password lenght must be greater than 2",
-            });
-        }
-
-        if (confirmPassword.length <= 2) {
-            errors.push({
-                field: "confirmPassword",
-                message:
-                    "The confirmation password lenght must be greater than 2",
-            });
-        }
-
-        if (password !== confirmPassword) {
-            errors.push(
-                {
-                    field: "password",
-                    message: "The two passwords do not match",
-                },
-                {
-                    field: "confirmPassword",
-                    message: "The two passwords do not match",
-                }
-            );
-        }
-
         let status = "";
 
         if (!payload) {
             status = "You are not authenticated.";
         } else {
+            if (!isValidUserInput(currentPassword) || currentPassword.length <= 2) {
+                errors.push({
+                    field: "currentPassword",
+                    message: "The current password lenght must be greater than 2",
+                });
+            }
+    
+            if (!isValidUserInput(password) || password.length <= 2) {
+                errors.push({
+                    field: "password",
+                    message: "The password lenght must be greater than 2",
+                });
+            }
+    
+            if (!isValidUserInput(confirmPassword) || confirmPassword.length <= 2) {
+                errors.push({
+                    field: "confirmPassword",
+                    message:
+                        "The confirmation password lenght must be greater than 2",
+                });
+            }
+    
+            if (password !== confirmPassword) {
+                errors.push(
+                    {
+                        field: "password",
+                        message: "The two passwords do not match",
+                    },
+                    {
+                        field: "confirmPassword",
+                        message: "The two passwords do not match",
+                    }
+                );
+            }
+            
             try {
                 const user = await this.findUserById(payload.id);
         
@@ -1839,19 +1837,18 @@ export class UserResolver {
         let status;
         let ok = false;
 
-        if (gender === "Gender" || gender === "") {
-            errors.push({
-                field: "gender",
-                message: "The gender field cannot take this value",
-            });
-        }
         if (!payload) {
             errors.push({
                 field: "gender",
                 message: "You are not authenticated",
             });
         } else {
-            if (errors.length === 0) {
+            if (gender === "Gender" || gender === "") {
+                errors.push({
+                    field: "gender",
+                    message: "The gender field cannot take this value",
+                });
+            } else {
                 try {
                     await this.userRepository.update(
                         {
@@ -1895,23 +1892,23 @@ export class UserResolver {
         let status;
         let ok = false;
 
-        if (monthAndDayVisibility === "") {
-            errors.push({
-                field: "monthAndDayVisibility",
-                message: "The month and day visibility field cannot take this value",
-            });
-        }
-
-        if (yearVisibility === "") {
-            errors.push({
-                field: "yearVisibility",
-                message: "The year visibility field cannot take this value",
-            });
-        }
-
         if (!payload) {
             status = "You are not authenticated.";
         } else {
+            if (monthAndDayVisibility === "") {
+                errors.push({
+                    field: "monthAndDayVisibility",
+                    message: "The month and day visibility field cannot take this value",
+                });
+            }
+    
+            if (yearVisibility === "") {
+                errors.push({
+                    field: "yearVisibility",
+                    message: "The year visibility field cannot take this value",
+                });
+            }
+
             if (errors.length === 0) {
                 try {
                     const user = await this.findUserById(payload.id);
@@ -1966,8 +1963,10 @@ export class UserResolver {
             return false;
         }
 
-        if (!sessionId) {
+        if (!isUUID(sessionId)) {
             logger.warn("Session id not provided.");
+
+            return false;
         }
 
         try {
@@ -2013,17 +2012,15 @@ export class UserResolver {
         let status;
         let ok = false;
 
-        if (incomingMessages === "") {
-            errors.push({
-                field: "incomingMessages",
-                message: "You cannot set the incoming messages field to this value",
-            });
-        }
-
         if (!payload) {
             status = "You are not authenticated.";
         } else {
-            if (errors.length === 0) {
+            if (incomingMessages === "") {
+                errors.push({
+                    field: "incomingMessages",
+                    message: "You cannot set the incoming messages field to this value",
+                });
+            } else {
                 try {
                     await this.userRepository.update(
                         {
@@ -2141,6 +2138,8 @@ export class UserResolver {
         @Ctx() { res, payload }: AuthContext
     ) {
         if (!payload) {
+            logger.warn("Payload not provided.");
+
             return false;
         }
 
@@ -2171,6 +2170,8 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext
     ): Promise<Boolean | null> {
         if (!payload) {
+            logger.warn("Payload not provided.");
+
             return null;
         } else {
             try {
@@ -2199,6 +2200,8 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext
     ): Promise<Boolean | null> {
         if (!payload) {
+            logger.warn("Payload not provided.");
+
             return null;
         } else {
             try {
@@ -2228,7 +2231,9 @@ export class UserResolver {
         @Arg("origin") origin: string,
         @Ctx() { payload }: AuthContext
     ): Promise<Block | null> {
-        if (!payload) {
+        if (!payload || !userId) {
+            logger.warn("Bad request.");
+
             return null;
         } else {
             try {
@@ -2284,7 +2289,9 @@ export class UserResolver {
         @Arg("blockedId", () => Int) blockedId: number,
         @Ctx() { payload }: AuthContext
     ) {
-        if (!payload) {
+        if (!payload || !blockedId) {
+            logger.warn("Bad request.");
+
             return false;
         }
 
@@ -2307,6 +2314,8 @@ export class UserResolver {
         @Arg("offset", () => Int, { nullable: true }) offset: number
     ): Promise<User[] | null> {
         if (!payload) {
+            logger.warn("Payload not provided.");
+
             return null;
         } else {
             try {
@@ -2350,6 +2359,12 @@ export class UserResolver {
             return false;
         }
 
+        if (!id) {
+            logger.warn("User id not provided.");
+
+            return false;
+        }
+
         try {
             const block = await this.blockRepository.findOne({ where: { blockedId: id, userId: payload.id } });
 
@@ -2373,6 +2388,12 @@ export class UserResolver {
     ) {
         if (!payload) {
             logger.warn("Payload not provided.");
+
+            return false;
+        }
+
+        if (!id) {
+            logger.warn("User id not provided.");
 
             return false;
         }
@@ -2426,6 +2447,8 @@ export class UserResolver {
     @Query(() => [UserDeviceToken], { nullable: true })
     async findUserDeviceTokensByUserId(@Arg("userId", () => Int, { nullable: true }) userId: number): Promise<UserDeviceToken[] | null> {
         if (!userId) {
+            logger.warn("User id not provided.");
+
             return null;
         }
 
@@ -2441,8 +2464,8 @@ export class UserResolver {
     }
 
     @Query(() => UserDeviceToken, { nullable: true })
-    async findUserDeviceTokenByToken(@Arg("token", { nullable: true }) token: string, @Arg("userId", () => Int, { nullable: true }) userId: number): Promise<UserDeviceToken | null> {
-        if (!token) {
+    async findUserDeviceTokenByToken(@Arg("token") token: string, @Arg("userId", () => Int, { nullable: true }) userId: number): Promise<UserDeviceToken | null> {
+        if (token.length === 0) {
             logger.warn("Token not provided.");
 
             return null;
@@ -2472,8 +2495,8 @@ export class UserResolver {
     }
 
     @Query(() => UserDeviceToken, { nullable: true })
-    async findUserDeviceTokenBySessionId(@Arg("sessionId", { nullable: true }) sessionId: string, @Arg("userId", () => Int, { nullable: true }) userId: number): Promise<UserDeviceToken | null> {
-        if (!sessionId) {
+    async findUserDeviceTokenBySessionId(@Arg("sessionId") sessionId: string, @Arg("userId", () => Int, { nullable: true }) userId: number): Promise<UserDeviceToken | null> {
+        if (!isUUID(sessionId)) {
             logger.warn("Session id not provided.");
 
             return null;
@@ -2505,7 +2528,7 @@ export class UserResolver {
     @Mutation(() => Boolean)
     @UseMiddleware(isAuth)
     async createDeviceToken(
-        @Arg("token", { nullable: true }) token: string,
+        @Arg("token") token: string,
         @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
@@ -2521,7 +2544,7 @@ export class UserResolver {
                 await this.deleteDeviceToken(existingToken.id, { payload } as AuthContext);
             }
 
-            if (token && token.length > 0) {
+            if (token.length > 0) {
                 await this.userDeviceTokenRepository.create({
                     token,
                     userId: payload.id,
@@ -2549,6 +2572,12 @@ export class UserResolver {
     ) {
         if (!payload) {
             logger.warn("Payload not provided.");
+
+            return false;
+        }
+
+        if (!id) {
+            logger.warn("Id not provided.");
 
             return false;
         }
@@ -2599,42 +2628,36 @@ export class UserResolver {
         let errors = [];
         let ok = false;
 
-        if (email === "" || email === null || !isValidEmailAddress(email)) {
-            errors.push({
-                field: "email",
-                message: "Invalid email",
-            });
-        }
-        if (username.includes("@")) {
-            errors.push({
-                field: "username",
-                message: "The username field cannot contain @",
-            });
-        }
-        if (username.length <= 2) {
-            errors.push({
-                field: "username",
-                message: "The username lenght must be greater than 2",
-            });
-        }
-        if (password.length <= 2) {
-            errors.push({
-                field: "password",
-                message: "The password lenght must be greater than 2",
-            });
-        }
-        if (name === "" || name === null) {
-            errors.push({
-                field: "name",
-                message: "The name field cannot be empty",
-            });
-        }
-
         let status;
 
         if (!payload) {
             status = "You're not authenticated.";
         } else {
+            if (!isEmail(email)) {
+                errors.push({
+                    field: "email",
+                    message: "Invalid email",
+                });
+            }
+            if (!isValidUserInput(username) || username.includes("@")) {
+                errors.push({
+                    field: "username",
+                    message: "Invalid username",
+                });
+            }
+            if (!isValidUserInput(password) || password.length <= 2) {
+                errors.push({
+                    field: "password",
+                    message: "The password lenght must be greater than 2",
+                });
+            }
+            if (!isValidUserInput(name)) {
+                errors.push({
+                    field: "name",
+                    message: "The name field cannot be empty",
+                });
+            }
+
             try {
                 const hashedPassword = await argon2.hash(password);
                 const encriptedSecretKey = encrypt(uuidv4());
@@ -2643,7 +2666,7 @@ export class UserResolver {
                     where: {
                         email,
                         username,
-                        type: "organization"
+                        type: USER_TYPES.ORGANIZATION
                     },
                     withDeleted: true,
                 });
@@ -2662,14 +2685,11 @@ export class UserResolver {
                         email,
                         password: hashedPassword,
                         name,
-                        type: "organization",
+                        type: USER_TYPES.ORGANIZATION,
                         birthDate: {
                             date: birthDate,
-                            monthAndDayVisibility: "Public",
-                            yearVisibility: "Public",
                         },
                         secretKey: encriptedSecretKey,
-                        emailVerified: false,
                     }).save();
 
                     await this.affiliationRepository.create({
@@ -2701,7 +2721,7 @@ export class UserResolver {
                 } else if (error.detail.includes("email") && error.code === "23505") {
                     errors.push({
                         field: "email",
-                        message: "An organization using this email already exists",
+                        message: "A user using this email already exists",
                     });
                 } else {
                     status = "An unknown error has occurred, please try again later.";
@@ -2718,8 +2738,8 @@ export class UserResolver {
 
     @Query(() => Affiliation, { nullable: true })
     @UseMiddleware(isAuth)
-    async findAffiliationRequest(@Arg("affiliationId", { nullable: true }) affiliationId: string, @Ctx() { payload }: AuthContext): Promise<Affiliation | null> {
-        if (!affiliationId) {
+    async findAffiliationRequest(@Arg("affiliationId") affiliationId: string, @Ctx() { payload }: AuthContext): Promise<Affiliation | null> {
+        if (!isUUID(affiliationId)) {
             logger.warn("Affiliation id not provided.");
 
             return null;
@@ -2760,7 +2780,7 @@ export class UserResolver {
             const affiliation = await this.affiliationRepository.findOne({ where: { userId } });
             
             if (!affiliation) {
-                logger.warn(`User with id "${userId}" not found.`);
+                logger.warn(`Affiliation of user with id "${userId}" not found.`);
 
                 return null;
             }
@@ -2787,12 +2807,12 @@ export class UserResolver {
             const affiliation = await this.findAffiliationByUserId(id);
 
             if (!affiliation) {
-                logger.warn(`User with id "${id}" not found.`);
+                logger.warn(`Affiliation of user with id "${id}" not found.`);
 
                 return null;
             }
 
-            const organization = await this.findUserById(affiliation.organizationId, false, "organization");
+            const organization = await this.findUserById(affiliation.organizationId, false, USER_TYPES.ORGANIZATION);
 
             if (!organization) {
                 logger.warn(`Organization with id "${affiliation.organizationId}" not found.`);
@@ -2815,10 +2835,12 @@ export class UserResolver {
         @Arg("offset", () => Int, { nullable: true }) offset: number
     ): Promise<User[] | null> {
         if (!id) {
+            logger.warn("User id not provided.");
+
             return null;
         } else {
             try {
-                const organization = await this.findUserById(id, false, "organization");
+                const organization = await this.findUserById(id, false, USER_TYPES.ORGANIZATION);
                 const users: User[] = [];
 
                 if (organization) {
@@ -2853,16 +2875,20 @@ export class UserResolver {
         @Ctx() { payload }: AuthContext,
     ): Promise<Affiliation | null> {
         if (!payload) {
+            logger.warn("Payload not provided.");
+
             return null;
         }
 
         if (!userId) {
+            logger.warn("User id not provided.");
+
             return null;
         }
 
         try {
             const user = await this.findUserById(userId);
-            const organization = await this.findUserById(payload.id, false, "organization");
+            const organization = await this.findUserById(payload.id, false, USER_TYPES.ORGANIZATION);
             const existingAffiliation = await this.findAffiliationByUserId(userId);
 
             if (user && organization && !existingAffiliation) {
@@ -2908,15 +2934,19 @@ export class UserResolver {
     @Mutation(() => Affiliation, { nullable: true })
     @UseMiddleware(isAuth)
     async manageAffiliation(
-        @Arg("affiliationId", { nullable: true }) affiliationId: string,
+        @Arg("affiliationId") affiliationId: string,
         @Arg("accepted", { nullable: true }) accepted: boolean,
         @Ctx() { payload }: AuthContext,
     ): Promise<Affiliation | null> {
         if (!payload) {
+            logger.warn("Payload not provided.");
+
             return null;
         }
 
-        if (!affiliationId) {
+        if (!isUUID(affiliationId)) {
+            logger.warn("Affiliation id not provided.");
+
             return null;
         }
 
@@ -2947,14 +2977,18 @@ export class UserResolver {
     @Mutation(() => Boolean)
     @UseMiddleware(isAuth)
     async removeAffiliation(
-        @Arg("affiliationId", { nullable: true }) affiliationId: string,
+        @Arg("affiliationId") affiliationId: string,
         @Ctx() { payload }: AuthContext,
     ) {
         if (!payload) {
+            logger.warn("Payload not provided.");
+
             return false;
         }
 
-        if (!affiliationId) {
+        if (!isUUID(affiliationId)) {
+            logger.warn("Affiliation id not provided.");
+
             return false;
         }
 
@@ -2993,7 +3027,7 @@ export class UserResolver {
     @Query(() => UserVerification, { nullable: true })
     async findVerificationRequest(
         @Arg("id", () => Int, { nullable: true }) id: number,
-        @Arg("type", { nullable: true }) type: string,
+        @Arg("type") type: string,
     ): Promise<UserVerification | null> {
         if (!id) {
             logger.warn("User id not provided.");
@@ -3001,7 +3035,7 @@ export class UserResolver {
             return null;
         }
 
-        if (!type) {
+        if (type.length === 0) {
             logger.warn("User type not provided.");
 
             return null;

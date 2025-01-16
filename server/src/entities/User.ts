@@ -14,26 +14,26 @@ import { Post, Article } from "./Post";
 
 @ObjectType()
 export class Profile {
-    @Field(() => String, { defaultValue: "" })
+    @Field(() => String)
     @Column({ default: "" })
     profilePicture: string;
 
-    @Field(() => String, { defaultValue: "" })
+    @Field(() => String)
     @Column({ default: "" })
     profileBanner: string;
 
-    @Field(() => String, { defaultValue: "" })
+    @Field(() => String)
     @Column({ default: "" })
     bio: string;
 
-    @Field(() => String, { defaultValue: "" })
+    @Field(() => String)
     @Column({ default: "" })
     website: string;
 }
 
 @ObjectType()
 export class Settings {
-    @Field(() => String, { defaultValue: "everyone" })
+    @Field(() => String)
     @Column({ default: "everyone" })
     incomingMessages: string;
 
@@ -44,36 +44,36 @@ export class Settings {
 
 @ObjectType()
 export class SearchSettings {
-    @Field(() => Boolean, { defaultValue: true })
+    @Field(() => Boolean)
     @Column({ default: true })
     hideSensitiveContent: boolean;
 
-    @Field(() => Boolean, { defaultValue: true })
+    @Field(() => Boolean)
     @Column({ default: true })
     hideBlockedAccounts: boolean;
 }
 
 @ObjectType()
 export class BirthDate {
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     date: Date;
 
-    @Field(() => String, { defaultValue: "public" })
-    @Column({ default: "public" })
+    @Field(() => String)
+    @Column({ default: "Public" })
     monthAndDayVisibility: string;
 
-    @Field(() => String, { defaultValue: "public" })
-    @Column({ default: "public" })
+    @Field(() => String)
+    @Column({ default: "Public" })
     yearVisibility: string;
 }
 
 @ObjectType()
 export class SecretKey {
-    @Column({ type: "varchar", nullable: false })
+    @Column({ type: "varchar" })
     iv: string;
 
-    @Column({ type: "varchar", unique: true, nullable: false })
+    @Column({ type: "varchar", unique: true })
     encryptedData: string;
 }
 
@@ -84,30 +84,30 @@ export class User extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     name: string;
 
-    @Field(() => String, { nullable: false })
-    @Column({ unique: true, nullable: false })
+    @Field(() => String)
+    @Column({ unique: true })
     username: string;
 
-    @Field(() => String, { nullable: false })
-    @Column({ unique: true, nullable: false })
+    @Field(() => String)
+    @Column({ unique: true })
     email: string;
 
-    @Field(() => String, { nullable: false, defaultValue: "user" })
-    @Column({ nullable: false, default: "user" })
+    @Field(() => String)
+    @Column({ default: "user" })
     type: string;
 
-    @Column({ nullable: false })
+    @Column()
     password: string;
 
     @Column(() => SecretKey)
     secretKey: SecretKey;
 
-    @Field(() => String, { nullable: true })
-    @Column({ nullable: true })
+    @Field(() => String)
+    @Column({ default: "Non-binary" })
     gender: string;
 
     @Field(() => BirthDate)
@@ -115,7 +115,7 @@ export class User extends BaseEntity {
     birthDate: BirthDate;
 
     @Field(() => Boolean)
-    @Column()
+    @Column({ default: false })
     emailVerified: boolean;
 
     @Field(() => Profile)
@@ -150,12 +150,12 @@ export class User extends BaseEntity {
     @Column(() => SearchSettings)
     searchSettings: SearchSettings;
 
-    @Field(() => [Int], { nullable: false, defaultValue: [] })
-    @Column({ type: "int", array: true, nullable: false, default: [] })
+    @Field(() => [Int])
+    @Column({ type: "int", array: true, default: [] })
     topicsIds: number[];
 
-    @Field(() => String, { nullable: false })
-    @CreateDateColumn({ nullable: false })
+    @Field(() => String)
+    @CreateDateColumn()
     createdAt: Date;
 
     @DeleteDateColumn()
@@ -169,20 +169,20 @@ export class Follow extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Field(() => User, { nullable: false })
-    @ManyToOne(() => User, (user) => user.following, { nullable: false })
+    @Field(() => User)
+    @ManyToOne(() => User, (user) => user.following)
     follower: User;
 
-    @Field(() => User, { nullable: false })
-    @ManyToOne(() => User, (user) => user.followers, { nullable: false })
+    @Field(() => User)
+    @ManyToOne(() => User, (user) => user.followers)
     user: User;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     origin: string;
 
-    @Field(() => String, { nullable: false })
-    @CreateDateColumn({ nullable: false })
+    @Field(() => String)
+    @CreateDateColumn()
     createdAt: Date;
 }
 
@@ -193,20 +193,20 @@ export class Block extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Field(() => Int, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => Int)
+    @Column()
     blockedId: number;
 
-    @Field(() => Int, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => Int)
+    @Column()
     userId: number;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     origin: string;
 
-    @Field(() => String, { nullable: false })
-    @CreateDateColumn({ nullable: false })
+    @Field(() => String)
+    @CreateDateColumn()
     createdAt: Date;
 }
 
@@ -217,36 +217,36 @@ export class Session extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Field(() => User, { nullable: false })
-    @ManyToOne(() => User, (user) => user.sessions, { nullable: false })
+    @Field(() => User)
+    @ManyToOne(() => User, (user) => user.sessions)
     user: User;
 
-    @Field(() => String, { nullable: false })
-    @Column({ type: "uuid", unique: true, nullable: false })
+    @Field(() => String)
+    @Column({ type: "uuid", unique: true })
     sessionId: string;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     clientOS: string;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     clientType: string;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     clientName: string;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     deviceLocation: string;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     country: string;
 
-    @Field(() => String, { nullable: false })
-    @CreateDateColumn({ nullable: false })
+    @Field(() => String)
+    @CreateDateColumn()
     creationDate: Date;
 }
 
@@ -257,20 +257,20 @@ export class UserDeviceToken extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     token: string;
 
-    @Field(() => Int, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => Int)
+    @Column()
     userId: number;
 
-    @Field(() => String, { nullable: false })
-    @Column({ type: "uuid", unique: true, nullable: false })
+    @Field(() => String)
+    @Column({ type: "uuid", unique: true })
     sessionId: string;
 
-    @Field(() => String, { nullable: false })
-    @CreateDateColumn({ nullable: false })
+    @Field(() => String)
+    @CreateDateColumn()
     createdAt: Date;
 }
 
@@ -281,71 +281,71 @@ export class UserVerification extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Field(() => Int, { nullable: false })
-    @Column({ unique: true, nullable: false })
+    @Field(() => Int)
+    @Column({ unique: true })
     userId: number;
 
-    @Field(() => String, { nullable: false })
-    @CreateDateColumn({ nullable: false })
+    @Field(() => String)
+    @CreateDateColumn()
     createdAt: Date;
 
-    @Field(() => String, { nullable: false })
-    @UpdateDateColumn({ nullable: false })
+    @Field(() => String)
+    @UpdateDateColumn()
     updatedAt: Date;
 
     @Field(() => Boolean)
-    @Column()
+    @Column({ default: false })
     verified: boolean;
 
-    @Field(() => String, { nullable: false, defaultValue: "user" })
-    @Column({ nullable: false, default: "user" })
+    @Field(() => String)
+    @Column({ default: "user" })
     type: string;
 
     @Field(() => String, { nullable: true, defaultValue: null })
     @Column({ nullable: true, default: null })
     verifiedSince: Date;
 
-    @Field(() => String, { nullable: true, defaultValue: null })
-    @Column({ nullable: true, default: null })
+    @Field(() => String)
+    @Column({ default: "" })
     idUrl: string;
 
-    @Field(() => [String], { nullable: true, defaultValue: [] })
-    @Column({ type: "text", array: true, nullable: true, default: [] })
+    @Field(() => [String])
+    @Column({ type: "text", array: true, default: [] })
     documents: string[];
 
-    @Field(() => String, { nullable: true, defaultValue: null })
-    @Column({ nullable: true, default: null })
+    @Field(() => String)
+    @Column({ default: "" })
     outcome: string;
 }
 
 @ObjectType()
-@Entity("block-actions")
+@Entity("affiliations")
 export class Affiliation extends BaseEntity {
     @Field(() => Int)
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Field(() => String, { nullable: false })
-    @Column({ type: "uuid", unique: true, nullable: false })
+    @Field(() => String)
+    @Column({ type: "uuid", unique: true })
     affiliationId: string;
 
-    @Field(() => Int, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => Int)
+    @Column()
     organizationId: number;
 
-    @Field(() => Int, { nullable: false })
-    @Column({ unique: true, nullable: false })
+    @Field(() => Int)
+    @Column({ unique: true })
     userId: number;
 
-    @Field(() => Boolean, { defaultValue: false })
+    @Field(() => Boolean)
     @Column({ default: false })
     status: boolean;
 
-    @Field(() => String, { nullable: false })
-    @CreateDateColumn({ nullable: false })
+    @Field(() => String)
+    @CreateDateColumn()
     createdAt: Date;
 
-    @Field(() => String, { nullable: false })
-    @UpdateDateColumn({ nullable: false })
+    @Field(() => String)
+    @UpdateDateColumn()
     updatedAt: Date;
 }

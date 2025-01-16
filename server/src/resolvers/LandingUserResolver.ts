@@ -7,8 +7,9 @@ import path from "path";
 import appDataSource from "../dataSource";
 import { SendEmailCommand, SendEmailCommandInput } from "@aws-sdk/client-ses";
 import mailHelper from "../helpers/mail/mailHelper";
-import { isValidEmailAddress } from "../helpers/mail/isValidEmail";
 import { logger } from "../helpers/logger";
+import { isEmail } from "class-validator";
+import { isValidUserInput } from "src/helpers/user/isValidUserInput";
 
 @Resolver(LandingUser)
 export class LandingUserResolver {
@@ -38,25 +39,19 @@ export class LandingUserResolver {
         let errors = [];
         let ok = false;
 
-        if (email === "" || email === null || !isValidEmailAddress(email)) {
+        if (!isEmail(email)) {
             errors.push({
                 field: "email",
                 message: "Invalid email",
             });
         }
-        if (username.includes("@")) {
+        if (!isValidUserInput(username) || username.includes("@")) {
             errors.push({
                 field: "username",
-                message: "The username field cannot contain @",
+                message: "Invalid username",
             });
         }
-        if (username.length <= 2) {
-            errors.push({
-                field: "username",
-                message: "The username lenght must be greater than 2",
-            });
-        }
-        if (name == "" || name == null) {
+        if (!isValidUserInput(name)) {
             errors.push({
                 field: "name",
                 message: "The name field cannot be empty",
@@ -69,14 +64,17 @@ export class LandingUserResolver {
             const existingUserWithUsername = await this.userResolver.findUser(username);
             const existingUserWithEmail = await this.userResolver.findUserByEmail(email);
 
-            if (existingUserWithEmail) {
+            const existingLandingUserWithEmail = await this.landingUserRepository.findOne({ where: { email } });
+            const existingLandingUserWithUsername = await this.landingUserRepository.findOne({ where: { username } });
+
+            if (existingUserWithEmail || existingLandingUserWithEmail) {
                 errors.push({
                     field: "email",
                     message: "A user using this email already exists",
                 });
             }
 
-            if (existingUserWithUsername) {
+            if (existingUserWithUsername || existingLandingUserWithUsername) {
                 errors.push({
                     field: "username",
                     message: "Username already taken",
