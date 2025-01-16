@@ -14,44 +14,44 @@ export class Report extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Field(() => String, { nullable: false })
-    @Column({ type: "uuid", unique: true, nullable: false })
+    @Field(() => String)
+    @Column({ type: "uuid", unique: true })
     reportId: string;
 
-    @Field(() => Int, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => Int)
+    @Column()
     authorId: number;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     contentId: string;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     contentType: string;
 
-    @Field(() => Int, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => Int)
+    @Column()
     categoryId: number;
 
-    @Field(() => Int, { nullable: true })
-    @Column({ nullable: true })
+    @Field(() => Int, { nullable: true, defaultValue: null })
+    @Column({ nullable: true, default: null })
     subCategoryId: number;
 
     @Field(() => [Int], { nullable: true, defaultValue: [] })
     @Column({ type: "int", array: true, nullable: true, default: [] })
     additionalContentIds: number[];
 
-    @Field(() => String, { nullable: true })
-    @Column({ nullable: true })
+    @Field(() => String, { nullable: true, defaultValue: null })
+    @Column({ nullable: true, default: null })
     additionalContentType: string;
 
-    @Field(() => String, { nullable: false })
-    @CreateDateColumn({ nullable: false })
+    @Field(() => String)
+    @CreateDateColumn()
     createdAt: Date;
 
-    @Field(() => String, { nullable: false })
-    @UpdateDateColumn({ nullable: false })
+    @Field(() => String)
+    @UpdateDateColumn()
     updatedAt: Date;
 
     @Field(() => ReportStatus)
@@ -62,7 +62,7 @@ export class Report extends BaseEntity {
     })
     status: ReportStatus;
 
-    @Field(() => String, { nullable: true })
-    @Column({ nullable: true })
+    @Field(() => String)
+    @Column({ default: "" })
     outcome: string;
 }

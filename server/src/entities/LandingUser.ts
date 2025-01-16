@@ -14,19 +14,19 @@ export class LandingUser extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     name: string;
 
-    @Field(() => String, { nullable: false })
-    @Column({ unique: true, nullable: false })
+    @Field(() => String)
+    @Column({ unique: true })
     username: string;
 
-    @Field(() => String, { nullable: false })
-    @Column({ unique: true, nullable: false })
+    @Field(() => String)
+    @Column({ unique: true })
     email: string;
 
-    @Field(() => String, { nullable: false })
-    @CreateDateColumn({ nullable: false })
+    @Field(() => String)
+    @CreateDateColumn()
     createdAt: Date;
 }

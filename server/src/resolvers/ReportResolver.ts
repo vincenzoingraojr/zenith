@@ -6,6 +6,7 @@ import { Repository } from "typeorm";
 import appDataSource from "../dataSource";
 import { v4 as uuidv4 } from "uuid";
 import { altReportOptions, ReportOption, reportOptions } from "../helpers/reportData";
+import { logger } from "../helpers/logger";
 
 @ObjectType()
 export class ReportResponse {
@@ -14,6 +15,9 @@ export class ReportResponse {
 
     @Field(() => String, { nullable: true })
     status?: string;
+
+    @Field(() => Boolean)
+    ok: boolean;
 }
 
 @Resolver(Report)
@@ -36,38 +40,45 @@ export class ReportResolver {
         @Arg("additionalContentType", { nullable: true }) additionalContentType?: string,
     ): Promise<ReportResponse> {
         let status = "";
+        let ok = false;
         
         if (!payload) {
             status = "You're not authenticated.";
         } else {
-            await this.reportRepository.create({
-                reportId: uuidv4(),
-                authorId: payload.id,
-                contentId,
-                contentType,
-                categoryId,
-                subCategoryId,
-                additionalContentIds,
-                additionalContentType,
-            }).save().then(() => {
+            try {
+                await this.reportRepository.create({
+                    reportId: uuidv4(),
+                    authorId: payload.id,
+                    contentId,
+                    contentType,
+                    categoryId,
+                    subCategoryId,
+                    additionalContentIds,
+                    additionalContentType,
+                }).save();
+
                 status = "Your report has been submitted.";
-            }).catch((error) => {
-                console.error(error);
+
+                ok = true;
+            } catch (error) {
+                logger.error(error);
+
                 status = "An error has occurred, please try again later.";
-            });
+            }
         }
 
         return {
-            status
+            status,
+            ok
         };
     }
 
-    @Query(() => [ReportOption])
+    @Query(() => [ReportOption], { nullable: true })
     @UseMiddleware(isAuth)
     reportOptions(
-        @Arg("type", { nullable: true }) type: string,
+        @Arg("type") type: string,
         @Ctx() { payload }: AuthContext,
-    ) {
+    ): ReportOption[] | null {
         if (payload) {
             if (type === "user" || type === "post") {
                 return reportOptions;
@@ -75,7 +86,7 @@ export class ReportResolver {
                 return altReportOptions;
             }
         } else {
-            return [];
+            return null;
         }
     }
 }
