@@ -6,6 +6,9 @@ import { LessThan, Repository } from "typeorm";
 import { Chat } from "../entities/Message";
 import appDataSource from "../dataSource";
 import { User } from "../entities/User";
+import { UserResolver } from "./UserResolver";
+import { logger } from "../helpers/logger";
+import { isUUID } from "class-validator";
 
 @ObjectType()
 export class PaginatedNotifications {
@@ -19,11 +22,11 @@ export class PaginatedNotifications {
 @Resolver(Notification)
 export class NotificationResolver {
     private readonly notificationRepository: Repository<Notification>;
-    private readonly userRepository: Repository<User>;
+    private readonly userResolver: UserResolver;
 
     constructor() {
         this.notificationRepository = appDataSource.getRepository(Notification);
-        this.userRepository = appDataSource.getRepository(User);
+        this.userResolver = new UserResolver();
     }
 
     @Query(() => PaginatedNotifications)
@@ -34,6 +37,8 @@ export class NotificationResolver {
         @Ctx() { payload }: AuthContext
     ): Promise<PaginatedNotifications> {
         if (!payload) {
+            logger.warn("No payload found in context. Returning empty feed.");
+
             return {
                 notifications: [],
                 nextCursor: null,
@@ -42,8 +47,10 @@ export class NotificationResolver {
 
         try {
             let dateCursor: Date | null = null;
-            if (cursor) {
+
+            if (cursor && cursor.length > 0) {
                 const parsedDate = Date.parse(cursor);
+                
                 if (!isNaN(parsedDate)) {
                     dateCursor = new Date(parsedDate);
                 }
@@ -59,15 +66,15 @@ export class NotificationResolver {
                 },
                 take: limit,
             });
+
+            const ids = Array.from(new Set(notifications.map((notification) => notification.creatorId)));
+            const creators = await this.userResolver.findUsersById(ids);
             
-            const feed = [];
+            const feed: Notification[] = [];
 
-            for (const notification of notifications) {
-                const creator = await this.userRepository.findOne({ where: { id: notification.creatorId } });
-
-                if (creator) {
-                    feed.push(notification);
-                }
+            if (creators && creators.length > 0) {
+                const creatorIdsSet = new Set(creators.map(creator => creator.id));
+                feed.push(...notifications.filter((notification) => creatorIdsSet.has(notification.creatorId)));
             }
 
             const nextCursor = notifications.length === limit
@@ -76,7 +83,7 @@ export class NotificationResolver {
 
             return { notifications: feed, nextCursor };
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
             return { notifications: [], nextCursor: null };
         }
@@ -85,7 +92,13 @@ export class NotificationResolver {
     @Query(() => [Notification])
     @UseMiddleware(isAuth)
     async unseenNotifications(@Ctx() { payload }: AuthContext) {
-        if (payload) {
+        if (!payload) {
+            logger.warn("No payload found in context. Returning empty feed.");
+
+            return [];
+        }
+
+        try {
             const unseenNotifications = await this.notificationRepository.find({
                 order: {
                     createdAt: "DESC",
@@ -96,78 +109,66 @@ export class NotificationResolver {
                 },
             });
 
-            const unseenFeed = [];
+            const ids = Array.from(new Set(unseenNotifications.map((notification) => notification.creatorId)));
+            const creators = await this.userResolver.findUsersById(ids);
+            
+            const unseenFeed: Notification[] = [];
 
-            for (const notification of unseenNotifications) {
-                const creator = await this.userRepository.findOne({ where: { id: notification.creatorId } });
-
-                if (creator) {
-                    unseenFeed.push(notification);
-                }
+            if (creators && creators.length > 0) {
+                const creatorIdsSet = new Set(creators.map(creator => creator.id));
+                unseenFeed.push(...unseenNotifications.filter((notification) => creatorIdsSet.has(notification.creatorId)));
             }
 
             return unseenFeed;
-        } else {
+        } catch (error) {
+            logger.error(error);
+
             return [];
         }
     }
 
-    @Mutation(() => Boolean, { nullable: true })
-    @UseMiddleware(isAuth)
-    async viewNotifications(
-        @Ctx() { payload }: AuthContext,
-    ) {
-        if (!payload) {
-            return false;
-        }
-
-        const newNotifications = await this.notificationRepository.find({
-            where: {
-                recipientId: payload.id,
-                viewed: false,
-            },
-        });
-
-        if (newNotifications.length === 0) {
-            return false;
-        }
-
-        await this.notificationRepository
-            .createQueryBuilder()
-            .update(Notification)
-            .set({ viewed: true })
-            .whereInIds(newNotifications.map((notification) => notification.id))
-            .execute();
-
-        return true;
-    }
-
-    @Mutation(() => Boolean, { nullable: true })
+    @Mutation(() => Boolean)
     @UseMiddleware(isAuth)
     async viewNotification(
-        @Arg("notificationId", { nullable: true }) notificationId: string,
+        @Arg("notificationId") notificationId: string,
         @Ctx() { payload }: AuthContext,
     ) {
         if (!payload) {
+            logger.warn("No payload found in context. Returning false.");
+
             return false;
         }
 
-        const newNotification = await this.notificationRepository.findOne({
-            where: {
-                notificationId,
-                recipientId: payload.id,
-                viewed: false,
-            },
-        });
+        if (!isUUID(notificationId)) {
+            logger.warn("Invalid UUID provided. Returning false.");
 
-        if (!newNotification) {
             return false;
         }
 
-        newNotification.viewed = true;
-        await newNotification.save();
+        try {
+            const newNotification = await this.notificationRepository.findOne({
+                where: {
+                    notificationId,
+                    recipientId: payload.id,
+                    viewed: false,
+                },
+            });
+    
+            if (!newNotification) {
+                logger.warn("Notification not found or already viewed. Returning false.");
 
-        return true;
+                return false;
+            }
+    
+            newNotification.viewed = true;
+            await newNotification.save();
+    
+            return true;
+        } catch (error) {
+            logger.error(error);
+
+            return false;
+        }
     }
 
     @Subscription(() => Notification, {
@@ -176,7 +177,7 @@ export class NotificationResolver {
             return payload.recipientId === args.userId;
         },
     })
-    newNotification(@Arg("userId", () => Int, { nullable: true }) _userId: number, @Root() notification: Notification): Notification {
+    newNotification(@Arg("userId", () => Int) _userId: number, @Root() notification: Notification): Notification {
         return notification;
     }
 
@@ -186,7 +187,7 @@ export class NotificationResolver {
             return payload.recipientId === args.userId;
         },
     })
-    deletedNotification(@Arg("userId", () => Int, { nullable: true }) _userId: number, @Root() notification: Notification): Notification {
+    deletedNotification(@Arg("userId", () => Int) _userId: number, @Root() notification: Notification): Notification {
         return notification;
     }
 }

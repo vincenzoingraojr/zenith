@@ -10,7 +10,7 @@ import {
     Resolver,
     UseMiddleware,
 } from "type-graphql";
-import { Not, Repository } from "typeorm";
+import { In, Not, Repository } from "typeorm";
 import argon2 from "argon2";
 import { AuthContext } from "../types";
 import { sendRefreshToken } from "../auth/sendRefreshToken";
@@ -144,6 +144,25 @@ export class UserResolver {
             }
 
             return user;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
+    }
+
+    @Query(() => [User], { nullable: true })
+    async findUsersById(@Arg("ids", () => [Int]) ids: number[], @Arg("deleted", { nullable: true }) deleted: boolean = false): Promise<User[] | null> {
+        if (ids.length === 0) {
+            logger.warn("Ids not provided.");
+
+            return null;
+        }
+
+        try {
+            const users = await this.userRepository.find({ where: { id: In(ids) }, withDeleted: deleted });
+
+            return users;
         } catch (error) {
             logger.error(error);
 
