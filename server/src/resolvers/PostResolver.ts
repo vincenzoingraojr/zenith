@@ -16,6 +16,7 @@ import lumen from "@zenith-to/lumen-js";
 import { getPresignedUrlForDeleteCommand } from "../helpers/getPresignedUrls";
 import axios from "axios";
 import { UserResolver } from "./UserResolver";
+import { logger } from "../helpers/logger";
 
 @ObjectType()
 export class PostResponse {
@@ -65,7 +66,7 @@ export class PostResolver {
     @Subscription(() => Post, {
         topics: "NEW_POST",
         filter: ({ payload, args }) => {
-            if (args.postId !== null) {
+            if (!args.postId) {
                 return payload.isReplyTo === args.postId && payload.authorId === args.userId;
             } else {
                 return payload.authorId === args.userId;
@@ -79,7 +80,7 @@ export class PostResolver {
     @Subscription(() => Post, {
         topics: "DELETED_POST",
         filter: ({ payload, args }) => {
-            if (args.postId !== null) {
+            if (!args.postId) {
                 return payload.isReplyTo === args.postId && payload.authorId === args.userId;
             } else {
                 return payload.authorId === args.userId;
@@ -101,7 +102,10 @@ export class PostResolver {
     }
 
     @Query(() => [Post]) // implement algorithm
-    async postFeed() {
+    async postFeed(
+        @Arg("offset", () => Int, { nullable: true }) offset: number,
+        @Arg("limit", () => Int, { nullable: true }) limit: number,
+    ) {
         const posts = await this.postRepository.find({
             where: {
                 type: "post",
@@ -112,6 +116,8 @@ export class PostResolver {
             order: {
                 createdAt: "DESC",
             },
+            skip: offset,
+            take: limit,
             relations: ["author", "media"],
         });
 
@@ -144,7 +150,7 @@ export class PostResolver {
                 relations: ["author", "media"],
             });
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
             return [];
         }

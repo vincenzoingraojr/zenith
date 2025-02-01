@@ -80,7 +80,7 @@ const ContactPage = () => {
                             name="blog-contact-form"
                             method="POST"
                             data-netlify="true"
-                            action="/response/"
+                            action="/response"
                         >
                             <FormContent>
                                 <input

@@ -31,7 +31,7 @@ export class ReportResolver {
     @Mutation(() => ReportResponse)
     @UseMiddleware(isAuth)
     async createReport(
-        @Arg("contentId", () => String) contentId: string,
+        @Arg("contentId") contentId: string,
         @Arg("contentType") contentType: string,
         @Arg("categoryId", () => Int) categoryId: number, 
         @Arg("subCategoryId", () => Int, { nullable: true }) subCategoryId: number,

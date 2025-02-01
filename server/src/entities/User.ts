@@ -154,6 +154,10 @@ export class User extends BaseEntity {
     @Column({ type: "int", array: true, default: [] })
     topicsIds: number[];
 
+    @Field(() => [Int])
+    @Column({ type: "int", array: true, default: [] })
+    hiddenPosts: number[];
+
     @Field(() => String)
     @CreateDateColumn()
     createdAt: Date;

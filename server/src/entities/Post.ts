@@ -18,68 +18,72 @@ export class Post extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Field(() => String, { nullable: false })
-    @Column({ type: "uuid", unique: true, nullable: false })
+    @Field(() => String)
+    @Column({ type: "uuid", unique: true })
     postId: string;
 
-    @Field(() => Int, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => Int)
+    @Column()
     authorId: number;
 
-    @Field(() => Int, { nullable: true })
-    @Column({ nullable: true })
+    @Field(() => Int, { nullable: true, defaultValue: null })
+    @Column({ nullable: true, default: null })
     isReplyTo: number;
 
-    @Field(() => Int, { nullable: true })
-    @Column({ nullable: true })
+    @Field(() => Int, { nullable: true, defaultValue: null })
+    @Column({ nullable: true, default: null })
     quotedPostId: number;
 
     @Field(() => User)
     @ManyToOne(() => User, (user) => user.posts)
     author: User;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column({ default: "post" })
     type: string;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     content: string;
 
-    @Field(() => String, { nullable: false })
-    @CreateDateColumn({ nullable: false })
+    @Field(() => String)
+    @CreateDateColumn()
     createdAt: Date;
 
-    @Field(() => Boolean, { defaultValue: false })
+    @Field(() => Boolean)
     @Column({ default: false })
     isEdited: boolean;
 
-    @Field(() => String, { nullable: false })
-    @UpdateDateColumn({ nullable: false })
+    @Field(() => String)
+    @UpdateDateColumn()
     updatedAt: Date;
 
     @Field(() => [MediaItem], { nullable: true, defaultValue: [] })
-    @OneToMany(() => MediaItem, (mediaItem) => mediaItem.post, { nullable: true, eager: true })
+    @OneToMany(() => MediaItem, (mediaItem) => mediaItem.post, { nullable: true, cascade: true, eager: true })
     media: MediaItem[];
     
-    @Field(() => [String], { nullable: true, defaultValue: [] })
-    @Column({ type: "text", array: true, nullable: true, default: [] })
+    @Field(() => [String])
+    @Column({ type: "text", array: true, default: [] })
     mentions: string[];
 
-    @Field(() => [String], { nullable: true, defaultValue: [] })
-    @Column({ type: "text", array: true, nullable: true, default: [] })
+    @Field(() => [String])
+    @Column({ type: "text", array: true, default: [] })
     hashtags: string[];
 
-    @Field(() => Int, { defaultValue: 0 })
+    @Field(() => Int)
     @Column("int", { default: 0 })
     views: number;
 
-    @Field(() => String, { nullable: false, defaultValue: "undefined" })
-    @Column({ nullable: false, default: "undefined" })
+    @Field(() => Number)
+    @Column("float", { default: 1 })
+    usefulnessRating: number;
+
+    @Field(() => String)
+    @Column()
     lang: string;
 
-    @Field(() => [Int], { nullable: false, defaultValue: [] })
-    @Column({ type: "int", array: true, nullable: false, default: [] })
+    @Field(() => [Int])
+    @Column({ type: "int", array: true, default: [] })
     topicsIds: number[];
 }
 
@@ -90,24 +94,28 @@ export class Like extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Field(() => Int, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => Int)
+    @Column()
     userId: number;
 
-    @Field(() => String, { nullable: false })
-    @Column({ type: "uuid", nullable: false })
-    likedPostId: string;
+    @Field(() => String)
+    @Column({ type: "uuid" })
+    likedItemId: string;
 
-    @Field(() => Boolean, { nullable: false })
-    @Column({ nullable: false })
-    postOpened: boolean;
+    @Field(() => Boolean)
+    @Column()
+    itemOpened: boolean;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
+    itemType: string;
+
+    @Field(() => String)
+    @Column()
     origin: string;
 
-    @Field(() => String, { nullable: false })
-    @CreateDateColumn({ nullable: false })
+    @Field(() => String)
+    @CreateDateColumn()
     createdAt: Date;
 }
 
@@ -122,20 +130,20 @@ export class MediaItem extends BaseEntity {
     @ManyToOne(() => Post, (post) => post.media)
     post: Post;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     type: string;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     src: string;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     alt: string;
 
-    @Field(() => String, { nullable: false })
-    @CreateDateColumn({ nullable: false })
+    @Field(() => String)
+    @CreateDateColumn()
     createdAt: Date;
 }
 
@@ -146,16 +154,16 @@ export class ViewLog extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Field(() => String, { nullable: false })
-    @Column({ type: "uuid", unique: false, nullable: false })
-    postId: string;
+    @Field(() => String)
+    @Column({ type: "uuid" })
+    itemId: string;
 
-    @Field(() => String, { nullable: false })
-    @Column({ type: "uuid", unique: false, nullable: false })
+    @Field(() => String)
+    @Column({ type: "uuid" })
     uniqueIdentifier: string;
 
-    @Field(() => Int, { nullable: true })
-    @Column({ nullable: true })
+    @Field(() => Int, { nullable: true, defaultValue: null })
+    @Column({ nullable: true, default: null })
     userId: number;
 
     @Field(() => Boolean)
@@ -164,15 +172,30 @@ export class ViewLog extends BaseEntity {
 
     @Field(() => Boolean)
     @Column()
-    postOpened: boolean;
+    itemOpened: boolean;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
+    itemType: string;
+
+    @Field(() => String)
+    @Column()
     origin: string;
 
-    @Field(() => String, { nullable: false })
-    @CreateDateColumn({ nullable: false })
+    @Field(() => String)
+    @CreateDateColumn()
     createdAt: Date;
+}
+
+@ObjectType()
+export class ArticleCover {
+    @Field(() => String)
+    @Column({ default: "" })
+    alt: string;
+
+    @Field(() => String)
+    @Column({ default: "" })
+    src: string;
 }
 
 @ObjectType()
@@ -182,56 +205,60 @@ export class Article extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Field(() => String, { nullable: false })
-    @Column({ type: "uuid", unique: true, nullable: false })
+    @Field(() => String)
+    @Column({ type: "uuid", unique: true })
     articleId: string;
 
-    @Field(() => Int, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => Int)
+    @Column()
     authorId: number;
 
     @Field(() => User)
     @ManyToOne(() => User, (user) => user.articles)
     author: User;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     title: string;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     description: string;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     content: string;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
-    cover: string;
+    @Field(() => ArticleCover)
+    @Column()
+    cover: ArticleCover;
 
-    @Field(() => String, { nullable: false })
-    @CreateDateColumn({ nullable: false })
+    @Field(() => String)
+    @CreateDateColumn()
     createdAt: Date;
 
-    @Field(() => Boolean, { defaultValue: false })
+    @Field(() => Boolean)
     @Column({ default: false })
     isEdited: boolean;
 
-    @Field(() => String, { nullable: false })
-    @UpdateDateColumn({ nullable: false })
+    @Field(() => String)
+    @UpdateDateColumn()
     updatedAt: Date;
 
-    @Field(() => Int, { defaultValue: 0 })
+    @Field(() => Int)
     @Column("int", { default: 0 })
     views: number;
 
-    @Field(() => String, { nullable: false, defaultValue: "undefined" })
-    @Column({ nullable: false, default: "undefined" })
+    @Field(() => Int)
+    @Column("int", { default: 1 })
+    usefulnessRating: number;
+
+    @Field(() => String)
+    @Column()
     lang: string;
 
-    @Field(() => [Int], { nullable: false, defaultValue: [] })
-    @Column({ type: "int", array: true, nullable: false, default: [] })
+    @Field(() => [Int])
+    @Column({ type: "int", array: true, default: [] })
     topicsIds: number[];
 }
 
@@ -242,19 +269,43 @@ export class Repost extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Field(() => String, { nullable: false })
-    @Column({ type: "uuid", unique: true, nullable: false })
+    @Field(() => String)
+    @Column({ type: "uuid", unique: true })
     repostId: string;
 
-    @Field(() => Int, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => Int)
+    @Column()
     postId: number;
 
-    @Field(() => Int, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => Int)
+    @Column()
     authorId: number;
 
-    @Field(() => String, { nullable: false })
-    @CreateDateColumn({ nullable: false })
+    @Field(() => String)
+    @CreateDateColumn()
     createdAt: Date;    
+}
+
+@ObjectType()
+@Entity("bookmarks")
+export class Bookmark extends BaseEntity {
+    @Field(() => Int)
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @Field(() => Int)
+    @Column()
+    itemId: number;
+
+    @Field(() => String)
+    @Column()
+    itemType: string;
+
+    @Field(() => Int)
+    @Column()
+    authorId: number;
+
+    @Field(() => String)
+    @CreateDateColumn()
+    createdAt: Date;
 }

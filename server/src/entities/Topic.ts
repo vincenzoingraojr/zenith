@@ -16,3 +16,31 @@ export class Topic extends BaseEntity {
     @CreateDateColumn()
     createdAt: Date;
 }
+
+@ObjectType()
+@Entity("topics-with-weights")
+export class TopicWithWeight extends BaseEntity {
+    @Field(() => Int)
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @Field(() => Int)
+    @Column()
+    topicId: number;
+
+    @Field(() => Int)
+    @Column()
+    itemId: number;
+
+    @Field(() => String)
+    @Column()
+    itemType: string;
+
+    @Field(() => Int)
+    @Column("int", { default: 100 })
+    weight: number;
+
+    @Field(() => String)
+    @CreateDateColumn()
+    createdAt: Date;
+}
