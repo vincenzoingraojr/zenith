@@ -9,6 +9,7 @@ import { User } from "../entities/User";
 import { UserResolver } from "./UserResolver";
 import { logger } from "../helpers/logger";
 import { isUUID } from "class-validator";
+import { v4 as uuidv4 } from "uuid";
 
 @ObjectType()
 export class PaginatedNotifications {
@@ -189,6 +190,90 @@ export class NotificationResolver {
     })
     deletedNotification(@Arg("userId", () => Int) _userId: number, @Root() notification: Notification): Notification {
         return notification;
+    }
+
+    @Mutation(() => Notification, { nullable: true })
+    async findNotification(
+        @Arg("creatorId", () => Int) creatorId: number,
+        @Arg("recipientId", () => Int) recipientId: number,
+        @Arg("resourceId", () => Int) resourceId: number,
+        @Arg("resourceType") resourceType: string,
+        @Arg("notificationType") notificationType: string,
+    ): Promise<Notification | null> {
+        try {
+            const notification = await this.notificationRepository.findOne({
+                where: {
+                    creatorId,
+                    recipientId,
+                    resourceId,
+                    resourceType,
+                    notificationType,
+                },
+            });
+
+            return notification || null;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
+    }
+
+    @Mutation(() => Notification, { nullable: true })
+    async createNotification(
+        @Arg("creatorId", () => Int) creatorId: number,
+        @Arg("recipientId", () => Int) recipientId: number,
+        @Arg("resourceId", () => Int) resourceId: number,
+        @Arg("resourceType") resourceType: string,
+        @Arg("notificationType") notificationType: string,
+        @Arg("content") content: string,
+    ): Promise<Notification | null> {
+        try {
+            const newNotification = this.notificationRepository.create({
+                notificationId: uuidv4(),
+                creatorId,
+                recipientId,
+                resourceId,
+                resourceType,
+                notificationType,
+                content,
+            });
+
+            await newNotification.save();
+
+            return newNotification;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
+    }
+
+    @Mutation(() => Boolean)
+    async deleteNotification(
+        @Arg("notificationId") notificationId: string,
+    ): Promise<boolean> {
+        try {
+            const notification = await this.notificationRepository.findOne({
+                where: {
+                    notificationId,
+                },
+            });
+
+            if (!notification) {
+                logger.warn("Notification not found. Returning false.");
+
+                return false;
+            }
+
+            await this.notificationRepository.remove(notification);
+
+            return true;
+        } catch (error) {
+            logger.error(error);
+
+            return false;
+        }
     }
 }
 

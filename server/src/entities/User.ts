@@ -1,16 +1,13 @@
 import { Field, Int, ObjectType } from "type-graphql";
 import {
     Entity,
-    PrimaryGeneratedColumn,
     Column,
-    CreateDateColumn,
-    BaseEntity,
     ManyToOne,
     OneToMany,
     DeleteDateColumn,
-    UpdateDateColumn,
 } from "typeorm";
-import { Post, Article } from "./Post";
+import { FeedItem } from "./Post";
+import { BaseItem } from "./BaseItem";
 
 @ObjectType()
 export class Profile {
@@ -79,11 +76,7 @@ export class SecretKey {
 
 @ObjectType()
 @Entity("users")
-export class User extends BaseEntity {
-    @Field(() => Int)
-    @PrimaryGeneratedColumn()
-    id: number;
-
+export class User extends BaseItem {
     @Field(() => String)
     @Column()
     name: string;
@@ -134,13 +127,9 @@ export class User extends BaseEntity {
     @OneToMany(() => Follow, (follow) => follow.follower, { nullable: true, cascade: true })
     following: Follow[];
 
-    @Field(() => [Post], { nullable: true, defaultValue: [] })
-    @OneToMany(() => Post, (post) => post.author, { nullable: true })
-    posts: Post[];
-
-    @Field(() => [Article], { nullable: true, defaultValue: [] })
-    @OneToMany(() => Article, (article) => article.author, { nullable: true })
-    articles: Article[];
+    @Field(() => [FeedItem], { nullable: true, defaultValue: [] })
+    @OneToMany(() => FeedItem, (item) => item.author, { nullable: true })
+    contentPublished: FeedItem[];
 
     @Field(() => Settings)
     @Column(() => Settings)
@@ -150,17 +139,13 @@ export class User extends BaseEntity {
     @Column(() => SearchSettings)
     searchSettings: SearchSettings;
 
-    @Field(() => [Int])
-    @Column({ type: "int", array: true, default: [] })
-    topicsIds: number[];
+    @Field(() => [Object], { nullable: true })
+    @Column({ type: "jsonb", default: [] })
+    topics: { id: number; weight: number }[];
 
     @Field(() => [Int])
     @Column({ type: "int", array: true, default: [] })
     hiddenPosts: number[];
-
-    @Field(() => String)
-    @CreateDateColumn()
-    createdAt: Date;
 
     @DeleteDateColumn()
     deletedAt: Date;
@@ -168,11 +153,7 @@ export class User extends BaseEntity {
 
 @ObjectType()
 @Entity("follow-actions")
-export class Follow extends BaseEntity {
-    @Field(() => Int)
-    @PrimaryGeneratedColumn()
-    id: number;
-
+export class Follow extends BaseItem {
     @Field(() => User)
     @ManyToOne(() => User, (user) => user.following)
     follower: User;
@@ -184,19 +165,11 @@ export class Follow extends BaseEntity {
     @Field(() => String)
     @Column()
     origin: string;
-
-    @Field(() => String)
-    @CreateDateColumn()
-    createdAt: Date;
 }
 
 @ObjectType()
 @Entity("block-actions")
-export class Block extends BaseEntity {
-    @Field(() => Int)
-    @PrimaryGeneratedColumn()
-    id: number;
-
+export class Block extends BaseItem {
     @Field(() => Int)
     @Column()
     blockedId: number;
@@ -208,19 +181,11 @@ export class Block extends BaseEntity {
     @Field(() => String)
     @Column()
     origin: string;
-
-    @Field(() => String)
-    @CreateDateColumn()
-    createdAt: Date;
 }
 
 @ObjectType()
 @Entity("sessions")
-export class Session extends BaseEntity {
-    @Field(() => Int)
-    @PrimaryGeneratedColumn()
-    id: number;
-
+export class Session extends BaseItem {
     @Field(() => User)
     @ManyToOne(() => User, (user) => user.sessions)
     user: User;
@@ -248,19 +213,11 @@ export class Session extends BaseEntity {
     @Field(() => String)
     @Column()
     country: string;
-
-    @Field(() => String)
-    @CreateDateColumn()
-    creationDate: Date;
 }
 
 @ObjectType()
 @Entity("user-device-tokens")
-export class UserDeviceToken extends BaseEntity {
-    @Field(() => Int)
-    @PrimaryGeneratedColumn()
-    id: number;
-
+export class UserDeviceToken extends BaseItem {
     @Field(() => String)
     @Column()
     token: string;
@@ -272,30 +229,14 @@ export class UserDeviceToken extends BaseEntity {
     @Field(() => String)
     @Column({ type: "uuid", unique: true })
     sessionId: string;
-
-    @Field(() => String)
-    @CreateDateColumn()
-    createdAt: Date;
 }
 
 @ObjectType()
 @Entity("user-verifications")
-export class UserVerification extends BaseEntity {
-    @Field(() => Int)
-    @PrimaryGeneratedColumn()
-    id: number;
-
+export class UserVerification extends BaseItem {
     @Field(() => Int)
     @Column({ unique: true })
     userId: number;
-
-    @Field(() => String)
-    @CreateDateColumn()
-    createdAt: Date;
-
-    @Field(() => String)
-    @UpdateDateColumn()
-    updatedAt: Date;
 
     @Field(() => Boolean)
     @Column({ default: false })
@@ -324,11 +265,7 @@ export class UserVerification extends BaseEntity {
 
 @ObjectType()
 @Entity("affiliations")
-export class Affiliation extends BaseEntity {
-    @Field(() => Int)
-    @PrimaryGeneratedColumn()
-    id: number;
-
+export class Affiliation extends BaseItem {
     @Field(() => String)
     @Column({ type: "uuid", unique: true })
     affiliationId: string;
@@ -344,12 +281,4 @@ export class Affiliation extends BaseEntity {
     @Field(() => Boolean)
     @Column({ default: false })
     status: boolean;
-
-    @Field(() => String)
-    @CreateDateColumn()
-    createdAt: Date;
-
-    @Field(() => String)
-    @UpdateDateColumn()
-    updatedAt: Date;
 }

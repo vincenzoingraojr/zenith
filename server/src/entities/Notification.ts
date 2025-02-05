@@ -1,13 +1,10 @@
 import { Field, Int, ObjectType } from "type-graphql";
-import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity } from "typeorm";
+import { BaseItem } from "./BaseItem";
 
 @ObjectType()
 @Entity("notifications")
-export class Notification extends BaseEntity {
-    @Field(() => Int)
-    @PrimaryGeneratedColumn()
-    id: number;
-
+export class Notification extends BaseItem {
     @Field(() => String)
     @Column({ type: "uuid", unique: true })
     notificationId: string;
@@ -39,10 +36,6 @@ export class Notification extends BaseEntity {
     @Field(() => Boolean, { defaultValue: false })
     @Column({ default: false })
     viewed: boolean;
-
-    @Field(() => String)
-    @CreateDateColumn()
-    createdAt: Date;
 }
 
 @ObjectType()

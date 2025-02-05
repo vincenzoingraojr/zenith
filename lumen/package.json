@@ -1,20 +1,20 @@
 {
   "name": "@zenith-to/lumen-js",
   "description": "A JavaScript text processing library",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "dist/index.js",
   "module": "dist/esm",
   "files": [
     "dist"
   ],
   "types": "dist/index.d.ts",
-  "homepage": "https://github.com/vincenzoingraojr/zenith",
+  "homepage": "https://github.com/zenith-to/lumen",
   "author": "Vincenzo Ingrao Jr.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vincenzoingraojr/zenith.git"
+    "url": "git+https://github.com/zenith-to/lumen.git"
   },
-  "license": "CC-BY-NC-ND-1.0",
+  "license": "MIT",
   "devDependencies": {
     "@babel/cli": "^7.4.0",
     "@babel/core": "^7.4.0",

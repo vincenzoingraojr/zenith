@@ -1,6 +1,7 @@
 import { ReportStatus } from "../helpers/enums";
 import { Field, Int, ObjectType, registerEnumType } from "type-graphql";
-import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, Entity } from "typeorm";
+import { BaseItem } from "./BaseItem";
 
 registerEnumType(ReportStatus, {
     name: "ReportStatus",
@@ -9,11 +10,7 @@ registerEnumType(ReportStatus, {
 
 @ObjectType()
 @Entity("reports")
-export class Report extends BaseEntity {
-    @Field(() => Int)
-    @PrimaryGeneratedColumn()
-    id: number;
-
+export class Report extends BaseItem {
     @Field(() => String)
     @Column({ type: "uuid", unique: true })
     reportId: string;
@@ -45,14 +42,6 @@ export class Report extends BaseEntity {
     @Field(() => String, { nullable: true, defaultValue: null })
     @Column({ nullable: true, default: null })
     additionalContentType: string;
-
-    @Field(() => String)
-    @CreateDateColumn()
-    createdAt: Date;
-
-    @Field(() => String)
-    @UpdateDateColumn()
-    updatedAt: Date;
 
     @Field(() => ReportStatus)
     @Column({

@@ -23,7 +23,6 @@ import { FieldError } from "./common";
 import { isAuth } from "../middleware/isAuth";
 import { processBirthDate, processDays } from "../helpers/dates";
 import { v4 as uuidv4 } from "uuid";
-import { Notification } from "../entities/Notification";
 import { totp } from "otplib";
 import { decrypt, encrypt } from "../helpers/crypto";
 import appDataSource from "../dataSource";
@@ -40,6 +39,7 @@ import { logger } from "../helpers/logger";
 import { isEmail, isJWT, isUUID } from "class-validator";
 import { isValidUserInput } from "../helpers/user/isValidUserInput";
 import { USER_TYPES } from "../helpers/user/userTypes";
+import { NotificationResolver } from "./NotificationResolver";
 
 @ObjectType()
 export class UserResponse {
@@ -76,7 +76,7 @@ export class UserResolver {
     private readonly userRepository: Repository<User>;
     private readonly postRepository: Repository<Post>;
     private readonly sessionRepository: Repository<Session>;
-    private readonly notificationRepository: Repository<Notification>;
+    private readonly notificationResolver: NotificationResolver;
     private readonly followRepository: Repository<Follow>;
     private readonly blockRepository: Repository<Block>;
     private readonly userDeviceTokenRepository: Repository<UserDeviceToken>;
@@ -90,7 +90,7 @@ export class UserResolver {
         this.userRepository = appDataSource.getRepository(User);
         this.postRepository = appDataSource.getRepository(Post);
         this.sessionRepository = appDataSource.getRepository(Session);
-        this.notificationRepository = appDataSource.getRepository(Notification);
+        this.notificationResolver = new NotificationResolver();
         this.followRepository = appDataSource.getRepository(Follow);
         this.blockRepository = appDataSource.getRepository(Block);
         this.userDeviceTokenRepository = appDataSource.getRepository(UserDeviceToken);
@@ -279,7 +279,7 @@ export class UserResolver {
                     sessionId: Not(payload.sessionId),
                 },
                 order: {
-                    creationDate: "DESC",
+                    createdAt: "DESC",
                 },
             });
 
@@ -1306,26 +1306,20 @@ export class UserResolver {
                     origin,
                 }).save();
 
-                const notification = await this.notificationRepository.create({
-                    notificationId: uuidv4(),
-                    creatorId: follower.id,
-                    recipientId: user.id,
-                    resourceId: follower.id,
-                    type: "follow",
-                    viewed: false,
-                    content: `${follower.name} (@${follower.username}) started following you.`,
-                }).save();
+                const notification = await this.notificationResolver.createNotification(follower.id, user.id, follower.id, "user", "follow", `${follower.name} (@${follower.username}) started following you.`);
 
-                pubSub.publish("NEW_NOTIFICATION", notification);
+                if (notification) {
+                    pubSub.publish("NEW_NOTIFICATION", notification);
                 
-                const tokens = await this.findUserDeviceTokensByUserId(user.id);
-                const pushNotification: FirebaseNotification = {
-                    title: `New follower on Zenith (for @${user.username})`,
-                    body: notification.content,
-                    imageUrl: follower.profile.profilePicture.length > 0 ? follower.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
-                };
-                const link = `${process.env.CLIENT_ORIGIN}/${follower.username}?n_id=${notification.notificationId}`;
-                await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: user.username, type: notification.type });
+                    const tokens = await this.findUserDeviceTokensByUserId(user.id);
+                    const pushNotification: FirebaseNotification = {
+                        title: `New follower on Zenith (for @${user.username})`,
+                        body: notification.content,
+                        imageUrl: follower.profile.profilePicture.length > 0 ? follower.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
+                    };
+                    const link = `${process.env.CLIENT_ORIGIN}/${follower.username}?n_id=${notification.notificationId}`;
+                    await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: user.username, type: notification.notificationType });
+                }
 
                 return follow;
             } else {
@@ -1360,20 +1354,13 @@ export class UserResolver {
 
         try {
             await this.followRepository.delete({ user: { id: userId }, follower: { id: payload.id } });
-    
-            const notification = await this.notificationRepository.findOne({
-                where: {
-                    resourceId: payload.id, 
-                    type: "follow", 
-                    creatorId: payload.id, 
-                    recipientId: userId
-                }
-            });
-    
-            await this.notificationRepository.delete({ resourceId: payload.id, type: "follow", creatorId: payload.id, recipientId: userId });
+
+            const notification = await this.notificationResolver.findNotification(payload.id, userId, payload.id, "user", "follow");
     
             if (notification) {
                 pubSub.publish("DELETED_NOTIFICATION", notification);
+
+                await this.notificationResolver.deleteNotification(notification.notificationId); 
             }
     
             return true;
@@ -2271,20 +2258,13 @@ export class UserResolver {
                         await this.unfollowUser(user.id, { payload } as  AuthContext);
 
                         await this.followRepository.delete({ user: { id: me.id }, follower: { id: user.id } });
-                
-                        const notification = await this.notificationRepository.findOne({
-                            where: {
-                                resourceId: user.id, 
-                                type: "follow", 
-                                creatorId: user.id, 
-                                recipientId: me.id
-                            }
-                        });
-                
-                        await this.notificationRepository.delete({ resourceId: user.id, type: "follow", creatorId: user.id, recipientId: me.id });
+
+                        const notification = await this.notificationResolver.findNotification(user.id, me.id, user.id, "user", "follow");
                 
                         if (notification) {
                             pubSub.publish("DELETED_NOTIFICATION", notification);
+
+                            await this.notificationResolver.deleteNotification(notification.notificationId);
                         }
 
                         return block;
@@ -2918,27 +2898,20 @@ export class UserResolver {
                     status: false,
                 }).save();
 
-                const notification = await this.notificationRepository.create({
-                    notificationId: uuidv4(),
-                    creatorId: organization.id,
-                    recipientId: user.id,
-                    resourceId: affiliation.id,
-                    type: "affiliation",
-                    viewed: false,
-                    content: `${organization.name} (@${organization.username}) wants you to become an affiliated account.`,
-                }).save();
+                const notification = await this.notificationResolver.createNotification(organization.id, user.id, affiliation.id, "affiliation", "affiliation", `${organization.name} (@${organization.username}) wants you to become an affiliated account.`);
 
-                pubSub.publish("NEW_NOTIFICATION", notification);
-                
-                const tokens = await this.findUserDeviceTokensByUserId(user.id);
-                const pushNotification: FirebaseNotification = {
-                    title: `New affiliation request on Zenith (for @${user.username})`,
-                    body: notification.content,
-                    imageUrl: organization.profile.profilePicture.length > 0 ? organization.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
-                };
-                const link = `${process.env.CLIENT_ORIGIN}/affiliation/${affiliation.affiliationId}?n_id=${notification.notificationId}`;
-                await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: user.username, type: notification.type });
-
+                if (notification) {
+                    pubSub.publish("NEW_NOTIFICATION", notification);
+                    
+                    const tokens = await this.findUserDeviceTokensByUserId(user.id);
+                    const pushNotification: FirebaseNotification = {
+                        title: `New affiliation request on Zenith (for @${user.username})`,
+                        body: notification.content,
+                        imageUrl: organization.profile.profilePicture.length > 0 ? organization.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
+                    };
+                    const link = `${process.env.CLIENT_ORIGIN}/affiliation/${affiliation.affiliationId}?n_id=${notification.notificationId}`;
+                    await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: user.username, type: notification.notificationType });
+                }
                 return affiliation;
             } else {
                 return null;
@@ -3017,19 +2990,12 @@ export class UserResolver {
             if (affiliation) {
                 await this.affiliationRepository.delete({ affiliationId, userId: payload.id });
 
-                const notification = await this.notificationRepository.findOne({
-                    where: {
-                        resourceId: affiliation.id, 
-                        type: "affiliation", 
-                        creatorId: affiliation.organizationId, 
-                        recipientId: payload.id,
-                    }
-                });
-        
-                await this.notificationRepository.delete({ resourceId: affiliation.id, type: "affiliation", creatorId: affiliation.organizationId, recipientId: payload.id });
-        
+                const notification = await this.notificationResolver.findNotification(affiliation.organizationId, payload.id, affiliation.id, "affiliation", "affiliation");
+                
                 if (notification) {
                     pubSub.publish("DELETED_NOTIFICATION", notification);
+
+                    await this.notificationResolver.deleteNotification(notification.notificationId);
                 }
 
                 return true;

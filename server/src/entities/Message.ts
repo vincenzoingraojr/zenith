@@ -1,6 +1,7 @@
 import { Field, Int, ObjectType, registerEnumType } from "type-graphql";
 import { BaseEntity, Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { MessageStatus } from "../helpers/enums";
+import { BaseItem } from "./BaseItem";
 
 registerEnumType(MessageStatus, {
     name: "MessageStatus",
@@ -9,21 +10,21 @@ registerEnumType(MessageStatus, {
 
 @ObjectType()
 @Entity("chats")
-export class Chat extends BaseEntity {
+export class Chat extends BaseItem {
     @Field(() => Int)
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Field(() => String, { nullable: false })
-    @Column({ type: "uuid", unique: true, nullable: false })
+    @Field(() => String)
+    @Column({ type: "uuid", unique: true })
     chatId: string;
 
-    @Field(() => Int, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => Int)
+    @Column()
     creatorId: number;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     type: string;
 
     @Field(() => String, { nullable: true, defaultValue: "" })

@@ -1,19 +1,13 @@
-import { Field, Int, ObjectType } from "type-graphql";
+import { Field, ObjectType } from "type-graphql";
 import {
     Entity,
-    PrimaryGeneratedColumn,
     Column,
-    CreateDateColumn,
-    BaseEntity,
 } from "typeorm";
+import { BaseItem } from "./BaseItem";
 
 @ObjectType()
 @Entity("landing-users")
-export class LandingUser extends BaseEntity {
-    @Field(() => Int)
-    @PrimaryGeneratedColumn()
-    id: number;
-
+export class LandingUser extends BaseItem {
     @Field(() => String)
     @Column()
     name: string;
@@ -25,8 +19,4 @@ export class LandingUser extends BaseEntity {
     @Field(() => String)
     @Column({ unique: true })
     email: string;
-
-    @Field(() => String)
-    @CreateDateColumn()
-    createdAt: Date;
 }
