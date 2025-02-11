@@ -775,7 +775,6 @@ export class UserResolver {
                                     `https://${item.type.includes("image") ? "img" : "vid"}.zncdn.net/`, ""
                                 );
         
-
                             try {
                                 const url = await getPresignedUrlForDeleteCommand(existingKey, item.type);
         
