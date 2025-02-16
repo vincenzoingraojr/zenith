@@ -18,10 +18,6 @@ export class FeedItem extends BaseItem {
     @Column()
     authorId: number;
 
-    @Field(() => User)
-    @ManyToOne(() => User, (user) => user.contentPublished)
-    author: User;
-
     @Field(() => String)
     @Column()
     type: string;
@@ -39,7 +35,7 @@ export class FeedItem extends BaseItem {
     views: number;
 
     @Field(() => Number)
-    @Column("float", { default: 1 })
+    @Column("float", { default: 1.0 })
     usefulnessRating: number;
 
     @Field(() => String)
@@ -54,6 +50,10 @@ export class FeedItem extends BaseItem {
 @ObjectType()
 @Entity("posts")
 export class Post extends FeedItem {
+    @Field(() => User)
+    @ManyToOne(() => User, (user) => user.posts)
+    author: User;
+
     @Field(() => Int, { nullable: true, defaultValue: null })
     @Column({ nullable: true, default: null })
     isReplyTo: number;
@@ -165,6 +165,10 @@ export class ArticleCover {
 @ObjectType()
 @Entity("articles")
 export class Article extends FeedItem {
+    @Field(() => User)
+    @ManyToOne(() => User, (user) => user.articles)
+    author: User;
+
     @Field(() => String)
     @Column()
     title: string;

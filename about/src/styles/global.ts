@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { devices } from "./devices";
 
@@ -77,7 +76,7 @@ export const Status = styled.div`
     margin-bottom: 24px;
 `;
 
-export const LinkButton = styled(Link)`
+export const LinkButton = styled.a`
     display: inline-block;
     padding: 12px 24px;
     border-radius: 9999px;

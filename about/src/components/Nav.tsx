@@ -491,12 +491,13 @@ function Nav() {
                     </NavContent>
                 )}
                 <NavButtonLink
-                    title="Coming soon"
-                    to="/"
-                    role="button"
-                    aria-label="Coming soon"
+                    title="Waiting list"
+                    href="https://zenith.to"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Waiting list"
                 >
-                    Coming soon
+                    Waiting list
                 </NavButtonLink>
             </HeaderRightContent>
         </NavContainer>

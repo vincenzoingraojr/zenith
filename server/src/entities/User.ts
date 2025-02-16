@@ -6,7 +6,7 @@ import {
     OneToMany,
     DeleteDateColumn,
 } from "typeorm";
-import { FeedItem } from "./Post";
+import { Article, Post } from "./Post";
 import { BaseItem } from "./BaseItem";
 
 @ObjectType()
@@ -127,9 +127,13 @@ export class User extends BaseItem {
     @OneToMany(() => Follow, (follow) => follow.follower, { nullable: true, cascade: true })
     following: Follow[];
 
-    @Field(() => [FeedItem], { nullable: true, defaultValue: [] })
-    @OneToMany(() => FeedItem, (item) => item.author, { nullable: true })
-    contentPublished: FeedItem[];
+    @Field(() => [Post], { nullable: true, defaultValue: [] })
+    @OneToMany(() => Post, (post) => post.author, { nullable: true })
+    posts: Post[];
+
+    @Field(() => [Article], { nullable: true, defaultValue: [] })
+    @OneToMany(() => Article, (article) => article.author, { nullable: true })
+    articles: Article[];
 
     @Field(() => Settings)
     @Column(() => Settings)

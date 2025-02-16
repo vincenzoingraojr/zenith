@@ -1,5 +1,5 @@
 import { Field, Int, ObjectType, registerEnumType } from "type-graphql";
-import { BaseEntity, Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany } from "typeorm";
 import { MessageStatus } from "../helpers/enums";
 import { BaseItem } from "./BaseItem";
 
@@ -11,10 +11,6 @@ registerEnumType(MessageStatus, {
 @ObjectType()
 @Entity("chats")
 export class Chat extends BaseItem {
-    @Field(() => Int)
-    @PrimaryGeneratedColumn()
-    id: number;
-
     @Field(() => String)
     @Column({ type: "uuid", unique: true })
     chatId: string;
@@ -27,28 +23,16 @@ export class Chat extends BaseItem {
     @Column()
     type: string;
 
-    @Field(() => String, { nullable: true, defaultValue: "" })
-    @Column({ nullable: true, default: "" })
+    @Field(() => String, { nullable: true, defaultValue: null})
+    @Column({ nullable: true, default: null })
     chatImage: string;
 
-    @Field(() => String, { nullable: true, defaultValue: "" })
-    @Column({ nullable: true, default: "" })
+    @Field(() => String, { nullable: true, defaultValue: null })
+    @Column({ nullable: true, default: null })
     chatTitle: string;
 
-    @Field(() => String, { nullable: false })
-    @CreateDateColumn({ nullable: false })
-    createdAt: Date;
-
-    @Field(() => String, { nullable: false })
-    @UpdateDateColumn({ nullable: false })
-    updatedAt: Date;
-
-    @Field(() => Boolean, { defaultValue: false })
-    @Column({ default: false })
-    visible: boolean;
-
-    @Field(() => [ChatUser], { nullable: false })
-    @OneToMany(() => ChatUser, (user) => user.chat, { nullable: false, cascade: true })
+    @Field(() => [ChatUser])
+    @OneToMany(() => ChatUser, (user) => user.chat, { cascade: true })
     users: ChatUser[];
 
     @Field(() => [Message], { nullable: true, defaultValue: [] })
@@ -57,7 +41,7 @@ export class Chat extends BaseItem {
 
     @Field(() => [Event], { nullable: true, defaultValue: [] })
     @OneToMany(() => Event, (event) => event.chat, { nullable: true, cascade: true })
-    events: Event[];
+    events: Message[];
 }
 
 @ObjectType()
@@ -84,32 +68,28 @@ export class MessageItem {
 
 @ObjectType()
 @Entity("chat-users")
-export class ChatUser extends BaseEntity {
-    @Field(() => Int)
-    @PrimaryGeneratedColumn()
-    id: number;
-
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+export class ChatUser extends BaseItem {
+    @Field(() => String)
+    @Column()
     role: string;
 
-    @Field(() => Int, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => Int)
+    @Column()
     userId: number;
 
     @Field(() => Chat)
     @ManyToOne(() => Chat, (chat) => chat.users)
     chat: Chat;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => String)
+    @Column()
     joinedChat: Date;
 
-    @Field(() => String, { nullable: true })
-    @Column({ nullable: true })
+    @Field(() => String)
+    @Column()
     lastExit: Date;
 
-    @Field(() => Boolean, { defaultValue: false })
+    @Field(() => Boolean)
     @Column({ default: false })
     inside: boolean;
 
@@ -119,47 +99,38 @@ export class ChatUser extends BaseEntity {
 }
 
 @ObjectType()
-@Entity("messages")
-export class Message extends BaseEntity {
+export class ChatItem extends BaseItem {
+    @Field(() => String)
+    @Column({ type: "uuid", unique: true })
+    itemId: string;
+
     @Field(() => Int)
-    @PrimaryGeneratedColumn()
-    id: number;
-
-    @Field(() => String, { nullable: false })
-    @Column({ type: "uuid", unique: true, nullable: false })
-    messageId: string;
-
-    @Field(() => Int, { nullable: false })
-    @Column({ nullable: false })
+    @Column()
     authorId: number;
 
-    @Field(() => Int, { nullable: true })
-    @Column({ nullable: true })
-    isReplyTo: number;
+    @Field(() => String)
+    @Column()
+    type: string;
+}
 
-    @Field(() => Chat, { nullable: false })
-    @ManyToOne(() => Chat, (chat) => chat.messages, { nullable: false })
+@ObjectType()
+@Entity("messages")
+export class Message extends ChatItem {
+    @Field(() => Chat)
+    @ManyToOne(() => Chat, (chat) => chat.messages)
     chat: Chat;
 
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
-    type: string;
+    @Field(() => Int, { nullable: true, defaultValue: null })
+    @Column({ nullable: true, default: null })
+    isReplyTo: number;
 
-    @Field(() => String, { nullable: true })
-    @Column({ nullable: true })
+    @Field(() => String, { nullable: true, defaultValue: null })
+    @Column({ nullable: true, default: null })
     content: string;
 
-    @Field(() => String, { nullable: false })
-    @CreateDateColumn({ nullable: false })
-    createdAt: Date;
-
-    @Field(() => Boolean, { defaultValue: false })
+    @Field(() => Boolean)
     @Column({ default: false })
     isEdited: boolean;
-
-    @Field(() => String, { nullable: false })
-    @UpdateDateColumn({ nullable: false })
-    updatedAt: Date;
 
     @Field(() => MessageMedia)
     @Column(() => MessageMedia)
@@ -188,52 +159,28 @@ export class Message extends BaseEntity {
 
 @ObjectType()
 @Entity("message-view-logs")
-export class MessageViewLog extends BaseEntity {
-    @Field(() => Int)
-    @PrimaryGeneratedColumn()
-    id: number;
-
-    @Field(() => String, { nullable: false })
-    @Column({ type: "uuid", unique: false, nullable: false })
+export class MessageViewLog extends BaseItem {
+    @Field(() => String)
+    @Column({ type: "uuid", unique: false })
     messageId: string;
 
-    @Field(() => Int, { nullable: false })
-    @Column({ nullable: false })
+    @Field(() => Int)
+    @Column()
     userId: number;
-    
-    @Field(() => String, { nullable: false })
-    @CreateDateColumn({ nullable: false })
-    createdAt: Date;
 }
 
 @ObjectType()
 @Entity("events")
-export class Event extends BaseEntity {
-    @Field(() => Int)
-    @PrimaryGeneratedColumn()
-    id: number;
-
-    @Field(() => Int, { nullable: false })
-    @Column({ nullable: false })
-    userId: number;
-
-    @Field(() => Int, { nullable: true })
-    @Column({ nullable: true })
-    resourceId: number;
-
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
-    eventType: string;
-    
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
-    eventMessage: string;
-
-    @Field(() => Chat, { nullable: false })
-    @ManyToOne(() => Chat, (chat) => chat.events, { nullable: false })
+export class Event extends ChatItem {
+    @Field(() => Chat)
+    @ManyToOne(() => Chat, (chat) => chat.events)
     chat: Chat;
+
+    @Field(() => Int, { nullable: true, defaultValue: null })
+    @Column({ nullable: true, default: null })
+    resourceId: number;
     
-    @Field(() => String, { nullable: false })
-    @Column({ nullable: false })
-    createdAt: Date;
+    @Field(() => String)
+    @Column()
+    eventMessage: string;
 }
