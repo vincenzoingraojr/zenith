@@ -17,6 +17,8 @@ import { getPresignedUrlForDeleteCommand } from "../helpers/getPresignedUrls";
 import axios from "axios";
 import { UserResolver } from "./UserResolver";
 import { logger } from "../helpers/logger";
+import { isUUID } from "class-validator";
+import { NotificationResolver } from "./NotificationResolver";
 
 @ObjectType()
 export class PostResponse {
@@ -33,9 +35,12 @@ export class PostResponse {
     ok: boolean;
 }
 
+const EMPTY_CONTENT_REGEXP = /^\s+\S*/;
+
 @Resolver(Post)
 export class PostResolver {
     private readonly userResolver: UserResolver;
+    private readonly notificationResolver: NotificationResolver;
     private readonly userRepository: Repository<User>;
     private readonly postRepository: Repository<Post>;
     private readonly mediaItemRepository: Repository<MediaItem>;
@@ -47,6 +52,7 @@ export class PostResolver {
 
     constructor() {
         this.userResolver = new UserResolver();
+        this.notificationResolver = new NotificationResolver();
         this.userRepository = appDataSource.getRepository(User);
         this.postRepository = appDataSource.getRepository(Post);
         this.mediaItemRepository = appDataSource.getRepository(MediaItem);
@@ -73,7 +79,7 @@ export class PostResolver {
             }
         },
     })
-    newPost(@Arg("postId", () => Int, { nullable: true }) _postId: number, @Arg("userId", () => Int, { nullable: true }) _userId: number, @Root() post: Post): Post {
+    newPost(@Arg("postId", () => Int, { nullable: true }) _postId: number, @Arg("userId", () => Int) _userId: number, @Root() post: Post): Post {
         return post;
     }
 
@@ -87,54 +93,68 @@ export class PostResolver {
             }
         },
     })
-    deletedPost(@Arg("postId", () => Int, { nullable: true }) _postId: number, @Arg("userId", () => Int, { nullable: true }) _userId: number, @Root() post: Post): Post {
+    deletedPost(@Arg("postId", () => Int, { nullable: true }) _postId: number, @Arg("userId", () => Int) _userId: number, @Root() post: Post): Post {
         return post;
     }
 
     @Subscription(() => Post, {
         topics: "EDITED_POST",
         filter: ({ payload, args }) => {
-            return payload.postId === args.postId && payload.authorId === args.authorId;
+            return payload.itemId === args.postId;
         },
     })
-    editedPost(@Arg("postId", { nullable: true }) _postId: string, @Arg("authorId", { nullable: true }) _authorId: number, @Root() post: Post): Post {
+    editedPost(@Arg("postId") _postId: string, @Root() post: Post): Post {
         return post;
     }
 
-    @Query(() => [Post]) // implement algorithm
+    @Query(() => [Post], { nullable: true }) // implement algorithm
     async postFeed(
         @Arg("offset", () => Int, { nullable: true }) offset: number,
         @Arg("limit", () => Int, { nullable: true }) limit: number,
-    ) {
-        const posts = await this.postRepository.find({
-            where: {
-                type: "post",
-                author: {
-                    deletedAt: IsNull(),
+    ): Promise<Post[] | null> {
+        try {
+            const posts = await this.postRepository.find({
+                where: {
+                    type: "post",
+                    author: {
+                        deletedAt: IsNull(),
+                    },
                 },
-            },
-            order: {
-                createdAt: "DESC",
-            },
-            skip: offset,
-            take: limit,
-            relations: ["author", "media"],
-        });
+                order: {
+                    createdAt: "DESC",
+                },
+                skip: offset,
+                take: limit,
+                relations: ["author", "media"],
+            });
+    
+            return posts;
+        } catch (error) {
+            logger.error(error);
 
-        return posts;
+            return null;
+        }
     }
 
-    @Query(() => [Post])
+    @Query(() => [Post], { nullable: true })
     async userPostFeed(
-        @Arg("userId", () => Int) userId: number,
+        @Arg("userId", () => Int, { nullable: true }) userId: number,
         @Arg("offset", () => Int, { nullable: true }) offset: number,
         @Arg("limit", () => Int, { nullable: true }) limit: number,
-    ): Promise<Post[]> {
+    ): Promise<Post[] | null> {
+        if (!userId) {
+            logger.warn("User id not provided.");
+
+            return null;
+        }
+
         try {
             const author = await this.userResolver.findUserById(userId);
 
             if (!author) {
-                return [];
+                logger.warn("Post author not found.");
+
+                return null;
             }
 
             return await this.postRepository.find({
@@ -152,18 +172,20 @@ export class PostResolver {
         } catch (error) {
             logger.error(error);
 
-            return [];
+            return null;
         }
     }
 
-    @Query(() => [Post])
+    @Query(() => [Post], { nullable: true })
     async postComments(
-        @Arg("id", () => Int) id: number,
+        @Arg("id", () => Int, { nullable: true }) id: number,
         @Arg("offset", () => Int, { nullable: true }) offset: number,
         @Arg("limit", () => Int, { nullable: true }) limit: number,
-    ) {
+    ): Promise<Post[] | null> {
         if (!id) {
-            return [];
+            logger.warn("Post id not provided.");
+
+            return null;
         }
     
         try {
@@ -185,27 +207,31 @@ export class PostResolver {
     
             return comments;
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
-            return [];
+            return null;
         }
     }
 
-    @Query(() => [Post])
+    @Query(() => [Post], { nullable: true })
     async userComments(
-        @Arg("userId", () => Int) userId: number,
+        @Arg("userId", () => Int, { nullable: true }) userId: number,
         @Arg("offset", () => Int, { nullable: true }) offset: number,
         @Arg("limit", () => Int, { nullable: true }) limit: number,
-    ) {
+    ): Promise<Post[] | null> {
         if (!userId) {
-            return [];
+            logger.warn("User id not provided.");
+
+            return null;
         }
     
         try {
             const author = await this.userResolver.findUserById(userId);
             
             if (!author) {
-                return [];
+                logger.warn("Post author not found.");
+
+                return null;
             }
     
             return await this.postRepository.find({
@@ -221,45 +247,61 @@ export class PostResolver {
                 relations: ["author", "media"],
             });
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
-            return [];
+            return null;
         }
     }
 
     @Query(() => Post, { nullable: true })
     async findPost(@Arg("postId") postId: string): Promise<Post | null> {
-        if (!postId) {
+        if (!isUUID(postId)) {
+            logger.warn("Invalid postId provided.");
+
             return null;
         }
 
         try {
             const post = await this.postRepository.findOne({
-                where: { postId },
+                where: { itemId: postId, author: { deletedAt: IsNull() } },
                 relations: ["author", "media"],
             });
 
-            return post && post.author ? post : null;
+            if (!post) {
+                logger.warn(`Post with itemId "${postId}" not found.`);
+
+                return null;
+            }
+
+            return post;
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
             return null;
         }
     }
 
     @Query(() => Post, { nullable: true })
-    async findPostById(@Arg("id", () => Int) id: number): Promise<Post | null> {
+    async findPostById(@Arg("id", () => Int, { nullable: true }) id: number): Promise<Post | null> {
         if (!id) {
+            logger.warn("Id not provided.");
+
             return null;
         }
 
         try {
             const post = await this.postRepository.findOne({
-                where: { id },
+                where: { id, author: { deletedAt: IsNull() } },
                 relations: ["author", "media"],
             });
 
-            return post && post.author ? post : null;
+            if (!post) {
+                logger.warn(`Post with id "${id}" not found.`);
+
+                return null;
+            }
+
+            return post;
         } catch (error) {
             console.error(error);
 
@@ -267,19 +309,33 @@ export class PostResolver {
         }
     }
 
-    @Query(() => [MediaItem])
-    postMedia(@Arg("postId", { nullable: true }) postId: string) {
-        return this.mediaItemRepository.find({
-            order: {
-                createdAt: "ASC",
-            },
-            where: {
-                post: {
-                    postId,
+    @Query(() => [MediaItem], { nullable: true })
+    async postMedia(@Arg("postId") postId: string): Promise<MediaItem[] | null> {
+        if (!isUUID(postId)) {
+            logger.warn("Invalid postId provided.");
+
+            return null;
+        }
+
+        try {
+            const media = await this.mediaItemRepository.find({
+                order: {
+                    createdAt: "ASC",
                 },
-            },
-            relations: ["post"],
-        });
+                where: {
+                    post: {
+                        itemId: postId,
+                    },
+                },
+                relations: ["post"],
+            });
+
+            return media;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
     }
 
     @Mutation(() => PostResponse)
@@ -290,162 +346,136 @@ export class PostResolver {
         @Arg("media") media: string,
         @Ctx() { payload }: AuthContext,
         @Arg("isReplyTo", () => Int, { nullable: true }) isReplyTo?: number,
+        @Arg("quotedPostId", () => Int, { nullable: true }) quotedPostId?: number,
     ): Promise<PostResponse> {
         let errors = [];
-        let post;
+        let post: Post | null = null;
         let ok = false;
+        let status = "";
 
         let mediaArray = JSON.parse(media);
 
-        if (content === "" || content === null) {
+        if (EMPTY_CONTENT_REGEXP.test(content)) {
             errors.push({
                 field: "content",
                 message: `You can't publish a ${(type === "comment") ? "comment" : "post"} without content`,
             });
         }
 
-        if (type === "" || type === null) {
+        if (type.length === 0) {
             errors.push({
                 field: "type",
                 message: "Invalid type provided",
-            })
+            });
         }
 
         if (!payload) {
-            errors.push({
-                field: "content",
-                message: "You are not authenticated",
-            });
+            status = "You are not authenticated.";
         } else {
             if (errors.length === 0) {
-                const user = await this.userResolver.findUserById(payload.id);
+                try {
+                    const user = await this.userResolver.findUserById(payload.id);
                 
-                if (user) {
-                    let mentions: string[] = lumen.extractMentions(content);
-                    const index = mentions.indexOf(user.username);
-
-                    if (index !== -1) {
-                        mentions.splice(index, 1);
-                    }
-
-                    try {
-                        const mediaItems = [];
-
-                        if (mediaArray && mediaArray.length > 0) {
-                            for (const mediaItem of mediaArray) {
-                                const newMediaItem = this.mediaItemRepository.create({
-                                    post,
-                                    type: mediaItem.type,
-                                    src: mediaItem.src,
-                                    alt: mediaItem.alt,
-                                });
-                                await newMediaItem.save();
-                                mediaItems.push(newMediaItem);
-                            }
+                    if (user) {
+                        let mentions: string[] = lumen.extractMentions(content);
+                        const index = mentions.indexOf(user.username);
+    
+                        if (index !== -1) {
+                            mentions.splice(index, 1);
                         }
-
+    
                         const command = new DetectDominantLanguageCommand({
                             Text: content,
                         });
                         const response = await this.comprehend.send(command);
                         const lang = (response.Languages && response.Languages[0]) ? response.Languages[0].LanguageCode : "undefined";
-
+    
                         post = await this.postRepository.create({
-                            postId: uuidv4(),
+                            itemId: uuidv4(),
                             authorId: payload.id,
                             type,
                             content,
                             author: user,
                             mentions,
                             hashtags: lumen.extractHashtags(content),
-                            isEdited: false,
-                            media: mediaItems,
                             isReplyTo,
+                            quotedPostId,
                             lang,
-                            topicsIds: [],
                         }).save();
-
-                        if (post.mentions.length > 0) {
-                            let mentionedUsers = [];
-
-                            for (const mention of post.mentions) {
-                                const user = await this.userResolver.findUser(mention);
+    
+                        const mediaItems = [];
+    
+                        if (mediaArray && mediaArray.length > 0) {
+                            for (const mediaItem of mediaArray) {
+                                const newMediaItem = await this.mediaItemRepository.create({
+                                    post,
+                                    type: mediaItem.type,
+                                    src: mediaItem.src,
+                                    alt: mediaItem.alt,
+                                }).save();
                                 
-                                if (user) {
-                                    mentionedUsers.push(user);
-                                }
+                                mediaItems.push(newMediaItem);
                             }
-
+                        }
+    
+                        post.media = mediaItems;
+    
+                        await post.save();
+    
+                        if (post.mentions.length > 0) {
+                            const mentionedUsers = await this.userRepository.find({ where: { username: In(post.mentions) } });
+    
                             if (mentionedUsers.length > 0) {
                                 for (const mentionedUser of mentionedUsers) {
-                                    const notification = await this.notificationRepository.create({
-                                        notificationId: uuidv4(),
-                                        creatorId: payload.id,
-                                        recipientId: mentionedUser.id,
-                                        resourceId: post.id,
-                                        type: "mention",
-                                        viewed: false,
-                                        content: `${post.author.name} (@${post.author.username}) mentioned you in a ${(type === "comment") ? "comment" : "post"}.`,
-                                    }).save();
-
+                                    const notification = await this.notificationResolver.createNotification(payload.id, mentionedUser.id, post.id, type, "mention", `${post.author.name} (@${post.author.username}) mentioned you in a ${(type === "comment") ? "comment" : "post"}.`);
+                                    
+                                    if (notification) {
+                                        pubSub.publish("NEW_NOTIFICATION", notification);
+    
+                                        const tokens = await this.userDeviceTokenRepository.find({ where: { userId: mentionedUser.id } });
+                                        const pushNotification: FirebaseNotification = {
+                                            title: `@${post.author.username} mentioned you ${(type === "comment") ? "comment" : "post"} (for @${mentionedUser.username})`,
+                                            body: notification.content,
+                                            imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
+                                        };
+                                        const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.itemId}?n_id=${notification.notificationId}`;
+                                        await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: mentionedUser.username, type: notification.notificationType });
+                                    }
+                                }
+                            }
+                        }
+    
+                        if (isReplyTo) {
+                            const isReplyToPost = await this.findPostById(isReplyTo);
+    
+                            if (isReplyToPost && (type === "comment") && (isReplyToPost.authorId !== payload.id)) {
+                                const notification = await this.notificationResolver.createNotification(payload.id, isReplyToPost.authorId, post.id, type, "comment", `${post.author.name} (@${post.author.username}) commented your post.`);
+        
+                                if (notification) {
                                     pubSub.publish("NEW_NOTIFICATION", notification);
-
-                                    const tokens = await this.userDeviceTokenRepository.find({ where: { userId: mentionedUser.id } });
+        
+                                    const tokens = await this.userDeviceTokenRepository.find({ where: { userId: isReplyToPost.authorId } });
                                     const pushNotification: FirebaseNotification = {
-                                        title: `@${post.author.username} mentioned you ${(type === "comment") ? "comment" : "post"} (for @${mentionedUser.username})`,
+                                        title: `@${post.author.username} commented your post (for @${isReplyToPost.author.username})`,
                                         body: notification.content,
                                         imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
                                     };
-                                    const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.postId}?n_id=${notification.notificationId}`;
-                                    await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: mentionedUser.username, type: notification.type });
+                                    const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.itemId}?n_id=${notification.notificationId}`;
+                                    await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: isReplyToPost.author.username, type: notification.notificationType });
                                 }
                             }
                         }
-
-                        const isReplyToPost = await this.postRepository.findOne({
-                            where: { id: isReplyTo },
-                        });
-
-                        if (isReplyToPost && (type === "comment") && (isReplyToPost.authorId !== payload.id)) {
-                            const notification = await this.notificationRepository.create({
-                                notificationId: uuidv4(),
-                                creatorId: payload.id,
-                                recipientId: isReplyToPost.authorId,
-                                resourceId: post.id,
-                                type: "comment",
-                                viewed: false,
-                                content: `${post.author.name} (@${post.author.username}) commented your post.`,
-                            }).save();
-
-                            pubSub.publish("NEW_NOTIFICATION", notification);
-
-                            const tokens = await this.userDeviceTokenRepository.find({ where: { userId: isReplyToPost.authorId } });
-                            const pushNotification: FirebaseNotification = {
-                                title: `@${post.author.username} commented your post (for @${isReplyToPost.author.username})`,
-                                body: notification.content,
-                                imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
-                            };
-                            const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.postId}?n_id=${notification.notificationId}`;
-                            await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: isReplyToPost.author.username, type: notification.type });
-                        }
-
+    
                         pubSub.publish("NEW_POST", post);
-
+    
                         ok = true;
-                    } catch (error) {
-                        console.log(error);
-                        errors.push({
-                            field: "content",
-                            message:
-                                "An error has occurred. Please try again later to create a post",
-                        });
+                    } else {
+                        status = "Can't find the user.";
                     }
-                } else {
-                    errors.push({
-                        field: "content",
-                        message:
-                            "Can't find the user",
-                    });
+                } catch (error) {
+                    logger.error(error);
+    
+                    status = "An error has occurred. Please try again later to create a post.";
                 }
             }
         }
@@ -459,8 +489,9 @@ export class PostResolver {
 
     @Mutation(() => PostResponse)
     @UseMiddleware(isAuth)
-    async updatePost(
+    async editPost(
         @Arg("postId") postId: string,
+        @Arg("type") type: string,
         @Arg("content") content: string,
         @Arg("media") media: string,
         @Arg("deletedMedia") deletedMedia: string,
@@ -468,16 +499,21 @@ export class PostResolver {
         @Ctx() { payload }: AuthContext,
     ): Promise<PostResponse> {
         let errors = [];
-        let post;
+        let post: Post | null = null;
         let mediaArray = JSON.parse(media);
         let deletedMediaIdsArray = JSON.parse(deletedMedia);
         let existingAltTextsArray = JSON.parse(existingAltTexts);
         let ok = false;
+        let status = "";
 
-        if (content === "" || content === null) {
+        if (!isUUID(postId)) {
+            status = "Invalid postId provided.";
+        }
+
+        if (EMPTY_CONTENT_REGEXP.test(content)) {
             errors.push({
                 field: "content",
-                message: `You can't update a post by removing the content`,
+                message: `You can't update a ${(type === "comment") ? "comment" : "post"} by removing the content`,
             });
         }
 
@@ -487,7 +523,7 @@ export class PostResolver {
                 message: "You are not authenticated",
             });
         } else {
-            if (errors.length === 0) {
+            if (errors.length === 0) { // da qua
                 const user = await this.userResolver.findUserById(payload.id);
                 
                 if (user) {
@@ -659,6 +695,7 @@ export class PostResolver {
             post,
             errors,
             ok,
+            status,
         };
     }
 
@@ -894,30 +931,6 @@ export class PostResolver {
         } else {
             return false;
         }
-    }
-
-    @Query(() => [User])
-    async relevantPeople(
-        @Arg("postId", { nullable: true }) postId: string,
-    ) {
-        const post = await this.postRepository.findOne({ where: { postId }, relations: ["author", "media"] });
-        let mentions: User[] = [];
-
-        if (post) {
-            mentions.push(post.author);
-            
-            if (post.mentions.length > 0) {
-                for (const mention of post.mentions) {
-                    const user = await this.userResolver.findUser(mention);
-    
-                    if (user) {
-                        mentions.push(user);
-                    }
-                }
-            }
-        }
-
-        return mentions;
     }
 
     @Mutation(() => Post, { nullable: true })
