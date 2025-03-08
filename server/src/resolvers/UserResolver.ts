@@ -40,6 +40,7 @@ import { isEmail, isJWT, isUUID } from "class-validator";
 import { isValidUserInput } from "../helpers/user/isValidUserInput";
 import { USER_TYPES } from "../helpers/user/userTypes";
 import { NotificationResolver } from "./NotificationResolver";
+import { NOTIFICATION_TYPES } from "src/helpers/notification/notificationTypes";
 
 @ObjectType()
 export class UserResponse {
@@ -1305,7 +1306,7 @@ export class UserResolver {
                     origin,
                 }).save();
 
-                const notification = await this.notificationResolver.createNotification(follower.id, user.id, follower.id, "user", "follow", `${follower.name} (@${follower.username}) started following you.`);
+                const notification = await this.notificationResolver.createNotification(follower.id, user.id, follower.id, USER_TYPES.USER, NOTIFICATION_TYPES.FOLLOW, `${follower.name} (@${follower.username}) started following you.`);
 
                 if (notification) {
                     pubSub.publish("NEW_NOTIFICATION", notification);
@@ -1354,7 +1355,7 @@ export class UserResolver {
         try {
             await this.followRepository.delete({ user: { id: userId }, follower: { id: payload.id } });
 
-            const notification = await this.notificationResolver.findNotification(payload.id, userId, payload.id, "user", "follow");
+            const notification = await this.notificationResolver.findNotification(payload.id, userId, payload.id, USER_TYPES.USER, NOTIFICATION_TYPES.FOLLOW);
     
             if (notification) {
                 pubSub.publish("DELETED_NOTIFICATION", notification);
@@ -1858,7 +1859,7 @@ export class UserResolver {
                     await this.userRepository.update(
                         {
                             id: payload.id,
-                            type: Not("organization"),
+                            type: Not(USER_TYPES.ORGANIZATION),
                         },
                         {
                             gender
@@ -1919,7 +1920,7 @@ export class UserResolver {
                     const user = await this.findUserById(payload.id);
     
                     if (user) {
-                        if (user.type !== "organization") {
+                        if (user.type !== USER_TYPES.ORGANIZATION) {
                             let age = processBirthDate(birthDate);
 
                             if (age < 13) {
@@ -2070,7 +2071,7 @@ export class UserResolver {
 
         if (payload) {
             try {
-                me = await this.userRepository.findOne({ where: { id: payload.id } });
+                me = await this.findUserById(payload.id);
         
                 if (me) {
                     if (me.userSettings.twoFactorAuth) {
@@ -2149,7 +2150,7 @@ export class UserResolver {
         }
 
         try {
-            const me = await this.userRepository.findOne({ where: { id: payload.id }, relations: ["posts", "sessions"] });
+            const me = await this.userRepository.findOne({ where: { id: payload.id }, relations: ["sessions"] });
 
             if (!me) {
                 return false;
@@ -2258,7 +2259,7 @@ export class UserResolver {
 
                         await this.followRepository.delete({ user: { id: me.id }, follower: { id: user.id } });
 
-                        const notification = await this.notificationResolver.findNotification(user.id, me.id, user.id, "user", "follow");
+                        const notification = await this.notificationResolver.findNotification(user.id, me.id, user.id, USER_TYPES.USER, NOTIFICATION_TYPES.FOLLOW);
                 
                         if (notification) {
                             pubSub.publish("DELETED_NOTIFICATION", notification);
@@ -2897,7 +2898,7 @@ export class UserResolver {
                     status: false,
                 }).save();
 
-                const notification = await this.notificationResolver.createNotification(organization.id, user.id, affiliation.id, "affiliation", "affiliation", `${organization.name} (@${organization.username}) wants you to become an affiliated account.`);
+                const notification = await this.notificationResolver.createNotification(organization.id, user.id, affiliation.id, "affiliation", NOTIFICATION_TYPES.AFFILIATION, `${organization.name} (@${organization.username}) wants you to become an affiliated account.`);
 
                 if (notification) {
                     pubSub.publish("NEW_NOTIFICATION", notification);
@@ -2941,7 +2942,7 @@ export class UserResolver {
             return null;
         }
 
-        if (!accepted) {
+        if (accepted === null) {
             return null;
         }
 
@@ -2989,7 +2990,7 @@ export class UserResolver {
             if (affiliation) {
                 await this.affiliationRepository.delete({ affiliationId, userId: payload.id });
 
-                const notification = await this.notificationResolver.findNotification(affiliation.organizationId, payload.id, affiliation.id, "affiliation", "affiliation");
+                const notification = await this.notificationResolver.findNotification(affiliation.organizationId, payload.id, affiliation.id, "affiliation", NOTIFICATION_TYPES.AFFILIATION);
                 
                 if (notification) {
                     pubSub.publish("DELETED_NOTIFICATION", notification);

@@ -1,6 +1,6 @@
 import { Arg, Ctx, Field, Int, Mutation, ObjectType, Query, Resolver, Root, Subscription, UseMiddleware } from "type-graphql";
 import { FieldError } from "./common";
-import { Like, MediaItem, Post, ViewLog } from "../entities/Post";
+import { Article, FeedItem, Like, MediaItem, Post, ViewLog } from "../entities/Post";
 import { isAuth } from "../middleware/isAuth";
 import { AuthContext } from "../types";
 import { v4 as uuidv4 } from "uuid";
@@ -19,6 +19,8 @@ import { UserResolver } from "./UserResolver";
 import { logger } from "../helpers/logger";
 import { isUUID } from "class-validator";
 import { NotificationResolver } from "./NotificationResolver";
+import { POST_TYPES } from "src/helpers/post/postTypes";
+import { NOTIFICATION_TYPES } from "src/helpers/notification/notificationTypes";
 
 @ObjectType()
 export class PostResponse {
@@ -43,6 +45,7 @@ export class PostResolver {
     private readonly notificationResolver: NotificationResolver;
     private readonly userRepository: Repository<User>;
     private readonly postRepository: Repository<Post>;
+    private readonly articleRepository: Repository<Article>;
     private readonly mediaItemRepository: Repository<MediaItem>;
     private readonly notificationRepository: Repository<Notification>;
     private readonly likeRepository: Repository<Like>;
@@ -55,6 +58,7 @@ export class PostResolver {
         this.notificationResolver = new NotificationResolver();
         this.userRepository = appDataSource.getRepository(User);
         this.postRepository = appDataSource.getRepository(Post);
+        this.articleRepository = appDataSource.getRepository(Article);
         this.mediaItemRepository = appDataSource.getRepository(MediaItem);
         this.notificationRepository = appDataSource.getRepository(Notification);
         this.likeRepository = appDataSource.getRepository(Like);
@@ -115,7 +119,7 @@ export class PostResolver {
         try {
             const posts = await this.postRepository.find({
                 where: {
-                    type: "post",
+                    type: POST_TYPES.POST,
                     author: {
                         deletedAt: IsNull(),
                     },
@@ -162,7 +166,7 @@ export class PostResolver {
                     createdAt: "DESC",
                 },
                 where: {
-                    type: "post",
+                    type: POST_TYPES.POST,
                     author,
                 },
                 skip: offset,
@@ -179,6 +183,7 @@ export class PostResolver {
     @Query(() => [Post], { nullable: true })
     async postComments(
         @Arg("id", () => Int, { nullable: true }) id: number,
+        @Arg("type") type: string,
         @Arg("offset", () => Int, { nullable: true }) offset: number,
         @Arg("limit", () => Int, { nullable: true }) limit: number,
     ): Promise<Post[] | null> {
@@ -194,8 +199,9 @@ export class PostResolver {
                     createdAt: "DESC",
                 },
                 where: {
-                    type: "comment",
-                    isReplyTo: id,
+                    type: POST_TYPES.COMMENT,
+                    isReplyToId: id,
+                    isReplyToType: type,
                     author: {
                         deletedAt: IsNull(),
                     }
@@ -239,7 +245,7 @@ export class PostResolver {
                     createdAt: "DESC",
                 },
                 where: {
-                    type: "comment",
+                    type: POST_TYPES.COMMENT,
                     author,
                 }, 
                 skip: offset,
@@ -345,7 +351,8 @@ export class PostResolver {
         @Arg("content") content: string,
         @Arg("media") media: string,
         @Ctx() { payload }: AuthContext,
-        @Arg("isReplyTo", () => Int, { nullable: true }) isReplyTo?: number,
+        @Arg("isReplyToId", () => Int, { nullable: true }) isReplyToId?: number,
+        @Arg("isReplyToType", { nullable: true }) isReplyToType?: string,
         @Arg("quotedPostId", () => Int, { nullable: true }) quotedPostId?: number,
     ): Promise<PostResponse> {
         let errors = [];
@@ -358,7 +365,7 @@ export class PostResolver {
         if (EMPTY_CONTENT_REGEXP.test(content)) {
             errors.push({
                 field: "content",
-                message: `You can't publish a ${(type === "comment") ? "comment" : "post"} without content`,
+                message: "You can't create a post without content",
             });
         }
 
@@ -393,12 +400,13 @@ export class PostResolver {
                         post = await this.postRepository.create({
                             itemId: uuidv4(),
                             authorId: payload.id,
-                            type,
+                            type: (type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST,
                             content,
                             author: user,
                             mentions,
                             hashtags: lumen.extractHashtags(content),
-                            isReplyTo,
+                            isReplyToId,
+                            isReplyToType,
                             quotedPostId,
                             lang,
                         }).save();
@@ -427,14 +435,14 @@ export class PostResolver {
     
                             if (mentionedUsers.length > 0) {
                                 for (const mentionedUser of mentionedUsers) {
-                                    const notification = await this.notificationResolver.createNotification(payload.id, mentionedUser.id, post.id, type, "mention", `${post.author.name} (@${post.author.username}) mentioned you in a ${(type === "comment") ? "comment" : "post"}.`);
+                                    const notification = await this.notificationResolver.createNotification(payload.id, mentionedUser.id, post.id, type, NOTIFICATION_TYPES.MENTION, `${post.author.name} (@${post.author.username}) mentioned you in a ${(type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST}.`);
                                     
                                     if (notification) {
                                         pubSub.publish("NEW_NOTIFICATION", notification);
     
                                         const tokens = await this.userDeviceTokenRepository.find({ where: { userId: mentionedUser.id } });
                                         const pushNotification: FirebaseNotification = {
-                                            title: `@${post.author.username} mentioned you ${(type === "comment") ? "comment" : "post"} (for @${mentionedUser.username})`,
+                                            title: `@${post.author.username} mentioned you ${(type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST} (for @${mentionedUser.username})`,
                                             body: notification.content,
                                             imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
                                         };
@@ -445,23 +453,31 @@ export class PostResolver {
                             }
                         }
     
-                        if (isReplyTo) {
-                            const isReplyToPost = await this.findPostById(isReplyTo);
+                        if (isReplyToId) {
+                            let isReplyToItem: FeedItem | null = null;
+
+                            if (isReplyToItem === POST_TYPES.POST || isReplyToItem === POST_TYPES.COMMENT) {
+                                isReplyToItem = await this.findPostById(isReplyToId);
+                            } else {
+                                isReplyToItem = await this.articleRepository.findOne({ where: { id: isReplyToId } });
+                            }
     
-                            if (isReplyToPost && (type === "comment") && (isReplyToPost.authorId !== payload.id)) {
-                                const notification = await this.notificationResolver.createNotification(payload.id, isReplyToPost.authorId, post.id, type, "comment", `${post.author.name} (@${post.author.username}) commented your post.`);
+                            if (isReplyToItem && (type === NOTIFICATION_TYPES.COMMENT) && (isReplyToItem.authorId !== payload.id)) {
+                                const notification = await this.notificationResolver.createNotification(payload.id, isReplyToItem.authorId, post.id, type, NOTIFICATION_TYPES.COMMENT, `${post.author.name} (@${post.author.username}) commented your post.`);
         
-                                if (notification) {
+                                const author = await this.userResolver.findUserById(isReplyToItem.authorId);
+
+                                if (notification && author) {
                                     pubSub.publish("NEW_NOTIFICATION", notification);
         
-                                    const tokens = await this.userDeviceTokenRepository.find({ where: { userId: isReplyToPost.authorId } });
+                                    const tokens = await this.userDeviceTokenRepository.find({ where: { userId: isReplyToItem.authorId } });
                                     const pushNotification: FirebaseNotification = {
-                                        title: `@${post.author.username} commented your post (for @${isReplyToPost.author.username})`,
+                                        title: `@${post.author.username} commented your post (for @${author.username})`,
                                         body: notification.content,
                                         imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
                                     };
                                     const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.itemId}?n_id=${notification.notificationId}`;
-                                    await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: isReplyToPost.author.username, type: notification.notificationType });
+                                    await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: author.username, type: notification.notificationType });
                                 }
                             }
                         }
@@ -484,6 +500,7 @@ export class PostResolver {
             post,
             errors,
             ok,
+            status,
         };
     }
 
@@ -513,37 +530,41 @@ export class PostResolver {
         if (EMPTY_CONTENT_REGEXP.test(content)) {
             errors.push({
                 field: "content",
-                message: `You can't update a ${(type === "comment") ? "comment" : "post"} by removing the content`,
+                message: `You can't edit a ${(type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST} by removing the content`,
+            });
+        }
+
+        if (type.length === 0) {
+            errors.push({
+                field: "type",
+                message: "Invalid type provided",
             });
         }
 
         if (!payload) {
-            errors.push({
-                field: "content",
-                message: "You are not authenticated",
-            });
+            status = "You are not authenticated.";
         } else {
-            if (errors.length === 0) { // da qua
-                const user = await this.userResolver.findUserById(payload.id);
+            if (errors.length === 0) {
+                try {
+                    const user = await this.userResolver.findUserById(payload.id);
                 
-                if (user) {
-                    let mentions: string[] = lumen.extractMentions(content);
-                    const index = mentions.indexOf(user.username);
+                    if (user) {
+                        let mentions: string[] = lumen.extractMentions(content);
+                        const index = mentions.indexOf(user.username);
 
-                    if (index !== -1) {
-                        mentions.splice(index, 1);
-                    }
+                        if (index !== -1) {
+                            mentions.splice(index, 1);
+                        }
 
-                    const command = new DetectDominantLanguageCommand({
-                        Text: content,
-                    });
-                    const response = await this.comprehend.send(command);
-                    const lang = (response.Languages && response.Languages[0]) ? response.Languages[0].LanguageCode : "undefined";
+                        const command = new DetectDominantLanguageCommand({
+                            Text: content,
+                        });
+                        const response = await this.comprehend.send(command);
+                        const lang = (response.Languages && response.Languages[0]) ? response.Languages[0].LanguageCode : "undefined";
 
-                    try {
                         await this.postRepository.update(
                             {
-                                postId,
+                                itemId: postId,
                                 authorId: payload.id,
                             },
                             {
@@ -552,12 +573,11 @@ export class PostResolver {
                                 isEdited: true,
                                 hashtags: lumen.extractHashtags(content),
                                 lang,
-                                topicsIds: [],
                             },
                         );
 
                         post = await this.postRepository.findOne({
-                            where: { postId, authorId: payload.id },
+                            where: { itemId: postId, authorId: payload.id },
                             relations: ["author", "media"],
                         });
 
@@ -565,13 +585,13 @@ export class PostResolver {
                             const mediaItems = [];
                             
                             for (const mediaItem of mediaArray) {
-                                const newMediaItem = this.mediaItemRepository.create({
+                                const newMediaItem = await this.mediaItemRepository.create({
                                     post,
                                     type: mediaItem.type,
                                     src: mediaItem.src,
                                     alt: mediaItem.alt,
-                                });
-                                await newMediaItem.save();
+                                }).save();
+
                                 mediaItems.push(newMediaItem);
                             }
 
@@ -598,50 +618,27 @@ export class PostResolver {
                         }
 
                         if (post) {
-                            const mentionedUsers: User[] = [];
-
-                            if (post.mentions.length > 0) {
-                                for (const mention of post.mentions) {
-                                    const user = await this.userResolver.findUser(mention);
-                                    
-                                    if (user) {
-                                        mentionedUsers.push(user);
-                                    }
-                                }
-                            }
+                            const mentionedUsers = await this.userRepository.find({ where: { username: In(post.mentions) } });
 
                             if (mentionedUsers.length > 0) {
                                 for (const mentionedUser of mentionedUsers) {
-                                    const notification = await this.notificationRepository.findOne({
-                                        where: {
-                                            creatorId: payload.id,
-                                            type: "mention",
-                                            resourceId: post.id,
-                                            recipientId: mentionedUser.id,
-                                        },
-                                    });
+                                    const notification = await this.notificationResolver.findNotification(payload.id, mentionedUser.id, post.id, post.type, NOTIFICATION_TYPES.MENTION);
 
                                     if (!notification) {
-                                        const newNotification = await this.notificationRepository.create({
-                                            notificationId: uuidv4(),
-                                            creatorId: payload.id,
-                                            recipientId: mentionedUser.id,
-                                            resourceId: post.id,
-                                            type: "mention",
-                                            viewed: false,
-                                            content: `${post.author.name} (@${post.author.username}) mentioned you in a ${(post.type === "comment") ? "comment" : "post"}.`,
-                                        }).save();
+                                        const newNotification = await this.notificationResolver.createNotification(payload.id, mentionedUser.id, post.id, post.type, NOTIFICATION_TYPES.MENTION, `${post.author.name} (@${post.author.username}) mentioned you in a ${(post.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST}.`);
 
-                                        pubSub.publish("NEW_NOTIFICATION", newNotification);
+                                        if (newNotification) {
+                                            pubSub.publish("NEW_NOTIFICATION", newNotification);
 
-                                        const tokens = await this.userDeviceTokenRepository.find({ where: { userId: mentionedUser.id } });
-                                        const pushNotification: FirebaseNotification = {
-                                            title: `@${post.author.username} mentioned you ${(post.type === "comment") ? "comment" : "post"} (for @${mentionedUser.username})`,
-                                            body: newNotification.content,
-                                            imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
-                                        };
-                                        const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.postId}?n_id=${newNotification.notificationId}`;
-                                        await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: mentionedUser.username, type: newNotification.type });
+                                            const tokens = await this.userDeviceTokenRepository.find({ where: { userId: mentionedUser.id } });
+                                            const pushNotification: FirebaseNotification = {
+                                                title: `@${post.author.username} mentioned you ${(post.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST} (for @${mentionedUser.username})`,
+                                                body: newNotification.content,
+                                                imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
+                                            };
+                                            const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.itemId}?n_id=${newNotification.notificationId}`;
+                                            await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: mentionedUser.username, type: newNotification.notificationType });
+                                        }
                                     }
                                 }
                             }
@@ -649,8 +646,9 @@ export class PostResolver {
                             const mentionNotifications = await this.notificationRepository.find({
                                 where: {
                                     creatorId: payload.id,
-                                    type: "mention",
+                                    notificationType: NOTIFICATION_TYPES.MENTION,
                                     resourceId: post.id,
+                                    resourceType: post.type,
                                 },
                             });
 
@@ -659,7 +657,8 @@ export class PostResolver {
                             );
 
                             for (const deletedNotification of uselessNotifications) {
-                                await this.notificationRepository.delete({ id: deletedNotification.id, type: "mention" });
+                                await this.notificationRepository.delete({ id: deletedNotification.id, notificationType: NOTIFICATION_TYPES.COMMENT });
+                                
                                 pubSub.publish("DELETED_NOTIFICATION", deletedNotification);
                             }
 
@@ -673,20 +672,13 @@ export class PostResolver {
                                     "An error has occurred while retrieving the post data",
                             });
                         }
-                    } catch (error) {
-                        console.log(error);
-                        errors.push({
-                            field: "content",
-                            message:
-                                "An error has occurred. Please try again later to update your post",
-                        });
+                    } else {
+                        status = "Can't find the user.";
                     }
-                } else {
-                    errors.push({
-                        field: "content",
-                        message:
-                            "Can't find the user",
-                    });
+                } catch (error) {
+                    logger.error(error);
+
+                    status = "An error has occurred. Please try again later to edit your post.";
                 }
             }
         }
@@ -705,108 +697,139 @@ export class PostResolver {
         @Arg("postId") postId: string,
         @Ctx() { payload }: AuthContext
     ) {
-        
-        if (!payload) {
+        if (!payload || !isUUID(postId)) {
+            logger.warn("Bad request.");
+            
             return false;
         }
 
-        const post = await this.postRepository.findOne({ where: { postId, authorId: payload.id }, relations: ["author", "media"] });
+        try {
+            const post = await this.postRepository.findOne({ where: { itemId: postId, authorId: payload.id }, relations: ["author", "media"] });
 
-        if (!post) {
-            return false;
-        }
+            if (!post) {
+                return false;
+            }
 
-        if (post.media.length > 0) {
-            await Promise.all(
-                post.media.map(async (item) => {
-                    const existingKey =
-                        item.src.replace(
-                            `https://${item.type.includes("image") ? "img" : "vid"}.zncdn.net/`, ""
-                        );
-
-                    const url = await getPresignedUrlForDeleteCommand(existingKey, item.type);
-
-                    await axios.delete(url).then(() => {
-                        console.log("Media item successfully deleted.");
+            if (post.media.length > 0) {
+                await Promise.all(
+                    post.media.map(async (item) => {
+                        const existingKey =
+                            item.src.replace(
+                                `https://${item.type.includes("image") ? "img" : "vid"}.zncdn.net/`, ""
+                            );
+    
+                        const url = await getPresignedUrlForDeleteCommand(existingKey, item.type);
+    
+                        await axios.delete(url).then(() => {
+                            logger.error("Media item successfully deleted.");
+                        })
+                        .catch((error) => {
+                            logger.error(`An error occurred while deleting the media item. Error code: ${error.code}.`);
+                        });
+    
+                        await this.mediaItemRepository.delete({ id: item.id });
                     })
-                    .catch((error) => {
-                        console.error(`An error occurred while deleting the media item. Error code: ${error.code}.`);
-                    });
+                );
+            }
+    
+            await this.notificationRepository.delete({
+                resourceId: post.id,
+                notificationType: In([NOTIFICATION_TYPES.MENTION, NOTIFICATION_TYPES.LIKE, NOTIFICATION_TYPES.COMMENT]),
+            });
+    
+            await this.postRepository.delete({ itemId: postId, authorId: payload.id }).catch((error) => {
+                logger.error(error);
 
-                    await this.mediaItemRepository.delete({ id: item.id });
-                })
-            );
-        }
+                return false;
+            });
+    
+            pubSub.publish("DELETED_POST", post);
+    
+            return true;
+        } catch (error) {
+            logger.error(error);
 
-        await this.notificationRepository.delete({
-            resourceId: post.id,
-            type: In(["mention", "like", "comment"]),
-        });
-
-        await this.postRepository.delete({ postId, authorId: payload.id }).catch((error) => {
-            console.error(error);
             return false;
-        });
-
-        pubSub.publish("DELETED_POST", post);
-
-        return true;
+        }
     }
 
     @Mutation(() => Like, { nullable: true })
     @UseMiddleware(isAuth)
     async likePost(
-        @Arg("postId") postId: string,
+        @Arg("itemId") itemId: string,
         @Arg("origin") origin: string,
-        @Arg("postOpened") postOpened: boolean,
+        @Arg("itemOpened") itemOpened: boolean,
+        @Arg("itemType") itemType: string,
         @Ctx() { payload }: AuthContext,
     ): Promise<Like | null> {
         if (!payload) {
+            logger.warn("User not authenticated.");
+
             return null;
         }
 
-        const post = await this.postRepository.findOne({ where: { postId }, relations: ["author"] });
-        const existingLike = await this.likeRepository.findOne({ where: { likedPostId: postId, userId: payload.id } });
+        if (!isUUID(itemId)) {
+            logger.warn("Invalid itemId provided.");
 
-        if (post && !existingLike) {
-            const like = await this.likeRepository.create({
-                userId: payload.id,
-                likedPostId: postId,
-                origin,
-                postOpened,
-            }).save();
+            return null;
+        }
+
+        try {
+            let item: FeedItem | null = null;
+
+            if (itemType === POST_TYPES.POST || itemType === POST_TYPES.COMMENT) {
+                item = await this.findPost(itemId);
+            } else {
+                item = await this.articleRepository.findOne({ where: { itemId } });
+            }
+
+            const existingLike = await this.likeRepository.findOne({ where: { likedItemId: itemId, userId: payload.id } });
 
             const user = await this.userResolver.findUserById(payload.id);
 
             if (!user) {
+                logger.warn("User not found.");
+
                 return null;
             }
 
-            if (payload.id !== post.authorId) {
-                const notification = await this.notificationRepository.create({
-                    notificationId: uuidv4(),
-                    creatorId: payload.id,
-                    recipientId: post.authorId,
-                    resourceId: post.id,
-                    type: "like",
-                    viewed: false,
-                    content: `${user.name} (@${user.username}) liked your ${(post.type === "comment") ? "comment" : "post"}.`,
+            if (item && !existingLike) {
+                const like = await this.likeRepository.create({
+                    userId: payload.id,
+                    likedItemId: itemId,
+                    origin,
+                    itemOpened,
+                    itemType,
                 }).save();
 
-                pubSub.publish("NEW_NOTIFICATION", notification);
+                const author = await this.userResolver.findUserById(item.authorId);
 
-                const tokens = await this.userDeviceTokenRepository.find({ where: { userId: post.authorId } });
-                const pushNotification: FirebaseNotification = {
-                    title: `@${user.username} liked your ${(post.type === "comment") ? "comment" : "post"} (for @${post.author.username})`,
-                    body: notification.content,
-                    imageUrl: user.profile.profilePicture.length > 0 ? user.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
-                };
-                const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.postId}?n_id=${notification.notificationId}`;
-                await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: post.author.username, type: notification.type });
+                if (payload.id !== item.authorId && author) {
+                    const notification = await this.notificationResolver.createNotification(payload.id, item.authorId, item.id, item.type, NOTIFICATION_TYPES.LIKE, `${user.name} (@${user.username}) liked your ${(item.type === POST_TYPES.ARTICLE) ? POST_TYPES.ARTICLE : ((item.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST)}.`);
+
+                    if (notification) {
+                        pubSub.publish("NEW_NOTIFICATION", notification);
+
+                        const tokens = await this.userDeviceTokenRepository.find({ where: { userId: item.authorId } });
+                        const pushNotification: FirebaseNotification = {
+                            title: `@${user.username} liked your ${(item.type === POST_TYPES.ARTICLE) ? POST_TYPES.ARTICLE : ((item.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST)} (for @${author.username})`,
+                            body: notification.content,
+                            imageUrl: user.profile.profilePicture.length > 0 ? user.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
+                        };
+                        const link = `${process.env.CLIENT_ORIGIN}/${author.username}/post/${item.itemId}?n_id=${notification.notificationId}`;
+                        await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: author.username, type: notification.notificationType });
+                    }
+                }
+
+                return like;
+            } else {
+                logger.warn("Like already exists.");
+
+                return null;
             }
+        } catch (error) {
+            logger.error(error);
 
-            return like;
-        } else {
             return null;
         }
     }
@@ -814,41 +837,60 @@ export class PostResolver {
     @Mutation(() => Boolean)
     @UseMiddleware(isAuth)
     async removeLike(
-        @Arg("postId", { nullable: true }) postId: string,
+        @Arg("itemId") itemId: string,
+        @Arg("itemType") itemType: string,
         @Ctx() { payload }: AuthContext,
     ) {
         if (!payload) {
+            logger.warn("User not authenticated.");
+
             return false;
         }
 
-        const post = await this.postRepository.findOne({ where: { postId } });
-        
-        if (!post) {
+        if (!isUUID(itemId)) {
+            logger.warn("Invalid itemId provided.");
+
             return false;
         }
 
-        await this.likeRepository.delete({ userId: payload.id, likedPostId: postId }).catch((error) => {
-            console.error(error);
+        try {
+            let item: FeedItem | null = null;
+
+            if (itemType === POST_TYPES.POST || itemType === POST_TYPES.COMMENT) {
+                item = await this.findPost(itemId);
+            } else {
+                item = await this.articleRepository.findOne({ where: { itemId } });
+            }
+
+            if (!item) {
+                logger.warn("Item not found.");
+
+                return false;
+            }
+
+            await this.likeRepository.delete({ userId: payload.id, likedItemId: itemId, itemType }).catch((error) => {
+                logger.error(error);
+
+                return false;
+            });
+
+            const notification = await this.notificationResolver.findNotification(payload.id, item.authorId, item.id, item.type, NOTIFICATION_TYPES.LIKE);
+    
+            if (payload.id !== item.authorId && notification) {
+                await this.notificationResolver.deleteNotification(notification.notificationId);
+
+                pubSub.publish("DELETED_NOTIFICATION", notification);
+            }
+    
+            return true;
+        } catch (error) {
+            logger.error(error);
+
             return false;
-        });
-
-        const notification = await this.notificationRepository.findOne({ 
-            where: {
-                resourceId: post.id, 
-                type: "like", 
-                creatorId: payload.id, 
-                recipientId: post.authorId
-            },
-        });
-
-        if (payload.id !== post.authorId && notification) {
-            await this.notificationRepository.delete({ resourceId: post.id, type: "like", creatorId: payload.id, recipientId: post.authorId });
-            pubSub.publish("DELETED_NOTIFICATION", notification);
         }
-
-        return true;
     }
 
+    // da qui
     @Query(() => [Post], { nullable: true })
     async getLikedPosts(
         @Arg("id", () => Int, { nullable: true }) id: number,

@@ -8,6 +8,7 @@ import {
 } from "typeorm";
 import { Article, Post } from "./Post";
 import { BaseItem } from "./BaseItem";
+import { USER_TYPES } from "src/helpers/user/userTypes";
 
 @ObjectType()
 export class Profile {
@@ -90,7 +91,7 @@ export class User extends BaseItem {
     email: string;
 
     @Field(() => String)
-    @Column({ default: "user" })
+    @Column({ default: USER_TYPES.USER })
     type: string;
 
     @Column()
@@ -262,8 +263,8 @@ export class UserVerification extends BaseItem {
     @Column({ type: "text", array: true, default: [] })
     documents: string[];
 
-    @Field(() => String)
-    @Column({ default: "" })
+    @Field(() => String, { nullable: true, defaultValue: null })
+    @Column({ default: null, nullable: true })
     outcome: string;
 }
 

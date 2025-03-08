@@ -51,7 +51,7 @@ export class Report extends BaseItem {
     })
     status: ReportStatus;
 
-    @Field(() => String)
-    @Column({ default: "" })
+    @Field(() => String, { nullable: true, defaultValue: null })
+    @Column({ default: null, nullable: true })
     outcome: string;
 }
