@@ -4,14 +4,18 @@ import {
     Column,
     ManyToOne,
     OneToMany,
+    BaseEntity,
+    PrimaryGeneratedColumn,
+    CreateDateColumn,
+    UpdateDateColumn,
 } from "typeorm";
 import { User } from "./User";
 import { BaseItem } from "./BaseItem";
 
 @ObjectType()
-export class FeedItem extends BaseItem {
+export class FeedItem extends BaseEntity {
     @Field(() => String)
-    @Column({ type: "uuid", unique: true })
+    @PrimaryGeneratedColumn("uuid")
     itemId: string;
 
     @Field(() => Int)
@@ -34,10 +38,6 @@ export class FeedItem extends BaseItem {
     @Column("int", { default: 0 })
     views: number;
 
-    @Field(() => Number)
-    @Column("float", { default: 1.0 })
-    usefulnessRating: number;
-
     @Field(() => String)
     @Column()
     lang: string;
@@ -45,6 +45,14 @@ export class FeedItem extends BaseItem {
     @Field(() => [Object], { nullable: true })
     @Column({ type: "jsonb", default: [] })
     topics: { id: number; weight: number }[];
+
+    @Field(() => String)
+    @CreateDateColumn()
+    createdAt: Date;
+
+    @Field(() => String)
+    @UpdateDateColumn()
+    updatedAt: Date;
 }
 
 @ObjectType()
@@ -194,8 +202,8 @@ export class Repost extends BaseItem {
     repostId: string;
 
     @Field(() => Int)
-    @Column()
-    postId: number;
+    @Column({ type: "uuid" })
+    postId: string;
 
     @Field(() => Int)
     @Column()
@@ -205,8 +213,8 @@ export class Repost extends BaseItem {
 @ObjectType()
 @Entity("bookmarks")
 export class Bookmark extends BaseItem {
-    @Field(() => Int)
-    @Column()
+    @Field(() => String)
+    @Column({ type: "uuid" })
     itemId: number;
 
     @Field(() => String)

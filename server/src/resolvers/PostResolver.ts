@@ -3,7 +3,7 @@ import { FieldError } from "./common";
 import { Article, FeedItem, Like, MediaItem, Post, ViewLog } from "../entities/Post";
 import { isAuth } from "../middleware/isAuth";
 import { AuthContext } from "../types";
-import { v4 as uuidv4 } from "uuid";
+import { v5 as uuidv5 } from "uuid";
 import { User, UserDeviceToken } from "../entities/User";
 import { Notification } from "../entities/Notification";
 import { In, IsNull, Repository } from "typeorm";
@@ -38,6 +38,7 @@ export class PostResponse {
 }
 
 const EMPTY_CONTENT_REGEXP = /^\s+\S*/;
+const NAMESPACE = "123e4567-e89b-12d3-a456-426614174000";
 
 @Resolver(Post)
 export class PostResolver {
@@ -398,7 +399,7 @@ export class PostResolver {
                         const lang = (response.Languages && response.Languages[0]) ? response.Languages[0].LanguageCode : "undefined";
     
                         post = await this.postRepository.create({
-                            itemId: uuidv4(),
+                            itemId: uuidv5(`${(type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST}-${new Date()}`, NAMESPACE),
                             authorId: payload.id,
                             type: (type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST,
                             content,
@@ -890,7 +891,6 @@ export class PostResolver {
         }
     }
 
-    // da qui
     @Query(() => [Post], { nullable: true })
     async getLikedPosts(
         @Arg("id", () => Int, { nullable: true }) id: number,
@@ -898,7 +898,9 @@ export class PostResolver {
         @Arg("limit", () => Int, { nullable: true }) limit?: number,
     ) {
         if (!id) {
-            return [];
+            logger.warn("User id not provied.");
+
+            return null;
         }
     
         try {
@@ -909,68 +911,82 @@ export class PostResolver {
                 order: { createdAt: "DESC" }
             });
     
-            if (likes.length === 0) {
-                return [];
-            }
-    
-            const likedPostIds = likes.map(like => like.likedPostId);
+            const likedPostIds = likes.filter(like => like.itemType !== POST_TYPES.ARTICLE).map(like => like.likedItemId);
             
             const posts = await this.postRepository.find({
-                where: { postId: In(likedPostIds) },
+                where: { itemId: In(likedPostIds) },
                 relations: ["author", "media"],
             });
     
             return posts;
         } catch (error) {
-            console.error(error);
+            logger.error(error);
 
-            return [];
+            return null;
         }
     }
 
     @Query(() => [User], { nullable: true })
     async getPostLikes(
-        @Arg("postId", { nullable: true }) postId: string,
+        @Arg("postId") itemId: string,
         @Arg("offset", () => Int, { nullable: true }) offset?: number,
         @Arg("limit", () => Int, { nullable: true }) limit?: number,
     ) {
-        if (!postId) {
+        if (!isUUID(itemId)) {
+            logger.warn("Invalid itemId provided.");
+
             return null;
         }
-    
-        const likes = await this.likeRepository.find({
-            where: { likedPostId: postId },
-            skip: offset,
-            take: limit,
-            order: { createdAt: "DESC" }
-        });
-    
-        const userIds = likes.map(like => like.userId);
-    
-        if (userIds.length === 0) {
-            return [];
+
+        try {
+            const likes = await this.likeRepository.find({
+                where: { likedItemId: itemId },
+                skip: offset,
+                take: limit,
+                order: { createdAt: "DESC" }
+            });
+        
+            const userIds = likes.map(like => like.userId);
+        
+            const users = await this.userResolver.findUsersById(userIds, true);
+        
+            return users;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
         }
-    
-        const users = await this.userRepository.find({ where: { id: In(userIds) } });
-    
-        return users;
     }
 
     @Query(() => Boolean)
     @UseMiddleware(isAuth)
     async isPostLikedByMe(
-        @Arg("postId", { nullable: true }) postId: string,
+        @Arg("itemId") itemId: string,
         @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
+            logger.warn("User not authenticated.");
+
             return false;
         }
 
-        const like = await this.likeRepository.findOne({ where: { userId: payload.id, likedPostId: postId } });
+        if (!isUUID(itemId)) {
+            logger.warn("Invalid itemId provided.");
 
-        if (like) {
-            return true;
-        } else {
+            return false;
+        }
+
+        try {
+            const like = await this.likeRepository.findOne({ where: { userId: payload.id, likedItemId: itemId } });
+
+            if (like) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (error) {
+            logger.error(error);
+
             return false;
         }
     }
