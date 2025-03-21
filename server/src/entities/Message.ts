@@ -184,3 +184,15 @@ export class Event extends ChatItem {
     @Column()
     eventMessage: string;
 }
+
+@ObjectType()
+export class ChatItemWrapper {
+    @Field(() => String)
+    chatItemId: string;
+
+    @Field(() => String)
+    itemType: string;
+
+    @Field(() => ChatItem)
+    item: ChatItem;
+}

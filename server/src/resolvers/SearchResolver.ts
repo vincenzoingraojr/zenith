@@ -30,6 +30,7 @@ export class SearchResolver {
         this.blockRepository = appDataSource.getRepository(Block);
     }
 
+    // da sistemare
     @Query(() => SearchResult)
     @UseMiddleware(isAuth)
     async search(@Arg("keyword", { nullable: true }) keyword: string, @Arg("type", { nullable: true }) type: string, @Ctx() { payload }: AuthContext): Promise<SearchResult> {

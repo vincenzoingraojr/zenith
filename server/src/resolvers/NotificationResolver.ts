@@ -277,6 +277,7 @@ export class NotificationResolver {
     }
 }
 
+// da sistemare
 @Resolver(MessageNotification)
 export class MessageNotificationResolver {
     private readonly messageNotificationRepository: Repository<MessageNotification>;

@@ -14,6 +14,9 @@ import { pubSub } from "../helpers/createPubSub";
 import { Notification as FirebaseNotification } from "firebase-admin/messaging";
 import { sendPushNotifications } from "../helpers/notifications";
 import lumen from "@zenith-to/lumen-js";
+import { logger } from "../helpers/logger";
+import { UserResolver } from "./UserResolver";
+import { MessageNotificationResolver } from "./NotificationResolver";
 
 @ObjectType()
 export class ChatResponse {
@@ -25,6 +28,9 @@ export class ChatResponse {
 
     @Field(() => String, { nullable: true })
     status?: string;
+
+    @Field(() => Boolean)
+    ok: boolean;
 }
 
 export const MessageOrEvent = createUnionType({
@@ -45,6 +51,8 @@ export const MessageOrEvent = createUnionType({
 
 @Resolver(Chat)
 export class ChatResolver {
+    private readonly userResolver: UserResolver;
+    private readonly messageNotificationResolver: MessageNotificationResolver;
     private readonly chatRepository: Repository<Chat>;
     private readonly userRepository: Repository<User>;
     private readonly followRepository: Repository<Follow>;
@@ -55,6 +63,8 @@ export class ChatResolver {
     private readonly blockRepository: Repository<Block>;
 
     constructor() {
+        this.userResolver = new UserResolver();
+        this.messageNotificationResolver = new MessageNotificationResolver();
         this.chatRepository = appDataSource.getRepository(Chat);
         this.userRepository = appDataSource.getRepository(User);
         this.followRepository = appDataSource.getRepository(Follow);
@@ -65,27 +75,35 @@ export class ChatResolver {
         this.blockRepository = appDataSource.getRepository(Block);
     }
 
-    @Query(() => [Chat])
+    @Query(() => [Chat], { nullable: true })
     @UseMiddleware(isAuth)
     async chats(
         @Ctx() { payload }: AuthContext
-    ): Promise<Chat[]> {
-        const chats = await this.chatRepository.find({ relations: ["users"], order: { updatedAt: "DESC" } });
-        const userChats: Chat[] = [];
+    ): Promise<Chat[] | null> {
+        if (!payload) {
+            logger.warn("User not authenticated.");
 
-        if (payload) {
-            for (const chat of chats) {
-                const me = chat.users.find(user => user.userId === payload.id);
-                
-                if (me && ((chat.type === "group" && chat.users.some(obj => obj.userId === payload.id) && me.inside) || (chat.type === "chat" && chat.creatorId === payload.id && me.inside) || (chat.type === "chat" && chat.users.some(obj => obj.userId === payload.id) && me.inside && chat.visible))) {
-                    userChats.push(chat);
-                }
-            }
+            return null;
         }
 
-        return userChats;
+        try {
+            const userChats = await this.chatRepository
+                .createQueryBuilder("chat")
+                .leftJoinAndSelect("chat.users", "user")
+                .where("user.userId = :userId", { userId: payload.id })
+                .andWhere("user.inside = :inside", { inside: true })
+                .orderBy("chat.updatedAt", "DESC")
+                .getMany();
+
+            return userChats;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
     }
 
+    // si parte da qui per la sistemazione
     @Subscription(() => Chat, {
         topics: "NEW_CHAT",
         filter: ({ payload, args }) => {

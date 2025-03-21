@@ -1,9 +1,9 @@
 import { Arg, Ctx, Field, Int, Mutation, ObjectType, Query, Resolver, Root, Subscription, UseMiddleware } from "type-graphql";
 import { FieldError } from "./common";
-import { Article, FeedItem, Like, MediaItem, Post, ViewLog } from "../entities/Post";
+import { Article, Bookmark, FeedItem, Like, MediaItem, Post, ViewLog } from "../entities/Post";
 import { isAuth } from "../middleware/isAuth";
 import { AuthContext } from "../types";
-import { v5 as uuidv5 } from "uuid";
+import { v4 as uuidv4 } from "uuid";
 import { User, UserDeviceToken } from "../entities/User";
 import { Notification } from "../entities/Notification";
 import { In, IsNull, Repository } from "typeorm";
@@ -38,7 +38,6 @@ export class PostResponse {
 }
 
 const EMPTY_CONTENT_REGEXP = /^\s+\S*/;
-const NAMESPACE = "123e4567-e89b-12d3-a456-426614174000";
 
 @Resolver(Post)
 export class PostResolver {
@@ -52,6 +51,7 @@ export class PostResolver {
     private readonly likeRepository: Repository<Like>;
     private readonly viewLogRepository: Repository<ViewLog>;
     private readonly userDeviceTokenRepository: Repository<UserDeviceToken>;
+    private readonly bookmarkRepository: Repository<Bookmark>;
     private readonly comprehend: ComprehendClient;
 
     constructor() {
@@ -65,6 +65,7 @@ export class PostResolver {
         this.likeRepository = appDataSource.getRepository(Like);
         this.viewLogRepository = appDataSource.getRepository(ViewLog);
         this.userDeviceTokenRepository = appDataSource.getRepository(UserDeviceToken);
+        this.bookmarkRepository = appDataSource.getRepository(Bookmark);
         this.comprehend = new ComprehendClient({ 
             region: "us-west-1",
             credentials: {
@@ -78,7 +79,7 @@ export class PostResolver {
         topics: "NEW_POST",
         filter: ({ payload, args }) => {
             if (!args.postId) {
-                return payload.isReplyTo === args.postId && payload.authorId === args.userId;
+                return payload.isReplyToId === args.postId && payload.authorId === args.userId;
             } else {
                 return payload.authorId === args.userId;
             }
@@ -92,7 +93,7 @@ export class PostResolver {
         topics: "DELETED_POST",
         filter: ({ payload, args }) => {
             if (!args.postId) {
-                return payload.isReplyTo === args.postId && payload.authorId === args.userId;
+                return payload.isReplyToId === args.postId && payload.authorId === args.userId;
             } else {
                 return payload.authorId === args.userId;
             }
@@ -399,7 +400,7 @@ export class PostResolver {
                         const lang = (response.Languages && response.Languages[0]) ? response.Languages[0].LanguageCode : "undefined";
     
                         post = await this.postRepository.create({
-                            itemId: uuidv5(`${(type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST}-${new Date()}`, NAMESPACE),
+                            itemId: uuidv4(),
                             authorId: payload.id,
                             type: (type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST,
                             content,
@@ -928,7 +929,8 @@ export class PostResolver {
 
     @Query(() => [User], { nullable: true })
     async getPostLikes(
-        @Arg("postId") itemId: string,
+        @Arg("itemId") itemId: string,
+        @Arg("type") type: string,
         @Arg("offset", () => Int, { nullable: true }) offset?: number,
         @Arg("limit", () => Int, { nullable: true }) limit?: number,
     ) {
@@ -940,7 +942,7 @@ export class PostResolver {
 
         try {
             const likes = await this.likeRepository.find({
-                where: { likedItemId: itemId },
+                where: { likedItemId: itemId, itemType: type },
                 skip: offset,
                 take: limit,
                 order: { createdAt: "DESC" }
@@ -962,6 +964,7 @@ export class PostResolver {
     @UseMiddleware(isAuth)
     async isPostLikedByMe(
         @Arg("itemId") itemId: string,
+        @Arg("type") type: string,
         @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
@@ -977,7 +980,7 @@ export class PostResolver {
         }
 
         try {
-            const like = await this.likeRepository.findOne({ where: { userId: payload.id, likedItemId: itemId } });
+            const like = await this.likeRepository.findOne({ where: { userId: payload.id, likedItemId: itemId, itemType: type } });
 
             if (like) {
                 return true;
@@ -991,68 +994,260 @@ export class PostResolver {
         }
     }
 
-    @Mutation(() => Post, { nullable: true })
+    @Mutation(() => FeedItem, { nullable: true })
     @UseMiddleware(isAuth)
     async incrementPostViews(
-        @Arg("postId") postId: string,
-        @Arg("postOpened") postOpened: boolean,
+        @Arg("itemId") itemId: string,
+        @Arg("type") type: string,
+        @Arg("itemOpened") itemOpened: boolean,
         @Arg("origin") origin: string,
         @Ctx() { payload, req }: AuthContext
-    ): Promise<Post | null> {
-        const post = await this.postRepository.findOne({
-            where: {
-                postId,
-            },
-        });
-        const uniqueIdentifier = req.cookies["uid"];
+    ): Promise<FeedItem | null> {
+        if (!isUUID(itemId)) {
+            logger.warn("Invalid itemId provided.");
 
-        if (!post) {
+            return null;
+        }
+
+        try {
+            let item: FeedItem | null = null;
+
+            if (type === POST_TYPES.POST || type === POST_TYPES.COMMENT) {
+                item = await this.findPost(itemId);
+            } else {
+                item = await this.articleRepository.findOne({ where: { itemId } });
+            }
+
+            const uniqueIdentifier = req.cookies["uid"];
+
+            if (!item) {
+                return null;
+            }
+
+            if (!payload) {
+                const hasViewed = await this.viewLogRepository.findOne({
+                    where: {
+                        itemId,
+                        itemType: type,
+                        uniqueIdentifier,
+                    }
+                });
+        
+                if (!hasViewed) {
+                    item.views += 1;
+                    await item.save();
+                
+                    await this.viewLogRepository.create({
+                        itemId,
+                        uniqueIdentifier,
+                        isAuth: false,
+                        itemType: type,
+                        itemOpened,
+                        origin,
+                    }).save();
+                }
+            } else {
+                const userHasViewed = await this.viewLogRepository.findOne({
+                    where: {
+                        itemId,
+                        itemType: type,
+                        userId: payload.id,
+                    }
+                });
+        
+                if (!userHasViewed) {
+                    item.views += 1;
+                    await item.save();
+                
+                    await this.viewLogRepository.create({
+                        itemId,
+                        userId: payload.id,
+                        uniqueIdentifier,
+                        isAuth: true,
+                        itemType: type,
+                        itemOpened,
+                        origin,
+                    }).save();
+                }
+            }
+
+            return item;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
+    }
+
+    @Mutation(() => Bookmark, { nullable: true })
+    @UseMiddleware(isAuth)
+    async createBookmark(
+        @Arg("itemId") itemId: string,
+        @Arg("type") type: string,
+        @Arg("origin") origin: string,
+        @Ctx() { payload }: AuthContext
+    ): Promise<Bookmark | null> {
+        if (!isUUID(itemId)) {
+            logger.warn("Invalid itemId provided.");
+
             return null;
         }
 
         if (!payload) {
-            const hasViewed = await this.viewLogRepository.findOne({
-                where: {
-                    postId,
-                    uniqueIdentifier,
-                }
-            });
-    
-            if (!hasViewed) {
-                post.views += 1;
-                await post.save();
-            
-                await this.viewLogRepository.create({
-                    postId,
-                    uniqueIdentifier,
-                    isAuth: false,
-                    postOpened,
-                    origin,
-                }).save();
+            logger.warn("User not authenticated.");
+
+            return null;
+        }
+        
+        try {
+            let item: FeedItem | null = null;
+
+            if (type === POST_TYPES.POST || type === POST_TYPES.COMMENT) {
+                item = await this.findPost(itemId);
+            } else {
+                item = await this.articleRepository.findOne({ where: { itemId } });
             }
-        } else {
-            const userHasViewed = await this.viewLogRepository.findOne({
-                where: {
-                    postId,
-                    userId: payload.id,
-                }
-            });
-    
-            if (!userHasViewed) {
-                post.views += 1;
-                await post.save();
-            
-                await this.viewLogRepository.create({
-                    postId,
-                    userId: payload.id,
-                    uniqueIdentifier,
-                    isAuth: true,
-                    postOpened,
-                    origin,
-                }).save();
+
+            if (!item) {
+                return null;
             }
+
+            const bookmark = await this.bookmarkRepository.create({
+                itemId: item.id,
+                itemType: type,
+                authorId: payload.id,
+                origin,
+            }).save();
+
+            if (!bookmark) {
+                logger.warn("An error has occurred while creating the bookmark.");
+
+                return null;
+            }
+
+            return bookmark;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
+    }
+
+    @Mutation(() => Boolean)
+    @UseMiddleware(isAuth)
+    async removeBookmark(
+        @Arg("itemId") itemId: string,
+        @Arg("type") type: string,
+        @Ctx() { payload }: AuthContext,
+    ) {
+        if (!payload) {
+            logger.warn("User not authenticated.");
+
+            return false;
         }
 
-        return post;
+        if (!isUUID(itemId)) {
+            logger.warn("Invalid itemId provided.");
+
+            return null;
+        }
+
+        try {
+            let item: FeedItem | null = null;
+
+            if (type === POST_TYPES.POST || type === POST_TYPES.COMMENT) {
+                item = await this.findPost(itemId);
+            } else {
+                item = await this.articleRepository.findOne({ where: { itemId } });
+            }
+
+            if (!item) {
+                logger.warn("Item not found.");
+
+                return false;
+            }
+
+            await this.bookmarkRepository.delete({ authorId: payload.id, itemId: item.id, itemType: type }).catch((error) => {
+                logger.error(error);
+
+                return false;
+            });
+    
+            return true;
+        } catch (error) {
+            logger.error(error);
+
+            return false;
+        }
+    }
+
+    @Query(() => Boolean)
+    @UseMiddleware(isAuth)
+    async isBookmarked(
+        @Arg("itemId", () => Int) itemId: number,
+        @Arg("type") type: string,
+        @Ctx() { payload }: AuthContext
+    ) {
+        if (!payload) {
+            logger.warn("User not authenticated.");
+
+            return false;
+        }
+
+        if (!isUUID(itemId)) {
+            logger.warn("Invalid itemId provided.");
+
+            return false;
+        }
+
+        try {
+            const bookmark = await this.bookmarkRepository.findOne({ where: { authorId: payload.id, itemId, itemType: type } });
+
+            if (bookmark) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (error) {
+            logger.error(error);
+
+            return false;
+        }
+    }
+
+    @Query(() => [Post], { nullable: true })
+    @UseMiddleware(isAuth)
+    async getBookmarks(
+        @Ctx() { payload }: AuthContext,
+        @Arg("offset", () => Int, { nullable: true }) offset?: number,
+        @Arg("limit", () => Int, { nullable: true }) limit?: number,
+    ) {
+        if (!payload) {
+            logger.warn("User not authenticated.");
+
+            return null;
+        }
+    
+        try {
+            const bookmarks = await this.bookmarkRepository.find({
+                where: { authorId: payload.id },
+                skip: offset,
+                take: limit,
+                order: { createdAt: "DESC" }
+            });
+    
+            const savedPostIds = bookmarks.filter(bookmark => bookmark.itemType !== POST_TYPES.ARTICLE).map(bookmark => bookmark.itemId);
+            
+            const posts = await this.postRepository.find({
+                where: { id: In(savedPostIds) },
+                relations: ["author", "media"],
+            });
+    
+            return posts;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
     }
 }
