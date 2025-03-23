@@ -1,4 +1,4 @@
-import { Field, Int, ObjectType } from "type-graphql";
+import { createUnionType, Field, Int, ObjectType } from "type-graphql";
 import {
     Entity,
     Column,
@@ -218,6 +218,22 @@ export class Bookmark extends BaseItem {
     origin: string;
 }
 
+export const PostOrArticle = createUnionType({
+    name: "PostOrArticle",
+    description: "Post or Article type",
+    types: () => [Post, Article] as const,
+    resolveType: (value) => {
+        if (value && ("media" in value)) {
+            return Post;
+        }
+        if (value && ("title" in value)) {
+            return Article;
+        }
+
+        return null;
+    },
+});
+
 @ObjectType()
 export class FeedItemWrapper {
     @Field(() => String)
@@ -226,6 +242,6 @@ export class FeedItemWrapper {
     @Field(() => String)
     itemType: string;
 
-    @Field(() => FeedItem)
-    item: FeedItem;
+    @Field(() => PostOrArticle)
+    item: typeof PostOrArticle;
 }

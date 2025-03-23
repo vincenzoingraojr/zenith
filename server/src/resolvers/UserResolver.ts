@@ -1374,8 +1374,8 @@ export class UserResolver {
     @Query(() => [User], { nullable: true })
     async getFollowers(
         @Arg("id", () => Int, { nullable: true }) id: number,
-        @Arg("limit", () => Int, { nullable: true }) limit: number,
-        @Arg("offset", () => Int, { nullable: true }) offset: number
+        @Arg("offset", () => Int, { nullable: true }) offset?: number,
+        @Arg("limit", () => Int, { nullable: true }) limit?: number
     ): Promise<User[] | null> {
         if (!id) {
             logger.warn("User id not provided.");
@@ -1399,8 +1399,8 @@ export class UserResolver {
     @Query(() => [User], { nullable: true })
     async getFollowing(
         @Arg("id", () => Int, { nullable: true }) id: number,
-        @Arg("limit", () => Int, { nullable: true }) limit: number,
-        @Arg("offset", () => Int, { nullable: true }) offset: number
+        @Arg("offset", () => Int, { nullable: true }) offset?: number,
+        @Arg("limit", () => Int, { nullable: true }) limit?: number,
     ): Promise<User[] | null> {
         if (!id) {
             logger.warn("User id not provided.");
@@ -2309,8 +2309,8 @@ export class UserResolver {
     @UseMiddleware(isAuth)
     async blockedUsers(
         @Ctx() { payload }: AuthContext,
-        @Arg("limit", () => Int, { nullable: true }) limit: number,
-        @Arg("offset", () => Int, { nullable: true }) offset: number
+        @Arg("offset", () => Int, { nullable: true }) offset?: number,
+        @Arg("limit", () => Int, { nullable: true }) limit?: number,
     ): Promise<User[] | null> {
         if (!payload) {
             logger.warn("Payload not provided.");
@@ -2830,8 +2830,8 @@ export class UserResolver {
     @Query(() => [User], { nullable: true })
     async affiliates(
         @Arg("id", () => Int, { nullable: true }) id: number,
-        @Arg("limit", () => Int, { nullable: true }) limit: number,
-        @Arg("offset", () => Int, { nullable: true }) offset: number
+        @Arg("offset", () => Int, { nullable: true }) offset?: number,
+        @Arg("limit", () => Int, { nullable: true }) limit?: number,
     ): Promise<User[] | null> {
         if (!id) {
             logger.warn("User id not provided.");

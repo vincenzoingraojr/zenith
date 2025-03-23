@@ -5,3 +5,8 @@ export const NOTIFICATION_TYPES = Object.freeze({
     LIKE: "like",
     AFFILIATION: "affiliation",
 });
+
+export const MESSAGE_NOTIFICATION_TYPES = Object.freeze({
+    MESSAGE: "message",
+    MENTION: "mention",
+});

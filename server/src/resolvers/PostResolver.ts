@@ -21,6 +21,7 @@ import { isUUID } from "class-validator";
 import { NotificationResolver } from "./NotificationResolver";
 import { POST_TYPES } from "src/helpers/post/postTypes";
 import { NOTIFICATION_TYPES } from "src/helpers/notification/notificationTypes";
+import { EMPTY_CONTENT_REGEXP } from "../helpers/textConstants";
 
 @ObjectType()
 export class PostResponse {
@@ -36,8 +37,6 @@ export class PostResponse {
     @Field(() => Boolean)
     ok: boolean;
 }
-
-const EMPTY_CONTENT_REGEXP = /^\s+\S*/;
 
 @Resolver(Post)
 export class PostResolver {
@@ -115,8 +114,8 @@ export class PostResolver {
 
     @Query(() => [Post], { nullable: true }) // implement algorithm
     async postFeed(
-        @Arg("offset", () => Int, { nullable: true }) offset: number,
-        @Arg("limit", () => Int, { nullable: true }) limit: number,
+        @Arg("offset", () => Int, { nullable: true }) offset?: number,
+        @Arg("limit", () => Int, { nullable: true }) limit?: number,
     ): Promise<Post[] | null> {
         try {
             const posts = await this.postRepository.find({
@@ -145,8 +144,8 @@ export class PostResolver {
     @Query(() => [Post], { nullable: true })
     async userPostFeed(
         @Arg("userId", () => Int, { nullable: true }) userId: number,
-        @Arg("offset", () => Int, { nullable: true }) offset: number,
-        @Arg("limit", () => Int, { nullable: true }) limit: number,
+        @Arg("offset", () => Int, { nullable: true }) offset?: number,
+        @Arg("limit", () => Int, { nullable: true }) limit?: number,
     ): Promise<Post[] | null> {
         if (!userId) {
             logger.warn("User id not provided.");
@@ -186,8 +185,8 @@ export class PostResolver {
     async postComments(
         @Arg("id", () => Int, { nullable: true }) id: number,
         @Arg("type") type: string,
-        @Arg("offset", () => Int, { nullable: true }) offset: number,
-        @Arg("limit", () => Int, { nullable: true }) limit: number,
+        @Arg("offset", () => Int, { nullable: true }) offset?: number,
+        @Arg("limit", () => Int, { nullable: true }) limit?: number,
     ): Promise<Post[] | null> {
         if (!id) {
             logger.warn("Post id not provided.");
@@ -224,8 +223,8 @@ export class PostResolver {
     @Query(() => [Post], { nullable: true })
     async userComments(
         @Arg("userId", () => Int, { nullable: true }) userId: number,
-        @Arg("offset", () => Int, { nullable: true }) offset: number,
-        @Arg("limit", () => Int, { nullable: true }) limit: number,
+        @Arg("offset", () => Int, { nullable: true }) offset?: number,
+        @Arg("limit", () => Int, { nullable: true }) limit?: number,
     ): Promise<Post[] | null> {
         if (!userId) {
             logger.warn("User id not provided.");

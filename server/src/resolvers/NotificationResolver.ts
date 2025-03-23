@@ -2,14 +2,13 @@ import { isAuth } from "../middleware/isAuth";
 import { MessageNotification, Notification } from "../entities/Notification";
 import { Arg, Ctx, Field, Int, Mutation, ObjectType, Query, Resolver, Root, Subscription, UseMiddleware } from "type-graphql";
 import { AuthContext } from "../types";
-import { LessThan, Repository } from "typeorm";
-import { Chat } from "../entities/Message";
+import { In, LessThan, Repository } from "typeorm";
 import appDataSource from "../dataSource";
-import { User } from "../entities/User";
 import { UserResolver } from "./UserResolver";
 import { logger } from "../helpers/logger";
 import { isUUID } from "class-validator";
 import { v4 as uuidv4 } from "uuid";
+import { ChatResolver } from "./MessageResolver";
 
 @ObjectType()
 export class PaginatedNotifications {
@@ -281,22 +280,35 @@ export class NotificationResolver {
 @Resolver(MessageNotification)
 export class MessageNotificationResolver {
     private readonly messageNotificationRepository: Repository<MessageNotification>;
-    private readonly chatRepository: Repository<Chat>;
-    private readonly userRepository: Repository<User>;
+    private readonly userResolver: UserResolver;
+    private readonly chatResolver: ChatResolver;
 
     constructor() {
         this.messageNotificationRepository = appDataSource.getRepository(MessageNotification);
-        this.chatRepository = appDataSource.getRepository(Chat);
-        this.userRepository = appDataSource.getRepository(User);
+        this.userResolver = new UserResolver();
+        this.chatResolver = new ChatResolver();
     }
 
-    @Query(() => [MessageNotification])
+    @Query(() => [MessageNotification], { nullable: true })
     @UseMiddleware(isAuth)
     async unseenMessageNotifications(
         @Arg("chatId", { nullable: true }) chatId: string,
         @Ctx() { payload }: AuthContext
-    ) {
-        if (payload) {
+    ): Promise<MessageNotification[] | null> {
+        if (!payload) {
+            logger.warn("No payload found in context. Returning null.");
+
+            return null;
+        }
+
+        if (!isUUID(chatId)) {
+            logger.warn("Invalid UUID provided. Returning null.");
+
+            return null;
+        }
+
+
+        try {
             const messageNotifications = await this.messageNotificationRepository.find({
                 order: {
                     createdAt: "DESC",
@@ -308,88 +320,84 @@ export class MessageNotificationResolver {
                 },
             });
 
-            const feed = [];
+            const ids = Array.from(new Set(messageNotifications.map((notification) => notification.creatorId)));
+            const creators = await this.userResolver.findUsersById(ids);
+            
+            const unseenFeed: MessageNotification[] = [];
 
-            for (const messageNotification of messageNotifications) {
-                const creator = await this.userRepository.findOne({ where: { id: messageNotification.creatorId } });
-
-                if (creator) {
-                    feed.push(messageNotification);
-                }
+            if (creators && creators.length > 0) {
+                const creatorIdsSet = new Set(creators.map(creator => creator.id));
+                unseenFeed.push(...messageNotifications.filter((notification) => creatorIdsSet.has(notification.creatorId)));
             }
 
-            return feed;
-        } else {
-            return [];
+            return unseenFeed;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
         }
     }
 
-    @Query(() => [MessageNotification])
+    @Query(() => [MessageNotification], { nullable: true })
     @UseMiddleware(isAuth)
     async allUnseenMessageNotifications(
         @Ctx() { payload }: AuthContext
-    ) {
-        const chats = await this.chatRepository.find({ relations: ["users"], order: { updatedAt: "DESC" } });
-        
-        if (payload) {
-            const userChats: Chat[] = [];
+    ): Promise<MessageNotification[] | null> {
+        if (!payload) {
+            logger.warn("No payload found in context. Returning null.");
 
-            for (const chat of chats) {
-                const me = chat.users.find(user => user.userId === payload.id);
-                
-                if (me && ((chat.users.some(obj => obj.userId === payload.id) && me.inside) || (chat.creatorId === payload.id && me.inside))) {
-                    userChats.push(chat);
-                }
+            return null;
+        }
+
+        try {
+            const chats = await this.chatResolver.chats({ payload } as AuthContext);
+
+            if (!chats) {
+                return null;
             }
 
-            const unseenMessageNotifications: MessageNotification[] = [];
+            const chatIds = chats.map(chat => chat.chatId);
 
-            for (const userChat of userChats) {
-                const userChatNotifications = await this.messageNotificationRepository.find({
-                    order: {
-                        createdAt: "DESC",
-                    },
-                    where: {
-                        chatId: userChat.chatId,
-                        recipientId: payload.id,
-                        viewed: false,
-                    },
-                });
+            const messageNotifications = await this.messageNotificationRepository.find({
+                order: {
+                    createdAt: "DESC",
+                },
+                where: {
+                    chatId: In(chatIds),
+                    recipientId: payload.id,
+                    viewed: false,
+                },
+            });
 
-                const feed = [];
+            const ids = Array.from(new Set(messageNotifications.map((notification) => notification.creatorId)));
+            const creators = await this.userResolver.findUsersById(ids);
+            
+            const unseenFeed: MessageNotification[] = [];
 
-                for (const chatNotification of userChatNotifications) {
-                    const creator = await this.userRepository.findOne({ where: { id: chatNotification.creatorId } });
-
-                    if (creator) {
-                        feed.push(chatNotification);
-                    }
-                }
-
-                unseenMessageNotifications.push(...feed);
+            if (creators && creators.length > 0) {
+                const creatorIdsSet = new Set(creators.map(creator => creator.id));
+                unseenFeed.push(...messageNotifications.filter((notification) => creatorIdsSet.has(notification.creatorId)));
             }
 
-            return unseenMessageNotifications;
-        } else {
-            return [];
+            return unseenFeed;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
         }
     }
 
     @Subscription(() => MessageNotification, {
         topics: "NEW_CHAT_NOTIFICATION",
         filter: async ({ payload, args }) => {
-            const chats = await Chat.find({ relations: ["users"], order: { updatedAt: "DESC" } });
-            const userChats: Chat[] = [];
+            const chatResolver = new ChatResolver();
+            const chats = await chatResolver.chats({ payload: { id: args.userId } } as AuthContext);
 
-            for (const chat of chats) {
-                const me = chat.users.find(user => user.userId === args.userId);
-                
-                if (me && ((chat.users.some(obj => obj.userId === args.userId) && me.inside) || (chat.creatorId === args.userId && me.inside))) {
-                    userChats.push(chat);
-                }
+            if (!chats) {
+                return false;
             }
 
-            const chatIds = userChats.map(chat => chat.chatId);
+            const chatIds = chats.map(chat => chat.chatId);
 
             if (args.chatId !== null) {
                 return payload.chatId === args.chatId && payload.recipientId === args.userId;
@@ -405,19 +413,14 @@ export class MessageNotificationResolver {
     @Subscription(() => MessageNotification, {
         topics: "DELETED_CHAT_NOTIFICATION",
         filter: async ({ payload, args }) => {
-            const chatRepository = appDataSource.getRepository(Chat);
-            const chats = await chatRepository.find({ relations: ["users"], order: { updatedAt: "DESC" } });
-            const userChats: Chat[] = [];
+            const chatResolver = new ChatResolver();
+            const chats = await chatResolver.chats({ payload: { id: args.userId } } as AuthContext);
 
-            for (const chat of chats) {
-                const me = chat.users.find(user => user.userId === args.userId);
-                
-                if (me && ((chat.users.some(obj => obj.userId === args.userId) && me.inside) || (chat.creatorId === args.userId && me.inside))) {
-                    userChats.push(chat);
-                }
+            if (!chats) {
+                return false;
             }
 
-            const chatIds = userChats.map(chat => chat.chatId);
+            const chatIds = chats.map(chat => chat.chatId);
 
             if (args.chatId !== null) {
                 return payload.chatId === args.chatId && payload.recipientId === args.userId;
@@ -430,35 +433,75 @@ export class MessageNotificationResolver {
         return notification;
     }
 
-    @Mutation(() => Boolean, { nullable: true })
+    @Mutation(() => MessageNotification, { nullable: true })
+    async createMessageNotification(
+        @Arg("creatorId", () => Int) creatorId: number,
+        @Arg("recipientId", () => Int) recipientId: number,
+        @Arg("resourceId", () => Int) resourceId: number,
+        @Arg("resourceType") resourceType: string,
+        @Arg("notificationType") notificationType: string,
+        @Arg("content") content: string,
+        @Arg("chatId") chatId: string,
+    ): Promise<MessageNotification | null> {
+        try {
+            const newNotification = this.messageNotificationRepository.create({
+                notificationId: uuidv4(),
+                creatorId,
+                recipientId,
+                resourceId,
+                resourceType,
+                notificationType,
+                content,
+                chatId,
+            });
+
+            await newNotification.save();
+
+            return newNotification;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
+    }
+
+    @Mutation(() => Boolean)
     @UseMiddleware(isAuth)
     async viewMessageNotifications(
-        @Arg("chatId", { nullable: true }) chatId: string,
+        @Arg("chatId") chatId: string,
         @Ctx() { payload }: AuthContext,
     ) {
         if (!payload) {
+            logger.warn("No payload found in context. Returning false.");
+
             return false;
         }
 
-        const newNotifications = await this.messageNotificationRepository.find({
-            where: {
-                chatId,
-                recipientId: payload.id,
-                viewed: false,
-            },
-        });
+        try {
+            const newNotifications = await this.messageNotificationRepository.find({
+                where: {
+                    chatId,
+                    recipientId: payload.id,
+                    viewed: false,
+                },
+            });
+    
+            if (newNotifications.length === 0) {
+                return false;
+            }
+    
+            await this.messageNotificationRepository
+                .createQueryBuilder()
+                .update(MessageNotification)
+                .set({ viewed: true })
+                .whereInIds(newNotifications.map((notification) => notification.id))
+                .execute();
+    
+            return true;   
+        } catch (error) {
+            logger.error(error);
 
-        if (newNotifications.length === 0) {
             return false;
         }
-
-        await this.messageNotificationRepository
-            .createQueryBuilder()
-            .update(MessageNotification)
-            .set({ viewed: true })
-            .whereInIds(newNotifications.map((notification) => notification.id))
-            .execute();
-
-        return true;
     }
 }

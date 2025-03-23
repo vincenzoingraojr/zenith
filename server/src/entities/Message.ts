@@ -1,4 +1,4 @@
-import { Field, Int, ObjectType, registerEnumType } from "type-graphql";
+import { createUnionType, Field, Int, ObjectType, registerEnumType } from "type-graphql";
 import { Column, Entity, ManyToOne, OneToMany } from "typeorm";
 import { MessageStatus } from "../helpers/enums";
 import { BaseItem } from "./BaseItem";
@@ -85,8 +85,8 @@ export class ChatUser extends BaseItem {
     @Column()
     joinedChat: Date;
 
-    @Field(() => String)
-    @Column()
+    @Field(() => String, { nullable: true, defaultValue: null })
+    @Column({  nullable: true, default: null })
     lastExit: Date;
 
     @Field(() => Boolean)
@@ -122,7 +122,7 @@ export class Message extends ChatItem {
 
     @Field(() => Int, { nullable: true, defaultValue: null })
     @Column({ nullable: true, default: null })
-    isReplyTo: number;
+    isReplyToId: number;
 
     @Field(() => String, { nullable: true, defaultValue: null })
     @Column({ nullable: true, default: null })
@@ -185,6 +185,22 @@ export class Event extends ChatItem {
     eventMessage: string;
 }
 
+export const MessageOrEvent = createUnionType({
+    name: "MessageOrEvent",
+    description: "Message or Event type",
+    types: () => [Message, Event] as const,
+    resolveType: (value) => {
+        if (value && ("content" in value)) {
+            return Message;
+        }
+        if (value && ("eventMessage" in value)) {
+            return Event;
+        }
+
+        return null;
+    },
+});
+
 @ObjectType()
 export class ChatItemWrapper {
     @Field(() => String)
@@ -193,6 +209,6 @@ export class ChatItemWrapper {
     @Field(() => String)
     itemType: string;
 
-    @Field(() => ChatItem)
-    item: ChatItem;
+    @Field(() => MessageOrEvent)
+    item: typeof MessageOrEvent;
 }
