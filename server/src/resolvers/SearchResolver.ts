@@ -8,6 +8,7 @@ import { AuthContext } from "../types";
 import { checkSensitiveContent } from "../helpers/checkSensitiveContent";
 import { LanguageCode } from "@aws-sdk/client-comprehend";
 import lumen from "@zenith-to/lumen-js";
+import { logger } from "../helpers/logger";
 
 @ObjectType()
 export class SearchResult {
@@ -30,34 +31,33 @@ export class SearchResolver {
         this.blockRepository = appDataSource.getRepository(Block);
     }
 
-    // da sistemare
     @Query(() => SearchResult)
     @UseMiddleware(isAuth)
-    async search(@Arg("keyword", { nullable: true }) keyword: string, @Arg("type", { nullable: true }) type: string, @Ctx() { payload }: AuthContext): Promise<SearchResult> {
+    async search(@Arg("keyword") keyword: string, @Arg("type") type: string = "relevance", @Ctx() { payload }: AuthContext): Promise<SearchResult> {
         let posts: Post[] = [];
         let users: User[] = [];
         const regex = /[@#$]/;
+        
+        try {
+            let me: User | null = null;
+        
+            if (payload) {
+                me = await this.userRepository.findOne({ where: { id: payload.id } });
+            }
 
-        let me: User | null = null;
+            let encodedKeyword = keyword;
 
-        if (payload) {
-            me = await this.userRepository.findOne({ where: { id: payload.id } });
-        }
+            if (regex.test(encodedKeyword)) {
+                encodedKeyword = encodedKeyword.replace(/[@#$]/g, "");
+            }
 
-        let encodedKeyword = keyword;
+            const keywords = encodedKeyword.split(" ");
 
-        if (regex.test(encodedKeyword)) {
-            encodedKeyword = encodedKeyword.replace(/[@#$]/g, "");
-        }
+            const parameterObject = keywords.reduce((obj: { [key: string]: string }, word) => {
+                obj[word] = `%${word}%`;
+                return obj;
+            }, {});
 
-        const keywords = encodedKeyword.split(" ");
-
-        const parameterObject = keywords.reduce((obj: { [key: string]: string }, word) => {
-            obj[word] = `%${word}%`;
-            return obj;
-        }, {});
-
-        if (type === "relevance" || type === "latest") {
             const postsQuery = this.postRepository
                 .createQueryBuilder("post")
                 .leftJoinAndSelect("post.author", "user")
@@ -87,7 +87,7 @@ export class SearchResolver {
             }
 
             if (mentions.length > 0) {
-                postsQuery.andWhere('post.content ILIKE ANY(:mentions)', { mentions: mentions.map((mention: string) => `%${mention}%`) });
+                postsQuery.andWhere("post.content ILIKE ANY(:mentions)", { mentions: mentions.map((mention: string) => `%${mention}%`) });
             }
         
             if (hashtags.length > 0) {
@@ -101,19 +101,11 @@ export class SearchResolver {
                 postsQuery.addOrderBy("post.createdAt", "DESC");
             }
 
-            const postsFeed = await postsQuery
+            posts = await postsQuery
                 .orWhere(`(${authorNameConditions})`, parameterObject)
                 .orWhere(`(${authorUsernameConditions})`, parameterObject)
                 .getMany();
 
-            for (const post of postsFeed) {
-                if (post.author) {
-                    posts.push(post);
-                }
-            }
-        }
-
-        if (type === "relevance" || type === "user") {
             const nameConditions = keywords.map((word) => `user.name ILIKE :${word}`).join(" OR ");
             const usernameConditions = keywords.map((word) => `user.username ILIKE :${word}`).join(" OR ");
             const bioConditions = keywords.map((word) => `user.profile.bio ILIKE :${word}`).join(" OR ");
@@ -124,36 +116,38 @@ export class SearchResolver {
                 .orWhere(`(${usernameConditions})`, parameterObject)
                 .orWhere(`(${bioConditions})`, parameterObject)
                 .getMany();
-        }
 
-        if (me && me.searchSettings.hideBlockedAccounts) {
-            const blockActions = await this.blockRepository.find({ where: { userId: me.id } });
-            
-            const blockedAccounts = blockActions.map((item) => item.blockedId);
-            
-            if (users.length > 0) {
-                users = users.filter((user) => !blockedAccounts.includes(user.id));
-            }
-
-            if (posts.length > 0) {
-                posts = posts.filter((post) => !blockedAccounts.includes(post.authorId));
-            }
-        }
-
-        if (me && me.searchSettings.hideSensitiveContent) {
-            if (posts.length > 0) {
-                const sensitivePostIds: number[] = [];
-
-                for (const post of posts) {
-                    const isSensitive = await checkSensitiveContent(post.content, post.lang as LanguageCode | undefined);
-
-                    if (isSensitive) {
-                        sensitivePostIds.push(post.id);
-                    }
+            if (me && me.searchSettings.hideBlockedAccounts) {
+                const blockActions = await this.blockRepository.find({ where: { userId: me.id } });
+                
+                const blockedAccounts = blockActions.map((item) => item.blockedId);
+                
+                if (users.length > 0) {
+                    users = users.filter((user) => !blockedAccounts.includes(user.id));
                 }
 
-                posts = posts.filter((post) => !sensitivePostIds.includes(post.id));
+                if (posts.length > 0) {
+                    posts = posts.filter((post) => !blockedAccounts.includes(post.authorId));
+                }
             }
+
+            if (me && me.searchSettings.hideSensitiveContent) {
+                if (posts.length > 0) {
+                    const sensitivePostIds: number[] = [];
+
+                    for (const post of posts) {
+                        const isSensitive = await checkSensitiveContent(post.content, post.lang as LanguageCode | undefined);
+
+                        if (isSensitive) {
+                            sensitivePostIds.push(post.id);
+                        }
+                    }
+
+                    posts = posts.filter((post) => !sensitivePostIds.includes(post.id));
+                }
+            }
+        } catch (error) {
+            logger.error("Error during search", error);
         }
 
         return {

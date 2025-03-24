@@ -1,7 +1,6 @@
 import { createPubSub } from "@graphql-yoga/subscription";
 import { MessageNotification, Notification } from "../entities/Notification";
-import { Chat, ChatUser, Message } from "../entities/Message";
-import { MessageOrEvent } from "../resolvers/MessageResolver";
+import { Chat, ChatUser, Message, MessageOrEvent } from "../entities/Message";
 import { User } from "../entities/User";
 import { Post } from "../entities/Post";
 

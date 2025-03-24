@@ -8,7 +8,7 @@ import {
 } from "typeorm";
 import { Article, Post } from "./Post";
 import { BaseItem } from "./BaseItem";
-import { USER_TYPES } from "src/helpers/user/userTypes";
+import { USER_TYPES } from "../helpers/user/userTypes";
 
 @ObjectType()
 export class Profile {

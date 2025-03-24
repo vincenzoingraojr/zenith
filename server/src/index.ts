@@ -116,7 +116,7 @@ async function main() {
                 name: user.name,
                 link: "/" + user.username,
                 username: user.username,
-                avatar: user.profile.profilePicture as string,
+                avatar: user.profile.profilePicture,
             })
         ));
 

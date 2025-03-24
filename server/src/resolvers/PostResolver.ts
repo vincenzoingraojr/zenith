@@ -19,8 +19,8 @@ import { UserResolver } from "./UserResolver";
 import { logger } from "../helpers/logger";
 import { isUUID } from "class-validator";
 import { NotificationResolver } from "./NotificationResolver";
-import { POST_TYPES } from "src/helpers/post/postTypes";
-import { NOTIFICATION_TYPES } from "src/helpers/notification/notificationTypes";
+import { POST_TYPES } from "../helpers/post/postTypes";
+import { NOTIFICATION_TYPES } from "../helpers/notification/notificationTypes";
 import { EMPTY_CONTENT_REGEXP } from "../helpers/textConstants";
 
 @ObjectType()
@@ -601,9 +601,25 @@ export class PostResolver {
                         }
 
                         if (deletedMediaIdsArray && deletedMediaIdsArray.length > 0) {
+                            const mediaItems = await this.mediaItemRepository.find({ where: { id: In(deletedMediaIdsArray) } });
+                            
                             await Promise.all(
-                                deletedMediaIdsArray.map(async (item: any) => {
-                                    await this.mediaItemRepository.delete({ id: item });
+                                mediaItems.map(async (item) => {
+                                    const existingKey =
+                                        item.src.replace(
+                                            `https://${item.type.includes("image") ? "img" : "vid"}.zncdn.net/`, ""
+                                        );
+                
+                                    const url = await getPresignedUrlForDeleteCommand(existingKey, item.type);
+                
+                                    await axios.delete(url).then(() => {
+                                        logger.error("Media item successfully deleted.");
+                                    })
+                                    .catch((error) => {
+                                        logger.error(`An error occurred while deleting the media item. Error code: ${error.code}.`);
+                                    });
+
+                                    await this.mediaItemRepository.delete({ id: item.id });
                                 })
                             );
                         }

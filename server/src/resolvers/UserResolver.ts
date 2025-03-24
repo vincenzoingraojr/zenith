@@ -40,7 +40,7 @@ import { isEmail, isJWT, isUUID } from "class-validator";
 import { isValidUserInput } from "../helpers/user/isValidUserInput";
 import { USER_TYPES } from "../helpers/user/userTypes";
 import { NotificationResolver } from "./NotificationResolver";
-import { NOTIFICATION_TYPES } from "src/helpers/notification/notificationTypes";
+import { NOTIFICATION_TYPES } from "../helpers/notification/notificationTypes";
 
 @ObjectType()
 export class UserResponse {

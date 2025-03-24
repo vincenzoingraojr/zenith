@@ -200,15 +200,3 @@ export const MessageOrEvent = createUnionType({
         return null;
     },
 });
-
-@ObjectType()
-export class ChatItemWrapper {
-    @Field(() => String)
-    chatItemId: string;
-
-    @Field(() => String)
-    itemType: string;
-
-    @Field(() => MessageOrEvent)
-    item: typeof MessageOrEvent;
-}

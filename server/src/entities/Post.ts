@@ -178,7 +178,7 @@ export class Article extends FeedItem {
     description: string;
 
     @Field(() => ArticleCover)
-    @Column()
+    @Column(() => ArticleCover)
     cover: ArticleCover;
 }
 
@@ -233,15 +233,3 @@ export const PostOrArticle = createUnionType({
         return null;
     },
 });
-
-@ObjectType()
-export class FeedItemWrapper {
-    @Field(() => String)
-    feedItemId: string;
-
-    @Field(() => String)
-    itemType: string;
-
-    @Field(() => PostOrArticle)
-    item: typeof PostOrArticle;
-}
