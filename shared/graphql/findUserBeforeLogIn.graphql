@@ -31,8 +31,14 @@ mutation FindUserBeforeLogIn(
                 hideSensitiveContent
                 hideBlockedAccounts
             }
+            createdAt
+            updatedAt
         }
         status
         ok
+        errors {
+            field
+            message
+        }
     }
 }

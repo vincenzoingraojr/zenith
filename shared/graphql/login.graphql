@@ -43,6 +43,8 @@ mutation Login(
                 hideSensitiveContent
                 hideBlockedAccounts
             }
+            createdAt
+            updatedAt
         }
         errors {
             field
