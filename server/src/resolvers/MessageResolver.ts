@@ -1005,7 +1005,7 @@ export class MessageResolver {
                     src: mediaObject.src,
                     type: mediaObject.type,
                 },
-                item: {
+                messageItem: {
                     type: itemObject.type,
                     id: itemObject.id,
                 },
@@ -1058,7 +1058,7 @@ export class MessageResolver {
 
                     if (chatUsers && me && chatUsers.length > 0) {
                         for (const chatUser of chatUsers) {
-                            const notificationContent = message.content.length > 0 ? message.content : (message.media.src.length > 0 ? `Sent a ${message.media.type}` : (message.item.type.length > 0 ? `Sent a ${message.item.type}` : "Sent a message"));
+                            const notificationContent = message.content.length > 0 ? message.content : (message.media.src.length > 0 ? `Sent a ${message.media.type}` : (message.messageItem.type.length > 0 ? `Sent a ${message.messageItem.type}` : "Sent a message"));
                             const notification = await this.messageNotificationResolver.createMessageNotification(payload.id, chatUser.id, message.id, message.type, MESSAGE_NOTIFICATION_TYPES.MESSAGE, notificationContent, chat.chatId);
 
                             if (notification) {

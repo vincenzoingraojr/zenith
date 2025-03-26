@@ -7,6 +7,7 @@ import {
 } from "typeorm";
 import { User } from "./User";
 import { BaseItem } from "./BaseItem";
+import { GraphQLJSONObject } from "graphql-scalars";
 
 @ObjectType()
 export class FeedItem extends BaseItem {
@@ -38,7 +39,7 @@ export class FeedItem extends BaseItem {
     @Column()
     lang: string;
 
-    @Field(() => [Object], { nullable: true })
+    @Field(() => [GraphQLJSONObject], { nullable: true })
     @Column({ type: "jsonb", default: [] })
     topics: { id: number; weight: number }[];
 }

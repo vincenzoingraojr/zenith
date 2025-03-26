@@ -138,7 +138,7 @@ export class Message extends ChatItem {
 
     @Field(() => MessageItem)
     @Column(() => MessageItem)
-    item: MessageItem;
+    messageItem: MessageItem;
     
     @Field(() => [String], { nullable: true, defaultValue: [] })
     @Column({ type: "text", array: true, nullable: true, default: [] })

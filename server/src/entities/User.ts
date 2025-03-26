@@ -9,6 +9,7 @@ import {
 import { Article, Post } from "./Post";
 import { BaseItem } from "./BaseItem";
 import { USER_TYPES } from "../helpers/user/userTypes";
+import { GraphQLJSONObject } from "graphql-scalars";
 
 @ObjectType()
 export class Profile {
@@ -144,7 +145,7 @@ export class User extends BaseItem {
     @Column(() => SearchSettings)
     searchSettings: SearchSettings;
 
-    @Field(() => [Object], { nullable: true })
+    @Field(() => [GraphQLJSONObject], { nullable: true })
     @Column({ type: "jsonb", default: [] })
     topics: { id: number; weight: number }[];
 
