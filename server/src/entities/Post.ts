@@ -181,6 +181,10 @@ export class Article extends FeedItem {
     @Field(() => ArticleCover)
     @Column(() => ArticleCover)
     cover: ArticleCover;
+
+    @Field(() => Boolean)
+    @Column({ default: true })
+    draft: boolean;
 }
 
 @ObjectType()

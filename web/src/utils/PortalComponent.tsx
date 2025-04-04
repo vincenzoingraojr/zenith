@@ -10,9 +10,11 @@ const PortalComponent: FunctionComponent<PortalProps> = ({ children }) => {
 
     if (!portalRoot) {
         console.error("Portal root element not found.");
+        
+        return null;
     }
 
-    return ReactDOM.createPortal(children, portalRoot!);
+    return ReactDOM.createPortal(children, portalRoot);
 };
 
 export default PortalComponent;

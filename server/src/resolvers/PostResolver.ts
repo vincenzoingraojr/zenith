@@ -457,10 +457,10 @@ export class PostResolver {
                         if (isReplyToId) {
                             let isReplyToItem: FeedItem | null = null;
 
-                            if (isReplyToItem === POST_TYPES.POST || isReplyToItem === POST_TYPES.COMMENT) {
+                            if (isReplyToType === POST_TYPES.POST || isReplyToType === POST_TYPES.COMMENT) {
                                 isReplyToItem = await this.findPostById(isReplyToId);
                             } else {
-                                isReplyToItem = await this.articleRepository.findOne({ where: { id: isReplyToId } });
+                                isReplyToItem = await this.articleRepository.findOne({ where: { id: isReplyToId, draft: false } });
                             }
     
                             if (isReplyToItem && (type === NOTIFICATION_TYPES.COMMENT) && (isReplyToItem.authorId !== payload.id)) {
@@ -797,7 +797,7 @@ export class PostResolver {
             if (itemType === POST_TYPES.POST || itemType === POST_TYPES.COMMENT) {
                 item = await this.findPost(itemId);
             } else {
-                item = await this.articleRepository.findOne({ where: { itemId } });
+                item = await this.articleRepository.findOne({ where: { itemId, draft: false } });
             }
 
             const existingLike = await this.likeRepository.findOne({ where: { likedItemId: itemId, userId: payload.id } });
@@ -876,7 +876,7 @@ export class PostResolver {
             if (itemType === POST_TYPES.POST || itemType === POST_TYPES.COMMENT) {
                 item = await this.findPost(itemId);
             } else {
-                item = await this.articleRepository.findOne({ where: { itemId } });
+                item = await this.articleRepository.findOne({ where: { itemId, draft: false } });
             }
 
             if (!item) {
@@ -1030,7 +1030,7 @@ export class PostResolver {
             if (type === POST_TYPES.POST || type === POST_TYPES.COMMENT) {
                 item = await this.findPost(itemId);
             } else {
-                item = await this.articleRepository.findOne({ where: { itemId } });
+                item = await this.articleRepository.findOne({ where: { itemId, draft: false } });
             }
 
             const uniqueIdentifier = req.cookies["uid"];
@@ -1120,7 +1120,7 @@ export class PostResolver {
             if (type === POST_TYPES.POST || type === POST_TYPES.COMMENT) {
                 item = await this.findPost(itemId);
             } else {
-                item = await this.articleRepository.findOne({ where: { itemId } });
+                item = await this.articleRepository.findOne({ where: { itemId, draft: false } });
             }
 
             if (!item) {
@@ -1173,7 +1173,7 @@ export class PostResolver {
             if (type === POST_TYPES.POST || type === POST_TYPES.COMMENT) {
                 item = await this.findPost(itemId);
             } else {
-                item = await this.articleRepository.findOne({ where: { itemId } });
+                item = await this.articleRepository.findOne({ where: { itemId, draft: false } });
             }
 
             if (!item) {
