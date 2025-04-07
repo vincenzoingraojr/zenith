@@ -21,6 +21,10 @@ import { getMainDefinition } from "@apollo/client/utilities";
 import { createClient } from "graphql-ws";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 import reportWebVitals from "./reportWebVitals";
+import GlobalStyle from "./styles/global";
+import { ThemeProvider } from "styled-components";
+import { darkTheme, lightTheme } from "./styles/theme";
+import { ThemeProviderWrapper, useTheme } from "./styles/ThemeContext";
 
 const cache = new InMemoryCache();
 
@@ -132,10 +136,24 @@ const client = new ApolloClient({
     cache,
 });
 
+const ThemedApp = () => {
+    const { isDarkMode } = useTheme();
+    const theme = isDarkMode ? darkTheme : lightTheme;
+  
+    return (
+        <ThemeProvider theme={theme}>
+            <GlobalStyle />
+            <App />
+        </ThemeProvider>
+    );
+};
+
 ReactDOM.render(
     <ApolloProvider client={client}>
         <BrowserRouter>
-            <App />
+            <ThemeProviderWrapper>
+                <ThemedApp />
+            </ThemeProviderWrapper>
         </BrowserRouter>
     </ApolloProvider>,
     document.getElementById("root")
