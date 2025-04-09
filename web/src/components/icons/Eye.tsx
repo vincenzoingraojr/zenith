@@ -1,13 +1,16 @@
 import { FunctionComponent } from "react";
 import { DynamicSizeIcon } from "./common";
+import { getTheme } from "../../styles/theme";
 
 interface EyeProps {
     mode: boolean;
 }
 
 const Eye: FunctionComponent<EyeProps> = ({ mode }) => {
+    const theme = getTheme();
+
     return (
-        <DynamicSizeIcon size={22} isFilled={"#FFFFFF"}>
+        <DynamicSizeIcon size={22} isFilled={theme.color}>
             {mode ? (
                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M4.70711 20.7071L20.7071 4.70711C21.0976 4.31658 21.0976 3.68342 20.7071 3.29289C20.3166 2.90237 19.6834 2.90237 19.2929 3.29289L3.29289 19.2929C2.90237 19.6834 2.90237 20.3166 3.29289 20.7071C3.68342 21.0976 4.31658 21.0976 4.70711 20.7071Z" />

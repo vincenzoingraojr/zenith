@@ -1,4 +1,4 @@
-import { Affiliation, Block, Follow, Session, User, UserDeviceToken, UserVerification } from "../entities/User";
+import { Affiliation, Block, Follow, IdentityVerification, Session, User, UserDeviceToken, UserVerification } from "../entities/User";
 import {
     Arg,
     Ctx,
@@ -41,6 +41,7 @@ import { isValidUserInput } from "../helpers/user/isValidUserInput";
 import { USER_TYPES } from "../helpers/user/userTypes";
 import { NotificationResolver } from "./NotificationResolver";
 import { NOTIFICATION_TYPES } from "../helpers/notification/notificationTypes";
+import { VerificationStatus } from "../helpers/enums";
 
 @ObjectType()
 export class UserResponse {
@@ -86,6 +87,7 @@ export class UserResolver {
     private readonly mediaItemRepository: Repository<MediaItem>;
     private readonly affiliationRepository: Repository<Affiliation>;
     private readonly userVerificationRepository: Repository<UserVerification>;
+    private readonly identityVerificationRepository: Repository<IdentityVerification>;
 
     constructor() {
         this.userRepository = appDataSource.getRepository(User);
@@ -100,6 +102,7 @@ export class UserResolver {
         this.mediaItemRepository = appDataSource.getRepository(MediaItem);
         this.affiliationRepository = appDataSource.getRepository(Affiliation);
         this.userVerificationRepository = appDataSource.getRepository(UserVerification);
+        this.identityVerificationRepository = appDataSource.getRepository(IdentityVerification);
     }
 
     @Query(() => User, { nullable: true })
@@ -3054,49 +3057,59 @@ export class UserResolver {
     @Mutation(() => UserVerificationResponse)
     @UseMiddleware(isAuth)
     async requestVerification(
-        @Arg("idUrl") idUrl: string,
-        @Arg("documents", () => [String]) documents: string[],
+        @Arg("documents") documents: string,
         @Ctx() { payload }: AuthContext
     ): Promise<UserVerificationResponse> {
         let userVerification: UserVerification | null = null;
         let status = "";
         let ok = false;
 
+        let documentsArray = JSON.parse(documents);
+
         if (!payload) {
             status = "You are not authenticated.";
+        } else if (!documentsArray || documentsArray.length === 0) {
+            status = "Documents not provided.";
         } else {
             try {
                 const me = await this.findUserById(payload.id);
 
                 if (me) {
-                    const verification = await this.findVerificationRequest(me.id, me.type);
-                    
-                    if (verification && (verification.createdAt === verification.updatedAt || verification.verified)) {
-                        if (verification.verified) {
-                            status = "You're already verified.";
-                        } else {
-                            status = "You've already submitted a verification request for your account."
-                        }
-                    } else if (verification && verification.outcome !== null && !verification.verified && verification.createdAt < verification.updatedAt) {
-                        verification.outcome = "";
-                        verification.idUrl = idUrl;
-                        verification.documents = documents;
+                    const identity = await this.findIdentityVerificationRequest(me.id, me.type);
 
-                        await verification.save();
-
-                        userVerification = verification;
+                    if (!me.emailVerified) {
+                        status = "Your email address is not verified.";
                     } else {
-                        userVerification = await this.userVerificationRepository.create({
-                            userId: me.id,
-                            verified: false,
-                            type: me.type,
-                            idUrl,
-                            documents,
-                        }).save();
+                        if (identity && identity.verified === VerificationStatus.VERIFIED) {
+                            const verification = await this.findVerificationRequest(me.id, me.type);
+                    
+                            if (verification && (verification.createdAt === verification.updatedAt || verification.verified)) {
+                                if (verification.verified) {
+                                    status = "You're already verified.";
+                                } else {
+                                    status = "You've already submitted a verification request for your account."
+                                }
+                            } else if (verification && verification.outcome !== null && verification.verified !== VerificationStatus.VERIFIED && verification.createdAt < verification.updatedAt) {
+                                verification.outcome = "";
+                                verification.documents = documentsArray;
 
-                        status = "Verification request submitted.";
-                        
-                        ok = true;
+                                await verification.save();
+
+                                userVerification = verification;
+                            } else {
+                                userVerification = await this.userVerificationRepository.create({
+                                    userId: me.id,
+                                    type: me.type,
+                                    documents: documentsArray,
+                                }).save();
+
+                                status = "Verification request submitted.";
+                                
+                                ok = true;
+                            }
+                        } else {
+                            status = "You need to verify your identity on Zenith before submitting a verification request for your account.";
+                        }
                     }
                 } else {
                     status = "This user doesn't exist.";
@@ -3114,5 +3127,47 @@ export class UserResolver {
             status,
             ok,
         };
+    }
+
+    @Query(() => IdentityVerification, { nullable: true })
+    async findIdentityVerificationRequest(
+        @Arg("id", () => Int, { nullable: true }) id: number,
+        @Arg("type") type: string,
+    ): Promise<IdentityVerification | null> {
+        if (!id) {
+            logger.warn("User id not provided.");
+
+            return null;
+        }
+
+        if (type.length === 0) {
+            logger.warn("User type not provided.");
+
+            return null;
+        }
+
+        try {
+            const user = await this.findUserById(id, false);
+
+            if (!user) {
+                logger.warn(`User with id "${id}" not found.`);
+
+                return null;
+            }
+
+            const identityVerification = await this.identityVerificationRepository.findOne({ where: { userId: user.id, type } });
+
+            if (!identityVerification) {
+                logger.warn(`Identity verification request for user with id "${user.id}" not found.`);
+
+                return null;
+            }
+
+            return identityVerification;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
     }
 }

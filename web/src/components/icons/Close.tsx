@@ -1,5 +1,6 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import { DynamicSizeIcon } from "./common";
+import { getTheme } from "../../styles/theme";
 
 interface CloseProps {
     type?: "normal" | "small";
@@ -7,6 +8,7 @@ interface CloseProps {
 
 const Close: FunctionComponent<CloseProps> = ({ type }) => {
     const [size, setSize] = useState(type === "normal" ? 16 : 12);
+    const theme = getTheme();
 
     useEffect(() => {
         if (type === "normal") {
@@ -17,7 +19,7 @@ const Close: FunctionComponent<CloseProps> = ({ type }) => {
     }, [type]);
 
     return (
-        <DynamicSizeIcon hasStroke={"#FFFFFF"} size={size}>
+        <DynamicSizeIcon hasStroke={theme.color} size={size}>
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path
                     d="M5 5L19 19M5 19L19 5"

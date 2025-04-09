@@ -10,6 +10,7 @@ import { Article, Post } from "./Post";
 import { BaseItem } from "./BaseItem";
 import { USER_TYPES } from "../helpers/user/userTypes";
 import { GraphQLJSONObject } from "graphql-scalars";
+import { MatchStatus, VerificationStatus } from "../helpers/enums";
 
 @ObjectType()
 export class Profile {
@@ -244,12 +245,48 @@ export class UserVerification extends BaseItem {
     @Column({ unique: true })
     userId: number;
 
-    @Field(() => Boolean)
-    @Column({ default: false })
-    verified: boolean;
+    @Field(() => VerificationStatus)
+    @Column({
+        type: "enum",
+        enum: VerificationStatus,
+        default: VerificationStatus.UNDER_REVIEW,
+    })
+    verified: VerificationStatus;
 
     @Field(() => String)
-    @Column({ default: "user" })
+    @Column({ default: USER_TYPES.USER })
+    type: string;
+
+    @Field(() => String, { nullable: true, defaultValue: null })
+    @Column({ nullable: true, default: null })
+    verifiedSince: Date;
+
+    @Field(() => [GraphQLJSONObject])
+    @Column({ type: "jsonb", default: [] })
+    documents: { type: string; url: string }[];
+
+    @Field(() => String, { nullable: true, defaultValue: null })
+    @Column({ default: null, nullable: true })
+    outcome: string;
+}
+
+@ObjectType()
+@Entity("identity-verifications")
+export class IdentityVerification extends BaseItem {
+    @Field(() => Int)
+    @Column({ unique: true })
+    userId: number;
+
+    @Field(() => VerificationStatus)
+    @Column({
+        type: "enum",
+        enum: VerificationStatus,
+        default: VerificationStatus.UNDER_REVIEW,
+    })
+    verified: VerificationStatus;
+
+    @Field(() => String)
+    @Column({ default: USER_TYPES.USER })
     type: string;
 
     @Field(() => String, { nullable: true, defaultValue: null })
@@ -257,17 +294,38 @@ export class UserVerification extends BaseItem {
     verifiedSince: Date;
 
     @Field(() => String)
-    @Column({ default: "" })
-    idUrl: string;
+    @Column()
+    country: string;
 
-    @Field(() => [String])
-    @Column({ type: "text", array: true, default: [] })
-    documents: string[];
+    @Field(() => String)
+    @Column()
+    fullName: string;
+
+    @Field(() => String)
+    @Column()
+    entityIdentifier: string;
+
+    @Field(() => String)
+    @Column()
+    birthOrCreationDate: Date;
+
+    @Field(() => MatchStatus)
+    @Column({
+        type: "enum",
+        enum: MatchStatus,
+        default: null,
+    })
+    matchStatus: MatchStatus;
+
+    @Field(() => [GraphQLJSONObject])
+    @Column({ type: "jsonb", default: [] })
+    documents: { type: string; url: string }[];
 
     @Field(() => String, { nullable: true, defaultValue: null })
     @Column({ default: null, nullable: true })
     outcome: string;
 }
+
 
 @ObjectType()
 @Entity("affiliations")

@@ -23,7 +23,7 @@ export class Chat extends BaseItem {
     @Column()
     type: string;
 
-    @Field(() => String, { nullable: true, defaultValue: null})
+    @Field(() => String, { nullable: true, defaultValue: null })
     @Column({ nullable: true, default: null })
     chatImage: string;
 

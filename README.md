@@ -17,4 +17,5 @@ This is a temporary repository regarding Zenith, the everything app.
 | [web](./web/)             | React web app      |
 
 ## What is Zenith?
+
 Zenith is a super-app for social, payments, and messaging.
