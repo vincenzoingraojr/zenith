@@ -1,15 +1,17 @@
 import appDataSource from "../../dataSource";
-import { Affiliation, User, UserVerification } from "../../entities/User";
+import { Affiliation, IdentityVerification, User, UserVerification } from "../../entities/User";
 import argon2 from "argon2";
 import { v4 as uuidv4 } from "uuid";
 import { encrypt } from "../crypto";
 import { logger } from "../logger";
 import { USER_TYPES } from "./userTypes";
+import { MatchStatus, VerificationStatus } from "../enums";
 
 export async function initAccounts() {
     const userRepository = appDataSource.getRepository(User);
     const userVerificationRepository = appDataSource.getRepository(UserVerification);
     const affiliationRepository = appDataSource.getRepository(Affiliation);
+    const identityVerificationRepository = appDataSource.getRepository(IdentityVerification);
 
     try {
         const generalAccount = await userRepository.findOne({ 
@@ -43,10 +45,23 @@ export async function initAccounts() {
                     website: "https://about.zenith.to",
                 },
             }).save();
+
+            await identityVerificationRepository.create({
+                userId: newGeneralAccount.id,
+                verified: VerificationStatus.VERIFIED,
+                type: newGeneralAccount.type,
+                verifiedSince: new Date(),
+                country: "Italy",
+                fullName: newGeneralAccount.name,
+                entityIdentifier: "",
+                birthOrCreationDate: newGeneralAccount.birthDate.date,
+                matchStatus: MatchStatus.GREEN,
+                outcome: "Account identity verified automatically.",
+            }).save();
     
             await userVerificationRepository.create({
                 userId: newGeneralAccount.id,
-                verified: true,
+                verified: VerificationStatus.VERIFIED,
                 type: newGeneralAccount.type,
                 verifiedSince: new Date(),
                 outcome: "Account verified automatically.",
@@ -99,9 +114,22 @@ export async function initAccounts() {
                 status: true,
             }).save();
     
+            await identityVerificationRepository.create({
+                userId: newPersonalAccount.id,
+                verified: VerificationStatus.VERIFIED,
+                type: newPersonalAccount.type,
+                verifiedSince: new Date(),
+                country: "Italy",
+                fullName: newPersonalAccount.name,
+                entityIdentifier: "",
+                birthOrCreationDate: newPersonalAccount.birthDate.date,
+                matchStatus: MatchStatus.GREEN,
+                outcome: "Account identity verified automatically.",
+            }).save();
+
             await userVerificationRepository.create({
                 userId: newPersonalAccount.id,
-                verified: true,
+                verified: VerificationStatus.VERIFIED,
                 type: newPersonalAccount.type,
                 verifiedSince: new Date(),
                 outcome: "Account verified automatically.",
@@ -148,10 +176,10 @@ export async function initAccounts() {
                 userId: newSupportAccount.id,
                 status: true,
             }).save();
-    
+
             await userVerificationRepository.create({
                 userId: newSupportAccount.id,
-                verified: true,
+                verified: VerificationStatus.VERIFIED,
                 type: newSupportAccount.type,
                 verifiedSince: new Date(),
                 outcome: "Account verified automatically.",

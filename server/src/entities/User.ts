@@ -1,4 +1,4 @@
-import { Field, Int, ObjectType } from "type-graphql";
+import { Field, Int, ObjectType, registerEnumType } from "type-graphql";
 import {
     Entity,
     Column,
@@ -11,6 +11,16 @@ import { BaseItem } from "./BaseItem";
 import { USER_TYPES } from "../helpers/user/userTypes";
 import { GraphQLJSONObject } from "graphql-scalars";
 import { MatchStatus, VerificationStatus } from "../helpers/enums";
+
+registerEnumType(MatchStatus, {
+    name: "MatchStatus",
+    description: "Possible documents and form data match status",
+});
+
+registerEnumType(VerificationStatus, {
+    name: "VerificationStatus",
+    description: "Possible verification request status values",
+});
 
 @ObjectType()
 export class Profile {
