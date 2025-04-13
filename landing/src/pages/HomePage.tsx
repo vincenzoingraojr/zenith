@@ -14,7 +14,6 @@ const IndexBrandGroup = styled.div`
     align-items: center;
     justify-content: flex-start;
     gap: 8.5px;
-    padding-bottom: 12px;
 `;
 
 const BrandName = styled.div`

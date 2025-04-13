@@ -41,7 +41,7 @@ export const ThemeProviderWrapper = ({ children }: { children: ReactNode }) => {
     );
 };
 
-export const useTheme = (): ThemeContextType => {
+export const useThemeContext = (): ThemeContextType => {
     const context = useContext(ThemeContext);
     
     if (!context) 

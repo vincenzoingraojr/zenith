@@ -11,10 +11,8 @@ import { onError } from "apollo-link-error";
 import { TokenRefreshLink } from "apollo-link-token-refresh";
 import jwtDecode, { JwtPayload } from "jwt-decode";
 import ReactDOM from "react-dom";
-import App from "./App";
 import { getAccessToken, setAccessToken } from "./utils/token";
 import "./styles/index.css";
-import "./styles/style.css";
 import { BrowserRouter } from "react-router-dom";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { getMainDefinition } from "@apollo/client/utilities";
@@ -24,7 +22,8 @@ import reportWebVitals from "./reportWebVitals";
 import GlobalStyle from "./styles/global";
 import { ThemeProvider } from "styled-components";
 import { darkTheme, lightTheme } from "./styles/theme";
-import { ThemeProviderWrapper, useTheme } from "./styles/ThemeContext";
+import { ThemeProviderWrapper, useThemeContext } from "./styles/ThemeContext";
+import App from "./App";
 
 const cache = new InMemoryCache();
 
@@ -137,7 +136,7 @@ const client = new ApolloClient({
 });
 
 const ThemedApp = () => {
-    const { isDarkMode } = useTheme();
+    const { isDarkMode } = useThemeContext();
     const theme = isDarkMode ? darkTheme : lightTheme;
   
     return (

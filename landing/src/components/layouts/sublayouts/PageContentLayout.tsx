@@ -6,8 +6,8 @@ interface PageContentLayoutProps {
 
 const MainContentComponent = styled.div`
     display: block;
-    margin-top: 48px;
-    padding-bottom: 84px;
+    margin-top: 36px;
+    padding-bottom: 72px;
 `;
 
 export const PageContentLayout: React.FC<PageContentLayoutProps> = ({ children }) => {

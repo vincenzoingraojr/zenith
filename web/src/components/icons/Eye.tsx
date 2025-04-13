@@ -1,13 +1,13 @@
 import { FunctionComponent } from "react";
 import { DynamicSizeIcon } from "./common";
-import { getTheme } from "../../styles/theme";
+import { useTheme } from "../../styles/theme";
 
 interface EyeProps {
     mode: boolean;
 }
 
 const Eye: FunctionComponent<EyeProps> = ({ mode }) => {
-    const theme = getTheme();
+    const theme = useTheme();
 
     return (
         <DynamicSizeIcon size={22} isFilled={theme.color}>

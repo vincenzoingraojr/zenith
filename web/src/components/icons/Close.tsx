@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import { DynamicSizeIcon } from "./common";
-import { getTheme } from "../../styles/theme";
+import { useTheme } from "../../styles/theme";
 
 interface CloseProps {
     type?: "normal" | "small";
@@ -8,7 +8,7 @@ interface CloseProps {
 
 const Close: FunctionComponent<CloseProps> = ({ type }) => {
     const [size, setSize] = useState(type === "normal" ? 16 : 12);
-    const theme = getTheme();
+    const theme = useTheme();
 
     useEffect(() => {
         if (type === "normal") {

@@ -6,7 +6,7 @@ import { buildSchema } from "type-graphql";
 import { UserResolver } from "./resolvers/UserResolver";
 import path from "path";
 import favicon from "serve-favicon";
-import cors from "cors";
+import cors, { CorsOptions } from "cors";
 import http from "http";
 import cookieParser from "cookie-parser";
 import { verify } from "jsonwebtoken";
@@ -45,11 +45,21 @@ async function main() {
 
     app.use(cookieParser());
     
+    const allowedOriginRegex = new RegExp(process.env.ORIGIN!);
+
+    const corsOptions: CorsOptions = {
+        origin: (origin, callback) => {
+            if (!origin || allowedOriginRegex.test(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
+        credentials: true,
+    };
+
     app.use(
-        cors({
-            origin: [process.env.ORIGIN!],
-            credentials: true,
-        }),
+        cors(corsOptions),
     );
 
     app.use(express.static(path.join(__dirname, "./public")));
