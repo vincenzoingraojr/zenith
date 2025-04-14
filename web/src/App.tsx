@@ -4,6 +4,8 @@ import { setAccessToken } from "./utils/token";
 import IsNotAuthenticated from "./components/routes/IsNotAuthenticated";
 import Authentication from "./pages/Authentication";
 import Preloader from "./components/utils/Preloader";
+import Modal from "./components/layouts/modal/Modal";
+import LogIn from "./pages/LogIn";
 
 function App() {
     const [loading, setLoading] = useState(true);
@@ -48,7 +50,39 @@ function App() {
                         />
                     }
                 />
+                <Route 
+                    path="/login"
+                    element={
+                        <IsNotAuthenticated
+                            isAuth={isAuth}
+                            children={
+                                <Modal
+                                    hasLogo={true}
+                                    modalContent={<LogIn />}
+                                />
+                            }
+                        />
+                    }
+                />
             </Routes>
+            {(state && state.backgroundLocation) && (
+                <Routes>
+                    <Route 
+                        path="/login"
+                        element={
+                            <IsNotAuthenticated
+                                isAuth={isAuth}
+                                children={
+                                    <Modal
+                                        hasLogo={true}
+                                        modalContent={<LogIn />}
+                                    />
+                                }
+                            />
+                        }
+                    />
+                </Routes>
+            )}
         </>
     );
 }

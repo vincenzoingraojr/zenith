@@ -4,11 +4,11 @@ import { Arg, Ctx, Field, Int, Mutation, ObjectType, Query, Resolver, Root, Subs
 import { AuthContext } from "../types";
 import { In, LessThan, Repository } from "typeorm";
 import appDataSource from "../dataSource";
-import { UserResolver } from "./UserResolver";
+import { UserResolver } from "./user.resolver";
 import { logger } from "../helpers/logger";
 import { isUUID } from "class-validator";
 import { v4 as uuidv4 } from "uuid";
-import { ChatResolver } from "./MessageResolver";
+import { ChatResolver } from "./message.resolver";
 
 @ObjectType()
 export class PaginatedNotifications {
@@ -276,7 +276,6 @@ export class NotificationResolver {
     }
 }
 
-// da sistemare
 @Resolver(MessageNotification)
 export class MessageNotificationResolver {
     private readonly messageNotificationRepository: Repository<MessageNotification>;

@@ -15,10 +15,10 @@ import { ComprehendClient, DetectDominantLanguageCommand } from "@aws-sdk/client
 import lumen from "@zenith-to/lumen-js";
 import { getPresignedUrlForDeleteCommand } from "../helpers/getPresignedUrls";
 import axios from "axios";
-import { UserResolver } from "./UserResolver";
+import { UserResolver } from "./user.resolver";
 import { logger } from "../helpers/logger";
 import { isUUID } from "class-validator";
-import { NotificationResolver } from "./NotificationResolver";
+import { NotificationResolver } from "./notification.resolver";
 import { POST_TYPES } from "../helpers/post/postTypes";
 import { NOTIFICATION_TYPES } from "../helpers/notification/notificationTypes";
 import { EMPTY_CONTENT_REGEXP } from "../helpers/textConstants";

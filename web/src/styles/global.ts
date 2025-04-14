@@ -1,6 +1,7 @@
 import styled, { createGlobalStyle } from "styled-components";
 import { COLORS } from "./colors";
 import { Link } from "react-router-dom";
+import { devices } from "./devices";
 
 const GlobalStyle = createGlobalStyle`
     body {
@@ -161,10 +162,50 @@ export const ControlContainer = styled.div.attrs(
     border-radius: 9999px;
     background-color: transparent;
     transition: background-color ease 0.2s;
-    opacity: 0.6;
 
     &:hover,
     &:focus {
-        background-color: ${COLORS.lightGrey};
+        background-color: ${({ theme }) => theme.opaqueGrey};
     }
+`;
+
+export const AuthForm = styled.div`
+    display: block;
+    padding-top: 12px;
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-bottom: 48px;
+
+    @media ${devices.mobileS} {
+        padding-left: 36px;
+        padding-right: 36px;
+    }
+`;
+
+export const AuthFormTitle = styled.div`
+    display: block;
+    font-weight: 800;
+    margin-bottom: 36px;
+    font-size: 32px;
+`;
+
+export const AuthFormContent = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+`;
+
+export const Status = styled.div`
+    display: block;
+    padding: 6px;
+    border-radius: 6px;
+    font-size: 14px;
+    background-color: ${COLORS.blue};
+    color: ${COLORS.white};
+    margin-bottom: 24px;
+`;
+
+export const StandardButton = styled(Button)`
+    background-color: ${COLORS.blue};
+    color: ${COLORS.white};
 `;

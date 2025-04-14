@@ -7,4 +7,6 @@ export const COLORS = {
     black: "#000000",
     red: "red",
     green: "green",
+    opaqueDarkGrey: "rgba(38, 33, 33, 0.6)",
+    opaqueLightGrey: "rgba(163, 155, 155, 0.6)",
 };

@@ -1,6 +1,6 @@
 import { LandingUser } from "../entities/LandingUser";
 import { Arg, Mutation, Query, Resolver } from "type-graphql";
-import { UserResolver, UserResponse } from "./UserResolver";
+import { UserResolver, UserResponse } from "./user.resolver";
 import { Repository } from "typeorm";
 import ejs from "ejs";
 import path from "path";
@@ -64,17 +64,14 @@ export class LandingUserResolver {
             const existingUserWithUsername = await this.userResolver.findUser(username);
             const existingUserWithEmail = await this.userResolver.findUserByEmail(email);
 
-            const existingLandingUserWithEmail = await this.landingUserRepository.findOne({ where: { email } });
-            const existingLandingUserWithUsername = await this.landingUserRepository.findOne({ where: { username } });
-
-            if (existingUserWithEmail || existingLandingUserWithEmail) {
+            if (existingUserWithEmail) {
                 errors.push({
                     field: "email",
                     message: "A user using this email already exists",
                 });
             }
 
-            if (existingUserWithUsername || existingLandingUserWithUsername) {
+            if (existingUserWithUsername) {
                 errors.push({
                     field: "username",
                     message: "Username already taken",

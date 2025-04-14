@@ -39,7 +39,7 @@ import { logger } from "../helpers/logger";
 import { isEmail, isJWT, isUUID } from "class-validator";
 import { isValidUserInput } from "../helpers/user/isValidUserInput";
 import { USER_TYPES } from "../helpers/user/userTypes";
-import { NotificationResolver } from "./NotificationResolver";
+import { NotificationResolver } from "./notification.resolver";
 import { NOTIFICATION_TYPES } from "../helpers/notification/notificationTypes";
 import { VerificationStatus } from "../helpers/enums";
 
