@@ -40,7 +40,7 @@ import { isEmail, isJWT, isUUID } from "class-validator";
 import { isValidUserInput } from "../helpers/user/isValidUserInput";
 import { USER_TYPES } from "../helpers/user/userTypes";
 import { NOTIFICATION_TYPES } from "../helpers/notification/notificationTypes";
-import { VerificationStatus } from "../helpers/enums";
+import { MatchStatus, VerificationStatus } from "../helpers/enums";
 import { NotificationService } from "./NotificationService";
 import { UserService } from "./UserService";
 
@@ -66,6 +66,21 @@ export class UserResponse {
 export class UserVerificationResponse {
     @Field(() => UserVerification, { nullable: true })
     userVerification?: UserVerification | null;
+
+    @Field(() => String, { nullable: true })
+    status?: string;
+
+    @Field(() => Boolean)
+    ok: boolean;
+}
+
+@ObjectType()
+export class IdentityVerificationResponse {
+    @Field(() => [FieldError], { nullable: true })
+    errors?: FieldError[];
+
+    @Field(() => UserVerification, { nullable: true })
+    identityVerification?: UserVerification | null;
 
     @Field(() => String, { nullable: true })
     status?: string;
@@ -2975,8 +2990,6 @@ export class UserResolver {
 
         if (!payload) {
             status = "You are not authenticated.";
-        } else if (!documentsArray || documentsArray.length === 0) {
-            status = "Documents not provided.";
         } else {
             try {
                 const me = await this.findUserById(payload.id);
@@ -2990,15 +3003,14 @@ export class UserResolver {
                         if (identity && identity.verified === VerificationStatus.VERIFIED) {
                             const verification = await this.findVerificationRequest(me.id, me.type);
                     
-                            if (verification && (verification.createdAt === verification.updatedAt || verification.verified)) {
-                                if (verification.verified) {
-                                    status = "You're already verified.";
-                                } else {
-                                    status = "You've already submitted a verification request for your account."
-                                }
-                            } else if (verification && verification.outcome !== null && verification.verified !== VerificationStatus.VERIFIED && verification.createdAt < verification.updatedAt) {
+                            if (verification && verification.verified === VerificationStatus.VERIFIED) {
+                                status = "You're already verified.";
+                            } else if (verification && verification.verified === VerificationStatus.UNDER_REVIEW) {
+                                status = "You've already submitted a verification request for your account.";
+                            } else if (verification && documentsArray && documentsArray.length > 0) {
                                 verification.outcome = "";
                                 verification.documents = documentsArray;
+                                verification.verified = VerificationStatus.UNDER_REVIEW;
 
                                 await verification.save();
 
@@ -3011,9 +3023,9 @@ export class UserResolver {
                                 }).save();
 
                                 status = "Verification request submitted.";
-                                
-                                ok = true;
                             }
+                            
+                            ok = true;
                         } else {
                             status = "You need to verify your identity on Zenith before submitting a verification request for your account.";
                         }
@@ -3076,5 +3088,117 @@ export class UserResolver {
 
             return null;
         }
+    }
+
+    @Mutation(() => IdentityVerificationResponse)
+    @UseMiddleware(isAuth)
+    async requestIdentityVerification(
+        @Arg("country") country: string,
+        @Arg("fullName") fullName: string,
+        @Arg("entityIdentifier") entityIdentifier: string,
+        @Arg("birthOrCreationDate") birthOrCreationDate: Date,
+        @Arg("type") type: string,
+        @Arg("documents") documents: string,
+        @Ctx() { payload }: AuthContext
+    ): Promise<IdentityVerificationResponse> {
+        let identityVerification: IdentityVerification | null = null;
+        let status = "";
+        let ok = false;
+        let errors: FieldError[] = [];
+
+        let documentsArray = JSON.parse(documents);
+
+        if (!isValidUserInput(fullName)) {
+            errors.push({
+                field: "fullName",
+                message: "The full name field cannot be empty",
+            });
+        }
+
+        if (!isValidUserInput(entityIdentifier)) {
+            errors.push({
+                field: "entity",
+                message: "The identifier field cannot be empty",
+            });
+        }
+
+        if (country === "Country" || country === "") {
+            errors.push({
+                field: "country",
+                message: "The country field cannot take this value",
+            });
+        }
+
+        let age = processBirthDate(birthOrCreationDate);
+
+        if (type === USER_TYPES.USER && age < 13) {
+            errors.push({
+                field: "birthOrCreationDate",
+                message: "Users under the age of 13 cannot use this platform",
+            });
+        }
+
+        if (!payload) {
+            status = "You are not authenticated.";
+        } else {
+            if (errors.length === 0) {
+                try {
+                    const me = await this.findUserById(payload.id);
+    
+                    if (me) {
+                        const identity = await this.findIdentityVerificationRequest(me.id, me.type);
+    
+                        if (!me.emailVerified) {
+                            status = "Your email address is not verified.";
+                        } else {
+                            if (identity && identity.verified === VerificationStatus.VERIFIED) {
+                                status = "You're already verified.";
+                            } else if (identity && identity.verified === VerificationStatus.UNDER_REVIEW) {
+                                status = "You've already submitted an identity verification request for your account.";
+                            } else if (identity && identity.matchStatus === MatchStatus.RED && documentsArray && documentsArray.length > 0) {
+                                identity.documents = documentsArray;
+                                identity.matchStatus = MatchStatus.YELLOW;
+                                identity.outcome = "";
+                                identity.country = country;
+                                identity.fullName = fullName;
+                                identity.entityIdentifier = entityIdentifier;
+                                identity.birthOrCreationDate = birthOrCreationDate;
+                                identity.verified = VerificationStatus.UNDER_REVIEW;
+
+                                await identity.save();
+                            } else {
+                                identityVerification = await this.identityVerificationRepository.create({
+                                    userId: me.id,
+                                    type: me.type,
+                                    country,
+                                    fullName,
+                                    entityIdentifier,
+                                    birthOrCreationDate,
+                                    documents: documentsArray,
+                                }).save();
+    
+                                status = "Identity verification request submitted.";
+                            }
+
+                            ok = true;
+                        }
+                    } else {
+                        status = "This user doesn't exist.";
+                    }
+                } catch (error) {
+                    logger.error(error);
+    
+                    status =
+                        "An error has occurred. Please try again later.";
+                }
+            }
+        }
+
+        return {
+            errors,
+            identityVerification,
+            status,
+            ok,
+        };
     }
 }

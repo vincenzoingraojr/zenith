@@ -249,8 +249,7 @@ export class UserDeviceToken extends BaseItem {
 }
 
 @ObjectType()
-@Entity("user-verifications")
-export class UserVerification extends BaseItem {
+export class Verification extends BaseItem {
     @Field(() => Int)
     @Column({ unique: true })
     userId: number;
@@ -281,28 +280,12 @@ export class UserVerification extends BaseItem {
 }
 
 @ObjectType()
+@Entity("user-verifications")
+export class UserVerification extends Verification {}
+
+@ObjectType()
 @Entity("identity-verifications")
-export class IdentityVerification extends BaseItem {
-    @Field(() => Int)
-    @Column({ unique: true })
-    userId: number;
-
-    @Field(() => VerificationStatus)
-    @Column({
-        type: "enum",
-        enum: VerificationStatus,
-        default: VerificationStatus.UNDER_REVIEW,
-    })
-    verified: VerificationStatus;
-
-    @Field(() => String)
-    @Column({ default: USER_TYPES.USER })
-    type: string;
-
-    @Field(() => String, { nullable: true, defaultValue: null })
-    @Column({ nullable: true, default: null })
-    verifiedSince: Date;
-
+export class IdentityVerification extends Verification {
     @Field(() => String)
     @Column()
     country: string;
@@ -326,16 +309,7 @@ export class IdentityVerification extends BaseItem {
         default: null,
     })
     matchStatus: MatchStatus;
-
-    @Field(() => [GraphQLJSONObject])
-    @Column({ type: "jsonb", default: [] })
-    documents: { type: string; url: string }[];
-
-    @Field(() => String, { nullable: true, defaultValue: null })
-    @Column({ default: null, nullable: true })
-    outcome: string;
 }
-
 
 @ObjectType()
 @Entity("affiliations")
