@@ -1,6 +1,6 @@
 import { LandingUser } from "../entities/LandingUser";
 import { Arg, Mutation, Query, Resolver } from "type-graphql";
-import { UserResolver, UserResponse } from "./user.resolver";
+import {  UserResponse } from "./UserResolver";
 import { Repository } from "typeorm";
 import ejs from "ejs";
 import path from "path";
@@ -10,15 +10,16 @@ import mailHelper from "../helpers/mail/mailHelper";
 import { logger } from "../helpers/logger";
 import { isEmail } from "class-validator";
 import { isValidUserInput } from "../helpers/user/isValidUserInput";
+import { UserService } from "./UserService";
 
 @Resolver(LandingUser)
 export class LandingUserResolver {
     private readonly landingUserRepository: Repository<LandingUser>;
-    private readonly userResolver: UserResolver;
+    private readonly userService: UserService;
 
     constructor() {
         this.landingUserRepository = appDataSource.getRepository(LandingUser);
-        this.userResolver = new UserResolver();
+        this.userService = new UserService();
     }
 
     @Query(() => [LandingUser])
@@ -61,8 +62,8 @@ export class LandingUserResolver {
         let status;
 
         try {
-            const existingUserWithUsername = await this.userResolver.findUser(username);
-            const existingUserWithEmail = await this.userResolver.findUserByEmail(email);
+            const existingUserWithUsername = await this.userService.findUser(username);
+            const existingUserWithEmail = await this.userService.findUserByEmail(email);
 
             if (existingUserWithEmail) {
                 errors.push({

@@ -8,21 +8,22 @@ import { Block, User, UserDeviceToken } from "../entities/User";
 import { mergeAndDeduplicateArrays } from "../helpers/mergeAndDeduplicateArrays";
 import { MessageStatus } from "../helpers/enums";
 import { MessageNotification } from "../entities/Notification";
-import { Brackets, In, IsNull, Repository } from "typeorm";
+import { In, IsNull, Repository } from "typeorm";
 import appDataSource from "../dataSource";
 import { pubSub } from "../helpers/createPubSub";
 import { Notification as FirebaseNotification } from "firebase-admin/messaging";
 import { sendPushNotifications } from "../helpers/notifications";
 import lumen from "@zenith-to/lumen-js";
 import { logger } from "../helpers/logger";
-import { UserResolver } from "./user.resolver";
-import { MessageNotificationResolver } from "./notification.resolver";
+import { UserService } from "./UserService";
+import { NotificationService } from "./NotificationService";
 import { isUUID } from "class-validator";
 import { CHAT_TYPES, CHAT_USER_ROLES, EVENT_TYPES, MESSAGE_TYPES } from "../helpers/message/chatTypes";
 import { EMPTY_CONTENT_REGEXP } from "../helpers/textConstants";
 import { MESSAGE_NOTIFICATION_TYPES } from "../helpers/notification/notificationTypes";
 import { getPresignedUrlForDeleteCommand } from "../helpers/getPresignedUrls";
 import axios from "axios";
+import { findChatsById } from "../helpers/message/findChatsById";
 
 @ObjectType()
 export class ChatResponse {
@@ -41,7 +42,7 @@ export class ChatResponse {
 
 @Resolver(Chat)
 export class ChatResolver {
-    private readonly userResolver: UserResolver;
+    private readonly userService: UserService;
     private readonly chatRepository: Repository<Chat>;
     private readonly userRepository: Repository<User>;
     private readonly messageRepository: Repository<Message>;
@@ -51,7 +52,7 @@ export class ChatResolver {
     private readonly blockRepository: Repository<Block>;
 
     constructor() {
-        this.userResolver = new UserResolver();
+        this.userService = new UserService();
         this.chatRepository = appDataSource.getRepository(Chat);
         this.userRepository = appDataSource.getRepository(User);
         this.messageRepository = appDataSource.getRepository(Message);
@@ -66,32 +67,9 @@ export class ChatResolver {
     async chats(
         @Ctx() { payload }: AuthContext
     ): Promise<Chat[] | null> {
-        if (!payload) {
-            logger.warn("User not authenticated.");
+        const chats = await findChatsById(payload?.id);
 
-            return null;
-        }
-
-        try {
-            const userChats = await this.chatRepository
-                .createQueryBuilder("chat")
-                .leftJoinAndSelect("chat.users", "user")
-                .where("user.userId = :userId", { userId: payload.id })
-                .andWhere(
-                    new Brackets(qb => {
-                        qb.where("chat.type = :chatTypeGroup", { chatTypeGroup: CHAT_TYPES.GROUP })
-                        .orWhere("chat.type = :chatTypeChat AND user.inside = :inside", { chatTypeChat: CHAT_TYPES.CHAT, inside: true });
-                    })
-                )
-                .orderBy("chat.updatedAt", "DESC")
-                .getMany();
-
-            return userChats;
-        } catch (error) {
-            logger.error(error);
-
-            return null;
-        }
+        return chats;
     }
 
     @Subscription(() => Chat, {
@@ -178,7 +156,7 @@ export class ChatResolver {
         }
 
         try {
-            const followers = await this.userResolver.getFollowers(payload.id);
+            const followers = await this.userService.getFollowers(payload.id);
 
             const everyoneUsers = await this.userRepository.find({ where: { deletedAt: IsNull(), userSettings: { incomingMessages: "everyone" } } });
 
@@ -313,7 +291,7 @@ export class ChatResolver {
 
                     await Promise.all(
                         userIds.map(async (id) => {
-                            const user = await this.userResolver.findUserById(id);
+                            const user = await this.userService.findUserById(id);
                             
                             if (user) {
                                 const chatUser = await this.chatUserRepository.create({
@@ -328,7 +306,7 @@ export class ChatResolver {
                         })
                     );
 
-                    const me = await this.userResolver.findUserById(payload.id);
+                    const me = await this.userService.findUserById(payload.id);
 
                     if (me) {
                         const meChatUser = await this.chatUserRepository.create({
@@ -471,7 +449,7 @@ export class ChatResolver {
 
                     pubSub.publish("ADDED_CHAT_USERS", actualUsers);
 
-                    const me = await this.userResolver.me({ payload } as AuthContext);
+                    const me = await this.userService.findUserById(payload.id);
                     
                     if (me) {
                         for (const chatUser of actualUsers) {                    
@@ -528,7 +506,7 @@ export class ChatResolver {
 
         try {
             const chat = await this.chatRepository.findOne({ where: { chatId, type }, relations: ["users"] });
-            const user = await this.userResolver.me({ payload } as AuthContext);
+            const user = await this.userService.findUserById(payload.id);
 
             if (!chat || !user) {
                 logger.warn("Chat or user not found.");
@@ -539,7 +517,7 @@ export class ChatResolver {
                 const otherChatUserIds = chat.users.filter(chatUser => chatUser.userId !== user.id).map(chatUser => chatUser.userId);
                 const ids = Array.from(new Set(otherChatUserIds));
 
-                const otherChatUsers = await this.userResolver.findUsersById(ids);
+                const otherChatUsers = await this.userService.findUsersById(ids);
 
                 const chatUsers = [];
 
@@ -619,7 +597,7 @@ export class ChatResolver {
 
         try {
             const chat = await this.chatRepository.findOne({ where: { chatId, type: CHAT_TYPES.GROUP }, relations: ["users"] });
-            const user = await this.userResolver.findUserById(userId);
+            const user = await this.userService.findUserById(userId);
 
             if (!chat || !user) {
                 logger.warn("Chat or user not found.");
@@ -634,7 +612,7 @@ export class ChatResolver {
                     chatUser.role = CHAT_USER_ROLES.MEMBER;
                     await chatUser.save();
                     
-                    const meUser = await this.userResolver.me({ payload } as AuthContext);
+                    const meUser = await this.userService.findUserById(payload.id);
 
                     if (meUser) {
                         const event = await this.eventRepository.create({
@@ -690,7 +668,7 @@ export class ChatResolver {
         
         try {
             const chat = await this.chatRepository.findOne({ where: { chatId, type: CHAT_TYPES.GROUP }, relations: ["users"] });
-            const user = await this.userResolver.findUserById(userId);
+            const user = await this.userService.findUserById(userId);
 
             if (!chat || !user || role === "" || role === "Role") {
                 return false;
@@ -736,7 +714,7 @@ export class ChatResolver {
 
         try {
             const chat = await this.chatRepository.findOne({ where: { chatId, type: CHAT_TYPES.GROUP }, relations: ["users"] });
-            const user = await this.userResolver.me({ payload } as AuthContext);
+            const user = await this.userService.findUserById(payload.id);
 
             if (!chat || !user) {
                 logger.warn("Chat or user not found.");
@@ -780,7 +758,7 @@ export class ChatResolver {
         } else {
             try {
                 const chat = await this.chatRepository.findOne({ where: { chatId, type: CHAT_TYPES.GROUP }, relations: ["users"] });
-                const user = await this.userResolver.me({ payload } as AuthContext);
+                const user = await this.userService.findUserById(payload.id);
 
                 if (!chat || !user) {
                     status = "An error has occurred while loading the data.";
@@ -839,7 +817,7 @@ export class ChatResolver {
 
         try {
             const chat = await this.findChat(chatId, { payload } as AuthContext);
-            const user = await this.userResolver.me({ payload } as AuthContext);
+            const user = await this.userService.findUserById(payload.id);
 
             if (!chat || !user) {
                 logger.warn("Chat or user not found.");
@@ -856,7 +834,7 @@ export class ChatResolver {
             const otherChatUserIds = chat.users.filter(chatUser => chatUser.userId !== me.userId && chatUser.inside).map(chatUser => chatUser.userId);
             const ids = Array.from(new Set(otherChatUserIds));
 
-            const otherChatUsers = await this.userResolver.findUsersById(ids);
+            const otherChatUsers = await this.userService.findUsersById(ids);
 
             return otherChatUsers;
         } catch (error) {
@@ -917,9 +895,9 @@ export class ChatResolver {
 
 @Resolver(Message)
 export class MessageResolver {
-    private readonly userResolver: UserResolver;
+    private readonly userService: UserService;
     private readonly chatResolver: ChatResolver;
-    private readonly messageNotificationResolver: MessageNotificationResolver;
+    private readonly notificationService: NotificationService;
     private readonly chatRepository: Repository<Chat>;
     private readonly messageRepository: Repository<Message>;
     private readonly eventRepository: Repository<Event>;
@@ -929,9 +907,9 @@ export class MessageResolver {
     private readonly blockRepository: Repository<Block>;
 
     constructor() {
-        this.userResolver = new UserResolver();
+        this.userService = new UserService();
         this.chatResolver = new ChatResolver();
-        this.messageNotificationResolver = new MessageNotificationResolver();
+        this.notificationService = new NotificationService();
         this.chatRepository = appDataSource.getRepository(Chat);
         this.messageRepository = appDataSource.getRepository(Message);
         this.eventRepository = appDataSource.getRepository(Event);
@@ -1052,14 +1030,14 @@ export class MessageResolver {
 
                     const insideUsers = chat.users.filter((user) => user.inside && user.userId !== payload.id).map((user) => user.userId);
 
-                    const me = await this.userResolver.me({ payload } as AuthContext);
+                    const me = await this.userService.findUserById(payload.id);
 
-                    const chatUsers = await this.userResolver.findUsersById(insideUsers);
+                    const chatUsers = await this.userService.findUsersById(insideUsers);
 
                     if (chatUsers && me && chatUsers.length > 0) {
                         for (const chatUser of chatUsers) {
                             const notificationContent = message.content.length > 0 ? message.content : (message.media.src.length > 0 ? `Sent a ${message.media.type}` : (message.messageItem.type.length > 0 ? `Sent a ${message.messageItem.type}` : "Sent a message"));
-                            const notification = await this.messageNotificationResolver.createMessageNotification(payload.id, chatUser.id, message.id, message.type, MESSAGE_NOTIFICATION_TYPES.MESSAGE, notificationContent, chat.chatId);
+                            const notification = await this.notificationService.createMessageNotification(payload.id, chatUser.id, message.id, message.type, MESSAGE_NOTIFICATION_TYPES.MESSAGE, notificationContent, chat.chatId);
 
                             if (notification) {
                                 pubSub.publish("NEW_CHAT_NOTIFICATION", notification);

@@ -15,10 +15,10 @@ import { ComprehendClient, DetectDominantLanguageCommand } from "@aws-sdk/client
 import lumen from "@zenith-to/lumen-js";
 import { getPresignedUrlForDeleteCommand } from "../helpers/getPresignedUrls";
 import axios from "axios";
-import { UserResolver } from "./user.resolver";
+import { UserService } from "./UserService";
 import { logger } from "../helpers/logger";
 import { isUUID } from "class-validator";
-import { NotificationResolver } from "./notification.resolver";
+import { NotificationService } from "./NotificationService";
 import { POST_TYPES } from "../helpers/post/postTypes";
 import { NOTIFICATION_TYPES } from "../helpers/notification/notificationTypes";
 import { EMPTY_CONTENT_REGEXP } from "../helpers/textConstants";
@@ -40,8 +40,8 @@ export class PostResponse {
 
 @Resolver(Post)
 export class PostResolver {
-    private readonly userResolver: UserResolver;
-    private readonly notificationResolver: NotificationResolver;
+    private readonly userService: UserService;
+    private readonly notificationService: NotificationService;
     private readonly userRepository: Repository<User>;
     private readonly postRepository: Repository<Post>;
     private readonly articleRepository: Repository<Article>;
@@ -54,8 +54,8 @@ export class PostResolver {
     private readonly comprehend: ComprehendClient;
 
     constructor() {
-        this.userResolver = new UserResolver();
-        this.notificationResolver = new NotificationResolver();
+        this.userService = new UserService();
+        this.notificationService = new NotificationService();
         this.userRepository = appDataSource.getRepository(User);
         this.postRepository = appDataSource.getRepository(Post);
         this.articleRepository = appDataSource.getRepository(Article);
@@ -154,7 +154,7 @@ export class PostResolver {
         }
 
         try {
-            const author = await this.userResolver.findUserById(userId);
+            const author = await this.userService.findUserById(userId);
 
             if (!author) {
                 logger.warn("Post author not found.");
@@ -233,7 +233,7 @@ export class PostResolver {
         }
     
         try {
-            const author = await this.userResolver.findUserById(userId);
+            const author = await this.userService.findUserById(userId);
             
             if (!author) {
                 logger.warn("Post author not found.");
@@ -382,7 +382,7 @@ export class PostResolver {
         } else {
             if (errors.length === 0) {
                 try {
-                    const user = await this.userResolver.findUserById(payload.id);
+                    const user = await this.userService.findUserById(payload.id);
                 
                     if (user) {
                         let mentions: string[] = lumen.extractMentions(content);
@@ -436,7 +436,7 @@ export class PostResolver {
     
                             if (mentionedUsers.length > 0) {
                                 for (const mentionedUser of mentionedUsers) {
-                                    const notification = await this.notificationResolver.createNotification(payload.id, mentionedUser.id, post.id, type, NOTIFICATION_TYPES.MENTION, `${post.author.name} (@${post.author.username}) mentioned you in a ${(type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST}.`);
+                                    const notification = await this.notificationService.createNotification(payload.id, mentionedUser.id, post.id, type, NOTIFICATION_TYPES.MENTION, `${post.author.name} (@${post.author.username}) mentioned you in a ${(type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST}.`);
                                     
                                     if (notification) {
                                         pubSub.publish("NEW_NOTIFICATION", notification);
@@ -464,9 +464,9 @@ export class PostResolver {
                             }
     
                             if (isReplyToItem && (type === NOTIFICATION_TYPES.COMMENT) && (isReplyToItem.authorId !== payload.id)) {
-                                const notification = await this.notificationResolver.createNotification(payload.id, isReplyToItem.authorId, post.id, type, NOTIFICATION_TYPES.COMMENT, `${post.author.name} (@${post.author.username}) commented your post.`);
+                                const notification = await this.notificationService.createNotification(payload.id, isReplyToItem.authorId, post.id, type, NOTIFICATION_TYPES.COMMENT, `${post.author.name} (@${post.author.username}) commented your post.`);
         
-                                const author = await this.userResolver.findUserById(isReplyToItem.authorId);
+                                const author = await this.userService.findUserById(isReplyToItem.authorId);
 
                                 if (notification && author) {
                                     pubSub.publish("NEW_NOTIFICATION", notification);
@@ -547,7 +547,7 @@ export class PostResolver {
         } else {
             if (errors.length === 0) {
                 try {
-                    const user = await this.userResolver.findUserById(payload.id);
+                    const user = await this.userService.findUserById(payload.id);
                 
                     if (user) {
                         let mentions: string[] = lumen.extractMentions(content);
@@ -639,10 +639,10 @@ export class PostResolver {
 
                             if (mentionedUsers.length > 0) {
                                 for (const mentionedUser of mentionedUsers) {
-                                    const notification = await this.notificationResolver.findNotification(payload.id, mentionedUser.id, post.id, post.type, NOTIFICATION_TYPES.MENTION);
+                                    const notification = await this.notificationService.findNotification(payload.id, mentionedUser.id, post.id, post.type, NOTIFICATION_TYPES.MENTION);
 
                                     if (!notification) {
-                                        const newNotification = await this.notificationResolver.createNotification(payload.id, mentionedUser.id, post.id, post.type, NOTIFICATION_TYPES.MENTION, `${post.author.name} (@${post.author.username}) mentioned you in a ${(post.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST}.`);
+                                        const newNotification = await this.notificationService.createNotification(payload.id, mentionedUser.id, post.id, post.type, NOTIFICATION_TYPES.MENTION, `${post.author.name} (@${post.author.username}) mentioned you in a ${(post.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST}.`);
 
                                         if (newNotification) {
                                             pubSub.publish("NEW_NOTIFICATION", newNotification);
@@ -802,7 +802,7 @@ export class PostResolver {
 
             const existingLike = await this.likeRepository.findOne({ where: { likedItemId: itemId, userId: payload.id } });
 
-            const user = await this.userResolver.findUserById(payload.id);
+            const user = await this.userService.findUserById(payload.id);
 
             if (!user) {
                 logger.warn("User not found.");
@@ -819,10 +819,10 @@ export class PostResolver {
                     itemType,
                 }).save();
 
-                const author = await this.userResolver.findUserById(item.authorId);
+                const author = await this.userService.findUserById(item.authorId);
 
                 if (payload.id !== item.authorId && author) {
-                    const notification = await this.notificationResolver.createNotification(payload.id, item.authorId, item.id, item.type, NOTIFICATION_TYPES.LIKE, `${user.name} (@${user.username}) liked your ${(item.type === POST_TYPES.ARTICLE) ? POST_TYPES.ARTICLE : ((item.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST)}.`);
+                    const notification = await this.notificationService.createNotification(payload.id, item.authorId, item.id, item.type, NOTIFICATION_TYPES.LIKE, `${user.name} (@${user.username}) liked your ${(item.type === POST_TYPES.ARTICLE) ? POST_TYPES.ARTICLE : ((item.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST)}.`);
 
                     if (notification) {
                         pubSub.publish("NEW_NOTIFICATION", notification);
@@ -891,10 +891,10 @@ export class PostResolver {
                 return false;
             });
 
-            const notification = await this.notificationResolver.findNotification(payload.id, item.authorId, item.id, item.type, NOTIFICATION_TYPES.LIKE);
+            const notification = await this.notificationService.findNotification(payload.id, item.authorId, item.id, item.type, NOTIFICATION_TYPES.LIKE);
     
             if (payload.id !== item.authorId && notification) {
-                await this.notificationResolver.deleteNotification(notification.notificationId);
+                await this.notificationService.deleteNotification(notification.notificationId);
 
                 pubSub.publish("DELETED_NOTIFICATION", notification);
             }
@@ -965,7 +965,7 @@ export class PostResolver {
         
             const userIds = likes.map(like => like.userId);
         
-            const users = await this.userResolver.findUsersById(userIds, true);
+            const users = await this.userService.findUsersById(userIds, true);
         
             return users;
         } catch (error) {

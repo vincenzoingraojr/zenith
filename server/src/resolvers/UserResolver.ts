@@ -10,7 +10,7 @@ import {
     Resolver,
     UseMiddleware,
 } from "type-graphql";
-import { In, Not, Repository } from "typeorm";
+import { Not, Repository } from "typeorm";
 import argon2 from "argon2";
 import { AuthContext } from "../types";
 import { sendRefreshToken } from "../auth/sendRefreshToken";
@@ -39,9 +39,10 @@ import { logger } from "../helpers/logger";
 import { isEmail, isJWT, isUUID } from "class-validator";
 import { isValidUserInput } from "../helpers/user/isValidUserInput";
 import { USER_TYPES } from "../helpers/user/userTypes";
-import { NotificationResolver } from "./notification.resolver";
 import { NOTIFICATION_TYPES } from "../helpers/notification/notificationTypes";
 import { VerificationStatus } from "../helpers/enums";
+import { NotificationService } from "./NotificationService";
+import { UserService } from "./UserService";
 
 @ObjectType()
 export class UserResponse {
@@ -76,9 +77,10 @@ export class UserVerificationResponse {
 @Resolver(User)
 export class UserResolver {
     private readonly userRepository: Repository<User>;
+    private readonly userService: UserService;
     private readonly postRepository: Repository<Post>;
     private readonly sessionRepository: Repository<Session>;
-    private readonly notificationResolver: NotificationResolver;
+    private readonly notificationService: NotificationService;
     private readonly followRepository: Repository<Follow>;
     private readonly blockRepository: Repository<Block>;
     private readonly userDeviceTokenRepository: Repository<UserDeviceToken>;
@@ -91,9 +93,10 @@ export class UserResolver {
 
     constructor() {
         this.userRepository = appDataSource.getRepository(User);
+        this.userService = new UserService();
         this.postRepository = appDataSource.getRepository(Post);
         this.sessionRepository = appDataSource.getRepository(Session);
-        this.notificationResolver = new NotificationResolver();
+        this.notificationService = new NotificationService();
         this.followRepository = appDataSource.getRepository(Follow);
         this.blockRepository = appDataSource.getRepository(Block);
         this.userDeviceTokenRepository = appDataSource.getRepository(UserDeviceToken);
@@ -107,98 +110,16 @@ export class UserResolver {
 
     @Query(() => User, { nullable: true })
     async findUser(@Arg("username") username: string, @Arg("deleted", { nullable: true }) deleted: boolean = false): Promise<User | null> {
-        if (!isValidUserInput(username)) {
-            logger.warn("Invalid username.");
+        const response = await this.userService.findUser(username, deleted);
 
-            return null;
-        }
-    
-        try {
-            const user = await this.userRepository.findOne({ where: { username }, withDeleted: deleted });
-            
-            if (!user) {
-                logger.warn(`User with username "${username}" not found.`);
-
-                return null;
-            }
-    
-            return user;
-        } catch (error) {
-            logger.error(error);
-
-            return null;
-        }    
+        return response;
     }
 
     @Query(() => User, { nullable: true })
     async findUserById(@Arg("id", () => Int, { nullable: true }) id: number, @Arg("deleted", { nullable: true }) deleted: boolean = false): Promise<User | null> {
-        if (!id) {
-            logger.warn("Id not provided.");
+        const response = await this.userService.findUserById(id, deleted);
 
-            return null;
-        }
-
-        try {
-            const user = await this.userRepository.findOne({ where: { id }, withDeleted: deleted });
-
-            if (!user) {
-                logger.warn(`User with id "${id}" not found.`);
-
-                return null;
-            }
-
-            return user;
-        } catch (error) {
-            logger.error(error);
-
-            return null;
-        }
-    }
-
-    @Query(() => [User], { nullable: true })
-    async findUsersById(@Arg("ids", () => [Int]) ids: number[], @Arg("deleted", { nullable: true }) deleted: boolean = false): Promise<User[] | null> {
-        if (ids.length === 0) {
-            logger.warn("Ids not provided.");
-
-            return null;
-        }
-
-        try {
-            const users = await this.userRepository.find({ where: { id: In(ids) }, withDeleted: deleted });
-
-            return users;
-        } catch (error) {
-            logger.error(error);
-
-            return null;
-        }
-    }
-
-    @Query(() => User, { nullable: true })
-    async findUserByEmail(@Arg("email") email: string, @Arg("deleted", { nullable: true }) deleted: boolean = false): Promise<User | null> {
-        const valid = isEmail(email);
-
-        if (!valid) {
-            logger.warn("The provided email address is not valid.");
-
-            return null;
-        }
-
-        try {
-            const user = await this.userRepository.findOne({ where: { email }, withDeleted: deleted || false });
-
-            if (!user) {
-                logger.warn(`User with email "${email}" not found.`);
-
-                return null;
-            }
-
-            return user;
-        } catch (error) {
-            logger.error(error);
-
-            return null;
-        }
+        return response;
     }
 
     @Query(() => User, { nullable: true })
@@ -362,7 +283,7 @@ export class UserResolver {
             const isEmailAddress = isEmail(input);
 
             if (isEmailAddress) {
-                user = await this.findUserByEmail(input);
+                user = await this.userService.findUserByEmail(input);
             } else {
                 user = await this.findUser(input);
             }
@@ -414,7 +335,7 @@ export class UserResolver {
             const isEmailAddress = isEmail(input);
 
             if (isEmailAddress) {
-                user = await this.findUserByEmail(input);
+                user = await this.userService.findUserByEmail(input);
             } else {
                 user = await this.findUser(input);
             }
@@ -666,7 +587,7 @@ export class UserResolver {
             const isEmailAddress = isEmail(input);
 
             if (isEmailAddress) {
-                user = await this.findUserByEmail(input, true);
+                user = await this.userService.findUserByEmail(input, true);
             } else {
                 user = await this.findUser(input, true);
             }
@@ -843,7 +764,7 @@ export class UserResolver {
             } else {
                 if (isValidUserInput(input)) {
                     if (isEmail(input)) {
-                        me = await this.findUserByEmail(input);
+                        me = await this.userService.findUserByEmail(input);
                     } else {
                         me = await this.findUser(input);
                     }
@@ -929,7 +850,7 @@ export class UserResolver {
             } else {
                 if (isValidUserInput(input)) {
                     if (isEmail(input)) {
-                        me = await this.findUserByEmail(input);
+                        me = await this.userService.findUserByEmail(input);
                     } else {
                         me = await this.findUser(input);
                     }
@@ -1074,7 +995,7 @@ export class UserResolver {
             });
         } else {
             try {
-                user = await this.findUserByEmail(email);
+                user = await this.userService.findUserByEmail(email);
 
                 if (!user) {
                     errors.push({
@@ -1309,7 +1230,7 @@ export class UserResolver {
                     origin,
                 }).save();
 
-                const notification = await this.notificationResolver.createNotification(follower.id, user.id, follower.id, USER_TYPES.USER, NOTIFICATION_TYPES.FOLLOW, `${follower.name} (@${follower.username}) started following you.`);
+                const notification = await this.notificationService.createNotification(follower.id, user.id, follower.id, USER_TYPES.USER, NOTIFICATION_TYPES.FOLLOW, `${follower.name} (@${follower.username}) started following you.`);
 
                 if (notification) {
                     pubSub.publish("NEW_NOTIFICATION", notification);
@@ -1358,12 +1279,12 @@ export class UserResolver {
         try {
             await this.followRepository.delete({ user: { id: userId }, follower: { id: payload.id } });
 
-            const notification = await this.notificationResolver.findNotification(payload.id, userId, payload.id, USER_TYPES.USER, NOTIFICATION_TYPES.FOLLOW);
+            const notification = await this.notificationService.findNotification(payload.id, userId, payload.id, USER_TYPES.USER, NOTIFICATION_TYPES.FOLLOW);
     
             if (notification) {
                 pubSub.publish("DELETED_NOTIFICATION", notification);
 
-                await this.notificationResolver.deleteNotification(notification.notificationId); 
+                await this.notificationService.deleteNotification(notification.notificationId); 
             }
     
             return true;
@@ -1380,23 +1301,9 @@ export class UserResolver {
         @Arg("offset", () => Int, { nullable: true }) offset?: number,
         @Arg("limit", () => Int, { nullable: true }) limit?: number
     ): Promise<User[] | null> {
-        if (!id) {
-            logger.warn("User id not provided.");
+        const response = await this.userService.getFollowers(id, offset, limit);
 
-            return null;
-        }
-
-        try {
-            const followRelations = await this.followRepository.find({ where: { user: { id } }, relations: ["follower", "user"], take: limit, skip: offset, order: { createdAt: "DESC" } });
-
-            const users = followRelations.map(follow => follow.follower);
-
-            return users;
-        } catch (error) {
-            logger.error(error);
-
-            return null;
-        }
+        return response;
     }
 
     @Query(() => [User], { nullable: true })
@@ -2262,12 +2169,12 @@ export class UserResolver {
 
                         await this.followRepository.delete({ user: { id: me.id }, follower: { id: user.id } });
 
-                        const notification = await this.notificationResolver.findNotification(user.id, me.id, user.id, USER_TYPES.USER, NOTIFICATION_TYPES.FOLLOW);
+                        const notification = await this.notificationService.findNotification(user.id, me.id, user.id, USER_TYPES.USER, NOTIFICATION_TYPES.FOLLOW);
                 
                         if (notification) {
                             pubSub.publish("DELETED_NOTIFICATION", notification);
 
-                            await this.notificationResolver.deleteNotification(notification.notificationId);
+                            await this.notificationService.deleteNotification(notification.notificationId);
                         }
 
                         return block;
@@ -2901,7 +2808,7 @@ export class UserResolver {
                     status: false,
                 }).save();
 
-                const notification = await this.notificationResolver.createNotification(organization.id, user.id, affiliation.id, "affiliation", NOTIFICATION_TYPES.AFFILIATION, `${organization.name} (@${organization.username}) wants you to become an affiliated account.`);
+                const notification = await this.notificationService.createNotification(organization.id, user.id, affiliation.id, "affiliation", NOTIFICATION_TYPES.AFFILIATION, `${organization.name} (@${organization.username}) wants you to become an affiliated account.`);
 
                 if (notification) {
                     pubSub.publish("NEW_NOTIFICATION", notification);
@@ -2993,12 +2900,12 @@ export class UserResolver {
             if (affiliation) {
                 await this.affiliationRepository.delete({ affiliationId, userId: payload.id });
 
-                const notification = await this.notificationResolver.findNotification(affiliation.organizationId, payload.id, affiliation.id, "affiliation", NOTIFICATION_TYPES.AFFILIATION);
+                const notification = await this.notificationService.findNotification(affiliation.organizationId, payload.id, affiliation.id, "affiliation", NOTIFICATION_TYPES.AFFILIATION);
                 
                 if (notification) {
                     pubSub.publish("DELETED_NOTIFICATION", notification);
 
-                    await this.notificationResolver.deleteNotification(notification.notificationId);
+                    await this.notificationService.deleteNotification(notification.notificationId);
                 }
 
                 return true;

@@ -4,11 +4,10 @@ import { Arg, Ctx, Field, Int, Mutation, ObjectType, Query, Resolver, Root, Subs
 import { AuthContext } from "../types";
 import { In, LessThan, Repository } from "typeorm";
 import appDataSource from "../dataSource";
-import { UserResolver } from "./user.resolver";
+import { UserService } from "./UserService";
 import { logger } from "../helpers/logger";
 import { isUUID } from "class-validator";
-import { v4 as uuidv4 } from "uuid";
-import { ChatResolver } from "./message.resolver";
+import { findChatsById } from "../helpers/message/findChatsById";
 
 @ObjectType()
 export class PaginatedNotifications {
@@ -22,11 +21,11 @@ export class PaginatedNotifications {
 @Resolver(Notification)
 export class NotificationResolver {
     private readonly notificationRepository: Repository<Notification>;
-    private readonly userResolver: UserResolver;
+    private readonly userService: UserService;
 
     constructor() {
         this.notificationRepository = appDataSource.getRepository(Notification);
-        this.userResolver = new UserResolver();
+        this.userService = new UserService();
     }
 
     @Query(() => PaginatedNotifications)
@@ -68,7 +67,7 @@ export class NotificationResolver {
             });
 
             const ids = Array.from(new Set(notifications.map((notification) => notification.creatorId)));
-            const creators = await this.userResolver.findUsersById(ids);
+            const creators = await this.userService.findUsersById(ids);
             
             const feed: Notification[] = [];
 
@@ -110,7 +109,7 @@ export class NotificationResolver {
             });
 
             const ids = Array.from(new Set(unseenNotifications.map((notification) => notification.creatorId)));
-            const creators = await this.userResolver.findUsersById(ids);
+            const creators = await this.userService.findUsersById(ids);
             
             const unseenFeed: Notification[] = [];
 
@@ -190,102 +189,16 @@ export class NotificationResolver {
     deletedNotification(@Arg("userId", () => Int) _userId: number, @Root() notification: Notification): Notification {
         return notification;
     }
-
-    @Mutation(() => Notification, { nullable: true })
-    async findNotification(
-        @Arg("creatorId", () => Int) creatorId: number,
-        @Arg("recipientId", () => Int) recipientId: number,
-        @Arg("resourceId", () => Int) resourceId: number,
-        @Arg("resourceType") resourceType: string,
-        @Arg("notificationType") notificationType: string,
-    ): Promise<Notification | null> {
-        try {
-            const notification = await this.notificationRepository.findOne({
-                where: {
-                    creatorId,
-                    recipientId,
-                    resourceId,
-                    resourceType,
-                    notificationType,
-                },
-            });
-
-            return notification || null;
-        } catch (error) {
-            logger.error(error);
-
-            return null;
-        }
-    }
-
-    @Mutation(() => Notification, { nullable: true })
-    async createNotification(
-        @Arg("creatorId", () => Int) creatorId: number,
-        @Arg("recipientId", () => Int) recipientId: number,
-        @Arg("resourceId", () => Int) resourceId: number,
-        @Arg("resourceType") resourceType: string,
-        @Arg("notificationType") notificationType: string,
-        @Arg("content") content: string,
-    ): Promise<Notification | null> {
-        try {
-            const newNotification = this.notificationRepository.create({
-                notificationId: uuidv4(),
-                creatorId,
-                recipientId,
-                resourceId,
-                resourceType,
-                notificationType,
-                content,
-            });
-
-            await newNotification.save();
-
-            return newNotification;
-        } catch (error) {
-            logger.error(error);
-
-            return null;
-        }
-    }
-
-    @Mutation(() => Boolean)
-    async deleteNotification(
-        @Arg("notificationId") notificationId: string,
-    ): Promise<boolean> {
-        try {
-            const notification = await this.notificationRepository.findOne({
-                where: {
-                    notificationId,
-                },
-            });
-
-            if (!notification) {
-                logger.warn("Notification not found. Returning false.");
-
-                return false;
-            }
-
-            await this.notificationRepository.remove(notification);
-
-            return true;
-        } catch (error) {
-            logger.error(error);
-
-            return false;
-        }
-    }
 }
 
 @Resolver(MessageNotification)
 export class MessageNotificationResolver {
     private readonly messageNotificationRepository: Repository<MessageNotification>;
-    private readonly userResolver: UserResolver;
-    private readonly chatResolver: ChatResolver;
+    private readonly userService: UserService;
 
     constructor() {
         this.messageNotificationRepository = appDataSource.getRepository(MessageNotification);
-        this.userResolver = new UserResolver();
-        this.chatResolver = new ChatResolver();
+        this.userService = new UserService();
     }
 
     @Query(() => [MessageNotification], { nullable: true })
@@ -320,7 +233,7 @@ export class MessageNotificationResolver {
             });
 
             const ids = Array.from(new Set(messageNotifications.map((notification) => notification.creatorId)));
-            const creators = await this.userResolver.findUsersById(ids);
+            const creators = await this.userService.findUsersById(ids);
             
             const unseenFeed: MessageNotification[] = [];
 
@@ -349,7 +262,7 @@ export class MessageNotificationResolver {
         }
 
         try {
-            const chats = await this.chatResolver.chats({ payload } as AuthContext);
+            const chats = await findChatsById(payload.id);
 
             if (!chats) {
                 return null;
@@ -369,7 +282,7 @@ export class MessageNotificationResolver {
             });
 
             const ids = Array.from(new Set(messageNotifications.map((notification) => notification.creatorId)));
-            const creators = await this.userResolver.findUsersById(ids);
+            const creators = await this.userService.findUsersById(ids);
             
             const unseenFeed: MessageNotification[] = [];
 
@@ -389,8 +302,7 @@ export class MessageNotificationResolver {
     @Subscription(() => MessageNotification, {
         topics: "NEW_CHAT_NOTIFICATION",
         filter: async ({ payload, args }) => {
-            const chatResolver = new ChatResolver();
-            const chats = await chatResolver.chats({ payload: { id: args.userId } } as AuthContext);
+            const chats = await findChatsById(payload.id);
 
             if (!chats) {
                 return false;
@@ -412,8 +324,7 @@ export class MessageNotificationResolver {
     @Subscription(() => MessageNotification, {
         topics: "DELETED_CHAT_NOTIFICATION",
         filter: async ({ payload, args }) => {
-            const chatResolver = new ChatResolver();
-            const chats = await chatResolver.chats({ payload: { id: args.userId } } as AuthContext);
+            const chats = await findChatsById(payload.id);
 
             if (!chats) {
                 return false;
@@ -430,38 +341,6 @@ export class MessageNotificationResolver {
     })
     deletedMessageNotification(@Arg("chatId", { nullable: true }) _chatId: string, @Arg("userId", () => Int, { nullable: true }) _userId: number, @Root() notification: MessageNotification): MessageNotification {
         return notification;
-    }
-
-    @Mutation(() => MessageNotification, { nullable: true })
-    async createMessageNotification(
-        @Arg("creatorId", () => Int) creatorId: number,
-        @Arg("recipientId", () => Int) recipientId: number,
-        @Arg("resourceId", () => Int) resourceId: number,
-        @Arg("resourceType") resourceType: string,
-        @Arg("notificationType") notificationType: string,
-        @Arg("content") content: string,
-        @Arg("chatId") chatId: string,
-    ): Promise<MessageNotification | null> {
-        try {
-            const newNotification = this.messageNotificationRepository.create({
-                notificationId: uuidv4(),
-                creatorId,
-                recipientId,
-                resourceId,
-                resourceType,
-                notificationType,
-                content,
-                chatId,
-            });
-
-            await newNotification.save();
-
-            return newNotification;
-        } catch (error) {
-            logger.error(error);
-
-            return null;
-        }
     }
 
     @Mutation(() => Boolean)
