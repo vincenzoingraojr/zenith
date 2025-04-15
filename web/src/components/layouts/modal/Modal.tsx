@@ -56,7 +56,7 @@ const ModalOuterContainer = styled.div`
         max-height: 65vh;
     }
 
-    @media ${devices.laptopL} {
+    @media ${devices.laptopM} {
         border-radius: 16px;
         width: 580px;
         height: auto;
@@ -90,7 +90,7 @@ const ModalContainer = styled.div`
         width: 100%;
     }
 
-    @media ${devices.laptopL} {
+    @media ${devices.laptopM} {
         width: 100%;
     }
 `;
