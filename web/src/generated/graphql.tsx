@@ -38,6 +38,7 @@ export type Article = {
   cover: ArticleCover;
   createdAt: Scalars['String']['output'];
   description: Scalars['String']['output'];
+  draft: Scalars['Boolean']['output'];
   id: Scalars['Int']['output'];
   isEdited: Scalars['Boolean']['output'];
   itemId: Scalars['String']['output'];
@@ -164,6 +165,32 @@ export type Follow = {
   user: User;
 };
 
+export type IdentityVerification = {
+  __typename?: 'IdentityVerification';
+  birthOrCreationDate: Scalars['String']['output'];
+  country: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  documents: Array<Scalars['JSONObject']['output']>;
+  entityIdentifier: Scalars['String']['output'];
+  fullName: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  matchStatus: MatchStatus;
+  outcome?: Maybe<Scalars['String']['output']>;
+  type: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  userId: Scalars['Int']['output'];
+  verified: VerificationStatus;
+  verifiedSince?: Maybe<Scalars['String']['output']>;
+};
+
+export type IdentityVerificationResponse = {
+  __typename?: 'IdentityVerificationResponse';
+  errors?: Maybe<Array<FieldError>>;
+  identityVerification?: Maybe<UserVerification>;
+  ok: Scalars['Boolean']['output'];
+  status?: Maybe<Scalars['String']['output']>;
+};
+
 export type LandingUser = {
   __typename?: 'LandingUser';
   createdAt: Scalars['String']['output'];
@@ -185,6 +212,13 @@ export type Like = {
   updatedAt: Scalars['String']['output'];
   userId: Scalars['Int']['output'];
 };
+
+/** Possible documents and form data match status */
+export enum MatchStatus {
+  Green = 'GREEN',
+  Red = 'RED',
+  Yellow = 'YELLOW'
+}
 
 export type MediaItem = {
   __typename?: 'MediaItem';
@@ -266,8 +300,6 @@ export type Mutation = {
   createBookmark?: Maybe<Bookmark>;
   createChatOrGroup: ChatResponse;
   createDeviceToken: Scalars['Boolean']['output'];
-  createMessageNotification?: Maybe<MessageNotification>;
-  createNotification?: Maybe<Notification>;
   createOrganization: UserResponse;
   createPost: PostResponse;
   createReport: ReportResponse;
@@ -278,7 +310,6 @@ export type Mutation = {
   deleteMeFromGroup: Scalars['Boolean']['output'];
   deleteMessageForEveryone: Scalars['Boolean']['output'];
   deleteMessageForMe: Scalars['Boolean']['output'];
-  deleteNotification: Scalars['Boolean']['output'];
   deleteOrAbandonChatOrGroup: Scalars['Boolean']['output'];
   deleteOtherSessions: Scalars['Boolean']['output'];
   deletePost: Scalars['Boolean']['output'];
@@ -293,7 +324,6 @@ export type Mutation = {
   editPost: PostResponse;
   editProfile: UserResponse;
   editTwoFactorAuth: UserResponse;
-  findNotification?: Maybe<Notification>;
   findUserBeforeLogIn: UserResponse;
   followUser?: Maybe<Follow>;
   incrementPostViews?: Maybe<FeedItem>;
@@ -307,6 +337,7 @@ export type Mutation = {
   removeBookmark: Scalars['Boolean']['output'];
   removeLike: Scalars['Boolean']['output'];
   removeUserFromGroup: Scalars['Boolean']['output'];
+  requestIdentityVerification: IdentityVerificationResponse;
   requestVerification: UserVerificationResponse;
   resendOTP: Scalars['Boolean']['output'];
   sendMessage?: Maybe<Message>;
@@ -386,27 +417,6 @@ export type MutationCreateDeviceTokenArgs = {
 };
 
 
-export type MutationCreateMessageNotificationArgs = {
-  chatId: Scalars['String']['input'];
-  content: Scalars['String']['input'];
-  creatorId: Scalars['Int']['input'];
-  notificationType: Scalars['String']['input'];
-  recipientId: Scalars['Int']['input'];
-  resourceId: Scalars['Int']['input'];
-  resourceType: Scalars['String']['input'];
-};
-
-
-export type MutationCreateNotificationArgs = {
-  content: Scalars['String']['input'];
-  creatorId: Scalars['Int']['input'];
-  notificationType: Scalars['String']['input'];
-  recipientId: Scalars['Int']['input'];
-  resourceId: Scalars['Int']['input'];
-  resourceType: Scalars['String']['input'];
-};
-
-
 export type MutationCreateOrganizationArgs = {
   birthDate: Scalars['DateTimeISO']['input'];
   email: Scalars['String']['input'];
@@ -460,11 +470,6 @@ export type MutationDeleteMessageForEveryoneArgs = {
 export type MutationDeleteMessageForMeArgs = {
   chatId: Scalars['String']['input'];
   messageId: Scalars['String']['input'];
-};
-
-
-export type MutationDeleteNotificationArgs = {
-  notificationId: Scalars['String']['input'];
 };
 
 
@@ -534,15 +539,6 @@ export type MutationEditProfileArgs = {
   profileBanner: Scalars['String']['input'];
   profilePicture: Scalars['String']['input'];
   website: Scalars['String']['input'];
-};
-
-
-export type MutationFindNotificationArgs = {
-  creatorId: Scalars['Int']['input'];
-  notificationType: Scalars['String']['input'];
-  recipientId: Scalars['Int']['input'];
-  resourceId: Scalars['Int']['input'];
-  resourceType: Scalars['String']['input'];
 };
 
 
@@ -626,9 +622,18 @@ export type MutationRemoveUserFromGroupArgs = {
 };
 
 
+export type MutationRequestIdentityVerificationArgs = {
+  birthOrCreationDate: Scalars['DateTimeISO']['input'];
+  country: Scalars['String']['input'];
+  documents: Scalars['String']['input'];
+  entityIdentifier: Scalars['String']['input'];
+  fullName: Scalars['String']['input'];
+  type: Scalars['String']['input'];
+};
+
+
 export type MutationRequestVerificationArgs = {
-  documents: Array<Scalars['String']['input']>;
-  idUrl: Scalars['String']['input'];
+  documents: Scalars['String']['input'];
 };
 
 
@@ -783,19 +788,18 @@ export type Query = {
   findAffiliationByUserId?: Maybe<Affiliation>;
   findAffiliationRequest?: Maybe<Affiliation>;
   findChat?: Maybe<Chat>;
+  findIdentityVerificationRequest?: Maybe<IdentityVerification>;
   findMessage?: Maybe<Message>;
   findMessageById?: Maybe<Message>;
   findPost?: Maybe<Post>;
   findPostById?: Maybe<Post>;
   findSession?: Maybe<Session>;
   findUser?: Maybe<User>;
-  findUserByEmail?: Maybe<User>;
   findUserById?: Maybe<User>;
   findUserDeviceTokenById?: Maybe<UserDeviceToken>;
   findUserDeviceTokenBySessionId?: Maybe<UserDeviceToken>;
   findUserDeviceTokenByToken?: Maybe<UserDeviceToken>;
   findUserDeviceTokensByUserId?: Maybe<Array<UserDeviceToken>>;
-  findUsersById?: Maybe<Array<User>>;
   findVerificationRequest?: Maybe<UserVerification>;
   getBookmarks?: Maybe<Array<Post>>;
   getFollowers?: Maybe<Array<User>>;
@@ -862,6 +866,12 @@ export type QueryFindChatArgs = {
 };
 
 
+export type QueryFindIdentityVerificationRequestArgs = {
+  id?: InputMaybe<Scalars['Int']['input']>;
+  type: Scalars['String']['input'];
+};
+
+
 export type QueryFindMessageArgs = {
   chatId?: InputMaybe<Scalars['String']['input']>;
   messageId?: InputMaybe<Scalars['String']['input']>;
@@ -895,12 +905,6 @@ export type QueryFindUserArgs = {
 };
 
 
-export type QueryFindUserByEmailArgs = {
-  deleted?: InputMaybe<Scalars['Boolean']['input']>;
-  email: Scalars['String']['input'];
-};
-
-
 export type QueryFindUserByIdArgs = {
   deleted?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<Scalars['Int']['input']>;
@@ -927,12 +931,6 @@ export type QueryFindUserDeviceTokenByTokenArgs = {
 
 export type QueryFindUserDeviceTokensByUserIdArgs = {
   userId?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type QueryFindUsersByIdArgs = {
-  deleted?: InputMaybe<Scalars['Boolean']['input']>;
-  ids: Array<Scalars['Int']['input']>;
 };
 
 
@@ -1320,14 +1318,13 @@ export type UserResponse = {
 export type UserVerification = {
   __typename?: 'UserVerification';
   createdAt: Scalars['String']['output'];
-  documents: Array<Scalars['String']['output']>;
+  documents: Array<Scalars['JSONObject']['output']>;
   id: Scalars['Int']['output'];
-  idUrl: Scalars['String']['output'];
   outcome?: Maybe<Scalars['String']['output']>;
   type: Scalars['String']['output'];
   updatedAt: Scalars['String']['output'];
   userId: Scalars['Int']['output'];
-  verified: Scalars['Boolean']['output'];
+  verified: VerificationStatus;
   verifiedSince?: Maybe<Scalars['String']['output']>;
 };
 
@@ -1337,6 +1334,13 @@ export type UserVerificationResponse = {
   status?: Maybe<Scalars['String']['output']>;
   userVerification?: Maybe<UserVerification>;
 };
+
+/** Possible verification request status values */
+export enum VerificationStatus {
+  Failed = 'FAILED',
+  UnderReview = 'UNDER_REVIEW',
+  Verified = 'VERIFIED'
+}
 
 export type FindUserBeforeLogInMutationVariables = Exact<{
   input: Scalars['String']['input'];
@@ -1368,6 +1372,23 @@ export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type MeQuery = { __typename?: 'Query', me?: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } } | null };
 
+export type NotAuthModifyPasswordMutationVariables = Exact<{
+  password: Scalars['String']['input'];
+  confirmPassword: Scalars['String']['input'];
+  token: Scalars['String']['input'];
+}>;
+
+
+export type NotAuthModifyPasswordMutation = { __typename?: 'Mutation', notAuthModifyPassword: { __typename?: 'UserResponse', status?: string | null, ok: boolean, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
+
+export type ResendOtpMutationVariables = Exact<{
+  input: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+}>;
+
+
+export type ResendOtpMutation = { __typename?: 'Mutation', resendOTP: boolean };
+
 export type SendRecoveryEmailMutationVariables = Exact<{
   email: Scalars['String']['input'];
 }>;
@@ -1386,6 +1407,28 @@ export type SignupMutationVariables = Exact<{
 
 
 export type SignupMutation = { __typename?: 'Mutation', signup: { __typename?: 'UserResponse', status?: string | null, ok: boolean, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
+
+export type VerifyEmailAddressMutationVariables = Exact<{
+  token: Scalars['String']['input'];
+}>;
+
+
+export type VerifyEmailAddressMutation = { __typename?: 'Mutation', verifyEmailAddress: { __typename?: 'UserResponse', status?: string | null, ok: boolean } };
+
+export type VerifyOtpMutationVariables = Exact<{
+  otp: Scalars['String']['input'];
+  input?: InputMaybe<Scalars['String']['input']>;
+  password?: InputMaybe<Scalars['String']['input']>;
+  isLogin: Scalars['Boolean']['input'];
+  clientOS?: InputMaybe<Scalars['String']['input']>;
+  clientType?: InputMaybe<Scalars['String']['input']>;
+  clientName?: InputMaybe<Scalars['String']['input']>;
+  deviceLocation?: InputMaybe<Scalars['String']['input']>;
+  country?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type VerifyOtpMutation = { __typename?: 'Mutation', verifyOTP: { __typename?: 'UserResponse', status?: string | null, accessToken?: string | null, ok: boolean, user?: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } } | null } };
 
 
 export const FindUserBeforeLogInDocument = gql`
@@ -1635,6 +1678,82 @@ export type MeQueryHookResult = ReturnType<typeof useMeQuery>;
 export type MeLazyQueryHookResult = ReturnType<typeof useMeLazyQuery>;
 export type MeSuspenseQueryHookResult = ReturnType<typeof useMeSuspenseQuery>;
 export type MeQueryResult = Apollo.QueryResult<MeQuery, MeQueryVariables>;
+export const NotAuthModifyPasswordDocument = gql`
+    mutation NotAuthModifyPassword($password: String!, $confirmPassword: String!, $token: String!) {
+  notAuthModifyPassword(
+    password: $password
+    confirmPassword: $confirmPassword
+    token: $token
+  ) {
+    status
+    errors {
+      field
+      message
+    }
+    ok
+  }
+}
+    `;
+export type NotAuthModifyPasswordMutationFn = Apollo.MutationFunction<NotAuthModifyPasswordMutation, NotAuthModifyPasswordMutationVariables>;
+
+/**
+ * __useNotAuthModifyPasswordMutation__
+ *
+ * To run a mutation, you first call `useNotAuthModifyPasswordMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useNotAuthModifyPasswordMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [notAuthModifyPasswordMutation, { data, loading, error }] = useNotAuthModifyPasswordMutation({
+ *   variables: {
+ *      password: // value for 'password'
+ *      confirmPassword: // value for 'confirmPassword'
+ *      token: // value for 'token'
+ *   },
+ * });
+ */
+export function useNotAuthModifyPasswordMutation(baseOptions?: Apollo.MutationHookOptions<NotAuthModifyPasswordMutation, NotAuthModifyPasswordMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<NotAuthModifyPasswordMutation, NotAuthModifyPasswordMutationVariables>(NotAuthModifyPasswordDocument, options);
+      }
+export type NotAuthModifyPasswordMutationHookResult = ReturnType<typeof useNotAuthModifyPasswordMutation>;
+export type NotAuthModifyPasswordMutationResult = Apollo.MutationResult<NotAuthModifyPasswordMutation>;
+export type NotAuthModifyPasswordMutationOptions = Apollo.BaseMutationOptions<NotAuthModifyPasswordMutation, NotAuthModifyPasswordMutationVariables>;
+export const ResendOtpDocument = gql`
+    mutation ResendOTP($input: String!, $password: String!) {
+  resendOTP(input: $input, password: $password)
+}
+    `;
+export type ResendOtpMutationFn = Apollo.MutationFunction<ResendOtpMutation, ResendOtpMutationVariables>;
+
+/**
+ * __useResendOtpMutation__
+ *
+ * To run a mutation, you first call `useResendOtpMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useResendOtpMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [resendOtpMutation, { data, loading, error }] = useResendOtpMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *      password: // value for 'password'
+ *   },
+ * });
+ */
+export function useResendOtpMutation(baseOptions?: Apollo.MutationHookOptions<ResendOtpMutation, ResendOtpMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ResendOtpMutation, ResendOtpMutationVariables>(ResendOtpDocument, options);
+      }
+export type ResendOtpMutationHookResult = ReturnType<typeof useResendOtpMutation>;
+export type ResendOtpMutationResult = Apollo.MutationResult<ResendOtpMutation>;
+export type ResendOtpMutationOptions = Apollo.BaseMutationOptions<ResendOtpMutation, ResendOtpMutationVariables>;
 export const SendRecoveryEmailDocument = gql`
     mutation SendRecoveryEmail($email: String!) {
   sendRecoveryEmail(email: $email) {
@@ -1723,3 +1842,120 @@ export function useSignupMutation(baseOptions?: Apollo.MutationHookOptions<Signu
 export type SignupMutationHookResult = ReturnType<typeof useSignupMutation>;
 export type SignupMutationResult = Apollo.MutationResult<SignupMutation>;
 export type SignupMutationOptions = Apollo.BaseMutationOptions<SignupMutation, SignupMutationVariables>;
+export const VerifyEmailAddressDocument = gql`
+    mutation VerifyEmailAddress($token: String!) {
+  verifyEmailAddress(token: $token) {
+    status
+    ok
+  }
+}
+    `;
+export type VerifyEmailAddressMutationFn = Apollo.MutationFunction<VerifyEmailAddressMutation, VerifyEmailAddressMutationVariables>;
+
+/**
+ * __useVerifyEmailAddressMutation__
+ *
+ * To run a mutation, you first call `useVerifyEmailAddressMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useVerifyEmailAddressMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [verifyEmailAddressMutation, { data, loading, error }] = useVerifyEmailAddressMutation({
+ *   variables: {
+ *      token: // value for 'token'
+ *   },
+ * });
+ */
+export function useVerifyEmailAddressMutation(baseOptions?: Apollo.MutationHookOptions<VerifyEmailAddressMutation, VerifyEmailAddressMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<VerifyEmailAddressMutation, VerifyEmailAddressMutationVariables>(VerifyEmailAddressDocument, options);
+      }
+export type VerifyEmailAddressMutationHookResult = ReturnType<typeof useVerifyEmailAddressMutation>;
+export type VerifyEmailAddressMutationResult = Apollo.MutationResult<VerifyEmailAddressMutation>;
+export type VerifyEmailAddressMutationOptions = Apollo.BaseMutationOptions<VerifyEmailAddressMutation, VerifyEmailAddressMutationVariables>;
+export const VerifyOtpDocument = gql`
+    mutation VerifyOTP($otp: String!, $input: String, $password: String, $isLogin: Boolean!, $clientOS: String, $clientType: String, $clientName: String, $deviceLocation: String, $country: String) {
+  verifyOTP(
+    otp: $otp
+    input: $input
+    password: $password
+    isLogin: $isLogin
+    clientOS: $clientOS
+    clientType: $clientType
+    clientName: $clientName
+    deviceLocation: $deviceLocation
+    country: $country
+  ) {
+    status
+    accessToken
+    user {
+      id
+      name
+      username
+      email
+      type
+      gender
+      birthDate {
+        date
+        monthAndDayVisibility
+        yearVisibility
+      }
+      emailVerified
+      profile {
+        profilePicture
+        profileBanner
+        bio
+        website
+      }
+      userSettings {
+        incomingMessages
+        twoFactorAuth
+      }
+      searchSettings {
+        hideSensitiveContent
+        hideBlockedAccounts
+      }
+      createdAt
+      updatedAt
+    }
+    ok
+  }
+}
+    `;
+export type VerifyOtpMutationFn = Apollo.MutationFunction<VerifyOtpMutation, VerifyOtpMutationVariables>;
+
+/**
+ * __useVerifyOtpMutation__
+ *
+ * To run a mutation, you first call `useVerifyOtpMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useVerifyOtpMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [verifyOtpMutation, { data, loading, error }] = useVerifyOtpMutation({
+ *   variables: {
+ *      otp: // value for 'otp'
+ *      input: // value for 'input'
+ *      password: // value for 'password'
+ *      isLogin: // value for 'isLogin'
+ *      clientOS: // value for 'clientOS'
+ *      clientType: // value for 'clientType'
+ *      clientName: // value for 'clientName'
+ *      deviceLocation: // value for 'deviceLocation'
+ *      country: // value for 'country'
+ *   },
+ * });
+ */
+export function useVerifyOtpMutation(baseOptions?: Apollo.MutationHookOptions<VerifyOtpMutation, VerifyOtpMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<VerifyOtpMutation, VerifyOtpMutationVariables>(VerifyOtpDocument, options);
+      }
+export type VerifyOtpMutationHookResult = ReturnType<typeof useVerifyOtpMutation>;
+export type VerifyOtpMutationResult = Apollo.MutationResult<VerifyOtpMutation>;
+export type VerifyOtpMutationOptions = Apollo.BaseMutationOptions<VerifyOtpMutation, VerifyOtpMutationVariables>;

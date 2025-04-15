@@ -1,0 +1,9 @@
+mutation ResendOTP(
+    $input: String!
+    $password: String!
+) {
+    resendOTP(
+        input: $input
+        password: $password
+    )
+}

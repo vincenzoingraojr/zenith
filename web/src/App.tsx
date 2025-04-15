@@ -9,6 +9,9 @@ import LogIn from "./pages/LogIn";
 import IsAuthenticated from "./components/routes/IsAuthenticated";
 import HomePage from "./pages/HomePage";
 import VerifyOTP from "./pages/VerifyOTP";
+import RecoverPassword from "./pages/RecoverPassword";
+import ModifyPassword from "./pages/ModifyPassword";
+import VerifyAccount from "./pages/VerifyAccount";
 
 function App() {
     const [loading, setLoading] = useState(true);
@@ -61,6 +64,35 @@ function App() {
                             children={
                                 <LogIn />
                             }
+                        />
+                    }
+                />
+                <Route 
+                    path="/recover_password"
+                    element={
+                        <IsNotAuthenticated
+                            isAuth={isAuth}
+                            children={
+                                <RecoverPassword />
+                            }
+                        />
+                    }
+                />
+                <Route
+                    path="/modify_password/:token"
+                    element={
+                        <IsNotAuthenticated
+                            isAuth={isAuth}
+                            children={<ModifyPassword />}
+                        />
+                    }
+                />
+                <Route
+                    path="/verify/:token"
+                    element={
+                        <IsNotAuthenticated
+                            isAuth={isAuth}
+                            children={<VerifyAccount />}
                         />
                     }
                 />

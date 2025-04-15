@@ -485,7 +485,7 @@ export class UserResolver {
         if (!isValidUserInput(password) || password.length <= 2) {
             errors.push({
                 field: "password",
-                message: "The password lenght must be greater than 2",
+                message: "The password length must be greater than 2",
             });
         }
         if (!isValidUserInput(name)) {
@@ -1029,10 +1029,10 @@ export class UserResolver {
                     }
                 } else {
                     const token = createAccessToken(user);
-                    const link = `${process.env.CLIENT_ORIGIN}/modify-password/${token}`;
+                    const link = `${process.env.CLIENT_ORIGIN}/modify_password/${token}`;
 
                     const data = await ejs.renderFile(
-                        path.join(__dirname, "./templates/RecoveryEmail.ejs"),
+                        path.join(__dirname, "../helpers/templates/RecoveryEmail.ejs"),
                         { link }
                     );
 
@@ -1087,7 +1087,7 @@ export class UserResolver {
         if (!isValidUserInput(password) || password.length <= 2) {
             errors.push({
                 field: "password",
-                message: "The password lenght must be greater than 2",
+                message: "The password length must be greater than 2",
             });
         }
 
@@ -1095,7 +1095,7 @@ export class UserResolver {
             errors.push({
                 field: "confirmPassword",
                 message:
-                    "The confirmation password lenght must be greater than 2",
+                    "The confirmation password length must be greater than 2",
             });
         }
 
@@ -1543,7 +1543,7 @@ export class UserResolver {
                             );
                             
                             const data = await ejs.renderFile(
-                                path.join(__dirname, "./templates/VerifyNewEmail.ejs"),
+                                path.join(__dirname, "../helpers/templates/VerifyNewEmail.ejs"),
                                 { link }
                             );
     
@@ -1683,14 +1683,14 @@ export class UserResolver {
             if (!isValidUserInput(currentPassword) || currentPassword.length <= 2) {
                 errors.push({
                     field: "currentPassword",
-                    message: "The current password lenght must be greater than 2",
+                    message: "The current password length must be greater than 2",
                 });
             }
     
             if (!isValidUserInput(password) || password.length <= 2) {
                 errors.push({
                     field: "password",
-                    message: "The password lenght must be greater than 2",
+                    message: "The password length must be greater than 2",
                 });
             }
     
@@ -1698,7 +1698,7 @@ export class UserResolver {
                 errors.push({
                     field: "confirmPassword",
                     message:
-                        "The confirmation password lenght must be greater than 2",
+                        "The confirmation password length must be greater than 2",
                 });
             }
     
@@ -2572,7 +2572,7 @@ export class UserResolver {
             if (!isValidUserInput(password) || password.length <= 2) {
                 errors.push({
                     field: "password",
-                    message: "The password lenght must be greater than 2",
+                    message: "The password length must be greater than 2",
                 });
             }
             if (!isValidUserInput(name)) {

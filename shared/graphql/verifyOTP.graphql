@@ -1,0 +1,57 @@
+mutation VerifyOTP(
+    $otp: String!
+    $input: String
+    $password: String
+    $isLogin: Boolean!
+    $clientOS: String
+    $clientType: String
+    $clientName: String
+    $deviceLocation: String
+    $country: String
+) {
+    verifyOTP(
+        otp: $otp
+        input: $input
+        password: $password
+        isLogin: $isLogin
+        clientOS: $clientOS
+        clientType: $clientType
+        clientName: $clientName
+        deviceLocation: $deviceLocation
+        country: $country
+    ) {
+        status
+        accessToken
+        user {
+            id
+            name
+            username
+            email
+            type
+            gender
+            birthDate {
+                date
+                monthAndDayVisibility
+                yearVisibility
+            }
+            emailVerified
+            profile {
+                profilePicture
+                profileBanner
+                bio
+                website
+            }
+            userSettings {
+                incomingMessages
+                twoFactorAuth
+            }
+            searchSettings {
+                hideSensitiveContent
+                hideBlockedAccounts
+            }
+            createdAt
+            updatedAt
+        }
+        ok
+    }
+}

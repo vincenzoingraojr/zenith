@@ -1,7 +1,30 @@
+import styled from "styled-components";
 import Head from "../components/Head";
-import { PageText } from "../styles/global";
+import { useLogoutMutation, useMeQuery } from "../generated/graphql";
+import { Button, PageBlock, PageText } from "../styles/global";
+import { COLORS } from "../styles/colors";
+import { setAccessToken } from "../utils/token";
+import { useNavigate } from "react-router-dom";
+import Preloader from "../components/utils/Preloader";
+
+const LogoutButton = styled(Button)`
+    background-color: ${COLORS.red};
+    color: ${COLORS.white};
+`;
 
 function HomePage() {
+    const { data, loading, error } = useMeQuery({
+        fetchPolicy: "cache-and-network",
+    });
+
+    const navigate = useNavigate();
+
+    const [logout, { client }] = useLogoutMutation();
+
+    if (loading || !data || !data.me) {
+        return <Preloader />;
+    }
+
     return (
         <>
             <Head
@@ -17,6 +40,28 @@ function HomePage() {
                 <br />
                 That now our dreams, they've finally come true.
             </PageText>
+            <PageText>
+                {loading ? "Loading..." : error ? error.message : `@${data?.me?.username}`}
+            </PageText>
+            <PageBlock>
+                <LogoutButton
+                    type="button"
+                    title="Log out"
+                    role="button"
+                    aria-label="Log out"
+                    onClick={async () => {
+                        await logout();
+
+                        setAccessToken("");
+                        
+                        await client.resetStore();
+                        
+                        navigate(0);
+                    }}
+                >
+                    Log out
+                </LogoutButton>
+            </PageBlock>
         </>
     );
 }

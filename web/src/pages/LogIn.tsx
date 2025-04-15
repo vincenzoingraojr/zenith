@@ -91,7 +91,7 @@ function LogIn() {
                                         country: values.country,
                                     },
                                     update: (store, { data }) => {
-                                        if (data && data.login && data.login.user) {
+                                        if (data && data.login.user && data.login.ok) {
                                             store.writeQuery<MeQuery>({
                                                 query: MeDocument,
                                                 data: {

@@ -12,7 +12,7 @@ export const sendVerificationEmail = async (
 
     try {
         const data = await ejs.renderFile(
-            path.join(__dirname, "./templates/VerifyEmail.ejs"),
+            path.join(__dirname, "../templates/VerifyEmail.ejs"),
             { link }
         );
 

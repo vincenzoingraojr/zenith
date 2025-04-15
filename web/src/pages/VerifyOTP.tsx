@@ -1,11 +1,70 @@
 import { Form, Formik } from "formik";
 import Head from "../components/Head";
-import { AuthFormContent, AuthForm, PageBlock, StandardButton, Status, ModalFormContainer, PageTextMB24 } from "../styles/global";
+import { AuthFormContent, AuthForm, PageBlock, StandardButton, Status, ModalFormContainer, PageTextMB24, SmallButton, PageText } from "../styles/global";
 import InputField from "../components/input/InputField";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { MeDocument, MeQuery, User, useResendOtpMutation, useVerifyOtpMutation } from "../generated/graphql";
+import { BAD_REQUEST_MESSAGE } from "../utils/constants";
+import { setAccessToken } from "../utils/token";
+import { useEffect, useState } from "react";
+import styled from "styled-components";
+
+const ResendOTPContainer = styled.div`
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 24px;
+`;
+
+const ResendOTPButton = styled(SmallButton)`
+    color: ${({ theme }) => theme.color};
+    border: 2px solid ${({ theme }) => theme.color};
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: unset;
+    }
+
+    &:disabled:hover,
+    &:disabled:focus {
+        background-color: transparent;
+    }
+`;
 
 function VerifyOTP() {
     const location = useLocation();
+
+    const [verifyOTP] = useVerifyOtpMutation();
+
+    const navigate = useNavigate();
+
+    const [minutes, setMinutes] = useState(0);
+    const [seconds, setSeconds] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (seconds > 0) {
+                setSeconds(seconds - 1);
+            }
+
+            if (seconds === 0) {
+                if (minutes === 0) {
+                    clearInterval(interval);
+                } else {
+                    setSeconds(59);
+                    setMinutes(minutes - 1);
+                }
+            }
+        }, 1000);
+
+        return () => {
+            clearInterval(interval);
+        };
+    }, [minutes, seconds]);
+
+    const [resendOTP] = useResendOtpMutation();
 
     return (
         <>
@@ -34,7 +93,37 @@ function VerifyOTP() {
                             values,
                             { setStatus }
                         ) => {
+                            const response = await verifyOTP({
+                                variables: values,
+                                update: (store, { data }) => {
+                                    if (data && data.verifyOTP.user && data.verifyOTP.ok) {
+                                        store.writeQuery<MeQuery>({
+                                            query: MeDocument,
+                                            data: {
+                                                me: data.verifyOTP
+                                                    .user as User,
+                                            },
+                                        });
+                                    }
+                                },
+                            });
+
+                            setStatus(null);
                             
+                            if (response.data) {
+                                setStatus(response.data.verifyOTP.status);
+
+                                if (response.data.verifyOTP.user && response.data.verifyOTP.ok) {
+                                    if (response.data.verifyOTP.accessToken && location.state.isLogin) {
+                                        setAccessToken(
+                                            response.data.verifyOTP.accessToken
+                                        );
+                                        navigate(0);
+                                    }
+                                }
+                            } else {
+                                setStatus(BAD_REQUEST_MESSAGE);
+                            }
                         }}
                     >
                         {({ status }) => (
@@ -62,6 +151,34 @@ function VerifyOTP() {
                             </Form>
                         )}
                     </Formik>
+                    <ResendOTPContainer>
+                        <ResendOTPButton
+                            role="button"
+                            title="Resend OTP"
+                            aria-label="Resend OPT"
+                            disabled={seconds > 0 || minutes > 0}
+                            onClick={async () => {
+                                const response = await resendOTP({
+                                    variables: {
+                                        input: location.state.input || "",
+                                        password: location.state.password || "",
+                                    },
+                                });
+
+                                if (response.data && response.data.resendOTP) {
+                                    setMinutes(2);
+                                    setSeconds(59);
+                                }
+                            }}
+                        >
+                            Resend OTP
+                        </ResendOTPButton>
+                        {(seconds > 0 || minutes > 0) && (
+                            <PageText>
+                                {minutes < 10 ? `0${minutes}` : minutes}:{seconds < 10 ? `0${seconds}` : seconds}
+                            </PageText>
+                        )}
+                    </ResendOTPContainer>
                 </AuthForm>
             </ModalFormContainer>
         </>
