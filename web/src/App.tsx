@@ -6,6 +6,9 @@ import Authentication from "./pages/Authentication";
 import Preloader from "./components/utils/Preloader";
 import Modal from "./components/layouts/modal/Modal";
 import LogIn from "./pages/LogIn";
+import IsAuthenticated from "./components/routes/IsAuthenticated";
+import HomePage from "./pages/HomePage";
+import VerifyOTP from "./pages/VerifyOTP";
 
 function App() {
     const [loading, setLoading] = useState(true);
@@ -56,11 +59,26 @@ function App() {
                         <IsNotAuthenticated
                             isAuth={isAuth}
                             children={
-                                <Modal
-                                    hasLogo={true}
-                                    modalContent={<LogIn />}
-                                />
+                                <LogIn />
                             }
+                        />
+                    }
+                />
+                <Route 
+                    path="/verify/otp"
+                    element={
+                        <Modal
+                            headerText="Verify OTP"
+                            children={<VerifyOTP />}
+                        />
+                    }
+                />
+                <Route
+                    path="/home"
+                    element={
+                        <IsAuthenticated
+                            isAuth={isAuth}
+                            children={<HomePage />}
                         />
                     }
                 />
@@ -68,16 +86,11 @@ function App() {
             {(state && state.backgroundLocation) && (
                 <Routes>
                     <Route 
-                        path="/login"
+                        path="/verify/otp"
                         element={
-                            <IsNotAuthenticated
-                                isAuth={isAuth}
-                                children={
-                                    <Modal
-                                        hasLogo={true}
-                                        modalContent={<LogIn />}
-                                    />
-                                }
+                            <Modal
+                                headerText="Verify OTP"
+                                children={<VerifyOTP />}
                             />
                         }
                     />

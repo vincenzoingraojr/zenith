@@ -1,35 +1,31 @@
 import styled from "styled-components";
 import Head from "../components/Head";
 import { devices } from "../styles/devices";
-import { LinkButton, PageBlock, PageText } from "../styles/global";
+import { Button, PageBlock, PageText } from "../styles/global";
 import Logo from "../components/icons/Logo";
-import { Outlet, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { COLORS } from "../styles/colors";
 import { useThemeContext } from "../styles/ThemeContext";
 
-const PageLayoutComponent = styled.div`
+const PageWrapper = styled.div`
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
+    gap: 48px;
     align-items: center;
     width: 100%;
+    min-height: 100vh;
 `;
 
-const MainComponent = styled.main`
+const PageContainer = styled.main`
     display: flex;
     width: 100%;
     justify-content: center;
-    min-height: calc(100vh - 80px);
     padding-left: 24px;
     padding-right: 24px;
-    width: 100%;
-
-    @media ${devices.mobileS} {
-        padding-left: 36px;
-        padding-right: 36px;
-    }
 
     @media ${devices.mobileL} {
-        width: 380px;
+        width: 360px;
     }
 
     @media (min-width: 600px) {
@@ -37,15 +33,15 @@ const MainComponent = styled.main`
     }
 
     @media ${devices.tablet} {
-        width: 520px;
+        width: 472px;
     }
 
     @media ${devices.laptopM} {
-        width: 640px;
+        width: 580px;
     }
 `;
 
-const FooterComponent = styled.footer`
+const PageFooter = styled.footer`
     display: flex;
     align-items: center;
     align-content: center;
@@ -61,13 +57,8 @@ const FooterComponent = styled.footer`
     padding-bottom: 12px;
     width: 100%;
 
-    @media ${devices.mobileS} {
-        padding-left: 36px;
-        padding-right: 36px;
-    }
-
     @media ${devices.mobileL} {
-        width: 380px;
+        width: 360px;
     }
 
     @media (min-width: 600px) {
@@ -75,19 +66,18 @@ const FooterComponent = styled.footer`
     }
 
     @media ${devices.tablet} {
-        width: 520px;
+        width: 472px;
     }
 
     @media ${devices.laptopM} {
-        width: 640px;
+        width: 580px;
     }
 `;
 
-const MainContentComponent = styled.div`
+const PageContent = styled.div`
     display: flex;
     flex-direction: column;
     margin-top: 36px;
-    padding-bottom: 72px;
     width: 100%;
     gap: 36px;
 `;
@@ -135,28 +125,28 @@ const PageFlex = styled(PageBlock)`
     gap: 24px;
 `;
 
-const LogInButton = styled(LinkButton)`
+const LogInButton = styled(Button)`
     background-color: ${COLORS.blue};
     color: ${COLORS.white};
 `;
 
-const SignUpButton = styled(LinkButton).attrs(
-    (props: { mode: boolean }) => props
+const SignUpButton = styled(Button).attrs(
+    (props: { dark: boolean }) => props
 )`
     background-color: ${({ theme }) => theme.color};
-    color: ${(props) => (props.mode ? COLORS.black : COLORS.white)};
+    color: ${(props) => (props.dark ? COLORS.black : COLORS.white)};
 `;
 
 function Authentication() {
-    const location = useLocation();
     const { isDarkMode } = useThemeContext();
+    const navigate = useNavigate();
 
     return (
         <>
             <Head title="Zenith" />
-            <PageLayoutComponent>
-                <MainComponent>
-                    <MainContentComponent>
+            <PageWrapper>
+                <PageContainer>
+                    <PageContent>
                         <IndexBrandGroup>
                             <Logo type="inline" />
                             <BrandName>Zenith</BrandName>
@@ -166,17 +156,31 @@ function Authentication() {
                             Find out what's happening in the world in real time, chat and make video calls with whoever you want. Send and receive money.
                         </PageText>
                         <PageFlex>
-                            <LogInButton to="/login" state={{ backgroundLocation: location }} title="Log in to Zenith" aria-label="Log in to Zenith">
+                            <LogInButton
+                                role="link" 
+                                title="Log in to Zenith" 
+                                aria-label="Log in to Zenith"
+                                onClick={() => {
+                                    navigate("/login");
+                                }}
+                            >
                                 Log in
                             </LogInButton>
-                            <SignUpButton to="/signup" mode={isDarkMode ? true : false} state={{ backgroundLocation: location }} title="Sign up to Zenith" aria-label="Sign up to Zenith">
+                            <SignUpButton 
+                                dark={isDarkMode} 
+                                role="link" 
+                                title="Sign up to Zenith" 
+                                aria-label="Sign up to Zenith"
+                                onClick={() => {
+                                    navigate("/signup");
+                                }}
+                            >
                                 Sign up
                             </SignUpButton>
                         </PageFlex>
-                        <Outlet />
-                    </MainContentComponent>
-                </MainComponent>
-                <FooterComponent>
+                    </PageContent>
+                </PageContainer>
+                <PageFooter>
                     <PageText>
                         &copy; {new Date().getFullYear()} Zenith
                     </PageText>
@@ -235,8 +239,8 @@ function Authentication() {
                             Help center
                         </a>
                     </PageText>
-                </FooterComponent>
-            </PageLayoutComponent>
+                </PageFooter>
+            </PageWrapper>
         </>
     );
 }

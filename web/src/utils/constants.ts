@@ -1,0 +1,1 @@
+export const BAD_REQUEST_MESSAGE = "Bad request. Please try again.";

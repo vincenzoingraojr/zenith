@@ -1,6 +1,5 @@
 import styled, { createGlobalStyle } from "styled-components";
 import { COLORS } from "./colors";
-import { Link } from "react-router-dom";
 import { devices } from "./devices";
 
 const GlobalStyle = createGlobalStyle`
@@ -93,18 +92,15 @@ export const Button = styled.button`
     cursor: pointer;
 `;
 
-export const LinkButton = styled(Link)`
-    display: inline-block;
-    padding: 12px 24px;
-    border-radius: 9999px;
-    text-decoration: none;
-    background-color: inherit;
-    color: inherit;
-    font-weight: 700;
+export const SmallButton = styled(Button)`
+    padding: 6px 18px;
+    border: inherit;
+    background-color: transparent;
+    transition: background-color ease 0.2s;
 
     &:hover,
-    &:active {
-        text-decoration: none;
+    &:focus {
+        background-color: ${({ theme }) => theme.opaqueGrey};
     }
 `;
 
@@ -169,24 +165,41 @@ export const ControlContainer = styled.div.attrs(
     }
 `;
 
-export const AuthForm = styled.div`
+export const ModalFormContainer = styled.div`
     display: block;
-    padding-top: 12px;
     padding-left: 24px;
     padding-right: 24px;
-    padding-bottom: 48px;
+    padding-bottom: 24px;
 
     @media ${devices.mobileS} {
         padding-left: 36px;
         padding-right: 36px;
     }
+`
+
+export const AuthForm = styled.div`
+    display: block;
+    padding-top: 12px;
+    padding-bottom: 24px;
 `;
 
 export const AuthFormTitle = styled.div`
     display: block;
     font-weight: 800;
-    margin-bottom: 36px;
+    margin-bottom: 48px;
     font-size: 32px;
+
+    @media ${devices.mobileS} {
+        font-size: 44px;
+    }
+
+    @media ${devices.mobileL} {
+        font-size: 50px;
+    }
+
+    @media ${devices.tablet} {
+        font-size: 60px;
+    }
 `;
 
 export const AuthFormContent = styled.div`

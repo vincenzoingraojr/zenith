@@ -5,11 +5,13 @@ import { devices } from "../../../styles/devices";
 import { ControlContainer } from "../../../styles/global";
 import Close from "../../icons/Close";
 import Logo from "../../icons/Logo";
+import { LayoutProps } from "../common";
+import Back from "../../icons/Back";
 
-interface ModalProps {
-    modalContent: JSX.Element;
+interface ModalProps extends LayoutProps {
     headerText?: string;
     hasLogo?: boolean;
+    isBack?: boolean;
 }
 
 const ModalWrapper = styled.div`
@@ -49,14 +51,14 @@ const ModalOuterContainer = styled.div`
 
     @media ${devices.tablet} and (min-height: 480px) {
         border-radius: 16px;
-        width: 480px;
+        width: 472px;
         height: auto;
         max-height: 65vh;
     }
 
     @media ${devices.laptopL} {
         border-radius: 16px;
-        width: 540px;
+        width: 580px;
         height: auto;
         max-height: 65vh;
     }
@@ -73,15 +75,15 @@ const ModalContainer = styled.div`
     height: 100%;
 
     @media ${devices.mobileL} {
-        width: 380px;
+        width: 360px;
     }
 
-    @media (min-width: 600px) and (max-height: 480px) {
+    @media (min-width: 600px) {
         width: 440px;
     }
 
     @media ${devices.tablet} and (max-height: 480px) {
-        width: 480px;
+        width: 472px;
     }
 
     @media ${devices.tablet} and (min-height: 480px) {
@@ -134,7 +136,7 @@ const ModalContent = styled.div`
     width: 100%;
 `;
 
-const Modal: FunctionComponent<ModalProps> = ({ modalContent, headerText, hasLogo }) => {
+const Modal: FunctionComponent<ModalProps> = ({ children, headerText, isBack = false, hasLogo = false }) => {
     const navigate = useNavigate();
 
     document.body.classList.add("not-scrolling");
@@ -167,7 +169,11 @@ const Modal: FunctionComponent<ModalProps> = ({ modalContent, headerText, hasLog
                                 }
                             }}
                         >
-                            <Close type="normal" />
+                            {isBack ? (
+                                <Back />
+                            ) : (
+                                <Close type="normal" />
+                            )}
                         </ControlContainer>
                         {hasLogo ? (
                             <ModalLogo>
@@ -179,7 +185,7 @@ const Modal: FunctionComponent<ModalProps> = ({ modalContent, headerText, hasLog
                             <ModalTitle>{headerText}</ModalTitle>
                         )}
                     </ModalHeader>
-                    <ModalContent>{modalContent}</ModalContent>
+                    <ModalContent>{children}</ModalContent>
                 </ModalContainer>
             </ModalOuterContainer>
         </ModalWrapper>
