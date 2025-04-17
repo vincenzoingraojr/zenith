@@ -2,13 +2,12 @@ import { Field } from "formik";
 import { FunctionComponent, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import Eye from "../icons/Eye";
+import { InputProps } from "./commons";
 
-interface InputFieldProps {
-    field: string;
+interface InputFieldProps extends InputProps {
     type: string;
     placeholder: string;
     value?: string;
-    errors?: any;
 }
 
 const InputFieldWrapper = styled.div`

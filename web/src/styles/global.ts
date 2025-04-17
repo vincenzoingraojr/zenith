@@ -222,3 +222,63 @@ export const StandardButton = styled(Button)`
     background-color: ${COLORS.blue};
     color: ${COLORS.white};
 `;
+
+export const AuthHalfInput = styled.div`
+    display: flex;
+    gap: 24px;
+    flex-direction: column;
+    align-items: unset;
+
+    @media ${devices.mobileS} {
+        flex-direction: column;
+        align-items: unset;
+    }
+
+    @media ${devices.mobileL} {
+        flex-direction: row;
+        align-items: flex-end;
+    }
+`;
+
+export const CustomFieldWrapper = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+`;
+
+export const CustomFieldError = styled.div`
+    display: block;
+    font-size: 14px;
+`;
+
+export const CustomFieldContainer = styled.div`
+    display: block;
+    background-color: ${({ theme }) => theme.inputBackground};
+    height: 60px;
+    padding-left: 12px;
+    padding-right: 12px;
+    border-radius: 6px;
+`;
+
+export const CustomInfoContainer = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    height: 22px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+`;
+
+export const CustomInfo = styled.div`
+    display: block;
+    font-size: 14px;
+`;
+
+export const CustomInnerFieldContainer = styled.div`
+    display: flex;
+    align-items: center;
+    height: 26px;
+    width: 100%;
+    margin-bottom: 4px;
+`;

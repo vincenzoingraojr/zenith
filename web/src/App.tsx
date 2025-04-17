@@ -12,6 +12,7 @@ import VerifyOTP from "./pages/VerifyOTP";
 import RecoverPassword from "./pages/RecoverPassword";
 import ModifyPassword from "./pages/ModifyPassword";
 import VerifyAccount from "./pages/VerifyAccount";
+import SignUp from "./pages/SignUp";
 
 function App() {
     const [loading, setLoading] = useState(true);
@@ -63,6 +64,17 @@ function App() {
                             isAuth={isAuth}
                             children={
                                 <LogIn />
+                            }
+                        />
+                    }
+                />
+                <Route 
+                    path="/signup"
+                    element={
+                        <IsNotAuthenticated
+                            isAuth={isAuth}
+                            children={
+                                <SignUp />
                             }
                         />
                     }
