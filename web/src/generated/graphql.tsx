@@ -1381,6 +1381,14 @@ export type NotAuthModifyPasswordMutationVariables = Exact<{
 
 export type NotAuthModifyPasswordMutation = { __typename?: 'Mutation', notAuthModifyPassword: { __typename?: 'UserResponse', status?: string | null, ok: boolean, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
 
+export type ReactivateAccountMutationVariables = Exact<{
+  input: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+}>;
+
+
+export type ReactivateAccountMutation = { __typename?: 'Mutation', reactivateAccount: { __typename?: 'UserResponse', status?: string | null, ok: boolean, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
+
 export type ResendOtpMutationVariables = Exact<{
   input: Scalars['String']['input'];
   password: Scalars['String']['input'];
@@ -1722,6 +1730,45 @@ export function useNotAuthModifyPasswordMutation(baseOptions?: Apollo.MutationHo
 export type NotAuthModifyPasswordMutationHookResult = ReturnType<typeof useNotAuthModifyPasswordMutation>;
 export type NotAuthModifyPasswordMutationResult = Apollo.MutationResult<NotAuthModifyPasswordMutation>;
 export type NotAuthModifyPasswordMutationOptions = Apollo.BaseMutationOptions<NotAuthModifyPasswordMutation, NotAuthModifyPasswordMutationVariables>;
+export const ReactivateAccountDocument = gql`
+    mutation ReactivateAccount($input: String!, $password: String!) {
+  reactivateAccount(input: $input, password: $password) {
+    status
+    errors {
+      field
+      message
+    }
+    ok
+  }
+}
+    `;
+export type ReactivateAccountMutationFn = Apollo.MutationFunction<ReactivateAccountMutation, ReactivateAccountMutationVariables>;
+
+/**
+ * __useReactivateAccountMutation__
+ *
+ * To run a mutation, you first call `useReactivateAccountMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useReactivateAccountMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [reactivateAccountMutation, { data, loading, error }] = useReactivateAccountMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *      password: // value for 'password'
+ *   },
+ * });
+ */
+export function useReactivateAccountMutation(baseOptions?: Apollo.MutationHookOptions<ReactivateAccountMutation, ReactivateAccountMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ReactivateAccountMutation, ReactivateAccountMutationVariables>(ReactivateAccountDocument, options);
+      }
+export type ReactivateAccountMutationHookResult = ReturnType<typeof useReactivateAccountMutation>;
+export type ReactivateAccountMutationResult = Apollo.MutationResult<ReactivateAccountMutation>;
+export type ReactivateAccountMutationOptions = Apollo.BaseMutationOptions<ReactivateAccountMutation, ReactivateAccountMutationVariables>;
 export const ResendOtpDocument = gql`
     mutation ResendOTP($input: String!, $password: String!) {
   resendOTP(input: $input, password: $password)

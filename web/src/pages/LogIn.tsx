@@ -1,6 +1,6 @@
 import { Formik, Form } from "formik";
 import Head from "../components/Head";
-import { AuthForm, AuthFormContent, AuthFormTitle, PageBlock, StandardButton, Status } from "../styles/global";
+import { AuthForm, AuthFormContent, AuthFormTitle, PageBlock, PageTextMB24, StandardButton, Status } from "../styles/global";
 import InputField from "../components/input/InputField";
 import { useEffect, useState } from "react";
 import { getUserLocationFromAPI } from "../utils/getLocation";
@@ -14,7 +14,7 @@ import {
 } from "react-device-detect";
 import { MeDocument, MeQuery, useLoginMutation, User } from "../generated/graphql";
 import { setAccessToken } from "../utils/token";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toErrorMap } from "../utils/toErrorMap";
 import { BAD_REQUEST_MESSAGE } from "../utils/constants";
 import AuthLayout from "../components/layouts/AuthLayout";
@@ -55,6 +55,8 @@ function LogIn() {
     const navigate = useNavigate();
 
     const location = useLocation();
+
+    const [recovery, setRecovery] = useState(false);
 
     return (
         <>
@@ -104,6 +106,7 @@ function LogIn() {
                                 });
 
                                 setStatus(null);
+                                setRecovery(false);
 
                                 if (response.data) {
                                     if (response.data.login.ok && response.data.login.user && response.data.login.accessToken) {
@@ -128,7 +131,7 @@ function LogIn() {
                                             },
                                         });
                                     } else if (response.data.login.user && response.data.login.status === "account_deactivated") {
-                                        setStatus("Account deactivated. Please contact support.");
+                                        setRecovery(true);
                                     } else {
                                         if (response.data.login.errors && response.data.login.errors.length > 0) {
                                             setErrors(toErrorMap(response.data.login.errors));
@@ -143,8 +146,15 @@ function LogIn() {
                         >
                             {({ errors, status }) => (
                                 <Form>
+                                    {recovery && (
+                                        <PageTextMB24>
+                                            Account deactivated, but you can reactivate it <Link to="/reactivate_account" title="Reactivate your account" aria-label="Reactivate your account">here</Link>.
+                                        </PageTextMB24>
+                                    )}
                                     {status && (
-                                        <Status>{status}</Status>
+                                        <Status>
+                                            {status}
+                                        </Status>
                                     )}
                                     <AuthFormContent>
                                         <InputField

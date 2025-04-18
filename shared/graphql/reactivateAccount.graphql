@@ -1,0 +1,16 @@
+mutation ReactivateAccount(
+    $input: String!
+    $password: String!
+) {
+    reactivateAccount(
+        input: $input
+        password: $password
+    ) {
+        status
+        errors {
+            field
+            message
+        }
+        ok
+    }
+}
