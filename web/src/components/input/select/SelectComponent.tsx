@@ -33,7 +33,6 @@ const SelectComponent: FunctionComponent<SelectProps> = ({
             styles={{
                 container: (base) => ({
                     ...base,
-                    display: "block",
                     backgroundColor: theme.inputBackground,
                     borderRadius: "6px",
                     width: "100%",
@@ -60,6 +59,7 @@ const SelectComponent: FunctionComponent<SelectProps> = ({
                     color: theme.inputText,
                     margin: 0,
                     padding: 0,
+                    overflow: "hidden",
                 }),
                 indicatorSeparator: (base) => ({
                     ...base,
@@ -89,13 +89,17 @@ const SelectComponent: FunctionComponent<SelectProps> = ({
                     paddingBottom: "4px",
                     paddingLeft: "12px",
                     paddingRight: "12px",
-                    backgroundColor: state.isFocused
-                        ? COLORS.white
-                        : theme.inputBackground,
-                    color: theme.inputText,
+                    backgroundColor: state.isSelected ? COLORS.blue : state.isFocused ? COLORS.white : theme.inputBackground,
+                    color: state.isSelected ? COLORS.white : state.isFocused ? COLORS.black : theme.inputText,
                     cursor: "pointer",
                 }),
+                noOptionsMessage: (base) => ({
+                    ...base,
+                    color: theme.inputText,
+                }),
+
             }}
+            classNamePrefix="select"
         />
     );
 };
