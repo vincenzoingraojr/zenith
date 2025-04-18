@@ -5,12 +5,7 @@ export interface IconProps {
     isActive: boolean;
 }
 
-export const BaseIcon = styled(SvgIcon)`
-    width: 24px;
-    height: 24px;
-`;
-
-export const StandardIcon = styled(BaseIcon).attrs(
+export const StandardIcon = styled(SvgIcon).attrs(
     (props: { isFilled?: string, hasStroke?: string }) => props
 )`
     fill:  ${(props) => (props.isFilled ? props.isFilled : `none`)};

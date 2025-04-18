@@ -1043,8 +1043,8 @@ export const SvgIcon = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 24px;
+    height: 24px;
     fill: inherit;
     stroke: inherit;
 
