@@ -1,7 +1,6 @@
 import { FunctionComponent } from "react";
 import DatePicker from "react-datepicker";
 import { InputProps } from "../commons";
-import "react-datepicker/dist/react-datepicker.css";
 
 interface DatePickerProps extends InputProps {
     form: any;

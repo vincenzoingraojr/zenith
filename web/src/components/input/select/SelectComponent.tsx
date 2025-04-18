@@ -1,6 +1,8 @@
 import { FunctionComponent } from "react";
 import Select from "react-select";
 import { InputProps } from "../commons";
+import { useTheme } from "../../../styles/theme";
+import { COLORS } from "../../../styles/colors";
 
 interface SelectProps extends InputProps {
     options: any;
@@ -11,7 +13,9 @@ const SelectComponent: FunctionComponent<SelectProps> = ({
     options,
     field,
     form,
-}) => {    
+}) => {
+    const theme = useTheme();
+
     return (
         <Select
             options={options}
@@ -26,6 +30,72 @@ const SelectComponent: FunctionComponent<SelectProps> = ({
                 form.setFieldValue(field.name, option.value)
             }
             onBlur={field.onBlur}
+            styles={{
+                container: (base) => ({
+                    ...base,
+                    display: "block",
+                    backgroundColor: theme.inputBackground,
+                    borderRadius: "6px",
+                    width: "100%",
+                }),
+                control: (base) => ({
+                    ...base,
+                    backgroundColor: theme.inputBackground,
+                    border: "none",
+                    boxShadow: "none",
+                    minHeight: "auto",
+                }),
+                valueContainer: (base) => ({
+                    ...base,
+                    padding: 0,
+                }),
+                singleValue: (base) => ({
+                    ...base,
+                    color: theme.inputText,
+                    margin: 0,
+                    padding: 0,
+                }),
+                input: (base) => ({
+                    ...base,
+                    color: theme.inputText,
+                    margin: 0,
+                    padding: 0,
+                }),
+                indicatorSeparator: (base) => ({
+                    ...base,
+                    display: "none",
+                }),
+                dropdownIndicator: (base) => ({
+                    ...base,
+                    padding: 0,
+                    color: theme.inputText,
+                }),
+                menu: (base) => ({
+                    ...base,
+                    marginTop: "12px",
+                    marginBottom: "12px",
+                    backgroundColor: theme.inputBackground,
+                    borderRadius: "6px",
+                    boxSizing: "border-box",
+                }),
+                menuList: (base) => ({
+                    ...base,
+                    margin: 0,
+                    padding: 0,
+                }),
+                option: (base: any, state: any) => ({
+                    ...base,
+                    paddingTop: "4px",
+                    paddingBottom: "4px",
+                    paddingLeft: "12px",
+                    paddingRight: "12px",
+                    backgroundColor: state.isFocused
+                        ? COLORS.white
+                        : theme.inputBackground,
+                    color: theme.inputText,
+                    cursor: "pointer",
+                }),
+            }}
         />
     );
 };
