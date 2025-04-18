@@ -934,13 +934,13 @@ export class UserResolver {
         }
 
         try {
-            await this.sessionRepository.delete({ sessionId: payload.sessionId });
-
             const existingToken = await this.findUserDeviceTokenBySessionId(payload.sessionId, payload.id);
 
             if (existingToken) {
                 await this.deleteDeviceToken(existingToken.id, { payload } as AuthContext);
             }
+
+            await this.sessionRepository.delete({ sessionId: payload.sessionId });
 
             sendRefreshToken(res, "");
 
