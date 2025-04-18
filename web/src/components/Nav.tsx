@@ -5,6 +5,13 @@ import { mediaQuery } from "../utils/mediaQuery";
 import { Link, NavLink } from "react-router-dom";
 import Logo from "./icons/Logo";
 import Home from "./icons/Home";
+import { ControlContainer } from "../styles/global";
+import Menu from "./icons/Menu";
+import Magnifier from "./icons/Magnifier";
+import Bell from "./icons/Bell";
+import { useMeData } from "./utils/useMeData";
+import Profile from "./icons/Profile";
+import Mail from "./icons/Mail";
 
 interface NavProps {
     noNav?: boolean;
@@ -105,7 +112,20 @@ const NavContainer = styled.div`
     }
 `;
 
+const NavOptionsContainer = styled.div`
+    display: none;
+
+    ${mediaQuery(
+        "(min-width: 600px) and (min-height: 480px)",
+        devices.laptopM
+    )} {
+        display: block;
+    }
+`;
+
 const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
+    const meData = useMeData();
+
     return (
         <NavWrapper hidden={noNav || false}>
             <BrandLink>
@@ -125,7 +145,61 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                         )}
                     </NavLink>
                 </NavItemLink>
+                <NavItemLink>
+                    <NavLink
+                        to="/search"
+                        title="Search"
+                        aria-label="Search"
+                    >
+                        {({ isActive }) => (
+                            <Magnifier type="normal" isActive={isActive} />
+                        )}
+                    </NavLink>
+                </NavItemLink>
+                {(meData.me && !meData.error) && (
+                    <NavItemLink>
+                        <NavLink
+                            to={`/${meData.me.username}`}
+                            title={meData.me.name}
+                            aria-label={meData.me.name}
+                            end
+                        >
+                            {({ isActive }) => (
+                                <Profile isActive={isActive} />
+                            )}
+                        </NavLink>
+                    </NavItemLink>
+                )}
+                <NavItemLink>
+                    <NavLink
+                        to="/notifications"
+                        title="Notifications"
+                        aria-label="Notifications"
+                    >
+                        {({ isActive }) => (
+                            <Bell isActive={isActive} />
+                        )}
+                    </NavLink>
+                </NavItemLink>
+                <NavItemLink>
+                    <NavLink
+                        to="/messages"
+                        title="Messages"
+                        aria-label="Messages"
+                    >
+                        {({ isActive }) => (
+                            <Mail isActive={isActive} />
+                        )}
+                    </NavLink>
+                </NavItemLink>
             </NavContainer>
+            <NavOptionsContainer>
+                <ControlContainer
+                    size={48}
+                >
+                    <Menu />
+                </ControlContainer>
+            </NavOptionsContainer>
         </NavWrapper>
     );
 }

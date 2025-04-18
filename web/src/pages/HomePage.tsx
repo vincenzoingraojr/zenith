@@ -1,12 +1,13 @@
 import styled from "styled-components";
 import Head from "../components/Head";
-import { useLogoutMutation, useMeQuery } from "../generated/graphql";
+import { useLogoutMutation } from "../generated/graphql";
 import { Button, PageBlock, PageTextMB24 } from "../styles/global";
 import { COLORS } from "../styles/colors";
 import { setAccessToken } from "../utils/token";
 import { useNavigate } from "react-router-dom";
 import Preloader from "../components/utils/Preloader";
 import PageLayout from "../components/layouts/PageLayout";
+import { useMeData } from "../components/utils/useMeData";
 
 const LogoutButton = styled(Button)`
     background-color: ${COLORS.red};
@@ -14,15 +15,13 @@ const LogoutButton = styled(Button)`
 `;
 
 function HomePage() {
-    const { data, loading, error } = useMeQuery({
-        fetchPolicy: "cache-and-network",
-    });
+    const { me, loading, error } = useMeData();
 
     const navigate = useNavigate();
 
     const [logout, { client }] = useLogoutMutation();
 
-    if (loading || !data || !data.me) {
+    if (!me || loading) {
         return <Preloader />;
     }
 
@@ -45,7 +44,7 @@ function HomePage() {
                             That now our dreams, they've finally come true.
                         </PageTextMB24>
                         <PageTextMB24>
-                            {loading ? "Loading..." : error ? error.message : `@${data?.me?.username}`}
+                            {loading ? "Loading..." : error ? error.message : `@${me.username}`}
                         </PageTextMB24>
                         <PageBlock>
                             <LogoutButton
