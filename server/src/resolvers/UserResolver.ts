@@ -607,7 +607,7 @@ export class UserResolver {
                 user = await this.findUser(input, true);
             }
     
-            if (user && user.deletedAt !== null && processDays(user.deletedAt) <= 90) {
+            if (user) {
                 const valid = await argon2.verify(user.password, password);
     
                 if (!valid) {
@@ -618,13 +618,21 @@ export class UserResolver {
                 }
                 
                 if (errors.length === 0) {
-                    await this.userRepository.restore({ id: user.id });
+                    if (user.deletedAt !== null && processDays(user.deletedAt) <= 90) {
+                        await this.userRepository.restore({ id: user.id });
 
-                    status = "Your account has been restored. Now you can log in.";
-                    ok = true;
+                        status = "Your account has been restored. Now you can log in.";
+                        ok = true;
+                    } else if (user.deletedAt !== null && processDays(user.deletedAt) > 90) {
+                        status = "Sorry, but you can't reactivate your account. It has been deactivated for more than 90 days.";
+
+                        await this.deleteAccountData(user.id);
+                    } else {
+                        status = "Your account is already active.";
+                    }
                 }
             } else {
-                status = "Can't find the user.";
+                status = "Sorry, but we can't find your account.";
             }
         } catch (error) {
             logger.error(error);
