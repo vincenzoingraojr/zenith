@@ -14,7 +14,7 @@ import ModifyPassword from "./pages/ModifyPassword";
 import VerifyAccount from "./pages/VerifyAccount";
 import SignUp from "./pages/SignUp";
 import ReactivateAccount from "./pages/ReactivateAccount";
-import SearchPage from "./pages/search/SearchPage";
+import Explore from "./pages/search/Explore";
 
 function App() {
     const [loading, setLoading] = useState(true);
@@ -140,9 +140,9 @@ function App() {
                     }
                 />
                 <Route 
-                    path="/search"
+                    path="/explore"
                     element={
-                        <SearchPage />
+                        <Explore />
                     }
                 />                
             </Routes>

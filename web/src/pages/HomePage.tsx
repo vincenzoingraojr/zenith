@@ -36,7 +36,7 @@ function HomePage() {
                 children={
                     <PageContentLayout 
                         title="Home"
-                        type="home"
+                        type="main"
                         children={
                             <>
                                 <PageTextMB24>

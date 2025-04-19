@@ -3,22 +3,22 @@ import PageLayout from "../../components/layouts/PageLayout";
 import PageContentLayout from "../../components/layouts/sublayouts/PageContentLayout";
 import { PageText } from "../../styles/global";
 
-function SearchPage() {
+function Explore() {
     return (
         <>
             <Head 
-                title="Search | Zenith"
+                title="Explore | Zenith"
                 description="Discover new things on Zenith."
             />
             <PageLayout 
                 children={
                     <PageContentLayout
-                        title="Search"
+                        title="Explore"
                         type="main"
-                        customHeaderComponent={<>Search</>}
+                        customHeaderComponent={<>SearchBar</>}
                         children={
                             <>
-                                <PageText>Search on Zenith.</PageText>
+                                <PageText>Explore on Zenith.</PageText>
                             </>
                         }
                     />
@@ -28,4 +28,4 @@ function SearchPage() {
     );
 }
 
-export default SearchPage;
+export default Explore;

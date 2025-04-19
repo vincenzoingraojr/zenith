@@ -4,10 +4,14 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { ControlContainer } from "../../../styles/global";
 import Back from "../../icons/Back";
+import { devices } from "../../../styles/devices";
+import { mediaQuery } from "../../../utils/mediaQuery";
+import { useMeData } from "../../../utils/useMeData";
+import profilePicture from "../../../images/profile-picture.png";
 
 interface PageContentLayoutProps extends LayoutProps {
     title: string;
-    type: "home" | "main" | "default";
+    type: "main" | "default";
     customHeaderComponent?: React.ReactNode;
     headerIconsComponent?: React.ReactNode;
 }
@@ -49,8 +53,16 @@ const MainHeaderLeftContainer = styled.div.attrs((props: { type: string }) => pr
     flex: 1;
     gap: 16px;
     overflow: hidden;
-    padding-left: ${(props) => (props.type !== "default" ? "6px" : "0px")};
-    padding-right: ${(props) => (props.type !== "default" ? "6px" : "0px")};
+    padding-left: 0;
+    padding-right: 0;
+
+    ${mediaQuery(
+        "(min-width: 600px) and (min-height: 480px)",
+        devices.laptopM
+    )} {
+        padding-left: ${(props) => (props.type === "main" ? "6px" : "0px")};
+        padding-right: ${(props) => (props.type === "main" ? "6px" : "0px")};
+    }
 `;
 
 const MainHeaderTitle = styled.div`
@@ -86,15 +98,47 @@ const CustomHeaderComponentContainer = styled.div`
     overflow: hidden;
 `;
 
+const MainHeaderProfileContainer = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+
+    ${mediaQuery(
+        "(min-width: 600px) and (min-height: 480px)",
+        devices.laptopM
+    )} {
+        display: none;
+    }
+`;
+
+const MainHeaderProfileImageContainer = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 15px;
+
+    img {
+        width: inherit;
+        height: inherit;
+        border-radius: inherit;
+        object-fit: cover;
+        object-position: center;
+    }
+`;
+
 const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({ title, type, customHeaderComponent, children, headerIconsComponent }) => {
     const navigate = useNavigate();
+    const { me, loading, error } = useMeData();
 
     return (
         <MainContainer>
             <MainHeader>
                 <MainHeaderContainer>
                     <MainHeaderLeftContainer type={type}>
-                        {type === "default" && (
+                        {type === "default" ? (
                             <ControlContainer
                                 title="Go back"
                                 role="button"
@@ -109,6 +153,33 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({ title, t
                             >
                                 <Back />
                             </ControlContainer>
+                        ) : (
+                            <>
+                                {(me && !error) && (
+                                    <MainHeaderProfileContainer
+                                        role="link"
+                                        title={me.name}
+                                        aria-label={me.name}
+                                        onClick={() => {
+                                            navigate(`/${me.username}`);
+                                        }}
+                                    >
+                                        <MainHeaderProfileImageContainer>
+                                            <img
+                                                src={
+                                                    loading
+                                                        ? profilePicture
+                                                        : me.profile.profilePicture.length > 0
+                                                        ? me.profile.profilePicture
+                                                        : profilePicture
+                                                }
+                                                title={me.name}
+                                                alt={me.name}
+                                            />
+                                        </MainHeaderProfileImageContainer>
+                                    </MainHeaderProfileContainer>
+                                )}
+                            </>
                         )}
                         {customHeaderComponent ? (
                             <CustomHeaderComponentContainer>

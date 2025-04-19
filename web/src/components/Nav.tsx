@@ -158,9 +158,9 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                 </NavItemLink>
                 <NavItemLink>
                     <NavLink
-                        to="/search"
-                        title="Search"
-                        aria-label="Search"
+                        to="/explore"
+                        title="Explore"
+                        aria-label="Explore"
                     >
                         {({ isActive }) => (
                             <Magnifier type="normal" isActive={isActive} />
