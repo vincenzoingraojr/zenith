@@ -21,10 +21,6 @@ const PageLayoutContainer = styled.div`
     grid-template-rows: auto;
     width: 100%;
 
-    @media ${devices.mobileL} {
-        width: 360px;
-    }
-
     @media (min-width: 600px) and (max-height: 480px) {
         width: 440px;
     }
@@ -62,7 +58,7 @@ const PageContentLayoutContainer = styled.div.attrs(
     min-height: 100vh;
     margin-bottom: ${props => props.navHidden ? "0" : "60px"}; 
 
-    @media ${devices.mobileL} {
+    @media (min-width: 600px) {
         border-left: 1px solid ${({ theme }) => theme.color};
         border-right: 1px solid ${({ theme }) => theme.color};
     }

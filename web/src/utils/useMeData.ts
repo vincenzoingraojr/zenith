@@ -1,4 +1,4 @@
-import { useMeQuery } from "../../generated/graphql";
+import { useMeQuery } from "../generated/graphql";
 
 export const useMeData = () => {
     const { data, loading, error } = useMeQuery({ fetchPolicy: "cache-and-network" });

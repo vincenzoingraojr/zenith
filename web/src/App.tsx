@@ -14,6 +14,7 @@ import ModifyPassword from "./pages/ModifyPassword";
 import VerifyAccount from "./pages/VerifyAccount";
 import SignUp from "./pages/SignUp";
 import ReactivateAccount from "./pages/ReactivateAccount";
+import SearchPage from "./pages/search/SearchPage";
 
 function App() {
     const [loading, setLoading] = useState(true);
@@ -138,6 +139,12 @@ function App() {
                         />
                     }
                 />
+                <Route 
+                    path="/search"
+                    element={
+                        <SearchPage />
+                    }
+                />                
             </Routes>
             {(state && state.backgroundLocation) && (
                 <Routes>
