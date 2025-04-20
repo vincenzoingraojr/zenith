@@ -39,10 +39,10 @@ const MainHeaderContainer = styled.div`
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    gap: 16px;
+    gap: 12px;
     overflow: hidden;
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: 12px;
+    padding-right: 12px;
 `;
 
 const MainHeaderLeftContainer = styled.div.attrs((props: { type: string }) => props)`
@@ -51,7 +51,7 @@ const MainHeaderLeftContainer = styled.div.attrs((props: { type: string }) => pr
     justify-content: flex-start;
     width: auto;
     flex: 1;
-    gap: 16px;
+    gap: 12px;
     overflow: hidden;
     padding-left: 0;
     padding-right: 0;
@@ -60,8 +60,8 @@ const MainHeaderLeftContainer = styled.div.attrs((props: { type: string }) => pr
         "(min-width: 600px) and (min-height: 480px)",
         devices.laptopM
     )} {
-        padding-left: ${(props) => (props.type === "main" ? "6px" : "0px")};
-        padding-right: ${(props) => (props.type === "main" ? "6px" : "0px")};
+        padding-left: ${(props) => (props.type === "main" ? "4px" : "0px")};
+        padding-right: ${(props) => (props.type === "main" ? "4px" : "0px")};
     }
 `;
 
@@ -79,7 +79,7 @@ const MainHeaderIconsContainer = styled.div`
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 16px;
+    gap: 12px;
 `;
 
 const MainContentContainer = styled.div`
@@ -94,7 +94,6 @@ const CustomHeaderComponentContainer = styled.div`
     justify-content: flex-start;
     width: auto;
     flex: 1;
-    gap: 16px;
     overflow: hidden;
 `;
 
