@@ -1,17 +1,19 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { devices } from "../styles/devices";
 import { mediaQuery } from "../utils/mediaQuery";
 import { Link, NavLink } from "react-router-dom";
 import Logo from "./icons/Logo";
 import Home from "./icons/Home";
-import { ControlContainer } from "../styles/global";
-import Menu from "./icons/Menu";
 import Magnifier from "./icons/Magnifier";
 import Bell from "./icons/Bell";
 import { useMeData } from "../utils/useMeData";
 import Profile from "./icons/Profile";
 import Mail from "./icons/Mail";
+import NavOptions from "./utils/NavOptions";
+import { ControlContainer } from "../styles/global";
+import Menu from "./icons/Menu";
+import { useNavOptions } from "./utils/hooks";
 
 interface NavProps {
     noNav?: boolean;
@@ -112,17 +114,6 @@ const NavContainer = styled.div`
     }
 `;
 
-const NavOptionsContainer = styled.div`
-    display: none;
-
-    ${mediaQuery(
-        "(min-width: 600px) and (min-height: 480px)",
-        devices.laptopM
-    )} {
-        display: block;
-    }
-`;
-
 const ProfileNavItemLink = styled(NavItemLink)`
     display: none;
 
@@ -134,11 +125,51 @@ const ProfileNavItemLink = styled(NavItemLink)`
     }
 `;
 
+const NavOptionsContainer = styled.div`
+    display: none;
+
+    ${mediaQuery(
+        "(min-width: 600px) and (min-height: 480px)",
+        devices.laptopM
+    )} {
+        display: block;
+    }
+`;
+
 const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
     const meData = useMeData();
+    const { showOptions, toggleOptions, closeOptions } = useNavOptions();
+
+    const [position, setPosition] = useState<DOMRect | null>(null);
+    const divRef = useRef<HTMLDivElement | null>(null);
+    const navRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        const navRefVar = navRef.current;
+
+        const handleOptions = () => {
+            if (divRef.current) {
+                const rect = divRef.current.getBoundingClientRect();
+
+                setPosition(rect);
+            }
+        };
+
+        handleOptions();
+        
+        navRefVar?.addEventListener("scroll", handleOptions);
+        window.addEventListener("scroll", handleOptions);
+        window.addEventListener("resize", handleOptions);
+
+        return () => {
+            navRefVar?.removeEventListener("scroll", handleOptions);
+            window.removeEventListener("scroll", handleOptions);
+            window.removeEventListener("resize", handleOptions);
+        };
+    }, []);
 
     return (
-        <NavWrapper hidden={noNav || false}>
+        <NavWrapper hidden={noNav || false} ref={navRef}>
             <BrandLink>
                 <Link to="/home" title="Zenith" aria-label="Zenith">
                     <Logo type="inline" />
@@ -208,10 +239,20 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
             </NavContainer>
             <NavOptionsContainer>
                 <ControlContainer
+                    ref={divRef}
                     size={48}
+                    role="button"
+                    title="Options"
+                    aria-label="Options"
+                    onClick={() => {
+                        toggleOptions();
+                    }}
                 >
                     <Menu />
                 </ControlContainer>
+                {showOptions && (
+                    <NavOptions type="nav" position={position} closeOptions={closeOptions} />
+                )}
             </NavOptionsContainer>
         </NavWrapper>
     );

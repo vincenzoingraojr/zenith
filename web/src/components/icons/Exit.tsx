@@ -1,0 +1,23 @@
+import { FunctionComponent } from "react";
+import { useTheme } from "../../styles/theme";
+import { COLORS } from "../../styles/colors";
+import { StandardIcon } from "./common";
+
+interface ExitProps {
+    isRed?: boolean;
+}
+
+const Exit: FunctionComponent<ExitProps> = ({ isRed }) => {
+    const theme = useTheme();
+
+    return (
+        <StandardIcon isFilled={isRed ? COLORS.red : theme.color}>
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12.5 2V4H3.5V20H12.5V22H3.5C2.39543 22 1.5 21.1046 1.5 20V4C1.5 2.89543 2.39543 2 3.5 2H12.5Z" />
+                <path d="M14.4287 4.92871C14.8191 4.53829 15.4522 4.53848 15.8428 4.92871L22.207 11.293C22.5976 11.6835 22.5976 12.3165 22.207 12.707L15.8428 19.0713C15.4522 19.4615 14.8191 19.4617 14.4287 19.0713C14.0383 18.6809 14.0385 18.0478 14.4287 17.6572L19.0859 13H6.5V11H19.0859L14.4287 6.34277C14.0385 5.95223 14.0383 5.31914 14.4287 4.92871Z" />
+            </svg>
+        </StandardIcon>
+    );
+};
+
+export default Exit;

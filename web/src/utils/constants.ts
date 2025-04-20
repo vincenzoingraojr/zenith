@@ -6,3 +6,8 @@ export const genderOptions = [
     { value: "Male", label: "Male" },
     { value: "Non-binary", label: "Non-binary" },
 ];
+
+export const USER_TYPES = Object.freeze({
+    USER: "user",
+    ORGANIZATION: "organization",
+});
