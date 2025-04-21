@@ -204,7 +204,7 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({ title, t
                                             />
                                         </MainHeaderProfileImageContainer>
                                         {showOptions && (
-                                            <NavOptions type="header" position={position} closeOptions={closeOptions} buttonRef={divRef} />
+                                            <NavOptions  type="header" position={position} closeOptions={closeOptions} buttonRef={divRef} />
                                         )}
                                     </MainHeaderProfileContainer>
                                 )}
