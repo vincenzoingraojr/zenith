@@ -12,6 +12,7 @@ interface NavOptionsProps {
     type: "nav" | "header";
     position: DOMRect | null;
     closeOptions: () => void;
+    buttonRef: React.MutableRefObject<HTMLDivElement | null>;
 }
 
 const NavOptionsContainer = styled.div.attrs(
@@ -44,7 +45,7 @@ const NavOption = styled.div`
         color: ${({ theme }) => theme.color};
         gap: 12px;
         font-weight: 500;
-        padding: 12px;
+        padding: 12px 24px;
         width: 100%;
         background-color: transparent;
         text-decoration: none;
@@ -78,22 +79,23 @@ const NavOptionText = styled(PageText).attrs(
     color: ${props => props.color ? props.color : "inherit"};
 `;
 
-const NavOptions: FunctionComponent<NavOptionsProps> = ({ type, position, closeOptions }) => {
+const NavOptions: FunctionComponent<NavOptionsProps> = ({ type, position, closeOptions, buttonRef }) => {
     const { me, error } = useMeData();
     const ref = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
-            if (ref.current && !ref.current.contains(e.target as Node) && e.target instanceof HTMLElement) {
+            if (ref.current && buttonRef.current && !ref.current.contains(e.target as Node) && !buttonRef.current.contains(e.target as Node) && e.target instanceof HTMLElement) {
                 closeOptions();
+
                 setReady(false);
             }
         };
 
-        document.addEventListener("mousedown", handleClickOutside);
+        window.addEventListener("mousedown", handleClickOutside);
 
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [closeOptions, ref]);
+        return () => window.removeEventListener("mousedown", handleClickOutside);
+    }, [closeOptions, ref, buttonRef]);
 
     const [buttonPosition, setButtonPosition] = useState<{ top: number; left: number }>({
         top: 0,
@@ -117,7 +119,7 @@ const NavOptions: FunctionComponent<NavOptionsProps> = ({ type, position, closeO
 
     return (
         <NavOptionsContainer ref={ref} optionsType={type} position={buttonPosition} ready={ready}>
-            {(me && !error) && (
+            {(me && !error && type === "header") && (
                 <NavOption>
                     <Link
                         to={`/${me.username}`}

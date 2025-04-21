@@ -251,7 +251,7 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                     <Menu />
                 </ControlContainer>
                 {showOptions && (
-                    <NavOptions type="nav" position={position} closeOptions={closeOptions} />
+                    <NavOptions type="nav" position={position} closeOptions={closeOptions} buttonRef={divRef} />
                 )}
             </NavOptionsContainer>
         </NavWrapper>
