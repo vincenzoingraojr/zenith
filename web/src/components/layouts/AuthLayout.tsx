@@ -7,6 +7,10 @@ import { devices } from "../../styles/devices";
 import { ControlContainer, PageBlock, PageText } from "../../styles/global";
 import { LayoutProps } from "./common";
 
+interface AuthLayoutProps extends LayoutProps {
+    isAuth?: boolean;
+}
+
 const AuthPage = styled.div`
     display: grid;
     justify-items: center;
@@ -85,7 +89,7 @@ const AuthPageContent = styled.div`
     gap: 24px;
 `;
 
-const AuthLayout: FunctionComponent<LayoutProps> = ({ children }) => {
+const AuthLayout: FunctionComponent<AuthLayoutProps> = ({ children, isAuth }) => {
     const navigate = useNavigate();
 
     let showLoginOption = true;
@@ -120,31 +124,33 @@ const AuthLayout: FunctionComponent<LayoutProps> = ({ children }) => {
             <AuthPageContentContainer>
                 <AuthPageContent>
                     {children}
-                    <PageBlock>
-                        {showLoginOption ? (
-                            <PageText>
-                                Already have an account?{" "}
-                                <Link
-                                    to="/login"
-                                    title="Log in"
-                                    aria-label="Log in to Zenith"
-                                >
-                                    Log in
-                                </Link>
-                            </PageText>
-                        ) : (
-                            <PageText>
-                                Forgot your password?{" "}
-                                <Link
-                                    to="/recover_password"
-                                    title="Recover your password"
-                                    aria-label="Recover your password"
-                                >
-                                    Recover it here
-                                </Link>
-                            </PageText>
-                        )}
-                    </PageBlock>
+                    {!isAuth && (
+                        <PageBlock>
+                            {showLoginOption ? (
+                                <PageText>
+                                    Already have an account?{" "}
+                                    <Link
+                                        to="/login"
+                                        title="Log in"
+                                        aria-label="Log in to Zenith"
+                                    >
+                                        Log in
+                                    </Link>
+                                </PageText>
+                            ) : (
+                                <PageText>
+                                    Forgot your password?{" "}
+                                    <Link
+                                        to="/recover_password"
+                                        title="Recover your password"
+                                        aria-label="Recover your password"
+                                    >
+                                        Recover it here
+                                    </Link>
+                                </PageText>
+                            )}
+                        </PageBlock>
+                    )}
                 </AuthPageContent>
             </AuthPageContentContainer>
         </AuthPage>

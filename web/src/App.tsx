@@ -15,6 +15,7 @@ import VerifyAccount from "./pages/VerifyAccount";
 import SignUp from "./pages/SignUp";
 import ReactivateAccount from "./pages/ReactivateAccount";
 import Explore from "./pages/search/Explore";
+import LogOut from "./pages/LogOut";
 
 function App() {
     const [loading, setLoading] = useState(true);
@@ -136,6 +137,15 @@ function App() {
                         <IsAuthenticated
                             isAuth={isAuth}
                             children={<HomePage />}
+                        />
+                    }
+                />
+                <Route
+                    path="/logout"
+                    element={
+                        <IsAuthenticated
+                            isAuth={isAuth}
+                            children={<LogOut />}
                         />
                     }
                 />
