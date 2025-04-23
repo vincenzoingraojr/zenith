@@ -13,3 +13,17 @@ export function useNavOptions() {
   
     return { showOptions, toggleOptions, closeOptions };
 }
+
+export function useMenu() {
+    const [showMenu, setShowMenu] = useState(false);
+
+    const openMenu = () => {
+        setShowMenu(true);
+    }
+
+    const closeMenu = () => {
+        setShowMenu(false);
+    }
+
+    return { showMenu, openMenu, closeMenu };
+}

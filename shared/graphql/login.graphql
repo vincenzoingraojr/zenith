@@ -45,6 +45,7 @@ mutation Login(
             }
             createdAt
             updatedAt
+            hiddenPosts
         }
         errors {
             field

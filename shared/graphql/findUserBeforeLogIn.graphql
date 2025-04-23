@@ -33,6 +33,7 @@ mutation FindUserBeforeLogIn(
             }
             createdAt
             updatedAt
+            hiddenPosts
         }
         status
         ok

@@ -13,11 +13,11 @@ import {
     deviceType,
 } from "react-device-detect";
 import { MeDocument, MeQuery, useLoginMutation, User } from "../generated/graphql";
-import { setAccessToken } from "../utils/token";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toErrorMap } from "../utils/toErrorMap";
 import { BAD_REQUEST_MESSAGE } from "../utils/constants";
 import AuthLayout from "../components/layouts/AuthLayout";
+import { useAuth } from "../utils/AuthContext";
 
 function LogIn() {
     const [clientName, setClientName] = useState<string>("");
@@ -57,6 +57,7 @@ function LogIn() {
     const location = useLocation();
 
     const [recovery, setRecovery] = useState(false);
+    const { logInAndSetToken } = useAuth();
 
     return (
         <>
@@ -110,9 +111,7 @@ function LogIn() {
 
                                 if (response.data) {
                                     if (response.data.login.ok && response.data.login.user && response.data.login.accessToken) {
-                                        setAccessToken(
-                                            response.data.login.accessToken
-                                        );
+                                        logInAndSetToken(response.data.login.user, response.data.login.accessToken);
                                         setStatus(response.data.login.status);
                                         navigate(0);
                                     } else if (response.data.login.user && response.data.login.user.userSettings.twoFactorAuth && response.data.login.status === "otp_sent") {

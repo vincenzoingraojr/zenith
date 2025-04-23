@@ -4,10 +4,9 @@ import AuthLayout from "../components/layouts/AuthLayout";
 import Preloader from "../components/utils/Preloader";
 import { useLogoutMutation } from "../generated/graphql";
 import { AuthForm, AuthFormTitle, Button, PageBlock, PageTextMB24 } from "../styles/global";
-import { useMeData } from "../utils/useMeData";
 import { COLORS } from "../styles/colors";
-import { setAccessToken } from "../utils/token";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../utils/AuthContext";
 
 const LogoutButton = styled(Button)`
     background-color: ${COLORS.red};
@@ -15,11 +14,11 @@ const LogoutButton = styled(Button)`
 `;
 
 function LogOut() {
-    const { me, loading, error } = useMeData();
+    const { user, logOutAndResetToken } = useAuth();
     const [logout, { client }] = useLogoutMutation();
     const navigate = useNavigate();
 
-    if (loading || !me || error) {
+    if (!user) {
         return <Preloader />;
     }
 
@@ -27,12 +26,11 @@ function LogOut() {
         <>
             <Head title="Log out | Zenith" description="Log out from Zenith." />
             <AuthLayout
-                isAuth={true}
                 children={
                     <AuthForm>
                         <AuthFormTitle>Log out</AuthFormTitle>
                         <PageTextMB24>
-                            Do you really want to disconnect from{" "}<b>@{me.username}</b>?
+                            Do you really want to disconnect from{" "}<b>@{user.username}</b>?
                         </PageTextMB24>
                         <PageBlock>
                             <LogoutButton
@@ -43,7 +41,7 @@ function LogOut() {
                                 onClick={async () => {
                                     await logout();
 
-                                    setAccessToken("");
+                                    logOutAndResetToken();
                                     
                                     await client.resetStore();
                                     

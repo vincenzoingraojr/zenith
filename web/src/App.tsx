@@ -1,6 +1,4 @@
-import { useEffect, useState } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
-import { setAccessToken } from "./utils/token";
 import IsNotAuthenticated from "./components/routes/IsNotAuthenticated";
 import Authentication from "./pages/Authentication";
 import Preloader from "./components/utils/Preloader";
@@ -16,29 +14,11 @@ import SignUp from "./pages/SignUp";
 import ReactivateAccount from "./pages/ReactivateAccount";
 import Explore from "./pages/search/Explore";
 import LogOut from "./pages/LogOut";
+import { useAuth } from "./utils/AuthContext";
 
 function App() {
-    const [loading, setLoading] = useState(true);
-    const [isAuth, setIsAuth] = useState(false);
     const location = useLocation();
-
-    useEffect(() => {
-        fetch(process.env.REACT_APP_SERVER_ORIGIN!, {
-            method: "POST",
-            credentials: "include",
-        }).then(async (x) => {
-            const { accessToken } = await x.json();
-            setAccessToken(accessToken);
-
-            if (accessToken && accessToken.length > 0) {
-                setIsAuth(true);
-            } else {
-                setIsAuth(false);
-            }
-            
-            setLoading(false);
-        });
-    }, []);
+    const { isAuth, loading } = useAuth();
 
     if (loading) {
         return <Preloader />;

@@ -5,18 +5,15 @@ import Settings from "../icons/Settings";
 import Exit from "../icons/Exit";
 import { PageText } from "../../styles/global";
 import { COLORS } from "../../styles/colors";
-import { useMeData } from "../../utils/useMeData";
-import Profile from "../icons/Profile";
 
 interface NavOptionsProps {
-    type: "nav" | "header";
     position: DOMRect | null;
     closeOptions: () => void;
     buttonRef: React.MutableRefObject<HTMLDivElement | null>;
 }
 
 const NavOptionsContainer = styled.div.attrs(
-    (props: { optionsType: string, position: { top: number; left: number }, ready: boolean }) => props
+    (props: { position: { top: number; left: number }, ready: boolean }) => props
 )`
     display: ${props => props.ready ? "flex" : "none"};
     position: fixed;
@@ -25,9 +22,9 @@ const NavOptionsContainer = styled.div.attrs(
     box-shadow: 0px 0px 2px ${({ theme }) => theme.opaqueGrey};
     z-index: 999;
     border-radius: 16px;
-    top: ${props => props.optionsType === "header" ? `${props.position.top + 44}px` : `${props.position.top}px`};
+    top: ${props => `${props.position.top}px`};
     left: ${props => `${props.position.left}px`};
-    transform: ${props => props.optionsType === "nav" ? "translateY(-100%)" : "none"};
+    transform: translateY(-100%);
     transform-origin: top;
 `;
 
@@ -79,8 +76,7 @@ const NavOptionText = styled(PageText).attrs(
     color: ${props => props.color ? props.color : "inherit"};
 `;
 
-const NavOptions: FunctionComponent<NavOptionsProps> = ({ type, position, closeOptions, buttonRef }) => {
-    const { me, error } = useMeData();
+const NavOptions: FunctionComponent<NavOptionsProps> = ({ position, closeOptions, buttonRef }) => {
     const ref = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -118,23 +114,7 @@ const NavOptions: FunctionComponent<NavOptionsProps> = ({ type, position, closeO
     }, [position]);
 
     return (
-        <NavOptionsContainer ref={ref} optionsType={type} position={buttonPosition} ready={ready}>
-            {(me && !error && type === "header") && (
-                <NavOption>
-                    <Link
-                        to={`/${me.username}`}
-                        title={me.name}
-                        aria-label={me.name}
-                    >
-                        <NavOptionIcon>
-                            <Profile isActive={false} />
-                        </NavOptionIcon>
-                        <NavOptionText>
-                            Profile
-                        </NavOptionText>
-                    </Link>
-                </NavOption>
-            )}
+        <NavOptionsContainer ref={ref} position={buttonPosition} ready={ready}>
             <NavOption>
                 <Link
                     to="/settings"

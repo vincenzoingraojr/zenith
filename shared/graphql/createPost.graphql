@@ -53,6 +53,7 @@ mutation CreatePost(
                 }
                 createdAt
                 updatedAt
+                hiddenPosts
             }
             isReplyToId
             isReplyToType

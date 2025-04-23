@@ -1,4 +1,4 @@
-import { FunctionComponent, useEffect, useRef, useState } from "react";
+import { FunctionComponent } from "react";
 import { LayoutProps } from "../common";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
@@ -9,8 +9,6 @@ import { mediaQuery } from "../../../utils/mediaQuery";
 import { useMeData } from "../../../utils/useMeData";
 import profilePicture from "../../../images/profile-picture.png";
 import { USER_TYPES } from "../../../utils/constants";
-import NavOptions from "../../utils/NavOptions";
-import { useNavOptions } from "../../utils/hooks";
 
 interface PageContentLayoutProps extends LayoutProps {
     title: string;
@@ -132,30 +130,6 @@ const MainHeaderProfileImageContainer = styled.div.attrs((props: { type: string 
 const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({ title, type, customHeaderComponent, children, headerIconsComponent }) => {
     const navigate = useNavigate();
     const { me, loading, error } = useMeData();
-    const { showOptions, toggleOptions, closeOptions } = useNavOptions();
-
-    const [position, setPosition] = useState<DOMRect | null>(null);
-    const divRef = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        const handleOptions = () => {
-            if (divRef.current) {
-                const rect = divRef.current.getBoundingClientRect();
-
-                setPosition(rect);
-            }
-        };
-
-        handleOptions();
-        
-        window.addEventListener("scroll", handleOptions);
-        window.addEventListener("resize", handleOptions);
-
-        return () => {
-            window.removeEventListener("scroll", handleOptions);
-            window.removeEventListener("resize", handleOptions);
-        };
-    }, []);
 
     return (
         <MainContainer>
@@ -186,9 +160,8 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({ title, t
                                             role="button"
                                             title={me.name}
                                             aria-label={me.name}
-                                            ref={divRef}
                                             onClick={() => {
-                                                toggleOptions();
+                                                console.log("Clicked.");
                                             }}
                                         >
                                             <img
@@ -203,9 +176,6 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({ title, t
                                                 alt={me.name}
                                             />
                                         </MainHeaderProfileImageContainer>
-                                        {showOptions && (
-                                            <NavOptions  type="header" position={position} closeOptions={closeOptions} buttonRef={divRef} />
-                                        )}
                                     </MainHeaderProfileContainer>
                                 )}
                             </>

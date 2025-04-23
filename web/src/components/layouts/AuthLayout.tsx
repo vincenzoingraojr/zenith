@@ -6,10 +6,7 @@ import styled from "styled-components";
 import { devices } from "../../styles/devices";
 import { ControlContainer, PageBlock, PageText } from "../../styles/global";
 import { LayoutProps } from "./common";
-
-interface AuthLayoutProps extends LayoutProps {
-    isAuth?: boolean;
-}
+import { useAuth } from "../../utils/AuthContext";
 
 const AuthPage = styled.div`
     display: grid;
@@ -89,7 +86,9 @@ const AuthPageContent = styled.div`
     gap: 24px;
 `;
 
-const AuthLayout: FunctionComponent<AuthLayoutProps> = ({ children, isAuth }) => {
+const AuthLayout: FunctionComponent<LayoutProps> = ({ children }) => {
+    const { isAuth } = useAuth();
+
     const navigate = useNavigate();
 
     let showLoginOption = true;

@@ -22,7 +22,7 @@ const PageLayoutContainer = styled.div`
     width: 100%;
 
     @media (min-width: 600px) and (max-height: 480px) {
-        width: 440px;
+        width: 480px;
     }
 
     ${mediaQuery(
@@ -38,11 +38,11 @@ const PageLayoutContainer = styled.div`
     }
 
     @media ${devices.tablet} and (max-height: 480px) {
-        width: 472px;
+        width: 524px;
     }
 
     @media ${devices.tablet} and (min-height: 480px) {
-        width: 552px;
+        width: 580px;
     }
 
     @media ${devices.laptopM} {

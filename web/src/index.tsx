@@ -24,6 +24,7 @@ import { ThemeProvider } from "styled-components";
 import { darkTheme, lightTheme } from "./styles/theme";
 import { ThemeProviderWrapper, useThemeContext } from "./styles/ThemeContext";
 import App from "./App";
+import { AuthProvider } from "./utils/AuthContext";
 
 const cache = new InMemoryCache();
 
@@ -149,11 +150,13 @@ const ThemedApp = () => {
 
 ReactDOM.render(
     <ApolloProvider client={client}>
-        <BrowserRouter>
-            <ThemeProviderWrapper>
-                <ThemedApp />
-            </ThemeProviderWrapper>
-        </BrowserRouter>
+        <AuthProvider>
+            <BrowserRouter>
+                <ThemeProviderWrapper>
+                    <ThemedApp />
+                </ThemeProviderWrapper>
+            </BrowserRouter>
+        </AuthProvider>
     </ApolloProvider>,
     document.getElementById("root")
 );

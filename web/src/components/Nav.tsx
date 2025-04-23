@@ -7,13 +7,13 @@ import Logo from "./icons/Logo";
 import Home from "./icons/Home";
 import Magnifier from "./icons/Magnifier";
 import Bell from "./icons/Bell";
-import { useMeData } from "../utils/useMeData";
 import Profile from "./icons/Profile";
 import Mail from "./icons/Mail";
 import NavOptions from "./utils/NavOptions";
 import { ControlContainer } from "../styles/global";
 import Menu from "./icons/Menu";
 import { useNavOptions } from "./utils/hooks";
+import { useAuth } from "../utils/AuthContext";
 
 interface NavProps {
     noNav?: boolean;
@@ -137,7 +137,7 @@ const NavOptionsContainer = styled.div`
 `;
 
 const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
-    const meData = useMeData();
+    const { user } = useAuth();
     const { showOptions, toggleOptions, closeOptions } = useNavOptions();
 
     const [position, setPosition] = useState<DOMRect | null>(null);
@@ -198,13 +198,13 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                         )}
                     </NavLink>
                 </NavItemLink>
-                {(meData.me && !meData.error) && (
+                {user && (
                     <>
                         <ProfileNavItemLink>
                             <NavLink
-                                to={`/${meData.me.username}`}
-                                title={meData.me.name}
-                                aria-label={meData.me.name}
+                                to={`/${user.username}`}
+                                title={user.name}
+                                aria-label={user.name}
                                 end
                             >
                                 {({ isActive }) => (
@@ -251,7 +251,7 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                     <Menu />
                 </ControlContainer>
                 {showOptions && (
-                    <NavOptions type="nav" position={position} closeOptions={closeOptions} buttonRef={divRef} />
+                    <NavOptions position={position} closeOptions={closeOptions} buttonRef={divRef} />
                 )}
             </NavOptionsContainer>
         </NavWrapper>

@@ -28,5 +28,6 @@ query Me {
         }
         createdAt
         updatedAt
+        hiddenPosts
     }
 }

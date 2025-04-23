@@ -5,9 +5,9 @@ import InputField from "../components/input/InputField";
 import { useLocation, useNavigate } from "react-router-dom";
 import { MeDocument, MeQuery, User, useResendOtpMutation, useVerifyOtpMutation } from "../generated/graphql";
 import { BAD_REQUEST_MESSAGE } from "../utils/constants";
-import { setAccessToken } from "../utils/token";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
+import { useAuth } from "../utils/AuthContext";
 
 const ResendOTPContainer = styled.div`
     display: flex;
@@ -66,6 +66,8 @@ function VerifyOTP() {
 
     const [resendOTP] = useResendOtpMutation();
 
+    const { logInAndSetToken } = useAuth();
+
     return (
         <>
             <Head
@@ -115,9 +117,7 @@ function VerifyOTP() {
 
                                 if (response.data.verifyOTP.user && response.data.verifyOTP.ok) {
                                     if (response.data.verifyOTP.accessToken && location.state.isLogin) {
-                                        setAccessToken(
-                                            response.data.verifyOTP.accessToken
-                                        );
+                                        logInAndSetToken(response.data.verifyOTP.user, response.data.verifyOTP.accessToken);
                                         navigate(0);
                                     }
                                 }

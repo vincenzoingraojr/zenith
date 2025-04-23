@@ -1,11 +1,11 @@
 import Head from "../components/Head";
 import { PageTextMB24 } from "../styles/global";
 import PageLayout from "../components/layouts/PageLayout";
-import { useMeData } from "../utils/useMeData";
 import PageContentLayout from "../components/layouts/sublayouts/PageContentLayout";
+import { useAuth } from "../utils/AuthContext";
 
 function HomePage() {
-    const { me, loading, error } = useMeData();
+    const { user } = useAuth();
 
     return (
         <>
@@ -30,7 +30,7 @@ function HomePage() {
                                     That now our dreams, they've finally come true.
                                 </PageTextMB24>
                                 <PageTextMB24>
-                                    {loading ? "Loading..." : error ? error.message : `@${me?.username}`}
+                                    {user ? `@${user.username}` : "No data."}
                                 </PageTextMB24>
                             </>
                         }
