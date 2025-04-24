@@ -1,4 +1,4 @@
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import IsNotAuthenticated from "./components/routes/IsNotAuthenticated";
 import Authentication from "./pages/Authentication";
 import Preloader from "./components/utils/Preloader";
@@ -15,13 +15,40 @@ import ReactivateAccount from "./pages/ReactivateAccount";
 import Explore from "./pages/search/Explore";
 import LogOut from "./pages/LogOut";
 import { useAuth } from "./utils/AuthContext";
+import { AppErrorContainer, AppErrorWrapper, PageBlock, PageText, StandardButton } from "./styles/global";
 
 function App() {
     const location = useLocation();
-    const { isAuth, loading } = useAuth();
+    const navigate = useNavigate();
+    const { isAuth, loading, error } = useAuth();
 
-    if (loading) {
+    if (loading && !error) {
         return <Preloader />;
+    }
+
+    if (error) {
+        return (
+            <AppErrorWrapper>
+                <AppErrorContainer>
+                    <PageText>
+                        {error.message}
+                    </PageText>
+                    <PageBlock>
+                        <StandardButton
+                            type="button"
+                            role="button"
+                            title="Refresh page"
+                            aria-label="Refresh page"
+                            onClick={() => {
+                                navigate(0);
+                            }}
+                        >
+                            Refresh page
+                        </StandardButton>
+                    </PageBlock>
+                </AppErrorContainer>
+            </AppErrorWrapper>
+        );
     }
 
     document.body.classList.remove("not-scrolling");

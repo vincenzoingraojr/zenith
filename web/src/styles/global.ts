@@ -1192,3 +1192,19 @@ export const CustomInnerFieldContainer = styled.div`
     width: 100%;
     margin-bottom: 4px;
 `;
+
+export const AppErrorWrapper = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 100vh;
+`;
+
+export const AppErrorContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px;
+    max-width: 260px;
+`;

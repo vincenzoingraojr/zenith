@@ -10,9 +10,11 @@ import { Link } from "react-router-dom";
 import Profile from "./icons/Profile";
 import Settings from "./icons/Settings";
 import Exit from "./icons/Exit";
+import { COLORS } from "../styles/colors";
+import { USER_TYPES } from "../utils/constants";
 
 interface MenuProps {
-    closeMenu: () => void
+    closeMenu: () => void;
 }
 
 const MenuWrapper = styled.div`
@@ -145,13 +147,13 @@ const ProfileMenuContainer = styled.div`
     }
 `;
 
-const ProfileMenuImageContainer = styled.div`
+const ProfileMenuImageContainer = styled.div.attrs((props: { type: string }) => props)`
     display: flex;
     align-items: center;
     justify-content: center;
     width: 42px;
     height: 42px;
-    border-radius: 21px;
+    border-radius: ${(props) => (props.type === USER_TYPES.ORGANIZATION ? "6px" : "21px")};
 
     img {
         width: inherit;
@@ -241,12 +243,15 @@ const MenuNavEntryIcon = styled.div`
     justify-content: center;
 `;
 
-const MenuNavEntryText = styled(PageText)`
+const MenuNavEntryText = styled(PageText).attrs(
+    (props: { color?: string }) => props
+)`
     display: block;
     width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: ${props => props.color ? props.color : "inherit"};
 `;
 
 const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
@@ -292,7 +297,7 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                 title={me.name}
                                 aria-label={me.name}
                             >
-                                <ProfileMenuImageContainer>
+                                <ProfileMenuImageContainer type={me.type}>
                                     <img
                                         src={
                                             (loading || me.profile.profilePicture.length === 0) ? 
@@ -345,11 +350,10 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                     aria-label={`Log out from @${me.username}`}
                                 >
                                     <MenuNavEntryIcon>
-                                        <Exit />
+                                        <Exit isRed={true} />
                                     </MenuNavEntryIcon>
-                                    <MenuNavEntryText>
-                                        Log out{" "}
-                                        <b>@{me.username}</b>
+                                    <MenuNavEntryText color={COLORS.red}>
+                                        Log out
                                     </MenuNavEntryText>
                                 </Link>
                             </MenuNavEntry>

@@ -114,14 +114,16 @@ const NavContainer = styled.div`
     }
 `;
 
-const ProfileNavItemLink = styled(NavItemLink)`
-    display: none;
+const CustomNavItemLink = styled(NavItemLink).attrs(
+    (props: { type: "nav" | "header" }) => props
+)`
+    display: ${props => props.type === "nav" ? "none" : "flex"};
 
     ${mediaQuery(
         "(min-width: 600px) and (min-height: 480px)",
         devices.laptopM
     )} {
-        display: flex;
+        display: ${props => props.type === "nav" ? "flex" : "none"};
     }
 `;
 
@@ -136,12 +138,28 @@ const NavOptionsContainer = styled.div`
     }
 `;
 
+const CustomNavContainer = styled.div.attrs(
+    (props: { type: "nav" | "header" }) => props
+)`
+    display: ${props => props.type === "nav" ? "none" : "flex"};
+
+    ${mediaQuery(
+        "(min-width: 600px) and (min-height: 480px)",
+        devices.laptopM
+    )} {
+        display: ${props => props.type === "nav" ? "flex" : "none"};
+    }
+`;
+
 const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
     const { me } = useMeData();
     const { showOptions, toggleOptions, closeOptions } = useNavOptions();
+    const { showOptions: showBottomNavOptions, toggleOptions: toggleBottomNavOptions, closeOptions: closeBottomNavOptions } = useNavOptions();
 
     const [position, setPosition] = useState<DOMRect | null>(null);
+    const [bottomNavPosition, setBottomNavPosition] = useState<DOMRect | null>(null);
     const divRef = useRef<HTMLDivElement | null>(null);
+    const buttonRef = useRef<HTMLDivElement | null>(null);
     const navRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -152,6 +170,12 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                 const rect = divRef.current.getBoundingClientRect();
 
                 setPosition(rect);
+            }
+
+            if (buttonRef.current) {
+                const bottomNavRect = buttonRef.current.getBoundingClientRect();
+
+                setBottomNavPosition(bottomNavRect);
             }
         };
 
@@ -176,6 +200,25 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                 </Link>
             </BrandLink>
             <NavContainer>
+                {!me && (
+                    <CustomNavContainer type="header">
+                        <ControlContainer
+                            ref={buttonRef}
+                            size={48}
+                            role="button"
+                            title="Options"
+                            aria-label="Options"
+                            onClick={() => {
+                                toggleBottomNavOptions();
+                            }}
+                        >
+                            <Menu />
+                        </ControlContainer>
+                        {showBottomNavOptions && (
+                            <NavOptions key={"bottom-nav"} position={bottomNavPosition} closeOptions={closeBottomNavOptions} buttonRef={buttonRef} />
+                        )}
+                    </CustomNavContainer>
+                )}
                 <NavItemLink>
                     <NavLink
                         to="/home"
@@ -200,7 +243,7 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                 </NavItemLink>
                 {me && (
                     <>
-                        <ProfileNavItemLink>
+                        <CustomNavItemLink type="nav">
                             <NavLink
                                 to={`/${me.username}`}
                                 title={me.name}
@@ -211,7 +254,7 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                                     <Profile isActive={isActive} />
                                 )}
                             </NavLink>
-                        </ProfileNavItemLink>
+                        </CustomNavItemLink>
                         <NavItemLink>
                             <NavLink
                                 to="/notifications"
@@ -251,7 +294,7 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                     <Menu />
                 </ControlContainer>
                 {showOptions && (
-                    <NavOptions position={position} closeOptions={closeOptions} buttonRef={divRef} />
+                    <NavOptions key={"nav"} position={position} closeOptions={closeOptions} buttonRef={divRef} />
                 )}
             </NavOptionsContainer>
         </NavWrapper>

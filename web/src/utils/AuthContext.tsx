@@ -7,6 +7,7 @@ interface AuthContextType {
     logOutAndResetToken: () => void;
     isAuth: boolean;
     loading: boolean;
+    error: any | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -14,6 +15,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [isAuth, setIsAuth] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         fetch(process.env.REACT_APP_SERVER_ORIGIN!, {
@@ -30,6 +32,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
             
             setLoading(false);
+        }).catch((error) => {
+            setError(error);
         });
     }, []);
 
@@ -44,7 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     return (
-        <AuthContext.Provider value={{ logInAndSetToken, logOutAndResetToken, isAuth, loading }}>
+        <AuthContext.Provider value={{ logInAndSetToken, logOutAndResetToken, isAuth, loading, error }}>
             {children}
         </AuthContext.Provider>
     );
