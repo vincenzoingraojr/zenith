@@ -9,6 +9,8 @@ import { mediaQuery } from "../../../utils/mediaQuery";
 import { useMeData } from "../../../utils/useMeData";
 import profilePicture from "../../../images/profile-picture.png";
 import { USER_TYPES } from "../../../utils/constants";
+import { useMenu } from "../../utils/hooks";
+import Menu from "../../Menu";
 
 interface PageContentLayoutProps extends LayoutProps {
     title: string;
@@ -131,6 +133,8 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({ title, t
     const navigate = useNavigate();
     const { me, loading, error } = useMeData();
 
+    const { showMenu, openMenu, closeMenu } = useMenu();
+
     return (
         <MainContainer>
             <MainHeader>
@@ -154,29 +158,32 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({ title, t
                         ) : (
                             <>
                                 {(me && !error && !customHeaderComponent) && (
-                                    <MainHeaderProfileContainer>
-                                        <MainHeaderProfileImageContainer 
-                                            type={me.type}
-                                            role="button"
-                                            title={me.name}
-                                            aria-label={me.name}
-                                            onClick={() => {
-                                                console.log("Clicked.");
-                                            }}
-                                        >
-                                            <img
-                                                src={
-                                                    loading
-                                                        ? profilePicture
-                                                        : me.profile.profilePicture.length > 0
-                                                        ? me.profile.profilePicture
-                                                        : profilePicture
-                                                }
+                                    <>
+                                        <MainHeaderProfileContainer>
+                                            <MainHeaderProfileImageContainer 
+                                                type={me.type}
+                                                role="button"
                                                 title={me.name}
-                                                alt={me.name}
-                                            />
-                                        </MainHeaderProfileImageContainer>
-                                    </MainHeaderProfileContainer>
+                                                aria-label={me.name}
+                                                onClick={() => {
+                                                    openMenu();
+                                                }}
+                                            >
+                                                <img
+                                                    src={
+                                                        (loading || me.profile.profilePicture.length === 0) 
+                                                            ? profilePicture
+                                                            : me.profile.profilePicture
+                                                    }
+                                                    title={me.name}
+                                                    alt={me.name}
+                                                />
+                                            </MainHeaderProfileImageContainer>
+                                        </MainHeaderProfileContainer>
+                                        {showMenu && (
+                                            <Menu closeMenu={closeMenu} />
+                                        )}
+                                    </>
                                 )}
                             </>
                         )}

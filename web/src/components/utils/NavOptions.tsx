@@ -5,6 +5,7 @@ import Settings from "../icons/Settings";
 import Exit from "../icons/Exit";
 import { PageText } from "../../styles/global";
 import { COLORS } from "../../styles/colors";
+import { useMeData } from "../../utils/useMeData";
 
 interface NavOptionsProps {
     position: DOMRect | null;
@@ -78,6 +79,7 @@ const NavOptionText = styled(PageText).attrs(
 
 const NavOptions: FunctionComponent<NavOptionsProps> = ({ position, closeOptions, buttonRef }) => {
     const ref = useRef<HTMLDivElement | null>(null);
+    const { me } = useMeData();
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -115,34 +117,63 @@ const NavOptions: FunctionComponent<NavOptionsProps> = ({ position, closeOptions
 
     return (
         <NavOptionsContainer ref={ref} position={buttonPosition} ready={ready}>
-            <NavOption>
-                <Link
-                    to="/settings"
-                    title="Settings"
-                    aria-label="Settings"
-                >
-                    <NavOptionIcon>
-                        <Settings />
-                    </NavOptionIcon>
-                    <NavOptionText>
-                        Settings
-                    </NavOptionText>
-                </Link>
-            </NavOption>
-            <NavOption>
-                <Link
-                    to="/logout"
-                    title="Log out"
-                    aria-label="Log out"
-                >
-                    <NavOptionIcon>
-                        <Exit isRed={true} />
-                    </NavOptionIcon>
-                    <NavOptionText color={COLORS.red}>
-                        Log out
-                    </NavOptionText>
-                </Link>
-            </NavOption>
+            {me ? (
+                <>
+                    <NavOption>
+                        <Link
+                            to="/settings"
+                            title="Settings"
+                            aria-label="Settings"
+                        >
+                            <NavOptionIcon>
+                                <Settings />
+                            </NavOptionIcon>
+                            <NavOptionText>
+                                Settings
+                            </NavOptionText>
+                        </Link>
+                    </NavOption>
+                    <NavOption>
+                        <Link
+                            to="/logout"
+                            title="Log out"
+                            aria-label="Log out"
+                        >
+                            <NavOptionIcon>
+                                <Exit isRed={true} />
+                            </NavOptionIcon>
+                            <NavOptionText color={COLORS.red}>
+                                Log out
+                            </NavOptionText>
+                        </Link>
+                    </NavOption> 
+                </>
+            ) : (
+                <>
+                    <NavOption>
+                        <Link
+                            to="/login"
+                            title="Log in to Zenith"
+                            aria-label="Log in to Zenith"
+                        >
+                            <NavOptionText>
+                                Log in
+                            </NavOptionText>
+                        </Link>
+                    </NavOption>
+                    <NavOption>
+                        <Link
+                            to="/signup"
+                            title="Sign up to Zenith"
+                            aria-label="Sign up to Zenith"
+                        >
+                            <NavOptionText color={COLORS.blue}>
+                                Sign up
+                            </NavOptionText>
+                        </Link>
+                    </NavOption>
+                </>
+            )}
         </NavOptionsContainer>
     );
 }

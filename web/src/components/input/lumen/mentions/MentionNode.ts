@@ -1,5 +1,4 @@
 import type { Spread } from "lexical";
-
 import {
     DOMConversionMap,
     DOMConversionOutput,
