@@ -1,12 +1,11 @@
 import styled from "styled-components";
 import Head from "../components/Head";
 import AuthLayout from "../components/layouts/AuthLayout";
-import Preloader from "../components/utils/Preloader";
 import { useLogoutMutation } from "../generated/graphql";
 import { AuthForm, AuthFormTitle, Button, PageBlock, PageTextMB24 } from "../styles/global";
 import { COLORS } from "../styles/colors";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "../utils/AuthContext";
+import { useMeData } from "../utils/useMeData";
 
 const LogoutButton = styled(Button)`
     background-color: ${COLORS.red};
@@ -14,13 +13,10 @@ const LogoutButton = styled(Button)`
 `;
 
 function LogOut() {
-    const { user, logOutAndResetToken } = useAuth();
+    const { logOutAndResetToken } = useAuth();
     const [logout, { client }] = useLogoutMutation();
-    const navigate = useNavigate();
 
-    if (!user) {
-        return <Preloader />;
-    }
+    const { me } = useMeData();
 
     return (
         <>
@@ -30,7 +26,7 @@ function LogOut() {
                     <AuthForm>
                         <AuthFormTitle>Log out</AuthFormTitle>
                         <PageTextMB24>
-                            Do you really want to disconnect from{" "}<b>@{user.username}</b>?
+                            Do you really want to disconnect from{" "}<b>{me ? `@${me.username}` : "this account"}</b>?
                         </PageTextMB24>
                         <PageBlock>
                             <LogoutButton
@@ -41,11 +37,9 @@ function LogOut() {
                                 onClick={async () => {
                                     await logout();
 
-                                    logOutAndResetToken();
-                                    
                                     await client.resetStore();
-                                    
-                                    navigate(0);
+
+                                    logOutAndResetToken();                                                                  
                                 }}
                             >
                                 Log out

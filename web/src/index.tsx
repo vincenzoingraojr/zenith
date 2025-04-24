@@ -150,13 +150,13 @@ const ThemedApp = () => {
 
 ReactDOM.render(
     <ApolloProvider client={client}>
-        <AuthProvider>
-            <BrowserRouter>
+        <BrowserRouter>
+            <AuthProvider>
                 <ThemeProviderWrapper>
                     <ThemedApp />
                 </ThemeProviderWrapper>
-            </BrowserRouter>
-        </AuthProvider>
+            </AuthProvider>
+        </BrowserRouter>
     </ApolloProvider>,
     document.getElementById("root")
 );

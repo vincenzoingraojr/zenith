@@ -2,10 +2,10 @@ import Head from "../components/Head";
 import { PageTextMB24 } from "../styles/global";
 import PageLayout from "../components/layouts/PageLayout";
 import PageContentLayout from "../components/layouts/sublayouts/PageContentLayout";
-import { useAuth } from "../utils/AuthContext";
+import { useMeData } from "../utils/useMeData";
 
 function HomePage() {
-    const { user } = useAuth();
+    const { me } = useMeData();
 
     return (
         <>
@@ -30,7 +30,7 @@ function HomePage() {
                                     That now our dreams, they've finally come true.
                                 </PageTextMB24>
                                 <PageTextMB24>
-                                    {user ? `@${user.username}` : "No data."}
+                                    {me ? `@${me.username}` : "No data."}
                                 </PageTextMB24>
                             </>
                         }

@@ -2,7 +2,7 @@ import { Form, Formik } from "formik";
 import Head from "../components/Head";
 import { AuthFormContent, AuthForm, PageBlock, StandardButton, Status, ModalFormContainer, PageTextMB24, SmallButton, PageText } from "../styles/global";
 import InputField from "../components/input/InputField";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { MeDocument, MeQuery, User, useResendOtpMutation, useVerifyOtpMutation } from "../generated/graphql";
 import { BAD_REQUEST_MESSAGE } from "../utils/constants";
 import { useEffect, useState } from "react";
@@ -38,7 +38,6 @@ function VerifyOTP() {
 
     const [verifyOTP] = useVerifyOtpMutation();
 
-    const navigate = useNavigate();
 
     const [minutes, setMinutes] = useState(0);
     const [seconds, setSeconds] = useState(0);
@@ -118,7 +117,6 @@ function VerifyOTP() {
                                 if (response.data.verifyOTP.user && response.data.verifyOTP.ok) {
                                     if (response.data.verifyOTP.accessToken && location.state.isLogin) {
                                         logInAndSetToken(response.data.verifyOTP.user, response.data.verifyOTP.accessToken);
-                                        navigate(0);
                                     }
                                 }
                             } else {

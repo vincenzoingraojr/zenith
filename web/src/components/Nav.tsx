@@ -13,7 +13,7 @@ import NavOptions from "./utils/NavOptions";
 import { ControlContainer } from "../styles/global";
 import Menu from "./icons/Menu";
 import { useNavOptions } from "./utils/hooks";
-import { useAuth } from "../utils/AuthContext";
+import { useMeData } from "../utils/useMeData";
 
 interface NavProps {
     noNav?: boolean;
@@ -137,7 +137,7 @@ const NavOptionsContainer = styled.div`
 `;
 
 const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
-    const { user } = useAuth();
+    const { me } = useMeData();
     const { showOptions, toggleOptions, closeOptions } = useNavOptions();
 
     const [position, setPosition] = useState<DOMRect | null>(null);
@@ -198,13 +198,13 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                         )}
                     </NavLink>
                 </NavItemLink>
-                {user && (
+                {me && (
                     <>
                         <ProfileNavItemLink>
                             <NavLink
-                                to={`/${user.username}`}
-                                title={user.name}
-                                aria-label={user.name}
+                                to={`/${me.username}`}
+                                title={me.name}
+                                aria-label={me.name}
                                 end
                             >
                                 {({ isActive }) => (
