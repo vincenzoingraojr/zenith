@@ -39,7 +39,7 @@ function SignUp() {
                                     variables: values,
                                 });
 
-                                if (response.data && response.data.signup) {
+                                if (response.data) {
                                     if (response.data.signup.errors && response.data.signup.errors.length > 0) {
                                         setErrors(toErrorMap(response.data.signup.errors));
                                     } else {

@@ -34,15 +34,17 @@ const RecoverPasswordScreen = ({ navigation }: Props) => {
             },
         });
 
-        if (response.data && response.data.sendRecoveryEmail) {
-            if (response.data.sendRecoveryEmail.status && response.data.sendRecoveryEmail.status.length > 0) {
-                Toast.show(response.data.sendRecoveryEmail.status as string, toastProps);
-            } else {
+        setErrors({});
+
+        if (response.data) {
+            if (response.data.sendRecoveryEmail.errors && response.data.sendRecoveryEmail.errors.length > 0) {
                 setErrors(
                     toErrorMap(
                         response.data.sendRecoveryEmail.errors!
                     )
                 );
+            } else {
+                Toast.show(response.data.sendRecoveryEmail.status as string, toastProps);
             }
         } else {
             Toast.show("An error has occurred, please try again later.", toastProps);

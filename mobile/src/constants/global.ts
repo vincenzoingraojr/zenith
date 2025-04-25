@@ -108,9 +108,9 @@ export const globalStyles = StyleSheet.create({
         fontFamily: "Inter_700Bold",
     },
     drawerUserButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
     },
     error: {
         fontSize: 16,

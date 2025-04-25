@@ -27,7 +27,7 @@ const TabStack = () => {
     const [imageUrl, setImageUrl] = useState<string>(require("../images/profile-picture.png"));
 
     useEffect(() => {
-        if (data && data.me && data.me.profile.profilePicture) {
+        if (data && data.me && data.me.profile.profilePicture.length > 0) {
             setImageUrl(data.me.profile.profilePicture);
         } else {
             setImageUrl(require("../images/profile-picture.png"));

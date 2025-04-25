@@ -8,7 +8,7 @@ const Home: FunctionComponent<IconProps> = ({ isActive }) => {
     const color = textColorProp();
 
     return (
-        <Svg width="30" height="30" viewBox="0 0 24 24" fill={isActive ? COLORS.blue : color} stroke={"none"}>
+        <Svg width="24" height="24" viewBox="0 0 24 24" fill={isActive ? COLORS.blue : color} stroke={"none"}>
             {isActive ? (
                 <Path fillRule="evenodd" clipRule="evenodd" d="M1 20C1 21.1046 1.89543 22 3 22H10V20V17C10 16.4477 10.4477 16 11 16H13C13.5523 16 14 16.4477 14 17V20V22H21C22.1046 22 23 21.1046 23 20V11.5277C23 10.5679 22.5407 9.666 21.7645 9.10147L12 2L2.23548 9.10147C1.45925 9.666 1 10.5679 1 11.5277V20Z" />
             ) : (

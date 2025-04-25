@@ -10,6 +10,7 @@ import { COLORS } from "../constants/colors";
 import Profile from "../components/icons/Profile";
 import Settings from "../components/icons/Settings";
 import { useAuth } from "./AuthContext";
+import Exit from "../components/icons/Exit";
 
 const DrawerContent: FunctionComponent<DrawerContentComponentProps> = (props) => {
     const styles = theme();
@@ -20,7 +21,7 @@ const DrawerContent: FunctionComponent<DrawerContentComponentProps> = (props) =>
     const [imageUrl, setImageUrl] = useState<string>(require("../images/profile-picture.png"));
 
     useEffect(() => {
-        if (data && data.me && data.me.profile.profilePicture) {
+        if (data && data.me && data.me.profile.profilePicture.length > 0) {
             setImageUrl(data.me.profile.profilePicture);
         } else {
             setImageUrl(require("../images/profile-picture.png"));
@@ -75,7 +76,8 @@ const DrawerContent: FunctionComponent<DrawerContentComponentProps> = (props) =>
                                 await logout();
                             }}    
                         >
-                            <Text style={[styles.text]}>Log out from <Text style={[styles.text, globalStyles.boldText]}>@{data.me.username}</Text></Text>
+                            <Exit />
+                            <Text style={[styles.text, globalStyles.boldText]}>Log out</Text>
                         </TouchableOpacity>
                     )}
                 </ScrollView>

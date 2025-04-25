@@ -18,7 +18,17 @@ import * as Device from "expo-device";
 
 type RootStackParamList = {
     LogIn: { input: string | null };
-    OTPVerification: { from: string, isLogin: boolean, input: string, password: string };
+    OTPVerification: { 
+        from: string, 
+        isLogin: boolean, 
+        input: string, 
+        password: string,
+        clientName: string,
+        clientOS: string,
+        clientType: string,
+        deviceLocation: string,
+        country: string,
+    };
     RecoverPassword: undefined;
 };
 
@@ -73,24 +83,35 @@ const LogInScreen = () => {
             },
         });
 
-        if (response.data && response.data.login) {
-            if (response.data.login.accessToken && response.data.login.user) {
-                await login(response.data.login.accessToken);
+        setErrors({});
+
+        if (response.data) {
+            if (response.data.login.ok && response.data.login.accessToken && response.data.login.user) {
                 Toast.show(response.data.login.status as string, toastProps);
-            } else if (response.data.login.user && response.data.login.user.userSettings.twoFactorAuth) {
+                await login(response.data.login.accessToken);
+            } else if (response.data.login.user && response.data.login.user.userSettings.twoFactorAuth && response.data.login.status === "otp_sent") {
                 navigation.navigate("OTPVerification", { 
                     from:
                         route.name,
                     isLogin: true,
                     input,
                     password,
+                    clientName: Device.modelName || "Unknown",
+                    clientOS: Platform.OS,
+                    clientType: Platform.OS === "web" ? "browser" : "native",
+                    deviceLocation: userLocation,
+                    country,
                 });
-            } else if (response.data.login.errors && response.data.login.errors.length > 0) {
-                setErrors(
-                    toErrorMap(response.data.login.errors)
-                );
+            } else if (response.data.login.user && response.data.login.status === "account_deactivated") {
+                console.log("Recover your account.");
             } else {
-                Toast.show(response.data.login.status as string, toastProps);
+                if (response.data.login.errors && response.data.login.errors.length > 0) {
+                    setErrors(
+                        toErrorMap(response.data.login.errors)
+                    );
+                } else {
+                    Toast.show(response.data.login.status as string, toastProps);
+                }
             }
         } else {
             Toast.show("An error has occurred, please try again later.", toastProps);

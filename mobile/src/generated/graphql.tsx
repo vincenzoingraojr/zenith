@@ -1394,6 +1394,14 @@ export type NotAuthModifyPasswordMutationVariables = Exact<{
 
 export type NotAuthModifyPasswordMutation = { __typename?: 'Mutation', notAuthModifyPassword: { __typename?: 'UserResponse', status?: string | null, ok: boolean, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
 
+export type PostFeedQueryVariables = Exact<{
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type PostFeedQuery = { __typename?: 'Query', postFeed?: Array<{ __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType: string, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null }> | null };
+
 export type ReactivateAccountMutationVariables = Exact<{
   input: Scalars['String']['input'];
   password: Scalars['String']['input'];
@@ -1428,6 +1436,14 @@ export type SignupMutationVariables = Exact<{
 
 
 export type SignupMutation = { __typename?: 'Mutation', signup: { __typename?: 'UserResponse', status?: string | null, ok: boolean, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
+
+export type UsersToMessageQueryVariables = Exact<{
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type UsersToMessageQuery = { __typename?: 'Query', usersToMessage?: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }> | null };
 
 export type VerifyEmailAddressMutationVariables = Exact<{
   token: Scalars['String']['input'];
@@ -1851,6 +1867,99 @@ export function useNotAuthModifyPasswordMutation(baseOptions?: ApolloReactHooks.
 export type NotAuthModifyPasswordMutationHookResult = ReturnType<typeof useNotAuthModifyPasswordMutation>;
 export type NotAuthModifyPasswordMutationResult = Apollo.MutationResult<NotAuthModifyPasswordMutation>;
 export type NotAuthModifyPasswordMutationOptions = Apollo.BaseMutationOptions<NotAuthModifyPasswordMutation, NotAuthModifyPasswordMutationVariables>;
+export const PostFeedDocument = gql`
+    query PostFeed($offset: Int, $limit: Int) {
+  postFeed(offset: $offset, limit: $limit) {
+    id
+    itemId
+    authorId
+    type
+    content
+    isEdited
+    views
+    lang
+    topics
+    author {
+      id
+      name
+      username
+      email
+      type
+      gender
+      birthDate {
+        date
+        monthAndDayVisibility
+        yearVisibility
+      }
+      emailVerified
+      profile {
+        profilePicture
+        profileBanner
+        bio
+        website
+      }
+      userSettings {
+        incomingMessages
+        twoFactorAuth
+      }
+      searchSettings {
+        hideSensitiveContent
+        hideBlockedAccounts
+      }
+      createdAt
+      updatedAt
+      hiddenPosts
+    }
+    isReplyToId
+    isReplyToType
+    quotedPostId
+    media {
+      id
+      type
+      src
+      alt
+    }
+    mentions
+    hashtags
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __usePostFeedQuery__
+ *
+ * To run a query within a React component, call `usePostFeedQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePostFeedQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePostFeedQuery({
+ *   variables: {
+ *      offset: // value for 'offset'
+ *      limit: // value for 'limit'
+ *   },
+ * });
+ */
+export function usePostFeedQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<PostFeedQuery, PostFeedQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<PostFeedQuery, PostFeedQueryVariables>(PostFeedDocument, options);
+      }
+export function usePostFeedLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PostFeedQuery, PostFeedQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<PostFeedQuery, PostFeedQueryVariables>(PostFeedDocument, options);
+        }
+export function usePostFeedSuspenseQuery(baseOptions?: ApolloReactHooks.SuspenseQueryHookOptions<PostFeedQuery, PostFeedQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useSuspenseQuery<PostFeedQuery, PostFeedQueryVariables>(PostFeedDocument, options);
+        }
+export type PostFeedQueryHookResult = ReturnType<typeof usePostFeedQuery>;
+export type PostFeedLazyQueryHookResult = ReturnType<typeof usePostFeedLazyQuery>;
+export type PostFeedSuspenseQueryHookResult = ReturnType<typeof usePostFeedSuspenseQuery>;
+export type PostFeedQueryResult = Apollo.QueryResult<PostFeedQuery, PostFeedQueryVariables>;
 export const ReactivateAccountDocument = gql`
     mutation ReactivateAccount($input: String!, $password: String!) {
   reactivateAccount(input: $input, password: $password) {
@@ -2010,6 +2119,75 @@ export function useSignupMutation(baseOptions?: ApolloReactHooks.MutationHookOpt
 export type SignupMutationHookResult = ReturnType<typeof useSignupMutation>;
 export type SignupMutationResult = Apollo.MutationResult<SignupMutation>;
 export type SignupMutationOptions = Apollo.BaseMutationOptions<SignupMutation, SignupMutationVariables>;
+export const UsersToMessageDocument = gql`
+    query UsersToMessage($offset: Int, $limit: Int) {
+  usersToMessage(offset: $offset, limit: $limit) {
+    id
+    name
+    username
+    email
+    type
+    gender
+    birthDate {
+      date
+      monthAndDayVisibility
+      yearVisibility
+    }
+    emailVerified
+    profile {
+      profilePicture
+      profileBanner
+      bio
+      website
+    }
+    userSettings {
+      incomingMessages
+      twoFactorAuth
+    }
+    searchSettings {
+      hideSensitiveContent
+      hideBlockedAccounts
+    }
+    createdAt
+    updatedAt
+    hiddenPosts
+  }
+}
+    `;
+
+/**
+ * __useUsersToMessageQuery__
+ *
+ * To run a query within a React component, call `useUsersToMessageQuery` and pass it any options that fit your needs.
+ * When your component renders, `useUsersToMessageQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useUsersToMessageQuery({
+ *   variables: {
+ *      offset: // value for 'offset'
+ *      limit: // value for 'limit'
+ *   },
+ * });
+ */
+export function useUsersToMessageQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<UsersToMessageQuery, UsersToMessageQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<UsersToMessageQuery, UsersToMessageQueryVariables>(UsersToMessageDocument, options);
+      }
+export function useUsersToMessageLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<UsersToMessageQuery, UsersToMessageQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<UsersToMessageQuery, UsersToMessageQueryVariables>(UsersToMessageDocument, options);
+        }
+export function useUsersToMessageSuspenseQuery(baseOptions?: ApolloReactHooks.SuspenseQueryHookOptions<UsersToMessageQuery, UsersToMessageQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useSuspenseQuery<UsersToMessageQuery, UsersToMessageQueryVariables>(UsersToMessageDocument, options);
+        }
+export type UsersToMessageQueryHookResult = ReturnType<typeof useUsersToMessageQuery>;
+export type UsersToMessageLazyQueryHookResult = ReturnType<typeof useUsersToMessageLazyQuery>;
+export type UsersToMessageSuspenseQueryHookResult = ReturnType<typeof useUsersToMessageSuspenseQuery>;
+export type UsersToMessageQueryResult = Apollo.QueryResult<UsersToMessageQuery, UsersToMessageQueryVariables>;
 export const VerifyEmailAddressDocument = gql`
     mutation VerifyEmailAddress($token: String!) {
   verifyEmailAddress(token: $token) {

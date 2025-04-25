@@ -52,15 +52,17 @@ const SignUpScreen = ({ navigation }: Props) => {
             },
         });
 
-        if (response.data && response.data.signup) {
-            if (response.data.signup.status && response.data.signup.status.length > 0) {
-                Toast.show(response.data.signup.status, toastProps);
-            } else {
+        setErrors({});
+
+        if (response.data) {
+            if (response.data.signup.errors && response.data.signup.errors.length > 0) {
                 setErrors(
                     toErrorMap(
                         response.data.signup.errors as FieldError[]
                     )
                 );
+            } else {
+                Toast.show(response.data.signup.status as string, toastProps);
             }
         } else {
             Toast.show("An unknown error has occurred, please try again later.", toastProps);

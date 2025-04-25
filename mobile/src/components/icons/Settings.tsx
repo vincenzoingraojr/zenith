@@ -5,7 +5,7 @@ const Settings = () => {
     const color = textColorProp();
 
     return (
-        <Svg width="30" height="30" viewBox="0 0 24 24" fill={color} stroke={"none"}>
+        <Svg width="24" height="24" viewBox="0 0 24 24" fill={color} stroke={"none"}>
             <Path
                 fillRule="evenodd"
                 clipRule="evenodd"
