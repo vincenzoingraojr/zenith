@@ -116,27 +116,6 @@ async function main() {
         return res.send({ ok: true, accessToken: createAccessToken(user, session), sessionId: session.sessionId });
     });
 
-    app.post("/users", async (_, res) => {
-        let rawUsers = await userRepository.find();
-        let users: any = [];
-
-        rawUsers.map((user: User) => (
-            users.push({
-                id: user.id,
-                name: user.name,
-                link: "/" + user.username,
-                username: user.username,
-                avatar: user.profile.profilePicture,
-            })
-        ));
-
-        if (users.length > 0) {
-            return res.send({ ok: true, users });
-        } else {
-            return res.send({ ok: false, users: [] });
-        }
-    });
-
     app.post("/presigned-url", async (req, res) => {
         const { key, type, itemType } = req.body;
         let url;

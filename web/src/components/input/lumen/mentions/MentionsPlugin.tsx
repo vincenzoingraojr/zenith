@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { $createMentionNode } from "./MentionNode";
 import profilePicture from "../../../../images/profile-picture.png";
+import { User, useUsersToMessageQuery } from "../../../../generated/graphql";
 
 const MentionsMenuContainer = styled.div`
     display: block;
@@ -287,22 +288,41 @@ function MentionsTypeaheadMenuItem({
     );
 }
 
+type UserMention = {
+    id: number;
+    name: string;
+    link: string;
+    username: string;
+    avatar: string;
+}
+
 export default function MentionsPlugin(): JSX.Element | null {
     const [editor] = useLexicalComposerContext();
 
     const [queryString, setQueryString] = useState<string | null>(null);
 
-    const [mentionData, setMentionData] = useState<any[]>([]);
+    const [mentionData, setMentionData] = useState<UserMention[]>([]);
+    
+    const { data } = useUsersToMessageQuery({ fetchPolicy: "cache-and-network" });
 
     useEffect(() => {
-        fetch(`${process.env.REACT_APP_SERVER_ORIGIN}/users`, {
-            method: "POST",
-            credentials: "include",
-        }).then(async (x) => {
-            const { users } = await x.json();
+        if (data && data.usersToMessage) {
+            const rawUsers = data.usersToMessage;
+            const users: UserMention[] = [];
+
+            rawUsers.map((user: User) => (
+                users.push({
+                    id: user.id,
+                    name: user.name,
+                    link: "/" + user.username,
+                    username: user.username,
+                    avatar: user.profile.profilePicture,
+                })
+            ));
+
             setMentionData(users);
-        });
-    }, []);
+        }
+    }, [data]);
 
     const results = useMentionLookupService(queryString, mentionData);
 
