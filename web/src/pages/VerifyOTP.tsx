@@ -38,7 +38,6 @@ function VerifyOTP() {
 
     const [verifyOTP] = useVerifyOtpMutation();
 
-
     const [minutes, setMinutes] = useState(0);
     const [seconds, setSeconds] = useState(0);
 
@@ -116,7 +115,7 @@ function VerifyOTP() {
 
                                 if (response.data.verifyOTP.user && response.data.verifyOTP.ok) {
                                     if (response.data.verifyOTP.accessToken && location.state.isLogin) {
-                                        logInAndSetToken(response.data.verifyOTP.user, response.data.verifyOTP.accessToken);
+                                        logInAndSetToken(response.data.verifyOTP.accessToken);
                                     }
                                 }
                             } else {
@@ -153,7 +152,7 @@ function VerifyOTP() {
                         <ResendOTPButton
                             role="button"
                             title="Resend OTP"
-                            aria-label="Resend OPT"
+                            aria-label="Resend OTP"
                             disabled={seconds > 0 || minutes > 0}
                             onClick={async () => {
                                 const response = await resendOTP({

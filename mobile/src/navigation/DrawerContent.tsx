@@ -74,6 +74,8 @@ const DrawerContent: FunctionComponent<DrawerContentComponentProps> = (props) =>
                                 await client.resetStore();
 
                                 await logout();
+
+                                props.navigation.navigate("Index");
                             }}    
                         >
                             <Exit />

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Button from "../components/ui/Button";
 import InputField from "../components/ui/InputField";
 import { textColorProp, theme } from "../constants/theme";
-import { useSendRecoveryEmailMutation } from "../generated/graphql";
+import { useReactivateAccountMutation } from "../generated/graphql";
 import Toast from "react-native-root-toast";
 import { toastProps } from "../constants/toast";
 import { toErrorMap } from "../utils/toErrorMap";
@@ -13,38 +13,40 @@ import AuthLayout from "../components/layouts/AuthLayout";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 type RootStackParamList = {
-    RecoverPassword: any | undefined;
+    ReactivateAccount: any | undefined;
     FindUserBeforeLogIn: undefined;
 };
 
-type Props = NativeStackScreenProps<RootStackParamList, "RecoverPassword">;
+type Props = NativeStackScreenProps<RootStackParamList, "ReactivateAccount">;
 
-const RecoverPasswordScreen = ({ navigation }: Props) => {
+const ReactivateAccountScreen = ({ navigation }: Props) => {
     const styles = theme();
-    const [email, setEmail] = useState("");
+    const [input, setInput] = useState("");
+    const [password, setPassword] = useState("");
     const [errors, setErrors] = useState<Record<string, string>>({});
     const color = textColorProp();
     
-    const [sendEmail] = useSendRecoveryEmailMutation();
+    const [reactivateAccount] = useReactivateAccountMutation();
 
-    const handleSendEmail = async () => {
-        const response = await sendEmail({
+    const handleReactivateAccount = async () => {
+        const response = await reactivateAccount({
             variables: {
-                email,
+                input,
+                password,
             },
         });
 
         setErrors({});
 
         if (response.data) {
-            if (response.data.sendRecoveryEmail.errors && response.data.sendRecoveryEmail.errors.length > 0) {
+            if (response.data.reactivateAccount.errors && response.data.reactivateAccount.errors.length > 0) {
                 setErrors(
                     toErrorMap(
-                        response.data.sendRecoveryEmail.errors
+                        response.data.reactivateAccount.errors
                     )
                 );
             } else {
-                Toast.show(response.data.sendRecoveryEmail.status as string, toastProps);
+                Toast.show(response.data.reactivateAccount.status as string, toastProps);
             }
         } else {
             Toast.show("An error has occurred, please try again later.", toastProps);
@@ -58,17 +60,18 @@ const RecoverPasswordScreen = ({ navigation }: Props) => {
                     content={
                         <View style={globalStyles.authPageContainer}>
                             <Text style={[styles.text, globalStyles.authTitle]}>
-                                Recover your password
+                                Reactivate your account
                             </Text>
                             <View style={globalStyles.authForm}>
-                                <InputField field="email" errors={errors} placeholder="Email" value={email} onUpdateValue={(text) => setEmail(text)} keyboardType="email-address" />
+                                <InputField field="input" errors={errors} placeholder="Username or email" value={input} onUpdateValue={(text) => setInput(text)} />
+                                <InputField field="password" errors={errors} placeholder="Password" value={password} onUpdateValue={(text) => setPassword(text)} type="password" />
                             </View>
                         </View>
                     }
                     bottomNav={
                         <View style={globalStyles.authBottomNav}>
                             <Button buttonStyle={{ backgroundColor: globalStyles.smallButton.backgroundColor, borderRadius: globalStyles.smallButton.borderRadius, borderWidth: globalStyles.smallButton.borderWidth, color, borderColor: color }} smallButton={true} text="Log in" onPress={() => { navigation.navigate("FindUserBeforeLogIn") }} />
-                            <Button buttonStyle={globalStyles.standardButton} text="Send email" onPress={handleSendEmail} disabled={email.length <= 2} />
+                            <Button buttonStyle={globalStyles.standardButton} text="Reactivate account" onPress={handleReactivateAccount} disabled={input.length <= 2 || password.length <= 2} />
                         </View>
                     }
                 />
@@ -77,4 +80,4 @@ const RecoverPasswordScreen = ({ navigation }: Props) => {
     );
 }
 
-export default RecoverPasswordScreen;
+export default ReactivateAccountScreen;

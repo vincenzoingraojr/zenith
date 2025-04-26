@@ -13,7 +13,7 @@ import { Layout } from "../components/Layout";
 import AuthLayout from "../components/layouts/AuthLayout";
 import { getUserLocationFromAPI } from "../utils/getLocation";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
+import { Link, RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import * as Device from "expo-device";
 
 type RootStackParamList = {
@@ -30,6 +30,7 @@ type RootStackParamList = {
         country: string,
     };
     RecoverPassword: undefined;
+    ReactivateAccount: undefined;
 };
 
 type LogInRouteProp = RouteProp<RootStackParamList, "LogIn">;
@@ -60,6 +61,8 @@ const LogInScreen = () => {
         });
     }, []);
 
+    const [recovery, setRecovery] = useState(false);
+
     const handleLogin = async () => {
         const response = await loginMutation({
             variables: {
@@ -84,6 +87,7 @@ const LogInScreen = () => {
         });
 
         setErrors({});
+        setRecovery(false);
 
         if (response.data) {
             if (response.data.login.ok && response.data.login.accessToken && response.data.login.user) {
@@ -103,7 +107,7 @@ const LogInScreen = () => {
                     country,
                 });
             } else if (response.data.login.user && response.data.login.status === "account_deactivated") {
-                console.log("Recover your account.");
+                setRecovery(true);
             } else {
                 if (response.data.login.errors && response.data.login.errors.length > 0) {
                     setErrors(
@@ -128,6 +132,11 @@ const LogInScreen = () => {
                                 Enter your password
                             </Text>
                             <View style={globalStyles.authForm}>
+                                {recovery && (
+                                    <Text style={styles.text}>
+                                        Account deactivated, but you can reactivate it <Link style={globalStyles.link} to="/ReactivateAccount" aria-label="Reactivate your account">here</Link>.
+                                    </Text>
+                                )}
                                 <InputField field="input" errors={errors} placeholder="Username or email" value={input} onUpdateValue={(text) => setInput(text)} />
                                 <InputField field="password" errors={errors} placeholder="Password" value={password} onUpdateValue={(text) => setPassword(text)} type="password" />
                             </View>

@@ -8,7 +8,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import InputField from "../components/ui/InputField";
 import { useState } from "react";
 import DatePicker from "../components/ui/DatePicker";
-import { FieldError, useSignupMutation } from "../generated/graphql";
+import { useSignupMutation } from "../generated/graphql";
 import { toErrorMap } from "../utils/toErrorMap";
 import Toast from "react-native-root-toast";
 import { toastProps } from "../constants/toast";
@@ -58,7 +58,7 @@ const SignUpScreen = ({ navigation }: Props) => {
             if (response.data.signup.errors && response.data.signup.errors.length > 0) {
                 setErrors(
                     toErrorMap(
-                        response.data.signup.errors as FieldError[]
+                        response.data.signup.errors
                     )
                 );
             } else {

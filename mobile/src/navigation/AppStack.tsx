@@ -14,6 +14,13 @@ import Logo from "../components/icons/Logo";
 import Bell from "../components/icons/Bell";
 import NotificationScreen from "../screens/NotificationScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import IndexScreen from "../screens/IndexScreen";
+import FindUserBeforeLogInScreen from "../screens/FindUserBeforeLogInScreen";
+import LogInScreen from "../screens/LogInScreen";
+import SignUpScreen from "../screens/SignUpScreen";
+import RecoverPasswordScreen from "../screens/RecoverPasswordScreen";
+import ReactivateAccountScreen from "../screens/ReactivateAccountScreen";
+import OTPVerificationScreen from "../screens/OTPVerificationScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -101,7 +108,7 @@ const DrawerTabStack = () => {
     );
 }
 
-const AppStack = () => {
+const AppStack = ({ isAuth }: { isAuth: boolean }) => {
     const styles = theme();
 
     return (
@@ -113,21 +120,78 @@ const AppStack = () => {
                 headerShadowVisible: false,
                 headerTitleStyle: { fontFamily: styles.header.fontFamily, fontSize: styles.header.fontSize },
                 animation: "simple_push",
-                headerBackVisible: true,
                 headerBackTitle: "Back",
             }}
-            initialRouteName="DrawerTabStack"
+            initialRouteName={isAuth ? "DrawerTabStack": "Index"}
         >
+            {isAuth ? (
+                <Stack.Group>
+                    <Stack.Screen 
+                        name="DrawerTabStack"
+                        component={DrawerTabStack}
+                    />
+                    <Stack.Screen 
+                        name="Profile"
+                        component={ProfileScreen}
+                        options={{
+                            headerShown: true,
+                            title: "Your profile",
+                        }}
+                    />
+                </Stack.Group>
+            ) : (
+                <Stack.Group
+                    screenOptions={{
+                        headerShown: true,
+                        headerTitleAlign: "center",
+                        headerTitle: () => <Logo />,
+                    }}
+                >
+                    <Stack.Screen 
+                        name="Index" 
+                        component={IndexScreen}
+                    />
+                    <Stack.Screen 
+                        name="FindUserBeforeLogIn" 
+                        component={FindUserBeforeLogInScreen}
+                    />
+                    <Stack.Screen 
+                        name="LogIn" 
+                        component={LogInScreen} 
+                        initialParams={{ input: null }}
+                    />
+                    <Stack.Screen 
+                        name="SignUp" 
+                        component={SignUpScreen} 
+                    />
+                    <Stack.Screen 
+                        name="RecoverPassword" 
+                        component={RecoverPasswordScreen}
+                    />
+                    <Stack.Screen 
+                        name="ReactivateAccount" 
+                        component={ReactivateAccountScreen}
+
+                    />
+                </Stack.Group>
+            )}
             <Stack.Screen 
-                name="DrawerTabStack"
-                component={DrawerTabStack}
-            />
-            <Stack.Screen 
-                name="Profile"
-                component={ProfileScreen}
+                name="OTPVerification" 
+                component={OTPVerificationScreen}
+                initialParams={{ 
+                    from: "", 
+                    isLogin: false,
+                    input: "", 
+                    password: "",
+                    clientName: "",
+                    clientOS: "",
+                    clientType: "",
+                    deviceLocation: "",
+                    country: "",
+                }}
                 options={{
                     headerShown: true,
-                    title: "Your profile",
+                    title: "Enter the OTP",
                 }}
             />
         </Stack.Navigator>

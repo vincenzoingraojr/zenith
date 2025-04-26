@@ -36,7 +36,7 @@ const FindUserBeforeLogInScreen = ({ navigation }: Props) => {
 
         if (response.data && response.data.findUserBeforeLogIn) {
             if (response.data.findUserBeforeLogIn.status && response.data.findUserBeforeLogIn.status.length > 0) {
-                Toast.show(response.data.findUserBeforeLogIn.status as string, toastProps);
+                Toast.show(response.data.findUserBeforeLogIn.status, toastProps);
             }
 
             if (response.data.findUserBeforeLogIn.user) {

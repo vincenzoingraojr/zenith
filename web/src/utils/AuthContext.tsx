@@ -1,9 +1,8 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
-import { User } from "../generated/graphql";
 import { setAccessToken } from "./token";
 
 interface AuthContextType {
-    logInAndSetToken: (user: User, token: string) => void;
+    logInAndSetToken: (token: string) => void;
     logOutAndResetToken: () => void;
     isAuth: boolean;
     loading: boolean;
@@ -37,7 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
     }, []);
 
-    const logInAndSetToken = (user: User, token: string) => {
+    const logInAndSetToken = (token: string) => {
         setAccessToken(token);
         setIsAuth(true);
     }

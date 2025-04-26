@@ -1,6 +1,5 @@
 import { NavigationContainer } from "@react-navigation/native";
 import AppStack from "./AppStack";
-import AuthStack from "./AuthStack";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { COLORS } from "../constants/colors";
 import { theme } from "../constants/theme";
@@ -26,7 +25,7 @@ function Navigation() {
         <RootSiblingParent>
             <ActionSheetProvider useCustomActionSheet={true}>
                 <NavigationContainer>
-                    {isAuth ? <AppStack /> : <AuthStack />}
+                    <AppStack isAuth={isAuth} />
                 </NavigationContainer>
             </ActionSheetProvider>
         </RootSiblingParent>

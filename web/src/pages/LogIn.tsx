@@ -112,7 +112,7 @@ function LogIn() {
                                 if (response.data) {
                                     if (response.data.login.ok && response.data.login.user && response.data.login.accessToken) {
                                         setStatus(response.data.login.status);
-                                        logInAndSetToken(response.data.login.user, response.data.login.accessToken);
+                                        logInAndSetToken(response.data.login.accessToken);
                                     } else if (response.data.login.user && response.data.login.user.userSettings.twoFactorAuth && response.data.login.status === "otp_sent") {
                                         navigate("/verify/otp", {
                                             state: {
