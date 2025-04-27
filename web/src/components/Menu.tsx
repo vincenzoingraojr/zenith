@@ -2,7 +2,7 @@ import { FunctionComponent, useState } from "react";
 import styled from "styled-components";
 import { mediaQuery } from "../utils/mediaQuery";
 import { devices } from "../styles/devices";
-import { ControlContainer, PageText } from "../styles/global";
+import { ControlContainer, CustomSpanOption, PageText } from "../styles/global";
 import Close from "./icons/Close";
 import { useMeData } from "../utils/useMeData";
 import profilePicture from "../images/profile-picture.png";
@@ -12,6 +12,8 @@ import Settings from "./icons/Settings";
 import Exit from "./icons/Exit";
 import { COLORS } from "../styles/colors";
 import { USER_TYPES } from "../utils/constants";
+import { useThemeContext } from "../styles/ThemeContext";
+import ThemeIcon from "./icons/ThemeIcon";
 
 interface MenuProps {
     closeMenu: () => void;
@@ -212,27 +214,28 @@ const MenuNavEntry = styled.div`
     width: 100%;
     height: 60px;
 
-    a {
+    a, span {
         display: flex;
         align-items: center;
         justify-content: flex-start;
-        text-decoration: none;
         color: ${({ theme }) => theme.color};
         font-weight: 500;
         gap: 16px;
         padding-left: 16px;
         padding-right: 16px;
         background-color: transparent;
-        text-decoration: none;
         transition: background-color ease 0.2s;
         width: 100%;
         height: 60px;
         overflow: hidden;
     }
 
-    a:hover,
-    a:active {
+    a, a:hover, a:active {
         text-decoration: none;
+    }
+
+    a:hover, span:hover,
+    a:active, span:focus {
         background-color: ${({ theme }) => theme.opaqueGrey};
     }
 `;
@@ -257,6 +260,7 @@ const MenuNavEntryText = styled(PageText).attrs(
 const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
     const [visible, setVisible] = useState(true);
     const { me, loading } = useMeData();
+    const { toggleTheme, isDarkMode } = useThemeContext();
 
     return (
         <MenuWrapper>
@@ -319,6 +323,19 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                             </Link>
                         </ProfileMenuContainer>
                         <MenuNav>
+                            <MenuNavEntry>
+                                <CustomSpanOption
+                                    role="button"
+                                    title={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
+                                    aria-label={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
+                                    onClick={() => toggleTheme()}
+                                >
+                                    <MenuNavEntryIcon>
+                                        <ThemeIcon />
+                                    </MenuNavEntryIcon>
+                                    <MenuNavEntryText>Switch to {isDarkMode ? "light" : "dark"}</MenuNavEntryText>
+                                </CustomSpanOption>
+                            </MenuNavEntry>
                             <MenuNavEntry>
                                 <Link
                                     to={`/${me.username}`}

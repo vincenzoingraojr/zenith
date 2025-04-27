@@ -3,9 +3,11 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 import Settings from "../icons/Settings";
 import Exit from "../icons/Exit";
-import { PageText } from "../../styles/global";
+import { CustomSpanOption, PageText } from "../../styles/global";
 import { COLORS } from "../../styles/colors";
 import { useMeData } from "../../utils/useMeData";
+import { useThemeContext } from "../../styles/ThemeContext";
+import ThemeIcon from "../icons/ThemeIcon";
 
 interface NavOptionsProps {
     position: DOMRect | null;
@@ -35,32 +37,33 @@ const NavOption = styled.div`
     justify-content: flex-start;
     width: 100%;
 
-    a {
+    a, span {
         display: flex;
         align-items: center;
         justify-content: flex-start;
-        text-decoration: none;
         color: ${({ theme }) => theme.color};
         gap: 12px;
         font-weight: 500;
         padding: 12px 24px;
         width: 100%;
         background-color: transparent;
-        text-decoration: none;
         transition: background-color ease 0.2s;
     }
 
-    a:hover,
-    a:active {
+    a, a:hover, a:active {
         text-decoration: none;
+    }
+
+    a:hover, span:hover,
+    a:active, span:focus {
         background-color: ${({ theme }) => theme.opaqueGrey};
     }
     
-    &:first-child a {
+    &:first-child a, &:first-child span {
         border-radius: 16px 16px 0px 0px;
     }
 
-    &:last-child a {
+    &:last-child a, &:last-child span {
         border-radius: 0px 0px 16px 16px;
     }
 `;
@@ -115,8 +118,25 @@ const NavOptions: FunctionComponent<NavOptionsProps> = ({ position, closeOptions
         }
     }, [position]);
 
+    const { toggleTheme, isDarkMode } = useThemeContext();
+
     return (
         <NavOptionsContainer ref={ref} position={buttonPosition} ready={ready}>
+            <NavOption>
+                <CustomSpanOption
+                    role="button"
+                    title={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
+                    aria-label={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
+                    onClick={() => toggleTheme()}
+                >
+                    <NavOptionIcon>
+                        <ThemeIcon />
+                    </NavOptionIcon>
+                    <NavOptionText>
+                        Switch to {isDarkMode ? "light" : "dark"}
+                    </NavOptionText>
+                </CustomSpanOption>
+            </NavOption>
             {me ? (
                 <>
                     <NavOption>

@@ -1208,3 +1208,8 @@ export const AppErrorContainer = styled.div`
     padding: 24px;
     max-width: 260px;
 `;
+
+export const CustomSpanOption = styled.span`
+    display: inherit;
+    cursor: pointer;
+`;
