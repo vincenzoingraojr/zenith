@@ -80,6 +80,24 @@ export class UserService {
         }
     }
 
+    async findUsersByUsername(usernames: string[], deleted: boolean = false): Promise<User[] | null> {
+        if (usernames.length === 0) {
+            logger.warn("Ids not provided.");
+
+            return null;
+        }
+
+        try {
+            const users = await this.userRepository.find({ where: { username: In(usernames) }, withDeleted: deleted });
+
+            return users;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
+    }
+
     async findUserByEmail(email: string, deleted: boolean = false): Promise<User | null> {
         const valid = isEmail(email);
 

@@ -42,7 +42,6 @@ export class PostResponse {
 export class PostResolver {
     private readonly userService: UserService;
     private readonly notificationService: NotificationService;
-    private readonly userRepository: Repository<User>;
     private readonly postRepository: Repository<Post>;
     private readonly articleRepository: Repository<Article>;
     private readonly mediaItemRepository: Repository<MediaItem>;
@@ -56,7 +55,6 @@ export class PostResolver {
     constructor() {
         this.userService = new UserService();
         this.notificationService = new NotificationService();
-        this.userRepository = appDataSource.getRepository(User);
         this.postRepository = appDataSource.getRepository(Post);
         this.articleRepository = appDataSource.getRepository(Article);
         this.mediaItemRepository = appDataSource.getRepository(MediaItem);
@@ -404,7 +402,6 @@ export class PostResolver {
                             type: (type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST,
                             content,
                             author: user,
-                            mentions,
                             hashtags: lumen.extractHashtags(content),
                             isReplyToId,
                             isReplyToType,
@@ -431,15 +428,17 @@ export class PostResolver {
     
                         await post.save();
     
-                        if (post.mentions.length > 0) {
-                            const mentionedUsers = await this.userRepository.find({ where: { username: In(post.mentions) } });
-    
-                            if (mentionedUsers.length > 0) {
+                        if (mentions.length > 0) {
+                            const mentionedUsers = await this.userService.findUsersByUsername(mentions);
+                            const postMentions: string[] = [];
+
+                            if (mentionedUsers && mentionedUsers.length > 0) {
                                 for (const mentionedUser of mentionedUsers) {
                                     const notification = await this.notificationService.createNotification(payload.id, mentionedUser.id, post.id, type, NOTIFICATION_TYPES.MENTION, `${post.author.name} (@${post.author.username}) mentioned you in a ${(type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST}.`);
                                     
                                     if (notification) {
                                         pubSub.publish("NEW_NOTIFICATION", notification);
+                                        postMentions.push(mentionedUser.username);
     
                                         const tokens = await this.userDeviceTokenRepository.find({ where: { userId: mentionedUser.id } });
                                         const pushNotification: FirebaseNotification = {
@@ -452,6 +451,10 @@ export class PostResolver {
                                     }
                                 }
                             }
+
+                            post.mentions = postMentions;
+
+                            await post.save();
                         }
     
                         if (isReplyToId) {
@@ -463,7 +466,7 @@ export class PostResolver {
                                 isReplyToItem = await this.articleRepository.findOne({ where: { id: isReplyToId, draft: false } });
                             }
     
-                            if (isReplyToItem && (type === NOTIFICATION_TYPES.COMMENT) && (isReplyToItem.authorId !== payload.id)) {
+                            if (isReplyToItem && (type === POST_TYPES.COMMENT) && (isReplyToItem.authorId !== payload.id)) {
                                 const notification = await this.notificationService.createNotification(payload.id, isReplyToItem.authorId, post.id, type, NOTIFICATION_TYPES.COMMENT, `${post.author.name} (@${post.author.username}) commented your post.`);
         
                                 const author = await this.userService.findUserById(isReplyToItem.authorId);
@@ -570,7 +573,6 @@ export class PostResolver {
                             },
                             {
                                 content,
-                                mentions,
                                 isEdited: true,
                                 hashtags: lumen.extractHashtags(content),
                                 lang,
@@ -635,9 +637,10 @@ export class PostResolver {
                         }
 
                         if (post) {
-                            const mentionedUsers = await this.userRepository.find({ where: { username: In(post.mentions) } });
+                            const mentionedUsers = await this.userService.findUsersByUsername(mentions);
+                            const postMentions: string[] = [];
 
-                            if (mentionedUsers.length > 0) {
+                            if (mentionedUsers && mentionedUsers.length > 0) {
                                 for (const mentionedUser of mentionedUsers) {
                                     const notification = await this.notificationService.findNotification(payload.id, mentionedUser.id, post.id, post.type, NOTIFICATION_TYPES.MENTION);
 
@@ -646,6 +649,7 @@ export class PostResolver {
 
                                         if (newNotification) {
                                             pubSub.publish("NEW_NOTIFICATION", newNotification);
+                                            postMentions.push(mentionedUser.username);
 
                                             const tokens = await this.userDeviceTokenRepository.find({ where: { userId: mentionedUser.id } });
                                             const pushNotification: FirebaseNotification = {
@@ -656,9 +660,15 @@ export class PostResolver {
                                             const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.itemId}?n_id=${newNotification.notificationId}`;
                                             await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: mentionedUser.username, type: newNotification.notificationType });
                                         }
+                                    } else {
+                                        postMentions.push(mentionedUser.username);
                                     }
                                 }
                             }
+
+                            post.mentions = postMentions;
+
+                            await post.save();
 
                             const mentionNotifications = await this.notificationRepository.find({
                                 where: {
@@ -670,7 +680,7 @@ export class PostResolver {
                             });
 
                             const uselessNotifications = mentionNotifications.filter(notification =>
-                                !mentionedUsers.some(mention => mention.id === notification.recipientId)
+                                mentionedUsers && !mentionedUsers.some(mention => mention.id === notification.recipientId)
                             );
 
                             for (const deletedNotification of uselessNotifications) {
@@ -768,6 +778,26 @@ export class PostResolver {
 
             return false;
         }
+    }
+
+    // sistemare questo
+    @Mutation(() => PostResponse)
+    @UseMiddleware(isAuth)
+    async revokeMention(
+        @Arg("postId") postId: string,
+        @Ctx() { payload }: AuthContext
+    ): Promise<PostResponse> {
+        let status = "";
+        let ok = false;
+
+        if (!payload || !isUUID(postId)) {
+            logger.warn("Bad request.");
+        }
+
+        return {
+            status,
+            ok,
+        };
     }
 
     @Mutation(() => Like, { nullable: true })
