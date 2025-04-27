@@ -165,6 +165,8 @@ export class ChatResolver {
             if (followers && followers.length > 0) {
                 const followerIds = followers.filter((follower) => follower.deletedAt === null).map((follower) => follower.id);   
                 userIds.push(...mergeAndDeduplicateArrays(everyoneUsers.filter((user) => user.id !== payload.id).map((user) => user.id), followerIds));
+            } else {
+                userIds.push(...everyoneUsers.filter((user) => user.id !== payload.id).map((user) => user.id));
             }
 
             const blockActions = await this.blockRepository.find({ where: { userId: payload.id } });
