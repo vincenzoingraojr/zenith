@@ -12,10 +12,10 @@ import ModifyPassword from "./pages/ModifyPassword";
 import VerifyAccount from "./pages/VerifyAccount";
 import SignUp from "./pages/SignUp";
 import ReactivateAccount from "./pages/ReactivateAccount";
-import Explore from "./pages/search/Explore";
 import LogOut from "./pages/LogOut";
 import { useAuth } from "./utils/AuthContext";
 import { AppErrorContainer, AppErrorWrapper, PageBlock, PageText, StandardButton } from "./styles/global";
+import SearchPage from "./pages/search/SearchPage";
 
 function App() {
     const location = useLocation();
@@ -157,9 +157,9 @@ function App() {
                     }
                 />
                 <Route 
-                    path="/explore"
+                    path="/search"
                     element={
-                        <Explore />
+                        <SearchPage />
                     }
                 />                
             </Routes>

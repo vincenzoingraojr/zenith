@@ -157,7 +157,7 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({ title, t
                             </ControlContainer>
                         ) : (
                             <>
-                                {(me && !error && !customHeaderComponent) && (
+                                {(me && !error) && (
                                     <>
                                         <MainHeaderProfileContainer>
                                             <MainHeaderProfileImageContainer 

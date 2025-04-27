@@ -780,7 +780,6 @@ export class PostResolver {
         }
     }
 
-    // sistemare questo
     @Mutation(() => PostResponse)
     @UseMiddleware(isAuth)
     async revokeMention(
@@ -790,8 +789,45 @@ export class PostResolver {
         let status = "";
         let ok = false;
 
-        if (!payload || !isUUID(postId)) {
-            logger.warn("Bad request.");
+        if (!payload) {
+            status = "User not authenticated.";
+        } else if (!isUUID(postId)) {
+            status = "Invalid postId provided.";
+        } else {
+            try {
+                const post = await this.findPost(postId);
+
+                if (post) {
+                    const me = await this.userService.findUserById(payload.id);
+                    
+                    if (me && post.mentions.includes(me.username)) {
+                        const mentions = post.mentions.filter(mention => mention !== me.username);
+                        post.mentions = mentions;
+
+                        await post.save();
+
+                        status = "Your mention has been removed from the post.";
+
+                        const notification = await this.notificationService.findNotification(post.authorId, me.id, post.id, post.type, NOTIFICATION_TYPES.MENTION);
+
+                        if (notification) {
+                            await this.notificationService.deleteNotification(notification.notificationId);
+                        }
+
+                        ok = true;
+                    } else if (me && !post.mentions.includes(me.username)) {
+                        status = "Mention not found.";
+                    } else {
+                        status = "User not found.";
+                    }
+                } else {
+                    status = "Post not found.";
+                }
+            } catch (error) {
+                logger.error(error);
+    
+                status = "An error has occurred. Please try again later.";
+            }
         }
 
         return {
