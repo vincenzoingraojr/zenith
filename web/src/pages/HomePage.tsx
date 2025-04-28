@@ -1,15 +1,17 @@
+import styled from "styled-components";
 import Head from "../components/Head";
 import LumenInput from "../components/input/lumen/LumenInput";
 import PageLayout from "../components/layouts/PageLayout";
 import PageContentLayout from "../components/layouts/sublayouts/PageContentLayout";
-import { useToasts } from "../components/utils/ToastProvider";
-import { PageBlock, StandardButton } from "../styles/global";
-import { useMeData } from "../utils/useMeData";
+
+const HomePageContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 24px;
+`;
 
 function HomePage() {
-    const { me } = useMeData();
-    const { addToast } = useToasts();
-
     return (
         <>
             <Head
@@ -22,28 +24,13 @@ function HomePage() {
                         title="Home"
                         type="main"
                         children={
-                            <>
-                                <PageBlock>
-                                    <LumenInput
-                                        type="post"
-                                        placeholder="What's happening right now?"
-                                        buttonText="Publish"
-                                    />
-                                </PageBlock>
-                                <PageBlock>
-                                    <StandardButton
-                                        type="button"
-                                        title="Who am I?"
-                                        role="button"
-                                        aria-label="Who am I?"
-                                        onClick={() => {
-                                            addToast(`You know who you are. You are authenticated as ${me && `@${me.username}`}.`);
-                                        }}
-                                    >
-                                        Who am I?
-                                    </StandardButton>
-                                </PageBlock>
-                            </>
+                            <HomePageContainer>
+                                <LumenInput
+                                    type="post"
+                                    placeholder="What's happening right now?"
+                                    buttonText="Publish"
+                                />
+                            </HomePageContainer>
                         }
                     />
                 }

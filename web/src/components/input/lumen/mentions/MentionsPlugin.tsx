@@ -15,10 +15,13 @@ import ReactDOM from "react-dom";
 
 const MentionsMenuContainer = styled.div`
     display: block;
-    position: relative;
-    width: 100%;
-    z-index: 1000;
-    margin-top: 6px;
+    position: absolute;
+    background: ${({ theme }) => theme.background};
+    box-shadow: 0px 0px 2px ${({ theme }) => theme.opaqueGrey};
+    border-radius: 6px;
+    width: 240px;
+    z-index: 100;
+    margin-top: 30px;
 `;
 
 const MentionsContainer = styled.div`
@@ -47,6 +50,18 @@ const MentionItem = styled.div`
 
     &.selected {
         background-color: ${({ theme }) => theme.opaqueGrey};
+    }
+
+    &:first-child {
+        border-radius: 6px 6px 0px 0px;
+    }
+
+    &:last-child {
+        border-radius: 0px 0px 6px 6px;
+    }
+
+    &:only-child {
+        border-radius: 6px;
     }
 `;
 
@@ -283,7 +298,7 @@ function MentionsTypeaheadMenuItem({
             </MentionImageContainer>
             <MentionUserInfo>
                 <MentionName>{option.name}</MentionName>
-                <MentionUsername>{option.username}</MentionUsername>
+                <MentionUsername>@{option.username}</MentionUsername>
             </MentionUserInfo>
         </MentionItem>
     );

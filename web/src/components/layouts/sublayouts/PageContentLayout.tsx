@@ -88,6 +88,7 @@ const MainHeaderIconsContainer = styled.div`
 const MainContentContainer = styled.div`
     display: block;
     width: 100%;
+    overflow-x: hidden;
     padding-bottom: 48px;
 `;
 
