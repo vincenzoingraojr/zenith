@@ -1,4 +1,5 @@
 import Head from "../components/Head";
+import LumenInput from "../components/input/lumen/LumenInput";
 import PageLayout from "../components/layouts/PageLayout";
 import PageContentLayout from "../components/layouts/sublayouts/PageContentLayout";
 import { useToasts } from "../components/utils/ToastProvider";
@@ -22,6 +23,13 @@ function HomePage() {
                         type="main"
                         children={
                             <>
+                                <PageBlock>
+                                    <LumenInput
+                                        type="post"
+                                        placeholder="What's happening right now?"
+                                        buttonText="Publish"
+                                    />
+                                </PageBlock>
                                 <PageBlock>
                                     <StandardButton
                                         type="button"

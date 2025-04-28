@@ -3,6 +3,7 @@ export const NOTIFICATION_TYPES = Object.freeze({
     MENTION: "mention",
     COMMENT: "comment",
     LIKE: "like",
+    QUOTE: "quote",
     AFFILIATION: "affiliation",
 });
 
