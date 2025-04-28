@@ -1,0 +1,79 @@
+mutation EditPost(
+    $postId: String!
+    $type: String!
+    $content: String!
+    $media: String!
+    $deletedMedia: String!
+    $existingAltTexts: String!
+) {
+    editPost(
+        postId: $postId
+        type: $type
+        content: $content
+        media: $media
+        deletedMedia: $deletedMedia
+        existingAltTexts: $existingAltTexts
+    ) {
+        post {
+            id
+            itemId
+            authorId
+            type
+            content
+            isEdited
+            views
+            lang
+            topics
+            author {
+                id
+                name
+                username
+                email
+                type
+                gender
+                birthDate {
+                    date
+                    monthAndDayVisibility
+                    yearVisibility
+                }
+                emailVerified
+                profile {
+                    profilePicture
+                    profileBanner
+                    bio
+                    website
+                }
+                userSettings {
+                    incomingMessages
+                    twoFactorAuth
+                }
+                searchSettings {
+                    hideSensitiveContent
+                    hideBlockedAccounts
+                }
+                createdAt
+                updatedAt
+                hiddenPosts
+            }
+            isReplyToId
+            isReplyToType
+            quotedPostId
+            media {
+                id
+                type
+                src
+                alt
+            }
+            mentions
+            hashtags
+            createdAt
+            updatedAt
+        }
+        errors {
+            field
+            message
+        }
+        ok
+        status
+    }
+}

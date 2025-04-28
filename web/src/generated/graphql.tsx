@@ -340,6 +340,7 @@ export type Mutation = {
   requestIdentityVerification: IdentityVerificationResponse;
   requestVerification: UserVerificationResponse;
   resendOTP: Scalars['Boolean']['output'];
+  revokeMention: PostResponse;
   sendMessage?: Maybe<Message>;
   sendRecoveryEmail: UserResponse;
   signup: UserResponse;
@@ -640,6 +641,11 @@ export type MutationRequestVerificationArgs = {
 export type MutationResendOtpArgs = {
   input: Scalars['String']['input'];
   password: Scalars['String']['input'];
+};
+
+
+export type MutationRevokeMentionArgs = {
+  postId: Scalars['String']['input'];
 };
 
 
@@ -1354,6 +1360,25 @@ export type CreatePostMutationVariables = Exact<{
 
 export type CreatePostMutation = { __typename?: 'Mutation', createPost: { __typename?: 'PostResponse', ok: boolean, status?: string | null, post?: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType: string, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
 
+export type EditPostMutationVariables = Exact<{
+  postId: Scalars['String']['input'];
+  type: Scalars['String']['input'];
+  content: Scalars['String']['input'];
+  media: Scalars['String']['input'];
+  deletedMedia: Scalars['String']['input'];
+  existingAltTexts: Scalars['String']['input'];
+}>;
+
+
+export type EditPostMutation = { __typename?: 'Mutation', editPost: { __typename?: 'PostResponse', ok: boolean, status?: string | null, post?: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType: string, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
+
+export type FindPostQueryVariables = Exact<{
+  postId: Scalars['String']['input'];
+}>;
+
+
+export type FindPostQuery = { __typename?: 'Query', findPost?: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType: string, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } | null };
+
 export type FindUserBeforeLogInMutationVariables = Exact<{
   input: Scalars['String']['input'];
 }>;
@@ -1572,6 +1597,203 @@ export function useCreatePostMutation(baseOptions?: Apollo.MutationHookOptions<C
 export type CreatePostMutationHookResult = ReturnType<typeof useCreatePostMutation>;
 export type CreatePostMutationResult = Apollo.MutationResult<CreatePostMutation>;
 export type CreatePostMutationOptions = Apollo.BaseMutationOptions<CreatePostMutation, CreatePostMutationVariables>;
+export const EditPostDocument = gql`
+    mutation EditPost($postId: String!, $type: String!, $content: String!, $media: String!, $deletedMedia: String!, $existingAltTexts: String!) {
+  editPost(
+    postId: $postId
+    type: $type
+    content: $content
+    media: $media
+    deletedMedia: $deletedMedia
+    existingAltTexts: $existingAltTexts
+  ) {
+    post {
+      id
+      itemId
+      authorId
+      type
+      content
+      isEdited
+      views
+      lang
+      topics
+      author {
+        id
+        name
+        username
+        email
+        type
+        gender
+        birthDate {
+          date
+          monthAndDayVisibility
+          yearVisibility
+        }
+        emailVerified
+        profile {
+          profilePicture
+          profileBanner
+          bio
+          website
+        }
+        userSettings {
+          incomingMessages
+          twoFactorAuth
+        }
+        searchSettings {
+          hideSensitiveContent
+          hideBlockedAccounts
+        }
+        createdAt
+        updatedAt
+        hiddenPosts
+      }
+      isReplyToId
+      isReplyToType
+      quotedPostId
+      media {
+        id
+        type
+        src
+        alt
+      }
+      mentions
+      hashtags
+      createdAt
+      updatedAt
+    }
+    errors {
+      field
+      message
+    }
+    ok
+    status
+  }
+}
+    `;
+export type EditPostMutationFn = Apollo.MutationFunction<EditPostMutation, EditPostMutationVariables>;
+
+/**
+ * __useEditPostMutation__
+ *
+ * To run a mutation, you first call `useEditPostMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useEditPostMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [editPostMutation, { data, loading, error }] = useEditPostMutation({
+ *   variables: {
+ *      postId: // value for 'postId'
+ *      type: // value for 'type'
+ *      content: // value for 'content'
+ *      media: // value for 'media'
+ *      deletedMedia: // value for 'deletedMedia'
+ *      existingAltTexts: // value for 'existingAltTexts'
+ *   },
+ * });
+ */
+export function useEditPostMutation(baseOptions?: Apollo.MutationHookOptions<EditPostMutation, EditPostMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<EditPostMutation, EditPostMutationVariables>(EditPostDocument, options);
+      }
+export type EditPostMutationHookResult = ReturnType<typeof useEditPostMutation>;
+export type EditPostMutationResult = Apollo.MutationResult<EditPostMutation>;
+export type EditPostMutationOptions = Apollo.BaseMutationOptions<EditPostMutation, EditPostMutationVariables>;
+export const FindPostDocument = gql`
+    query FindPost($postId: String!) {
+  findPost(postId: $postId) {
+    id
+    itemId
+    authorId
+    type
+    content
+    isEdited
+    views
+    lang
+    topics
+    author {
+      id
+      name
+      username
+      email
+      type
+      gender
+      birthDate {
+        date
+        monthAndDayVisibility
+        yearVisibility
+      }
+      emailVerified
+      profile {
+        profilePicture
+        profileBanner
+        bio
+        website
+      }
+      userSettings {
+        incomingMessages
+        twoFactorAuth
+      }
+      searchSettings {
+        hideSensitiveContent
+        hideBlockedAccounts
+      }
+      createdAt
+      updatedAt
+      hiddenPosts
+    }
+    isReplyToId
+    isReplyToType
+    quotedPostId
+    media {
+      id
+      type
+      src
+      alt
+    }
+    mentions
+    hashtags
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useFindPostQuery__
+ *
+ * To run a query within a React component, call `useFindPostQuery` and pass it any options that fit your needs.
+ * When your component renders, `useFindPostQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useFindPostQuery({
+ *   variables: {
+ *      postId: // value for 'postId'
+ *   },
+ * });
+ */
+export function useFindPostQuery(baseOptions: Apollo.QueryHookOptions<FindPostQuery, FindPostQueryVariables> & ({ variables: FindPostQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<FindPostQuery, FindPostQueryVariables>(FindPostDocument, options);
+      }
+export function useFindPostLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<FindPostQuery, FindPostQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<FindPostQuery, FindPostQueryVariables>(FindPostDocument, options);
+        }
+export function useFindPostSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<FindPostQuery, FindPostQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<FindPostQuery, FindPostQueryVariables>(FindPostDocument, options);
+        }
+export type FindPostQueryHookResult = ReturnType<typeof useFindPostQuery>;
+export type FindPostLazyQueryHookResult = ReturnType<typeof useFindPostLazyQuery>;
+export type FindPostSuspenseQueryHookResult = ReturnType<typeof useFindPostSuspenseQuery>;
+export type FindPostQueryResult = Apollo.QueryResult<FindPostQuery, FindPostQueryVariables>;
 export const FindUserBeforeLogInDocument = gql`
     mutation FindUserBeforeLogIn($input: String!) {
   findUserBeforeLogIn(input: $input) {

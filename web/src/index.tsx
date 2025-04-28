@@ -25,6 +25,7 @@ import { darkTheme, lightTheme } from "./styles/theme";
 import { ThemeProviderWrapper, useThemeContext } from "./styles/ThemeContext";
 import App from "./App";
 import { AuthProvider } from "./utils/AuthContext";
+import { ToastProvider } from "./components/utils/ToastProvider";
 
 const cache = new InMemoryCache();
 
@@ -142,8 +143,10 @@ const ThemedApp = () => {
   
     return (
         <ThemeProvider theme={theme}>
-            <GlobalStyle />
-            <App />
+            <ToastProvider>
+                <GlobalStyle />
+                <App />
+            </ToastProvider>
         </ThemeProvider>
     );
 };

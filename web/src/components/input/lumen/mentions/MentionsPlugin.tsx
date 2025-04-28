@@ -11,6 +11,7 @@ import styled from "styled-components";
 import { $createMentionNode } from "./MentionNode";
 import profilePicture from "../../../../images/profile-picture.png";
 import { User, useUsersToMessageQuery } from "../../../../generated/graphql";
+import ReactDOM from "react-dom";
 
 const MentionsMenuContainer = styled.div`
     display: block;
@@ -376,11 +377,11 @@ export default function MentionsPlugin(): JSX.Element | null {
             triggerFn={checkForMentionMatch}
             options={options}
             menuRenderFn={(
-                _,
+                anchorElementRef,
                 { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }
             ) =>
-                results.length > 0
-                    ? (
+                anchorElementRef.current && results.length > 0
+                    ? ReactDOM.createPortal(
                         <MentionsMenuContainer>
                             <MentionsContainer>
                                 {options.map((option, i: number) => (
@@ -399,7 +400,8 @@ export default function MentionsPlugin(): JSX.Element | null {
                                     />
                                 ))}
                             </MentionsContainer>
-                        </MentionsMenuContainer>
+                        </MentionsMenuContainer>,
+                        anchorElementRef.current
                     )
                     : null
             }
