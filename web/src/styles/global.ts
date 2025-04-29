@@ -8,7 +8,8 @@ const GlobalStyle = createGlobalStyle`
         color: ${({ theme }) => theme.color};
         font-family: "Inter", sans-serif;
         font-size: 18px;
-        overflow: auto;
+        overflow-x: hidden;
+        overflow-y: scroll;
     }
 
     * {
@@ -65,7 +66,7 @@ const GlobalStyle = createGlobalStyle`
     }
 
     .not-scrolling {
-        overflow: hidden;
+        overflow-y: hidden;
     }
 
     .editor-hashtag {

@@ -27,6 +27,7 @@ const NavWrapper = styled.nav.attrs(
     top: unset;
     height: auto;
     z-index: 100;
+    border-right: unset;
 
     ${mediaQuery(
         "(min-width: 600px) and (min-height: 480px)",
@@ -45,6 +46,7 @@ const NavWrapper = styled.nav.attrs(
         padding-top: 16px;
         padding-bottom: 16px;
         overflow: auto;
+        border-right: 1px solid ${({ theme }) => theme.color};
     }
 `;
 

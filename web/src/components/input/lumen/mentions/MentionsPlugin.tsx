@@ -11,15 +11,11 @@ import styled from "styled-components";
 import { $createMentionNode } from "./MentionNode";
 import profilePicture from "../../../../images/profile-picture.png";
 import { User, useUsersToMessageQuery } from "../../../../generated/graphql";
-import ReactDOM from "react-dom";
 
 const MentionsMenuContainer = styled.div`
     display: block;
-    position: absolute;
     background: ${({ theme }) => theme.background};
-    box-shadow: 0px 0px 2px ${({ theme }) => theme.opaqueGrey};
-    border-radius: 6px;
-    width: 240px;
+    width: 100%;
     z-index: 100;
     margin-top: 30px;
 `;
@@ -51,18 +47,6 @@ const MentionItem = styled.div`
     &.selected {
         background-color: ${({ theme }) => theme.opaqueGrey};
     }
-
-    &:first-child {
-        border-radius: 6px 6px 0px 0px;
-    }
-
-    &:last-child {
-        border-radius: 0px 0px 6px 6px;
-    }
-
-    &:only-child {
-        border-radius: 6px;
-    }
 `;
 
 const MentionImageContainer = styled.div`
@@ -87,7 +71,7 @@ const MentionUserInfo = styled.div`
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    width: 172px;
+    width: 100%;
 `;
 
 const MentionName = styled.div`
@@ -96,7 +80,7 @@ const MentionName = styled.div`
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    width: 172px;
+    width: 100%;
     font-weight: 700;
     color: ${({ theme }) => theme.color};
 `;
@@ -107,7 +91,7 @@ const MentionUsername = styled.div`
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    width: 172px;
+    width: 100%;
     font-weight: 400;
     color: ${({ theme }) => theme.inputText};
 `;
@@ -392,11 +376,11 @@ export default function MentionsPlugin(): JSX.Element | null {
             triggerFn={checkForMentionMatch}
             options={options}
             menuRenderFn={(
-                anchorElementRef,
+                _,
                 { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }
             ) =>
-                anchorElementRef.current && results.length > 0
-                    ? ReactDOM.createPortal(
+                results.length > 0
+                    ? (
                         <MentionsMenuContainer>
                             <MentionsContainer>
                                 {options.map((option, i: number) => (
@@ -415,8 +399,7 @@ export default function MentionsPlugin(): JSX.Element | null {
                                     />
                                 ))}
                             </MentionsContainer>
-                        </MentionsMenuContainer>,
-                        anchorElementRef.current
+                        </MentionsMenuContainer>
                     )
                     : null
             }

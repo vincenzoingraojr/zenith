@@ -13,6 +13,7 @@ interface EditorFieldProps {
     value?: string;
     buttonText: string;
     media?: MediaItem[];
+    progress: number | null;
 }
 
 const EditorFieldContainer = styled.div`
@@ -22,7 +23,7 @@ const EditorFieldContainer = styled.div`
     width: 100%;
 `;
 
-const EditorField: FunctionComponent<EditorFieldProps> = ({ field, placeholder, errors, status, value, buttonText, media }) => {
+const EditorField: FunctionComponent<EditorFieldProps> = ({ field, placeholder, errors, status, value, buttonText, media, progress }) => {
     return (
         <EditorFieldContainer>
             {errors[field] && (
@@ -36,6 +37,7 @@ const EditorField: FunctionComponent<EditorFieldProps> = ({ field, placeholder, 
                 value={value}
                 buttonText={buttonText}
                 mediaArray={media}
+                progress={progress}
             />
         </EditorFieldContainer>
     );

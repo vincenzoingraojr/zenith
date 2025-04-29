@@ -12,6 +12,14 @@ export const USER_TYPES = Object.freeze({
     ORGANIZATION: "organization",
 });
 
+export const POST_TYPES = Object.freeze({
+    POST: "post",
+    ARTICLE: "article",
+    COMMENT: "comment",
+    REPOST: "repost",
+    ADVERTISEMENT: "advertisement",
+});
+
 const URL_MATCHER =
     /((https?:\/\/(www\.)?)|(www\.))?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
 
@@ -35,3 +43,5 @@ export const MATCHERS = [
         };
     },
 ];
+
+export const EMPTY_CONTENT_REGEXP = /^\s+\S*/;

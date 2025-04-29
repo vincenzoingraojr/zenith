@@ -20,9 +20,11 @@ const PageLayoutContainer = styled.div`
     grid-template-columns: none;
     grid-template-rows: auto;
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 
     @media (min-width: 600px) and (max-height: 480px) {
-        width: 480px;
+        max-width: 480px;
     }
 
     ${mediaQuery(
@@ -34,19 +36,19 @@ const PageLayoutContainer = styled.div`
     }
 
     @media (min-width: 600px) and (min-height: 480px) {
-        width: 520px;
+        max-width: 520px;
     }
 
     @media ${devices.tablet} and (max-height: 480px) {
-        width: 524px;
+        max-width: 524px;
     }
 
     @media ${devices.tablet} and (min-height: 480px) {
-        width: 580px;
+        max-width: 580px;
     }
 
     @media ${devices.laptopM} {
-        width: 660px;
+        max-width: 660px;
     }
 `;
 
@@ -57,8 +59,10 @@ const PageContentLayoutContainer = styled.div.attrs(
     width: 100%;
     min-height: 100vh;
     margin-bottom: ${props => props.navHidden ? "0" : "60px"}; 
+    border-left: unset;
+    border-right: unset;
 
-    @media (min-width: 600px) {
+    @media (min-width: 600px) and (max-height: 480px) {
         border-left: 1px solid ${({ theme }) => theme.color};
         border-right: 1px solid ${({ theme }) => theme.color};
     }
@@ -68,6 +72,8 @@ const PageContentLayoutContainer = styled.div.attrs(
         devices.laptopM
     )} {
         margin-bottom: 0;
+        border-left: unset;
+        border-right: 1px solid ${({ theme }) => theme.color};
     }
 `;
 
