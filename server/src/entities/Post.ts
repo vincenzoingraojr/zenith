@@ -55,8 +55,8 @@ export class Post extends FeedItem {
     @Column({ nullable: true, default: null })
     isReplyToId: number;
 
-    @Field(() => String)
-    @Column()
+    @Field(() => String, { nullable: true, defaultValue: null })
+    @Column({ nullable: true, default: null })
     isReplyToType: string;
 
     @Field(() => Int, { nullable: true, defaultValue: null })

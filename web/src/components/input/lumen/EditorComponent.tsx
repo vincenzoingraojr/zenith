@@ -29,6 +29,7 @@ import { Field } from "formik";
 import Close from "../../icons/Close";
 import { getExactSize } from "../../../utils/getExactSize";
 import { useToasts } from "../../utils/ToastProvider";
+import { FileWrapper, ProgressStatus } from "../commons";
 
 interface EditorComponentProps {
     field: any;
@@ -38,7 +39,7 @@ interface EditorComponentProps {
     value?: string;
     buttonText: string;
     mediaArray?: MediaItem[];
-    progress: number | number;
+    progress: ProgressStatus[];
 }
 
 const EditorComponentWrapper = styled.div`
@@ -236,14 +237,12 @@ const MediaAltContainer = styled.div`
 `;
 
 interface ShouldClearEditorProps {
-    setMedia: (media: File[]) => void;
-    setAltTexts: (altTexts: string[]) => void;
+    setCombinedArray: (items: FileWrapper[]) => void;
     setContent: (content: string) => void;
 }
 
 const ShouldClearEditorPlugin: FunctionComponent<ShouldClearEditorProps> = ({
-    setMedia,
-    setAltTexts,
+    setCombinedArray,
     setContent,
 }) => {
     const [editor] = useLexicalComposerContext();
@@ -251,10 +250,9 @@ const ShouldClearEditorPlugin: FunctionComponent<ShouldClearEditorProps> = ({
     useEffect(() => {
         editor.focus();
         editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
-        setMedia([]);
-        setAltTexts([]);
+        setCombinedArray([]);
         setContent("");
-    }, [editor, setMedia, setAltTexts, setContent]);
+    }, [editor, setCombinedArray, setContent]);
 
     return null;
 };
@@ -300,9 +298,6 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
     };
 
     const uploadPostMediaRef = useRef<HTMLInputElement | null>(null);
-
-    const [media, setMedia] = useState<File[]>([]);
-    const [altTexts, setAltTexts] = useState<string[]>([]);
     const [existingAltTexts, setExistingAltTexts] = useState<(number | string)[][]>([]);
     const [existingMedia, setExistingMedia] = useState<MediaItem[]>(mediaArray || []);
     const [deletedMedia, setDeletedMedia] = useState<number[]>([]);
@@ -315,13 +310,7 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
         }
     }, [content]);
 
-    const [combinedArray, setCombinedArray] = useState<(File | string)[][]>([]);
-
-    useEffect(() => {
-        setCombinedArray(
-            media.map((item, i) => [item, altTexts[i] ? altTexts[i] : ""])
-        );
-    }, [media, altTexts]);
+    const [combinedArray, setCombinedArray] = useState<FileWrapper[]>([]);
 
     useEffect(() => {
         form.setFieldValue("media", combinedArray);
@@ -336,7 +325,7 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
     const [visible, setVisible] = useState(false);
 
     useEffect(() => {
-        if (media.length > 0) {
+        if (combinedArray.length > 0) {
             setVisible(true);
         } else {
             setVisible(false);
@@ -345,7 +334,7 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
                 uploadPostMediaRef.current.value = "";
             }
         }
-    }, [media]);
+    }, [combinedArray]);
 
     useEffect(() => {
         form.setFieldValue("existingAltTexts", existingAltTexts);
@@ -403,8 +392,7 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
                         <MentionsPlugin />
                         {status && (
                             <ShouldClearEditorPlugin
-                                setMedia={setMedia}
-                                setAltTexts={setAltTexts}
+                                setCombinedArray={setCombinedArray}
                                 setContent={setContent}
                             />
                         )}
@@ -419,7 +407,7 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
                                         {item.type.includes("image") ? (
                                             <img
                                                 src={item.src}
-                                                alt={altTexts[i]}
+                                                alt={existingAltTexts[i][1] as string}
                                             />
                                         ) : (
                                             <video controls>
@@ -431,8 +419,8 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
                                         <MediaAltContainer>
                                             <Field
                                                 as="input"
-                                                aria-label="Alt"
-                                                placeholder="Alt"
+                                                aria-label="Description"
+                                                placeholder="Description"
                                                 autoCapitalize="none"
                                                 spellCheck="false"
                                                 autoComplete="off"
@@ -487,18 +475,18 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
                 )}
                 {visible && (
                     <MediaItemsList>
-                        {media.map((item, i) => (
-                            <MediaContainer key={i}>
+                        {combinedArray.map((mediaItem) => (
+                            <MediaContainer key={mediaItem.id}>
                                 <MediaMainContainer>
                                     <MediaFileContainer>
-                                        {item.type.includes("image") ? (
+                                        {mediaItem.file.type.includes("image") ? (
                                             <img
-                                                src={URL.createObjectURL(item)}
-                                                alt={altTexts[i]}
+                                                src={URL.createObjectURL(mediaItem.file)}
+                                                alt={mediaItem.alt}
                                             />
                                         ) : (
                                             <video controls>
-                                                <source src={URL.createObjectURL(item)} type={item.type} />
+                                                <source src={URL.createObjectURL(mediaItem.file)} type={mediaItem.file.type} />
                                             </video>
                                         )}
                                     </MediaFileContainer>
@@ -506,32 +494,32 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
                                         <MediaAltContainer>
                                             <Field
                                                 as="input"
-                                                aria-label="Alt"
-                                                placeholder="Alt"
+                                                aria-label="Description"
+                                                placeholder="Description"
                                                 autoCapitalize="none"
                                                 spellCheck="false"
                                                 autoComplete="off"
                                                 autoCorrect="off"
-                                                name={`altTexts[${i}]`}
+                                                name={`altTexts[${mediaItem.id}]`}
                                                 type="text"
-                                                value={altTexts[i] || ""}
+                                                value={mediaItem.alt}
                                                 onChange={(
                                                     e: React.ChangeEvent<HTMLInputElement>
                                                 ) => {
-                                                    setAltTexts([
-                                                        ...altTexts.slice(0, i),
-                                                        e.target.value,
-                                                        ...altTexts.slice(
-                                                            i + 1
-                                                        ),
-                                                    ]);
+                                                    setCombinedArray((prevArray) =>
+                                                        prevArray.map((item) =>
+                                                            item.id === mediaItem.id
+                                                            ? { ...item, alt: e.target.value }
+                                                            : item
+                                                        )
+                                                    );
                                                 }}
                                             />
                                         </MediaAltContainer>
                                         <MediaSmallInfo>
-                                            Size: {getExactSize(item.size)}
+                                            Size: {getExactSize(mediaItem.file.size)}
                                             {" | Type: "}
-                                            {item.type}
+                                            {mediaItem.file.type}{progress.find(item => item.id === mediaItem.id) && ` | Uploading: ${progress.find(item => item.id === mediaItem.id)?.progress}%`}
                                         </MediaSmallInfo>
                                     </MediaFileInfo>
                                 </MediaMainContainer>
@@ -540,14 +528,9 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
                                     title="Delete media item"
                                     aria-label="Delete media item"
                                     onClick={() => {
-                                        setMedia([
-                                            ...media.slice(0, i),
-                                            ...media.slice(i + 1),
-                                        ]);
-                                        setAltTexts([
-                                            ...altTexts.slice(0, i),
-                                            ...altTexts.slice(i + 1),
-                                        ]);
+                                        setCombinedArray((prevArray) =>
+                                            prevArray.filter((item) => item.id !== mediaItem.id)
+                                        );
                                     }}
                                 >
                                     <Close type="small" />
@@ -579,13 +562,16 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
                                         event.target.files!
                                     );
                                     
-                                    if ((media.length + mediaArray.length) > 4) {
+                                    if ((combinedArray.length + mediaArray.length) > 4) {
                                         addToast("You can only upload up to 4 files.");
                                     } else {
-                                        setMedia((media) => [
-                                            ...media,
-                                            ...mediaArray,
-                                        ]);
+                                        const newItems = mediaArray.map((item, index) => ({
+                                            id: combinedArray.length + index + 1,
+                                            alt: "",
+                                            file: item,
+                                        }));
+                                          
+                                        setCombinedArray((prevArray) => [...prevArray, ...newItems]);
                                     }
                                 }}
                             />

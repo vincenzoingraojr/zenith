@@ -64,7 +64,7 @@ export class PostResolver {
         this.userDeviceTokenRepository = appDataSource.getRepository(UserDeviceToken);
         this.bookmarkRepository = appDataSource.getRepository(Bookmark);
         this.comprehend = new ComprehendClient({ 
-            region: "us-west-1",
+            region: "us-east-1",
             credentials: {
                 accessKeyId: process.env.COMPREHEND_KEY_ID!,
                 secretAccessKey: process.env.COMPREHEND_SECRET_KEY!,

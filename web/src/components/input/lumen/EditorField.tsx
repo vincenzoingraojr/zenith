@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { CustomFieldError } from "../../../styles/global";
 import { Field } from "formik";
 import EditorComponent from "./EditorComponent";
+import { ProgressStatus } from "../commons";
 
 interface EditorFieldProps {
     field: string;
@@ -13,7 +14,7 @@ interface EditorFieldProps {
     value?: string;
     buttonText: string;
     media?: MediaItem[];
-    progress: number | null;
+    progress: ProgressStatus[];
 }
 
 const EditorFieldContainer = styled.div`
