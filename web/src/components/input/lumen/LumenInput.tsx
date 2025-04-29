@@ -91,13 +91,14 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                                         (progressEvent.loaded * 100) /
                                             progressEvent.total
                                     );
-                                    setMediaUploadStatusArray((mediaUploadStatusArray) => [
-                                        ...mediaUploadStatusArray,
-                                        {
-                                            id: item.id,
-                                            progress,
-                                        } as ProgressStatus,
-                                    ]);
+                                    
+                                    setMediaUploadStatusArray((mediaUploadStatusArray) =>
+                                        mediaUploadStatusArray.some(status => status.id === item.id)
+                                            ? mediaUploadStatusArray.map(status =>
+                                                  status.id === item.id ? { ...status, progress } : status
+                                              )
+                                            : [...mediaUploadStatusArray, { id: item.id, progress } as ProgressStatus]
+                                    );
                                 },
                                 headers: {
                                     "Content-Type": file.type,
