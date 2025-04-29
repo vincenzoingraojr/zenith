@@ -130,7 +130,7 @@ const NavOptions: FunctionComponent<NavOptionsProps> = ({ position, closeOptions
                     onClick={() => toggleTheme()}
                 >
                     <NavOptionIcon>
-                        <ThemeIcon />
+                        <ThemeIcon type="options" />
                     </NavOptionIcon>
                     <NavOptionText>
                         Switch to {isDarkMode ? "light" : "dark"}
@@ -146,7 +146,7 @@ const NavOptions: FunctionComponent<NavOptionsProps> = ({ position, closeOptions
                             aria-label="Settings"
                         >
                             <NavOptionIcon>
-                                <Settings />
+                                <Settings type="options" />
                             </NavOptionIcon>
                             <NavOptionText>
                                 Settings
@@ -160,7 +160,7 @@ const NavOptions: FunctionComponent<NavOptionsProps> = ({ position, closeOptions
                             aria-label="Log out"
                         >
                             <NavOptionIcon>
-                                <Exit isRed={true} />
+                                <Exit type="options" isRed={true} />
                             </NavOptionIcon>
                             <NavOptionText color={COLORS.red}>
                                 Log out

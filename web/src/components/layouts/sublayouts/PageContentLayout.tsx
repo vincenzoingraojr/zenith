@@ -11,10 +11,11 @@ import profilePicture from "../../../images/profile-picture.png";
 import { USER_TYPES } from "../../../utils/constants";
 import { useMenu } from "../../utils/hooks";
 import Menu from "../../Menu";
+import Logo from "../../icons/Logo";
 
 interface PageContentLayoutProps extends LayoutProps {
     title: string;
-    type: "main" | "default";
+    type: "main" | "home" | "default";
     customHeaderComponent?: React.ReactNode;
     headerIconsComponent?: React.ReactNode;
 }
@@ -130,6 +131,42 @@ const MainHeaderProfileImageContainer = styled.div.attrs((props: { type: string 
     }
 `;
 
+const HomeContainer = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: auto;
+    flex: 1;
+    overflow: hidden;
+`;
+
+const HomeLogo = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding-right: 44px;
+
+    ${mediaQuery(
+        "(min-width: 600px) and (min-height: 480px)",
+        devices.laptopM
+    )} {
+        display: none;
+        padding-right: 0;
+    }
+`;
+
+const HomeHeaderTitle = styled(MainHeaderTitle)`
+    display: none;
+
+    ${mediaQuery(
+        "(min-width: 600px) and (min-height: 480px)",
+        devices.laptopM
+    )} {
+        display: block;
+    }
+`;
+
 const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({ title, type, customHeaderComponent, children, headerIconsComponent }) => {
     const navigate = useNavigate();
     const { me, loading, error } = useMeData();
@@ -193,7 +230,18 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({ title, t
                                 {customHeaderComponent}
                             </CustomHeaderComponentContainer>
                         ) : (
-                            <MainHeaderTitle>{title}</MainHeaderTitle>
+                            <>
+                                {type === "home" ? (
+                                    <HomeContainer>
+                                        <HomeLogo>
+                                            <Logo type="inline" />
+                                        </HomeLogo>
+                                        <HomeHeaderTitle>{title}</HomeHeaderTitle>
+                                    </HomeContainer>
+                                ) : (
+                                    <MainHeaderTitle>{title}</MainHeaderTitle>
+                                )}
+                            </>
                         )}
                     </MainHeaderLeftContainer>
                     {headerIconsComponent && (

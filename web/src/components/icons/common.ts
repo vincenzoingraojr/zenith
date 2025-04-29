@@ -5,6 +5,10 @@ export interface IconProps {
     isActive: boolean;
 }
 
+export interface LinkIconProps {
+    type: "nav" | "options";
+}
+
 export const StandardIcon = styled(SvgIcon).attrs(
     (props: { isFilled?: string, hasStroke?: string }) => props
 )`

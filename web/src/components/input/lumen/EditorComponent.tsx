@@ -62,6 +62,8 @@ const EditorContainer = styled.div`
     position: relative;
     min-height: 54px;
     font-size: 22px;
+    max-height: 220px;
+    overflow-y: auto;
 
     div p {
         margin: 0;

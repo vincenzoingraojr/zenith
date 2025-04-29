@@ -41,7 +41,7 @@ const MentionItem = styled.div`
     gap: 12px;
     outline: none;
     cursor: pointer;
-    padding: 6px 12px 6px 12px;
+    padding: 12px 16px 12px 16px;
     transition: background-color 0.4s cubic-bezier(0.27, 1.27, 0.48, 0.56);
 
     &.selected {

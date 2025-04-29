@@ -331,7 +331,7 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                     onClick={() => toggleTheme()}
                                 >
                                     <MenuNavEntryIcon>
-                                        <ThemeIcon />
+                                        <ThemeIcon type="nav" />
                                     </MenuNavEntryIcon>
                                     <MenuNavEntryText>Switch to {isDarkMode ? "light" : "dark"}</MenuNavEntryText>
                                 </CustomSpanOption>
@@ -355,7 +355,7 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                     aria-label={"Settings page"}
                                 >
                                     <MenuNavEntryIcon>
-                                        <Settings />
+                                        <Settings type="nav" />
                                     </MenuNavEntryIcon>
                                     <MenuNavEntryText>Settings</MenuNavEntryText>
                                 </Link>
@@ -367,7 +367,7 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                     aria-label={`Log out from @${me.username}`}
                                 >
                                     <MenuNavEntryIcon>
-                                        <Exit isRed={true} />
+                                        <Exit type="nav" isRed={true} />
                                     </MenuNavEntryIcon>
                                     <MenuNavEntryText color={COLORS.red}>
                                         Log out

@@ -1,13 +1,24 @@
-import { StandardIcon } from "./common";
+import { DynamicSizeIcon, LinkIconProps } from "./common";
 import { useTheme } from "../../styles/theme";
 import { useThemeContext } from "../../styles/ThemeContext";
+import { FunctionComponent, useEffect, useState } from "react";
 
-function ThemeIcon() {
+const ThemeIcon: FunctionComponent<LinkIconProps> = ({ type }) => {
     const theme = useTheme();
     const { isDarkMode } = useThemeContext();
 
+    const [size, setSize] = useState(type === "nav" ? 26 : 24);
+
+    useEffect(() => {
+        if (type === "nav") {
+            setSize(26);
+        } else {
+            setSize(24);
+        }
+    }, [type]);
+
     return (
-        <StandardIcon isFilled={theme.color}>
+        <DynamicSizeIcon size={size} isFilled={theme.color}>
             {isDarkMode ? (
                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M13 24H11V21H13V24Z" />
@@ -27,7 +38,7 @@ function ThemeIcon() {
                     <path d="M19.5547 16.8877C20.4699 16.7582 21.3485 16.5171 22.1768 16.1768C22.5171 15.3485 22.7582 14.4699 22.8877 13.5547C22.1898 14.0072 21.4265 14.3669 20.6133 14.6133C20.3669 15.4265 20.0072 16.1898 19.5547 16.8877Z" />
                 </svg>
             )}
-        </StandardIcon>
+        </DynamicSizeIcon>
     );
 };
 

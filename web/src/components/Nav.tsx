@@ -56,7 +56,11 @@ const NavItemLink = styled.div`
     justify-content: center;
 
     a {
-        padding: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
         border-radius: 9999px;
         background-color: transparent;
         text-decoration: none;
@@ -78,6 +82,11 @@ const BrandLink = styled(NavItemLink)`
         devices.laptopM
     )} {
         display: flex;
+
+        a {
+            width: 60px;
+            height: 60px;
+        }
     }
 `;
 

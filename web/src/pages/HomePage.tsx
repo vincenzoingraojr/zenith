@@ -29,7 +29,7 @@ function HomePage() {
                 children={
                     <PageContentLayout 
                         title="Home"
-                        type="main"
+                        type="home"
                         children={
                             <HomePageContainer>
                                 <LumenInput
