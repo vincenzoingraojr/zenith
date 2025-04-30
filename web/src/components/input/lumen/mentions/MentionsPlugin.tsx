@@ -17,21 +17,13 @@ const MentionsMenuContainer = styled.div`
     background: ${({ theme }) => theme.background};
     width: 100%;
     z-index: 100;
-    margin-top: 30px;
 `;
 
 const MentionsContainer = styled.div`
     display: flex;
     flex-direction: column;
     max-height: 200px;
-    overflow-y: scroll;
-
-    &::-webkit-scrollbar {
-        display: none;
-    }
-
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+    overflow-y: auto;
 `;
 
 const MentionItem = styled.div`

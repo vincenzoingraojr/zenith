@@ -16,6 +16,8 @@ import LogOut from "./pages/LogOut";
 import { useAuth } from "./utils/AuthContext";
 import { AppErrorContainer, AppErrorWrapper, PageBlock, PageText, StandardButton } from "./styles/global";
 import SearchPage from "./pages/search/SearchPage";
+import Notifications from "./pages/Notifications";
+import Messages from "./pages/messages/Messages";
 
 function App() {
     const location = useLocation();
@@ -161,7 +163,25 @@ function App() {
                     element={
                         <SearchPage />
                     }
-                />                
+                />   
+                <Route
+                    path="/notifications"
+                    element={
+                        <IsAuthenticated
+                            isAuth={isAuth}
+                            children={<Notifications />}
+                        />
+                    }
+                />    
+                <Route
+                    path="/messages"
+                    element={
+                        <IsAuthenticated
+                            isAuth={isAuth}
+                            children={<Messages />}
+                        />
+                    }
+                />           
             </Routes>
             {(state && state.backgroundLocation) && (
                 <Routes>

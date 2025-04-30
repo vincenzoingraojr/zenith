@@ -383,7 +383,6 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
                         <AutoLinkPlugin matchers={MATCHERS} />
                         <ClearEditorPlugin />
                         <HashtagPlugin />
-                        <MentionsPlugin />
                         {status && (
                             <ShouldClearEditorPlugin
                                 setCombinedArray={setCombinedArray}
@@ -391,6 +390,7 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
                             />
                         )}
                     </EditorContainer>
+                    <MentionsPlugin />
                 </LexicalComposer>
                 {existingMedia && existingMedia.length > 0 && existingAltTexts.length > 0 && (
                     <MediaItemsList>

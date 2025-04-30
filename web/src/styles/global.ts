@@ -1214,3 +1214,21 @@ export const CustomSpanOption = styled.span`
     display: inherit;
     cursor: pointer;
 `;
+
+export const FeedLoading = styled.div`
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    height: 42px;
+`;
+
+export const NoElementsAlert = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding-top: 12px;
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-bottom: 24px;
+`;
