@@ -64,8 +64,8 @@ const MainHeaderLeftContainer = styled.div.attrs((props: { type: string }) => pr
         "(min-width: 600px) and (min-height: 480px)",
         devices.laptopM
     )} {
-        padding-left: ${(props) => (props.type === "main" ? "4px" : "0px")};
-        padding-right: ${(props) => (props.type === "main" ? "4px" : "0px")};
+        padding-left: ${(props) => (props.type !== "default" ? "4px" : "0px")};
+        padding-right: ${(props) => (props.type !== "default" ? "4px" : "0px")};
     }
 `;
 

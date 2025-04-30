@@ -91,6 +91,8 @@ const firebaseApp = initializeApp({
     measurementId: process.env.FIREBASE_MEASUREMENT_ID
 });
 
+console.log(firebaseApp);
+
 const messaging = getMessaging(firebaseApp);
 
 onBackgroundMessage(messaging, (payload) => {

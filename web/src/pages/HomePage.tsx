@@ -3,7 +3,6 @@ import Head from "../components/Head";
 import LumenInput from "../components/input/lumen/LumenInput";
 import PageLayout from "../components/layouts/PageLayout";
 import PageContentLayout from "../components/layouts/sublayouts/PageContentLayout";
-import { usePostFeedQuery } from "../generated/graphql";
 
 const HomePageContainer = styled.div`
     display: flex;
@@ -13,12 +12,6 @@ const HomePageContainer = styled.div`
 `;
 
 function HomePage() {
-    const { data: postFeedData } = usePostFeedQuery({
-        fetchPolicy: "cache-and-network",
-    });
-
-    console.log(postFeedData);
-
     return (
         <>
             <Head

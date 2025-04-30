@@ -324,17 +324,9 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
         }
     }, [existingMedia]);
 
-    const [visible, setVisible] = useState(false);
-
     useEffect(() => {
-        if (combinedArray.length > 0) {
-            setVisible(true);
-        } else {
-            setVisible(false);
-
-            if (uploadPostMediaRef && uploadPostMediaRef.current) {
-                uploadPostMediaRef.current.value = "";
-            }
+        if (combinedArray.length === 0 && uploadPostMediaRef && uploadPostMediaRef.current) {
+            uploadPostMediaRef.current.value = "";
         }
     }, [combinedArray]);
 
@@ -475,7 +467,7 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
                         ))}
                     </MediaItemsList>
                 )}
-                {visible && (
+                {combinedArray.length > 0 && (
                     <MediaItemsList>
                         {combinedArray.map((mediaItem) => (
                             <MediaContainer key={mediaItem.id}>
