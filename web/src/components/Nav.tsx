@@ -46,7 +46,7 @@ const NavWrapper = styled.nav.attrs(
         padding-top: 16px;
         padding-bottom: 16px;
         overflow: auto;
-        border-right: 1px solid ${({ theme }) => theme.color};
+        border-right: 1px solid ${({ theme }) => theme.inputText};
     }
 `;
 
@@ -104,7 +104,7 @@ const NavContainer = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    border-top: 1px solid ${({ theme }) => theme.color};
+    border-top: 1px solid ${({ theme }) => theme.inputText};
 
     ${mediaQuery(
         "(min-width: 600px) and (min-height: 480px)",

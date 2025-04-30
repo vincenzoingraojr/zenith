@@ -3,10 +3,11 @@ import Head from "../components/Head";
 import LumenInput from "../components/input/lumen/LumenInput";
 import PageLayout from "../components/layouts/PageLayout";
 import PageContentLayout from "../components/layouts/sublayouts/PageContentLayout";
-import { usePostFeedQuery } from "../generated/graphql";
+import { Post, usePostFeedQuery } from "../generated/graphql";
 import LoadingComponent from "../components/utils/LoadingComponent";
 import { FeedLoading, NoElementsAlert } from "../styles/global";
 import ErrorOrItemNotFound from "../components/utils/ErrorOrItemNotFound";
+import PostComponent from "../components/layouts/items/post/PostComponent";
 
 const HomePageContainer = styled.div`
     display: flex;
@@ -63,9 +64,11 @@ function HomePage() {
                                                         <>
                                                             {data.postFeed.map(
                                                                 (post) => (
-                                                                    <div key={post.id}>
-                                                                        {post.content}
-                                                                    </div>
+                                                                    <PostComponent 
+                                                                        key={post.itemId}
+                                                                        post={post as Post}
+                                                                        origin="post-feed"
+                                                                    />
                                                                 )
                                                             )}
                                                         </>

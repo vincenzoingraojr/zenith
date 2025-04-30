@@ -63,8 +63,8 @@ const PageContentLayoutContainer = styled.div.attrs(
     border-right: unset;
 
     @media (min-width: 600px) and (max-height: 480px) {
-        border-left: 1px solid ${({ theme }) => theme.color};
-        border-right: 1px solid ${({ theme }) => theme.color};
+        border-left: 1px solid ${({ theme }) => theme.inputText};
+        border-right: 1px solid ${({ theme }) => theme.inputText};
     }
 
     ${mediaQuery(
@@ -73,7 +73,7 @@ const PageContentLayoutContainer = styled.div.attrs(
     )} {
         margin-bottom: 0;
         border-left: unset;
-        border-right: 1px solid ${({ theme }) => theme.color};
+        border-right: 1px solid ${({ theme }) => theme.inputText};
     }
 `;
 
