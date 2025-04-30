@@ -1,6 +1,3 @@
-import { initializeApp } from "firebase/app";
-import { getMessaging } from "firebase/messaging";
-
 export const firebaseConfig = {
     apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
     authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
@@ -10,9 +7,3 @@ export const firebaseConfig = {
     appId: process.env.REACT_APP_FIREBASE_APP_ID,
     measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
 };
-
-const app = initializeApp(firebaseConfig);
-
-const messaging = getMessaging(app);
-
-export { messaging };
