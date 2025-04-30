@@ -1,7 +1,7 @@
 import { FunctionComponent, useEffect, useRef, useState } from "react";
 import { MediaItem } from "../../../generated/graphql";
 import styled from "styled-components";
-import { useMeData } from "../../../utils/useMeData";
+import { useMeData } from "../../../utils/userQueries";
 import { Link } from "react-router-dom";
 import profilePicture from "../../../images/profile-picture.png";
 import { Button, ControlContainer, PageBlock, PageText } from "../../../styles/global";

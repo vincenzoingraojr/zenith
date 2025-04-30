@@ -4,7 +4,7 @@ import { mediaQuery } from "../utils/mediaQuery";
 import { devices } from "../styles/devices";
 import { ControlContainer, CustomSpanOption, PageText } from "../styles/global";
 import Close from "./icons/Close";
-import { useMeData } from "../utils/useMeData";
+import { useMeData } from "../utils/userQueries";
 import profilePicture from "../images/profile-picture.png";
 import { Link } from "react-router-dom";
 import Profile from "./icons/Profile";

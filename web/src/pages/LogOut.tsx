@@ -5,7 +5,7 @@ import { useLogoutMutation } from "../generated/graphql";
 import { AuthForm, AuthFormTitle, Button, PageBlock, PageTextMB24 } from "../styles/global";
 import { COLORS } from "../styles/colors";
 import { useAuth } from "../utils/AuthContext";
-import { useMeData } from "../utils/useMeData";
+import { useMeData } from "../utils/userQueries";
 
 const LogoutButton = styled(Button)`
     background-color: ${COLORS.red};

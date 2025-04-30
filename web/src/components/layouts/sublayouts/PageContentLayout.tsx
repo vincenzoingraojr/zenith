@@ -6,7 +6,7 @@ import { ControlContainer } from "../../../styles/global";
 import Back from "../../icons/Back";
 import { devices } from "../../../styles/devices";
 import { mediaQuery } from "../../../utils/mediaQuery";
-import { useMeData } from "../../../utils/useMeData";
+import { useMeData } from "../../../utils/userQueries";
 import profilePicture from "../../../images/profile-picture.png";
 import { USER_TYPES } from "../../../utils/constants";
 import { useMenu } from "../../utils/hooks";

@@ -5,7 +5,7 @@ import Settings from "../icons/Settings";
 import Exit from "../icons/Exit";
 import { CustomSpanOption, PageText } from "../../styles/global";
 import { COLORS } from "../../styles/colors";
-import { useMeData } from "../../utils/useMeData";
+import { useMeData } from "../../utils/userQueries";
 import { useThemeContext } from "../../styles/ThemeContext";
 import ThemeIcon from "../icons/ThemeIcon";
 

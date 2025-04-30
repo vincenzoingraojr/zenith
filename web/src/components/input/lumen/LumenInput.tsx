@@ -2,7 +2,7 @@ import { FunctionComponent, useState } from "react";
 import styled from "styled-components";
 import { Form, Formik } from "formik";
 import EditorField from "./EditorField";
-import { useMeData } from "../../../utils/useMeData";
+import { useMeData } from "../../../utils/userQueries";
 import axios from "axios";
 import { useToasts } from "../../utils/ToastProvider";
 import { FileWrapper, ProgressStatus } from "../commons";
@@ -117,6 +117,12 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                                 })
                                 .catch((error) => {
                                     addToast(`An error occurred while uploading the media item (${item.id}). Error code: ${error.code}.`);
+
+                                    setMediaUploadStatusArray((mediaUploadStatusArray) =>
+                                        mediaUploadStatusArray.map(status =>
+                                            status.id === item.id ? { ...status, progress: -1 } : status
+                                        )
+                                    );
                                 });
                         }
                     }

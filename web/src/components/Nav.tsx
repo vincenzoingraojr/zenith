@@ -13,7 +13,7 @@ import NavOptions from "./utils/NavOptions";
 import { ControlContainer } from "../styles/global";
 import Menu from "./icons/Menu";
 import { useNavOptions } from "./utils/hooks";
-import { useMeData } from "../utils/useMeData";
+import { useMeData } from "../utils/userQueries";
 
 interface NavProps {
     noNav?: boolean;
