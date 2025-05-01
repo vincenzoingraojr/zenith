@@ -62,7 +62,7 @@ const PageContentLayoutContainer = styled.div.attrs(
     border-left: unset;
     border-right: unset;
 
-    @media (min-width: 600px) and (max-height: 480px) {
+    @media (min-width: 600px) {
         border-left: 1px solid ${({ theme }) => theme.inputText};
         border-right: 1px solid ${({ theme }) => theme.inputText};
     }
@@ -72,8 +72,6 @@ const PageContentLayoutContainer = styled.div.attrs(
         devices.laptopM
     )} {
         margin-bottom: 0;
-        border-left: unset;
-        border-right: 1px solid ${({ theme }) => theme.inputText};
     }
 `;
 

@@ -126,8 +126,6 @@ const MainHeaderProfileImageContainer = styled.div.attrs((props: { type: string 
         width: inherit;
         height: inherit;
         border-radius: inherit;
-        object-fit: cover;
-        object-position: center;
     }
 `;
 

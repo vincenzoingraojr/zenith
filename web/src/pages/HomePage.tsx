@@ -13,7 +13,7 @@ const HomePageContainer = styled.div`
     display: flex;
     flex-direction: column;
     width: 100%;
-    gap: 24px;
+    gap: 12px;
 `;
 
 const PostFeedContainer = styled.div`

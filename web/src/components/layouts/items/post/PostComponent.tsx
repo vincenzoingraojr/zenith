@@ -2,9 +2,13 @@ import { FunctionComponent } from "react";
 import { Post } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useNavigate } from "react-router-dom";
-import { PageText } from "../../../../styles/global";
+import { ControlContainer, PageText } from "../../../../styles/global";
 import profilePicture from "../../../../images/profile-picture.png";
 import TextContainerRender from "../../../utils/TextContainerRender";
+import { USER_TYPES } from "../../../../utils/constants";
+import Like from "../../../icons/Like";
+import { formatter } from "../../../../utils/formatter";
+import { COLORS } from "../../../../styles/colors";
 
 interface PostComponentProps {
     post: Post;
@@ -25,7 +29,8 @@ const PostWrapper = styled.div`
 const PostContainer = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    background-color: transparent;
+    transition: 0.2s background-color ease;
     cursor: pointer;
 
     &:hover,
@@ -39,9 +44,10 @@ const PostHeader = styled.div`
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding-top: 16px;
+    padding-top: 12px;
     padding-left: 16px;
     padding-right: 16px;
+    padding-bottom: 12px;
     width: 100%;
     overflow: hidden;
 `;
@@ -62,20 +68,18 @@ const PostAuthorContainer = styled(Link)`
     }
 `;
 
-const AuthorImageContainer = styled.div`
+const AuthorImageContainer = styled.div.attrs((props: { type: string }) => props)`
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 42px;
-    border-radius: 21px;
+    width: 40px;
+    height: 40px;
+    border-radius: ${(props) => (props.type === USER_TYPES.ORGANIZATION ? "5px" : "20px")};
 
     img {
         width: inherit;
         height: inherit;
         border-radius: inherit;
-        object-fit: cover;
-        object-position: center;
     }
 `;
 
@@ -116,7 +120,9 @@ const AuthorUsername = styled(PageText)`
 const PostContentContainer = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    gap: 12px;
 `;
 
 const PostTextContainer = styled.div`
@@ -132,9 +138,31 @@ const PostActionsContainer = styled.div`
     align-items: center;
     justify-content: space-between;
     gap: 16px;
+    padding-top: 6px;
     padding-left: 16px;
     padding-right: 16px;
-    padding-bottom: 16px;
+    padding-bottom: 6px;
+`;
+
+const PostActionContainer = styled.div.attrs((props: { color: string }) => props)`
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    color: inherit;
+
+    &:hover, &:focus {
+        color: ${props => props.color};
+    }
+
+    &:hover div div svg, &:focus div div svg {
+        fill: ${props => props.color};
+    }
+`;
+
+const PostActionInfo = styled(PageText)`
+    font-size: 16px;
+    color: inherit;
 `;
 
 const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplying, origin }) => {
@@ -164,6 +192,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         title={`${post.author.name}'s profile`}
                         to={`/${post.author.username}`}
                         onClick={(e) => e.stopPropagation()}
+                        type={post.author.type}
                     >
                         <AuthorImageContainer>
                             <img
@@ -191,7 +220,24 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         <TextContainerRender content={post.content} />
                     </PostTextContainer>
                 </PostContentContainer>
-                <PostActionsContainer></PostActionsContainer>
+                <PostActionsContainer>
+                    <PostActionContainer
+                        role="button"
+                        aria-label={"Like this post"}
+                        title={"Like this post"}
+                        color={COLORS.red}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                        }}
+                    >
+                        <ControlContainer>
+                            <Like isActive={false} />
+                        </ControlContainer>
+                        <PostActionInfo>
+                            {formatter.format(1200)}
+                        </PostActionInfo>
+                    </PostActionContainer>
+                </PostActionsContainer>
             </PostContainer>
         </PostWrapper>
     );
