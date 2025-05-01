@@ -224,12 +224,12 @@ const DeleteMediaButton = styled(ControlContainer)`
     bottom: unset;
     width: 24px;
     height: 24px;
-    background-color: ${COLORS.opaqueLightGrey};
+    background-color: ${COLORS.overlayLightGrey};
     transition: background-color ease 0.2s;
 
     &:hover,
     &:focus {
-        background-color: ${COLORS.opaqueDarkGrey};
+        background-color: ${COLORS.overlayDarkGrey};
     }
 `;
 

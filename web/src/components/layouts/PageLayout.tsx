@@ -21,7 +21,6 @@ const PageLayoutContainer = styled.div`
     grid-template-rows: auto;
     width: 100%;
     max-width: 100%;
-    box-sizing: border-box;
 
     @media (min-width: 600px) and (max-height: 480px) {
         max-width: 480px;

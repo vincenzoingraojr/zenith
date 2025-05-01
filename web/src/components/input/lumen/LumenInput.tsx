@@ -24,7 +24,7 @@ const LumenInputContainer = styled.div`
     padding-top: 12px;
     padding-left: 16px;
     padding-right: 16px;
-    padding-bottom: 36px;
+    padding-bottom: 12px;
 `;
 
 const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isReplyToId, isReplyToType, quotedPostId, buttonText }) => {

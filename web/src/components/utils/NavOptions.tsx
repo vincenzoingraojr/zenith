@@ -22,7 +22,7 @@ const NavOptionsContainer = styled.div.attrs(
     position: fixed;
     flex-direction: column;
     background-color: ${({ theme }) => theme.background};
-    box-shadow: 0px 0px 2px ${({ theme }) => theme.opaqueGrey};
+    box-shadow: 0px 0px 2px ${({ theme }) => theme.overlayGrey};
     z-index: 999;
     border-radius: 16px;
     top: ${props => `${props.position.top}px`};
@@ -56,7 +56,7 @@ const NavOption = styled.div`
 
     a:hover, span:hover,
     a:active, span:focus {
-        background-color: ${({ theme }) => theme.opaqueGrey};
+        background-color: ${({ theme }) => theme.overlayGrey};
     }
     
     &:first-child a, &:first-child span {

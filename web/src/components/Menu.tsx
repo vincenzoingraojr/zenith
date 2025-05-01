@@ -29,7 +29,7 @@ const MenuWrapper = styled.div`
     align-items: center;
     background-color: transparent;
     justify-content: left;
-    z-index: 1000;
+    z-index: 100;
 
     ${mediaQuery(
         "(min-width: 600px) and (min-height: 480px)",
@@ -46,8 +46,8 @@ const MenuOverlay = styled.div.attrs((props: { visible: boolean }) => props)`
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 1000;
-    background-color: ${({ theme }) => theme.opaqueGrey};
+    z-index: 100;
+    background-color: ${({ theme }) => theme.overlayGrey};
     opacity: ${(props) => (props.visible ? "1" : "0")};
     transition: opacity ease 0.2s;
 `;
@@ -57,7 +57,7 @@ const MenuContainer = styled.div.attrs((props: { visible: boolean }) => props)`
     grid-template-rows: 60px auto;
     grid-template-columns: auto;
     position: relative;
-    z-index: 9999;
+    z-index: 999;
     overflow: hidden;
     background-color: ${({ theme }) => theme.background};
     width: 260px;
@@ -236,7 +236,7 @@ const MenuNavEntry = styled.div`
 
     a:hover, span:hover,
     a:active, span:focus {
-        background-color: ${({ theme }) => theme.opaqueGrey};
+        background-color: ${({ theme }) => theme.overlayGrey};
     }
 `;
 

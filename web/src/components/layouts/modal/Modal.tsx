@@ -24,7 +24,7 @@ const ModalWrapper = styled.div`
     align-items: center;
     background-color: transparent;
     justify-content: center;
-    z-index: 9999;
+    z-index: 999;
 `;
 
 const ModalOverlay = styled.div`
@@ -34,14 +34,14 @@ const ModalOverlay = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 9999;
-    background-color: ${({ theme }) => theme.opaqueGrey};
+    z-index: 999;
+    background-color: ${({ theme }) => theme.overlayGrey};
 `;
 
 const ModalOuterContainer = styled.div`
     display: flex;
     justify-content: center;
-    z-index: 99999;
+    z-index: 999;
     overflow: auto;
     background-color: ${({ theme }) => theme.background};
     width: 100vw;
@@ -69,7 +69,7 @@ const ModalContainer = styled.div`
     position: relative;
     grid-template-rows: 60px auto;
     grid-template-columns: 100%;
-    z-index: 99999;
+    z-index: 1000;
     background-color: ${({ theme }) => theme.background};
     width: 100%;
     height: 100%;
@@ -107,7 +107,7 @@ const ModalHeader = styled.div`
     min-height: 60px;
     gap: 12px;
     width: 100%;
-    z-index: 99999;
+    z-index: 1000;
     overflow: hidden;
     background-color: ${({ theme }) => theme.background};
 `;

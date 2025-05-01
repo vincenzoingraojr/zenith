@@ -77,7 +77,7 @@ const ShowPassword = styled.div`
     &:hover,
     &:focus {
         border-radius: 9999px;
-        background-color: ${({ theme }) => theme.opaqueGrey};
+        background-color: ${({ theme }) => theme.overlayGrey};
     }
 `;
 

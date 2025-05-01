@@ -6,7 +6,7 @@ export interface Theme {
     color: string;
     inputText: string;
     inputBackground: string;
-    opaqueGrey: string;
+    overlayGrey: string;
 }
 
 export const lightTheme: Theme = {
@@ -14,7 +14,7 @@ export const lightTheme: Theme = {
     color: COLORS.black,
     inputText: COLORS.black,
     inputBackground: COLORS.lightGrey,
-    opaqueGrey: COLORS.opaqueLightGrey,
+    overlayGrey: COLORS.overlayLightGrey,
 };
 
 export const darkTheme: Theme = {
@@ -22,7 +22,7 @@ export const darkTheme: Theme = {
     color: COLORS.white,
     inputText: COLORS.lightGrey,
     inputBackground: COLORS.grey,
-    opaqueGrey: COLORS.opaqueDarkGrey,
+    overlayGrey: COLORS.overlayDarkGrey,
 };
 
 export function useTheme(): Theme {

@@ -19,7 +19,7 @@ const AuthPageHeader = styled.div`
     position: sticky;
     top: 0;
     height: 60px;
-    z-index: 100;
+    z-index: 3;
     background-color: ${({ theme }) => theme.background};
     padding-left: 12px;
     padding-right: 12px;

@@ -12,6 +12,7 @@ import { USER_TYPES } from "../../../utils/constants";
 import { useMenu } from "../../utils/hooks";
 import Menu from "../../Menu";
 import Logo from "../../icons/Logo";
+import { useToasts } from "../../utils/ToastProvider";
 
 interface PageContentLayoutProps extends LayoutProps {
     title: string;
@@ -27,15 +28,14 @@ const MainContainer = styled.main`
 `;
 
 const MainHeader = styled.header`
-    display: grid;
+    display: flex;
     align-items: center;
     height: 60px;
     position: sticky;
     top: 0;
     width: 100%;
-    overflow: hidden;
+    z-index: 3;
     background-color: ${({ theme }) => theme.background};
-    z-index: 100;
 `;
 
 const MainHeaderContainer = styled.div`
@@ -44,7 +44,6 @@ const MainHeaderContainer = styled.div`
     justify-content: space-between;
     width: 100%;
     gap: 12px;
-    overflow: hidden;
     padding-left: 12px;
     padding-right: 12px;
 `;
@@ -56,7 +55,6 @@ const MainHeaderLeftContainer = styled.div.attrs((props: { type: string }) => pr
     width: auto;
     flex: 1;
     gap: 12px;
-    overflow: hidden;
     padding-left: 0;
     padding-right: 0;
 
@@ -73,9 +71,6 @@ const MainHeaderTitle = styled.div`
     display: block;
     font-weight: 700;
     width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     cursor: pointer;
 `;
 
@@ -171,6 +166,8 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({ title, t
 
     const { showMenu, openMenu, closeMenu } = useMenu();
 
+    const { addToast } = useToasts();
+
     return (
         <MainContainer>
             <MainHeader>
@@ -231,7 +228,11 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({ title, t
                             <>
                                 {type === "home" ? (
                                     <HomeContainer>
-                                        <HomeLogo>
+                                        <HomeLogo
+                                            onClick={() => {
+                                                addToast("This is Zenith!");
+                                            }}
+                                        >
                                             <Logo type="inline" />
                                         </HomeLogo>
                                         <HomeHeaderTitle>{title}</HomeHeaderTitle>

@@ -16,7 +16,6 @@ const MentionsMenuContainer = styled.div`
     display: block;
     background: ${({ theme }) => theme.background};
     width: 100%;
-    z-index: 100;
 `;
 
 const MentionsContainer = styled.div`
@@ -37,7 +36,7 @@ const MentionItem = styled.div`
     transition: background-color 0.4s cubic-bezier(0.27, 1.27, 0.48, 0.56);
 
     &.selected {
-        background-color: ${({ theme }) => theme.opaqueGrey};
+        background-color: ${({ theme }) => theme.overlayGrey};
     }
 `;
 

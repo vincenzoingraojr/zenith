@@ -620,7 +620,7 @@ const GlobalStyle = createGlobalStyle`
     }
 
     .react-datepicker__day--outside-month:hover {
-        background-color: ${({ theme }) => theme.opaqueGrey};
+        background-color: ${({ theme }) => theme.overlayGrey};
     }
 
     .react-datepicker__day--today,
@@ -946,7 +946,7 @@ const GlobalStyle = createGlobalStyle`
         position: fixed;
         width: 100vw;
         height: 100vh;
-        background-color: ${({ theme }) => theme.opaqueGrey};
+        background-color: ${({ theme }) => theme.overlayGrey};
         left: 0;
         top: 0;
         justify-content: center;
@@ -1011,7 +1011,7 @@ export const SmallButton = styled(Button)`
 
     &:hover,
     &:focus {
-        background-color: ${({ theme }) => theme.opaqueGrey};
+        background-color: ${({ theme }) => theme.overlayGrey};
     }
 `;
 
@@ -1072,7 +1072,7 @@ export const ControlContainer = styled.div.attrs(
 
     &:hover,
     &:focus {
-        background-color: ${({ theme }) => theme.opaqueGrey};
+        background-color: ${({ theme }) => theme.overlayGrey};
     }
 `;
 

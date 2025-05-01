@@ -40,7 +40,7 @@ const ToastOuterContainer = styled.div`
     left: 24px;
     right: 24px;
     transform: unset;
-    z-index: 99999;
+    z-index: 9999;
     
     @media ${devices.mobileL} {
         left: 50%;

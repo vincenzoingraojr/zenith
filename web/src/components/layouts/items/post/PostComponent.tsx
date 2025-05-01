@@ -35,7 +35,7 @@ const PostContainer = styled.div`
 
     &:hover,
     &:focus {
-        background-color: ${({ theme }) => theme.opaqueGrey};
+        background-color: ${({ theme }) => theme.overlayGrey};
     }
 `;
 
@@ -44,10 +44,10 @@ const PostHeader = styled.div`
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding-top: 12px;
+    padding-top: 16px;
     padding-left: 16px;
     padding-right: 16px;
-    padding-bottom: 12px;
+    padding-bottom: 16px;
     width: 100%;
     overflow: hidden;
 `;
@@ -120,16 +120,16 @@ const AuthorUsername = styled(PageText)`
 const PostContentContainer = styled.div`
     display: flex;
     flex-direction: column;
-    padding-top: 6px;
-    padding-bottom: 6px;
     gap: 12px;
+    padding-top: 6px;
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-bottom: 6px;
 `;
 
 const PostTextContainer = styled.div`
     display: block;
-    padding-left: 16px;
-    padding-right: 16px;
-    font-size: 20px;
+    font-size: 22px;
 `;
 
 const PostActionsContainer = styled.div`
@@ -138,10 +138,10 @@ const PostActionsContainer = styled.div`
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding-top: 6px;
+    padding-top: 12px;
     padding-left: 16px;
     padding-right: 16px;
-    padding-bottom: 6px;
+    padding-bottom: 12px;
 `;
 
 const PostActionContainer = styled.div.attrs((props: { color: string }) => props)`

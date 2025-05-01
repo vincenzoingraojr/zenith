@@ -26,7 +26,7 @@ const NavWrapper = styled.nav.attrs(
     position: relative;
     top: unset;
     height: auto;
-    z-index: 100;
+    z-index: 3;
 
     ${mediaQuery(
         "(min-width: 600px) and (min-height: 480px)",
@@ -36,7 +36,7 @@ const NavWrapper = styled.nav.attrs(
         position: sticky;
         top: 0;
         height: 100vh;
-        z-index: 100;
+        z-index: 3;
         width: 100%;
         gap: 16px;
         flex-direction: column;
@@ -68,7 +68,7 @@ const NavItemLink = styled.div`
     a:hover,
     a:active {
         text-decoration: none;
-        background-color: ${({ theme }) => theme.opaqueGrey};
+        background-color: ${({ theme }) => theme.overlayGrey};
     }
 `;
 
@@ -97,7 +97,7 @@ const NavContainer = styled.div`
     position: fixed;
     background-color: ${({ theme }) => theme.background};
     height: 60px;
-    z-index: 100;
+    z-index: 3;
     top: unset;
     left: 0;
     right: 0;
