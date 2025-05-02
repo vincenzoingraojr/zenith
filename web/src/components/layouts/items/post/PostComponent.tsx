@@ -9,6 +9,7 @@ import { USER_TYPES } from "../../../../utils/constants";
 import Like from "../../../icons/Like";
 import { formatter } from "../../../../utils/formatter";
 import { COLORS } from "../../../../styles/colors";
+import Share from "../../../icons/Share";
 
 interface PostComponentProps {
     post: Post;
@@ -144,19 +145,19 @@ const PostActionsContainer = styled.div`
     padding-bottom: 12px;
 `;
 
-const PostActionContainer = styled.div.attrs((props: { color: string, isActive: boolean }) => props)`
+const PostActionContainer = styled.div.attrs((props: { color?: string, isActive: boolean }) => props)`
     display: flex;
     align-items: center;
     justify-content: flex-start;
     gap: 4px;
-    color: ${props => props.isActive ? props.color : "inherit"};
+    color: ${props => props.isActive ? props.color || COLORS.blue : "inherit"};
 
     &:hover, &:focus {
-        color: ${props => props.color};
+        color: ${props => props.color || COLORS.blue};
     }
 
     &:hover div div svg, &:focus div div svg {
-        fill: ${props => props.color};
+        fill: ${props => props.color || COLORS.blue};
     }
 `;
 
@@ -245,6 +246,18 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         <PostActionInfo>
                             {formatter.format(1200)}
                         </PostActionInfo>
+                    </PostActionContainer>
+                    <PostActionContainer
+                        role="button"
+                        aria-label={"Share this post"}
+                        title={"Share this post"}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                        }}
+                    >
+                        <PostActionIcon>
+                            <Share />
+                        </PostActionIcon>
                     </PostActionContainer>
                 </PostActionsContainer>
             </PostContainer>
