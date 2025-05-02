@@ -97,7 +97,7 @@ const NavContainer = styled.div`
     position: fixed;
     background-color: ${({ theme }) => theme.background};
     height: 60px;
-    z-index: 3;
+    z-index: 10;
     top: unset;
     left: 0;
     right: 0;

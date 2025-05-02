@@ -34,7 +34,8 @@ const MainHeader = styled.header`
     position: sticky;
     top: 0;
     width: 100%;
-    z-index: 3;
+    overflow: hidden;
+    z-index: 10;
     background-color: ${({ theme }) => theme.background};
 `;
 
@@ -46,6 +47,7 @@ const MainHeaderContainer = styled.div`
     gap: 12px;
     padding-left: 12px;
     padding-right: 12px;
+    overflow: hidden;
 `;
 
 const MainHeaderLeftContainer = styled.div.attrs((props: { type: string }) => props)`
@@ -57,6 +59,7 @@ const MainHeaderLeftContainer = styled.div.attrs((props: { type: string }) => pr
     gap: 12px;
     padding-left: 0;
     padding-right: 0;
+    overflow: hidden;
 
     ${mediaQuery(
         "(min-width: 600px) and (min-height: 480px)",
@@ -71,6 +74,9 @@ const MainHeaderTitle = styled.div`
     display: block;
     font-weight: 700;
     width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     cursor: pointer;
 `;
 

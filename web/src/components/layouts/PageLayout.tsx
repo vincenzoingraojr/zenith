@@ -60,6 +60,8 @@ const PageContentLayoutContainer = styled.div.attrs(
     margin-bottom: ${props => props.navHidden ? "0" : "60px"}; 
     border-left: unset;
     border-right: unset;
+    border-collapse: separate;
+    border-spacing: 0;
 
     @media (min-width: 600px) {
         border-left: 1px solid ${({ theme }) => theme.inputText};
