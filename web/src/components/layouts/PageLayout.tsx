@@ -11,8 +11,10 @@ interface PageLayoutProps extends LayoutProps {
 
 const PageLayoutWrapper = styled.div`
     display: flex;
+    width: 100vw;
     justify-content: center;
-    width: 100%;
+    align-items: stretch;
+    min-height: 100vh;
 `;
 
 const PageLayoutContainer = styled.div`
@@ -56,12 +58,9 @@ const PageContentLayoutContainer = styled.div.attrs(
 )`
     display: block;
     width: 100%;
-    min-height: 100vh;
     margin-bottom: ${props => props.navHidden ? "0" : "60px"}; 
     border-left: unset;
     border-right: unset;
-    border-collapse: separate;
-    border-spacing: 0;
 
     @media (min-width: 600px) {
         border-left: 1px solid ${({ theme }) => theme.inputText};

@@ -10,6 +10,7 @@ const GlobalStyle = createGlobalStyle`
         font-size: 18px;
         overflow-x: hidden;
         overflow-y: scroll;
+        position: relative;
     }
 
     * {

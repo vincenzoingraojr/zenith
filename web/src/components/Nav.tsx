@@ -26,7 +26,7 @@ const NavWrapper = styled.nav.attrs(
     position: relative;
     top: unset;
     height: auto;
-    z-index: 3;
+    z-index: unset;
 
     ${mediaQuery(
         "(min-width: 600px) and (min-height: 480px)",
@@ -36,7 +36,7 @@ const NavWrapper = styled.nav.attrs(
         position: sticky;
         top: 0;
         height: 100vh;
-        z-index: 3;
+        z-index: 11;
         width: 100%;
         gap: 16px;
         flex-direction: column;

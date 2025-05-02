@@ -1,4 +1,4 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useState } from "react";
 import { Post } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useNavigate } from "react-router-dom";
@@ -144,12 +144,12 @@ const PostActionsContainer = styled.div`
     padding-bottom: 12px;
 `;
 
-const PostActionContainer = styled.div.attrs((props: { color: string }) => props)`
+const PostActionContainer = styled.div.attrs((props: { color: string, isActive: boolean }) => props)`
     display: flex;
     align-items: center;
     justify-content: flex-start;
     gap: 4px;
-    color: inherit;
+    color: ${props => props.isActive ? props.color : "inherit"};
 
     &:hover, &:focus {
         color: ${props => props.color};
@@ -160,6 +160,12 @@ const PostActionContainer = styled.div.attrs((props: { color: string }) => props
     }
 `;
 
+const PostActionIcon = styled(ControlContainer)`
+    ${PostActionContainer}:hover &, ${PostActionContainer}:focus & {
+        background-color: ${({ theme }) => theme.overlayGrey};
+    }
+`;
+
 const PostActionInfo = styled(PageText)`
     font-size: 16px;
     color: inherit;
@@ -167,6 +173,7 @@ const PostActionInfo = styled(PageText)`
 
 const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplying, origin }) => {
     const navigate = useNavigate();
+    const [like, setLike] = useState(false);
 
     return (
         <PostWrapper>
@@ -228,11 +235,13 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         color={COLORS.red}
                         onClick={(e) => {
                             e.stopPropagation();
+                            setLike(!like);
                         }}
+                        isActive={like}
                     >
-                        <ControlContainer>
-                            <Like isActive={false} />
-                        </ControlContainer>
+                        <PostActionIcon>
+                            <Like isActive={like} />
+                        </PostActionIcon>
                         <PostActionInfo>
                             {formatter.format(1200)}
                         </PostActionInfo>
