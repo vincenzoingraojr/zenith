@@ -21,6 +21,10 @@ import SignUpScreen from "../screens/SignUpScreen";
 import RecoverPasswordScreen from "../screens/RecoverPasswordScreen";
 import ReactivateAccountScreen from "../screens/ReactivateAccountScreen";
 import OTPVerificationScreen from "../screens/OTPVerificationScreen";
+import SearchScreen from "../screens/search/SearchScreen";
+import Magnifier from "../components/icons/Magnifier";
+import Mail from "../components/icons/Mail";
+import MessagesScreen from "../screens/messages/MessagesScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -75,6 +79,17 @@ const TabStack = () => {
                 }}
             />
             <Tab.Screen 
+                name="Search" 
+                component={SearchScreen}
+                options={{
+                    title: "Search",
+                    headerTitleAlign: "left",
+                    tabBarIcon: ({ focused }) => (
+                        <Magnifier type="normal" isActive={focused} />
+                    ),
+                }}
+            />
+            <Tab.Screen 
                 name="Notifications" 
                 component={NotificationScreen}
                 options={{
@@ -82,6 +97,17 @@ const TabStack = () => {
                     headerTitleAlign: "left",
                     tabBarIcon: ({ focused }) => (
                         <Bell isActive={focused} />
+                    ),
+                }}
+            />
+            <Tab.Screen 
+                name="Messages" 
+                component={MessagesScreen}
+                options={{
+                    title: "Messages",
+                    headerTitleAlign: "left",
+                    tabBarIcon: ({ focused }) => (
+                        <Mail isActive={focused} />
                     ),
                 }}
             />

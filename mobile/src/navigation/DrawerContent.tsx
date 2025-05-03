@@ -79,7 +79,7 @@ const DrawerContent: FunctionComponent<DrawerContentComponentProps> = (props) =>
                             }}    
                         >
                             <Exit />
-                            <Text style={[styles.text, globalStyles.boldText]}>Log out</Text>
+                            <Text style={[styles.text, globalStyles.boldText, drawerStyles.logOutText]}>Log out</Text>
                         </TouchableOpacity>
                     )}
                 </ScrollView>
@@ -123,6 +123,9 @@ const drawerStyles = StyleSheet.create({
         alignItems: "center",
         gap: 16,
     },
+    logOutText: {
+        color: COLORS.red,
+    }
 });
 
 export default DrawerContent;
