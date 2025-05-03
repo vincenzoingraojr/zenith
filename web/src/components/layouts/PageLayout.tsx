@@ -70,7 +70,6 @@ const PageContentLayoutContainer = styled.div.attrs(
     border-left: unset;
     border-right: unset;
     min-height: 100vh;
-    border-collapse: separate;
 
     @media (min-width: 600px) {
         border-left: 1px solid ${({ theme }) => theme.inputText};
