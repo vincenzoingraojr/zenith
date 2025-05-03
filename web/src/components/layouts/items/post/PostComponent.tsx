@@ -10,6 +10,7 @@ import Like from "../../../icons/Like";
 import { formatter } from "../../../../utils/formatter";
 import { COLORS } from "../../../../styles/colors";
 import Share from "../../../icons/Share";
+import Views from "../../../icons/Views";
 
 interface PostComponentProps {
     post: Post;
@@ -245,6 +246,21 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         </PostActionIcon>
                         <PostActionInfo>
                             {formatter.format(1200)}
+                        </PostActionInfo>
+                    </PostActionContainer>
+                    <PostActionContainer
+                        role="button"
+                        aria-label={"Post views"}
+                        title={"Post views"}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                        }}
+                    >
+                        <PostActionIcon>
+                            <Views />
+                        </PostActionIcon>
+                        <PostActionInfo>
+                            {formatter.format(10000)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
