@@ -13,8 +13,16 @@ const PageLayoutWrapper = styled.div`
     display: flex;
     width: 100vw;
     justify-content: center;
-    align-items: stretch;
-    min-height: 100vh;
+    min-height: unset;
+    align-items: unset;
+    
+    ${mediaQuery(
+        "(min-width: 600px) and (min-height: 480px)",
+        devices.laptopM
+    )} {
+        align-items: stretch;
+        min-height: 100vh;
+    }
 `;
 
 const PageLayoutContainer = styled.div`
@@ -61,6 +69,8 @@ const PageContentLayoutContainer = styled.div.attrs(
     margin-bottom: ${props => props.navHidden ? "0" : "60px"}; 
     border-left: unset;
     border-right: unset;
+    min-height: 100vh;
+    border-collapse: separate;
 
     @media (min-width: 600px) {
         border-left: 1px solid ${({ theme }) => theme.inputText};
@@ -71,6 +81,7 @@ const PageContentLayoutContainer = styled.div.attrs(
         "(min-width: 600px) and (min-height: 480px)",
         devices.laptopM
     )} {
+        min-height: unset;
         margin-bottom: 0;
     }
 `;
