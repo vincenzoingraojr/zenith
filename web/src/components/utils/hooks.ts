@@ -27,3 +27,15 @@ export function useMenu() {
 
     return { showMenu, openMenu, closeMenu };
 }
+
+export function useOptions() {
+    const [activeOptions, setActiveOptions] = useState<number | null>(
+        null
+    );
+
+    const handleOptionsClick = (index: number) => {
+        setActiveOptions(activeOptions === index ? null : index);
+    };
+
+    return { activeOptions, handleOptionsClick };
+}

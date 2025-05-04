@@ -11,6 +11,10 @@ import { formatter } from "../../../../utils/formatter";
 import { COLORS } from "../../../../styles/colors";
 import Share from "../../../icons/Share";
 import Views from "../../../icons/Views";
+import Options, { OptionItem, OptionItemIcon, OptionItemText } from "../../../Options";
+import More from "../../../icons/More";
+import { useOptions } from "../../../utils/hooks";
+import Flag from "../../../icons/Flag";
 
 interface PostComponentProps {
     post: Post;
@@ -119,14 +123,21 @@ const AuthorUsername = styled(PageText)`
     color: ${({ theme }) => theme.inputText};
 `;
 
+const PostRightContainer = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+`;
+
 const PostContentContainer = styled.div`
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding-top: 6px;
+    padding-top: 12px;
     padding-left: 16px;
     padding-right: 16px;
-    padding-bottom: 6px;
+    padding-bottom: 12px;
 `;
 
 const PostTextContainer = styled.div`
@@ -177,6 +188,8 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
     const navigate = useNavigate();
     const [like, setLike] = useState(false);
 
+    const { activeOptions, handleOptionsClick } = useOptions();
+
     return (
         <PostWrapper>
             <PostContainer
@@ -223,6 +236,29 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             </AuthorUsername>
                         </AuthorInfo>
                     </PostAuthorContainer>
+                    <PostRightContainer>
+                        <Options
+                            key={post.id}
+                            title="Post options" 
+                            icon={<More />}
+                            isOpen={activeOptions === post.id}
+                            toggleOptions={() =>
+                                handleOptionsClick(post.id)
+                            }
+                            children={
+                                <>
+                                    <OptionItem>
+                                        <OptionItemIcon>
+                                            <Flag />
+                                        </OptionItemIcon>
+                                        <OptionItemText>
+                                            Report this post
+                                        </OptionItemText>
+                                    </OptionItem>
+                                </>
+                            }
+                        />
+                    </PostRightContainer>
                 </PostHeader>
                 <PostContentContainer>
                     <PostTextContainer>
