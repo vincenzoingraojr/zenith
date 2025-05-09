@@ -2,10 +2,11 @@ import styled from "styled-components";
 import { SvgIcon } from "../../styles/global";
 
 export interface IconProps {
-    isActive: boolean;
+    isActive?: boolean;
+    color?: string;
 }
 
-export interface LinkIconProps {
+export interface LinkIconProps extends IconProps {
     type: "nav" | "options";
 }
 

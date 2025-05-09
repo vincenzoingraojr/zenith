@@ -3,6 +3,7 @@ import { ControlContainer, PageBlock, SmallButton } from "../styles/global";
 import PortalComponent from "../utils/PortalComponent";
 import styled from "styled-components";
 import { devices } from "../styles/devices";
+import { COLORS } from "../styles/colors";
 
 interface OptionsProps {
     icon: React.ReactNode;
@@ -125,9 +126,12 @@ export const OptionItemIcon = styled.div`
     justify-content: center;
 `;
 
-export const OptionItemText = styled.div`
+export const OptionItemText = styled.div.attrs(
+    (props: { isRed?: boolean }) => props
+)`
     display: block;
     font-weight: inherit;
+    color: ${({ theme, isRed }) => (isRed ? COLORS.red : theme.color)};
 `;
 
 const Options: FunctionComponent<OptionsProps> = ({ icon, title, isOpen, toggleOptions, children, mirrored }) => {

@@ -367,7 +367,7 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                     aria-label={`Log out from @${me.username}`}
                                 >
                                     <MenuNavEntryIcon>
-                                        <Exit type="nav" isRed={true} />
+                                        <Exit type="nav" color={COLORS.red} />
                                     </MenuNavEntryIcon>
                                     <MenuNavEntryText color={COLORS.red}>
                                         Log out

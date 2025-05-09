@@ -2,7 +2,7 @@ import { FunctionComponent, useState } from "react";
 import { Post } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useNavigate } from "react-router-dom";
-import { ControlContainer, PageText } from "../../../../styles/global";
+import { ControlContainer, PageBlock, PageText } from "../../../../styles/global";
 import profilePicture from "../../../../images/profile-picture.png";
 import TextContainerRender from "../../../utils/TextContainerRender";
 import { USER_TYPES } from "../../../../utils/constants";
@@ -15,6 +15,12 @@ import Options, { OptionItem, OptionItemIcon, OptionItemText } from "../../../Op
 import More from "../../../icons/More";
 import { useOptions } from "../../../utils/hooks";
 import Flag from "../../../icons/Flag";
+import Comment from "../../../icons/Comment";
+import { processDate } from "../../../../utils/processDate";
+import Pen from "../../../icons/Pen";
+import { useMeData } from "../../../../utils/userQueries";
+import Bin from "../../../icons/Bin";
+import FollowIcon from "../../../icons/FollowIcon";
 
 interface PostComponentProps {
     post: Post;
@@ -130,6 +136,19 @@ const PostRightContainer = styled.div`
     gap: 12px;
 `;
 
+const PostDate = styled(PageText)`
+    font-size: 14px;
+    color: ${({ theme }) => theme.inputText};
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover,
+    &:focus {
+        text-decoration: underline;
+    }
+`;
+
 const PostContentContainer = styled.div`
     display: flex;
     flex-direction: column;
@@ -143,6 +162,14 @@ const PostContentContainer = styled.div`
 const PostTextContainer = styled.div`
     display: block;
     font-size: 22px;
+`;
+
+const PostMediaContainer = styled.div`
+    display: flex;
+`;
+
+const PostMediaItem = styled.div`
+    display: flex;
 `;
 
 const PostActionsContainer = styled.div`
@@ -187,8 +214,24 @@ const PostActionInfo = styled(PageText)`
 const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplying, origin }) => {
     const navigate = useNavigate();
     const [like, setLike] = useState(false);
+    const [follow, setFollow] = useState(false);
 
     const { activeOptions, handleOptionsClick } = useOptions();
+
+    const date = processDate(post.createdAt, true, true);
+
+    const createdAt = new Date(parseInt(post.createdAt)).toLocaleString(
+        "en-us",
+        {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        }
+    );
+
+    const { me } = useMeData();
 
     return (
         <PostWrapper>
@@ -237,6 +280,22 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         </AuthorInfo>
                     </PostAuthorContainer>
                     <PostRightContainer>
+                        <PostDate title={createdAt} aria-label={createdAt}>
+                            <time
+                                dateTime={createdAt}
+                            >
+                                {date}
+                            </time>
+                        </PostDate>
+                        {!post.isEdited && (
+                            <PageBlock
+                                role="button"
+                                title="Edited post"
+                                aria-label="Edited post"
+                            >
+                                <Pen color={COLORS.blue} />
+                            </PageBlock>
+                        )}
                         <Options
                             key={post.id}
                             title="Post options" 
@@ -255,6 +314,49 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                             Report this post
                                         </OptionItemText>
                                     </OptionItem>
+                                    {me && (
+                                        <>
+                                            {post.authorId === me.id ? (
+                                                <>
+                                                    <OptionItem>
+                                                        <OptionItemIcon>
+                                                            <Pen />
+                                                        </OptionItemIcon>
+                                                        <OptionItemText>
+                                                            Edit this post
+                                                        </OptionItemText>
+                                                    </OptionItem>
+                                                    <OptionItem>
+                                                        <OptionItemIcon>
+                                                            <Bin color={COLORS.red} />
+                                                        </OptionItemIcon>
+                                                        <OptionItemText isRed={true}>
+                                                            Delete this post
+                                                        </OptionItemText>
+                                                    </OptionItem>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <OptionItem
+                                                        role="button"
+                                                        title="Follow this user"
+                                                        aria-label="Follow this user"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setFollow(!follow);
+                                                        }}
+                                                    >
+                                                        <OptionItemIcon>
+                                                            <FollowIcon isActive={follow} />
+                                                        </OptionItemIcon>
+                                                        <OptionItemText>
+                                                            {follow ? "Unfollow" : "Follow"} @{post.author.username}
+                                                        </OptionItemText>
+                                                    </OptionItem>
+                                                </>
+                                            )}
+                                        </>
+                                    )}
                                 </>
                             }
                         />
@@ -264,6 +366,15 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                     <PostTextContainer>
                         <TextContainerRender content={post.content} />
                     </PostTextContainer>
+                    {post.media && post.media.length > 0 && (
+                        <PostMediaContainer>
+                            {post.media.map((media) => (
+                                <PostMediaItem>
+
+                                </PostMediaItem>
+                            ))}
+                        </PostMediaContainer>
+                    )}
                 </PostContentContainer>
                 <PostActionsContainer>
                     <PostActionContainer
@@ -282,6 +393,21 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         </PostActionIcon>
                         <PostActionInfo>
                             {formatter.format(1200)}
+                        </PostActionInfo>
+                    </PostActionContainer>
+                    <PostActionContainer
+                        role="button"
+                        aria-label={"Comment this post"}
+                        title={"Comment this post"}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                        }}
+                    >
+                        <PostActionIcon>
+                            <Comment />
+                        </PostActionIcon>
+                        <PostActionInfo>
+                            {formatter.format(1700)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer

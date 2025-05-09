@@ -160,7 +160,7 @@ const NavOptions: FunctionComponent<NavOptionsProps> = ({ position, closeOptions
                             aria-label="Log out"
                         >
                             <NavOptionIcon>
-                                <Exit type="options" isRed={true} />
+                                <Exit type="options" color={COLORS.red} />
                             </NavOptionIcon>
                             <NavOptionText color={COLORS.red}>
                                 Log out
