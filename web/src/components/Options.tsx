@@ -150,12 +150,9 @@ const Options: FunctionComponent<OptionsProps> = ({ icon, title, isOpen, toggleO
             
             if (buttonElement) {
                 const rect = buttonElement.getBoundingClientRect();
-                const screenHeight = document.body.clientHeight;
-                const scrollY = window.scrollY;
+                const screenHeight = window.innerHeight;
 
-                const topPosition = rect.top + scrollY;
-
-                setIsInUpperHalf(topPosition < screenHeight / 2);
+                setIsInUpperHalf(rect.top < screenHeight / 2);
 
                 setPosition({
                     top: rect.top,
