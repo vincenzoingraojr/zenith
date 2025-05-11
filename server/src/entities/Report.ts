@@ -15,9 +15,13 @@ export class Report extends BaseItem {
     @Column({ type: "uuid", unique: true })
     reportId: string;
 
-    @Field(() => Int)
-    @Column()
+    @Field(() => Int, { nullable: true, defaultValue: null })
+    @Column({ nullable: true, default: null })
     authorId: number;
+
+    @Field(() => String)
+    @Column({ type: "uuid" })
+    uniqueIdentifier: string;
 
     @Field(() => String)
     @Column()

@@ -36,41 +36,40 @@ export class ReportResolver {
         @Arg("contentType") contentType: string,
         @Arg("categoryId", () => Int) categoryId: number, 
         @Arg("subCategoryId", () => Int, { nullable: true }) subCategoryId: number,
-        @Ctx() { payload }: AuthContext,
+        @Ctx() { payload, req }: AuthContext,
         @Arg("additionalContentIds", () => [Int], { nullable: true }) additionalContentIds?: number[],
         @Arg("additionalContentType", { nullable: true }) additionalContentType?: string,
     ): Promise<ReportResponse> {
         let status = "";
         let ok = false;
+
+        const uniqueIdentifier = req.cookies["uid"];
         
-        if (!payload) {
-            status = "You're not authenticated.";
-        } else {
-            try {
-                await this.reportRepository.create({
-                    reportId: uuidv4(),
-                    authorId: payload.id,
-                    contentId,
-                    contentType,
-                    categoryId,
-                    subCategoryId,
-                    additionalContentIds,
-                    additionalContentType,
-                }).save();
+        try {
+            await this.reportRepository.create({
+                reportId: uuidv4(),
+                authorId: payload && payload.id,
+                uniqueIdentifier,
+                contentId,
+                contentType,
+                categoryId,
+                subCategoryId,
+                additionalContentIds,
+                additionalContentType,
+            }).save();
 
-                status = "Your report has been submitted.";
+            status = "Your report has been submitted.";
 
-                ok = true;
-            } catch (error) {
-                logger.error(error);
+            ok = true;
+        } catch (error) {
+            logger.error(error);
 
-                status = "An error has occurred, please try again later.";
-            }
+            status = "An error has occurred, please try again later.";
         }
 
         return {
             status,
-            ok
+            ok,
         };
     }
 
