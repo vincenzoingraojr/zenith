@@ -287,7 +287,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                 {date}
                             </time>
                         </PostDate>
-                        {!post.isEdited && (
+                        {post.isEdited && (
                             <PageBlock
                                 role="button"
                                 title="Edited post"
