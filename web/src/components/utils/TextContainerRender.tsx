@@ -6,9 +6,10 @@ import { PageText } from "../../styles/global";
 
 interface TextContainerRenderProps {
     content: string;
+    mentions: string[];
 }
 
-const microOptions = {
+const lumenOptions = {
     usernameUrlBase: "/",
     usernameIncludeSymbol: true,
     hashtagUrlBase: "/search?q=%23",
@@ -21,13 +22,14 @@ function handleClick(e: any) {
 
 const TextContainerRender: FunctionComponent<TextContainerRenderProps> = ({
     content,
+    mentions,
 }) => {
     const parts = content.split("\n");
 
     const options = {
         replace: (domNode: any) => {
             if (domNode.name === "a" && domNode.attribs.class) {
-                if (domNode.attribs.class.includes("username")) {
+                if (domNode.attribs.class.includes("username") && mentions.includes(domNode.attribs["data-screen-name"])) {
                     return (
                         <Link
                             to={domNode.attribs.href}
@@ -76,7 +78,7 @@ const TextContainerRender: FunctionComponent<TextContainerRenderProps> = ({
             {parts.map((part, index) => (
                 <PageText key={index}>
                     {parse(
-                        lumen.autoLink(lumen.htmlEscape(part), microOptions),
+                        lumen.autoLink(lumen.htmlEscape(part), lumenOptions),
                         options
                     )}
                 </PageText>

@@ -165,11 +165,28 @@ const PostTextContainer = styled.div`
 `;
 
 const PostMediaContainer = styled.div`
-    display: flex;
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+
+    &:has(div:nth-child(3):last-child) div:nth-child(3), &:has(div:nth-child(1):only-child) div:nth-child(1) {
+        grid-column: span 2;
+    }
 `;
 
 const PostMediaItem = styled.div`
     display: flex;
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+
+    img, video {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: inherit;
+    }
 `;
 
 const PostActionsContainer = styled.div`
@@ -364,13 +381,19 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                 </PostHeader>
                 <PostContentContainer>
                     <PostTextContainer>
-                        <TextContainerRender content={post.content} />
+                        <TextContainerRender content={post.content} mentions={post.mentions} />
                     </PostTextContainer>
                     {post.media && post.media.length > 0 && (
                         <PostMediaContainer>
                             {post.media.map((media) => (
-                                <PostMediaItem>
-
+                                <PostMediaItem key={media.id}>
+                                    {media.type.includes("image") ? (
+                                        <img src={media.src} alt={media.alt} />
+                                    ) : (
+                                        <video controls>
+                                            <source src={media.src} type={media.type} />
+                                        </video>
+                                    )}
                                 </PostMediaItem>
                             ))}
                         </PostMediaContainer>
