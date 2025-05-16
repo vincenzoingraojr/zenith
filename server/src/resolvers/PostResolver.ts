@@ -1033,7 +1033,7 @@ export class PostResolver {
         
             const users = await this.userService.findUsersById(userIds, true);
         
-            return users;
+            return users || [];
         } catch (error) {
             logger.error(error);
 

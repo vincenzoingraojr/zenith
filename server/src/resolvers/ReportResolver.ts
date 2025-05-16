@@ -28,7 +28,6 @@ export class ReportResolver {
         this.reportRepository = appDataSource.getRepository(Report);
     }
 
-    // anche per utenti non autenticati
     @Mutation(() => ReportResponse)
     @UseMiddleware(isAuth)
     async createReport(

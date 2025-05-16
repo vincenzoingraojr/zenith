@@ -1,0 +1,9 @@
+query IsPostLikedByMe(
+    $itemId: String!,
+    $type: String!
+) {
+    isPostLikedByMe(
+        itemId: $itemId,
+        type: $type,
+    )
+}

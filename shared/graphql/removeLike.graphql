@@ -1,0 +1,9 @@
+mutation RemoveLike(
+    $itemId: String!,
+    $itemType: String!,
+) {
+    removeLike(
+        itemId: $itemId,
+        itemType: $itemType,
+    )
+}

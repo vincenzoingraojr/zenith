@@ -1,0 +1,20 @@
+mutation CreateReport(
+    $contentId: String!,
+    $contentType: String!,
+    $categoryId: Int!,
+    $subCategoryId: Int,
+    $additionalContentIds: [Int!],
+    $additionalContentType: String
+) {
+    createReport(
+        contentId: $contentId,
+        contentType: $contentType,
+        categoryId: $categoryId,
+        subCategoryId: $subCategoryId,
+        additionalContentIds: $additionalContentIds,
+        additionalContentType: $additionalContentType
+    ) {
+        status
+        ok
+    }
+}

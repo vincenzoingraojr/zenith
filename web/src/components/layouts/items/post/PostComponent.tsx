@@ -1,7 +1,7 @@
-import { FunctionComponent, useState } from "react";
-import { Post } from "../../../../generated/graphql";
+import { FunctionComponent, useEffect, useRef, useState } from "react";
+import { GetPostLikesDocument, GetPostLikesQuery, Post, useGetPostLikesQuery, useIncrementPostViewsMutation, useIsPostLikedByMeQuery, useLikePostMutation, usePostCommentsQuery, useRemoveLikeMutation } from "../../../../generated/graphql";
 import styled from "styled-components";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ControlContainer, PageBlock, PageText } from "../../../../styles/global";
 import profilePicture from "../../../../images/profile-picture.png";
 import TextContainerRender from "../../../utils/TextContainerRender";
@@ -152,11 +152,11 @@ const PostDate = styled(PageText)`
 const PostContentContainer = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding-top: 12px;
+    gap: 16px;
+    padding-top: 10px;
     padding-left: 16px;
     padding-right: 16px;
-    padding-bottom: 12px;
+    padding-bottom: 10px;
 `;
 
 const PostTextContainer = styled.div`
@@ -186,6 +186,8 @@ const PostMediaItem = styled.div`
         width: 100%;
         height: auto;
         border-radius: inherit;
+        object-fit: cover;
+        object-position: center;
     }
 `;
 
@@ -195,10 +197,10 @@ const PostActionsContainer = styled.div`
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding-top: 12px;
+    padding-top: 10px;
     padding-left: 16px;
     padding-right: 16px;
-    padding-bottom: 12px;
+    padding-bottom: 10px;
 `;
 
 const PostActionContainer = styled.div.attrs((props: { color?: string, isActive: boolean }) => props)`
@@ -250,10 +252,84 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
 
     const { me } = useMeData();
 
+    const location = useLocation();
+
+    const postRef = useRef<HTMLDivElement>(null);
+    const [incrementPostViews] = useIncrementPostViewsMutation();
+
+    useEffect(() => {
+        let postDivRef = postRef.current;
+
+        const options = {
+            root: null,
+            rootMargin: "0px",
+            threshold: 1.0,
+        };
+
+        const observer = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting) {
+                incrementPostViews({
+                    variables: {
+                        itemId: post.itemId,
+                        type: post.type,
+                        itemOpened: false,
+                        origin,
+                    },
+                });
+            }
+        }, options);
+
+        if (postDivRef) {
+            observer.observe(postDivRef);
+        }
+
+        return () => {
+            if (postDivRef) {
+                observer.unobserve(postDivRef);
+            }
+
+            postDivRef = null;
+        };
+    }, [incrementPostViews, post, origin]);
+
+    const [likePost] = useLikePostMutation();
+    const [removeLike] = useRemoveLikeMutation();
+
+    const { data: likeData } = useIsPostLikedByMeQuery({
+        fetchPolicy: "cache-and-network",
+        variables: { itemId: post.itemId, type: post.type },
+    });
+
+    useEffect(() => {
+        if (likeData) {
+            setLike(likeData.isPostLikedByMe);
+        }
+    }, [likeData]);
+
+    const { data: postLikesData } = useGetPostLikesQuery({
+        fetchPolicy: "cache-and-network",
+        variables: { itemId: post.itemId, type: post.type },
+    });
+
+    const [postLikes, setPostLikes] = useState(
+        (postLikesData && postLikesData.getPostLikes) ? postLikesData.getPostLikes.length : 0
+    );
+    useEffect(() => {
+        if (postLikesData && postLikesData.getPostLikes) {
+            setPostLikes(postLikesData.getPostLikes.length);
+        }
+    }, [postLikesData]);
+
+    const { data: commentsData } = usePostCommentsQuery({
+        fetchPolicy: "cache-and-network",
+        variables: { id: post.id, type: post.type },
+    });
+
     return (
         <PostWrapper>
             <PostContainer
                 role="link"
+                ref={postRef}
                 onClick={(e: any) => {
                     if (
                         e.target.tagName === "A" &&
@@ -323,7 +399,19 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             }
                             children={
                                 <>
-                                    <OptionItem>
+                                    <OptionItem
+                                        role="menuitem"
+                                        title="Report this post"
+                                        aria-label="Report this post"
+                                        onClick={(e) => {
+                                            navigate(`/report/post/${post.itemId}`, {
+                                                state: {
+                                                    backgroundLocation:
+                                                        location,
+                                                },
+                                            });
+                                        }}
+                                    >
                                         <OptionItemIcon>
                                             <Flag />
                                         </OptionItemIcon>
@@ -335,7 +423,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                         <>
                                             {post.authorId === me.id ? (
                                                 <>
-                                                    <OptionItem>
+                                                    <OptionItem
+                                                        role="menuitem"
+                                                    >
                                                         <OptionItemIcon>
                                                             <Pen />
                                                         </OptionItemIcon>
@@ -343,7 +433,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                             Edit this post
                                                         </OptionItemText>
                                                     </OptionItem>
-                                                    <OptionItem>
+                                                    <OptionItem
+                                                        role="menuitem"
+                                                    >
                                                         <OptionItemIcon>
                                                             <Bin color={COLORS.red} />
                                                         </OptionItemIcon>
@@ -355,7 +447,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                             ) : (
                                                 <>
                                                     <OptionItem
-                                                        role="button"
+                                                        role="menuitem"
                                                         title="Follow this user"
                                                         aria-label="Follow this user"
                                                         onClick={(e) => {
@@ -402,12 +494,88 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                 <PostActionsContainer>
                     <PostActionContainer
                         role="button"
-                        aria-label={"Like this post"}
-                        title={"Like this post"}
+                        title={`${like ? "Remove like from" : "Like"} @${post.author.username}'s post`}
+                        aria-label={`${like ? "Remove like from" : "Like"} @${post.author.username}'s post`}
                         color={COLORS.red}
-                        onClick={(e) => {
+                        onClick={async (e) => {
                             e.stopPropagation();
-                            setLike(!like);
+                            
+                            if (me) {
+                                if (like) {
+                                    await removeLike({
+                                        variables: {
+                                            itemId: post.itemId,
+                                            itemType: post.type,
+                                        },
+                                        update: (
+                                            store,
+                                            { data: removeLikeData }
+                                        ) => {
+                                            if (
+                                                removeLikeData &&
+                                                removeLikeData.removeLike &&
+                                                postLikesData && postLikesData.getPostLikes
+                                            ) {
+                                                const postLikes =
+                                                    postLikesData.getPostLikes.filter((item) => item.id !== me.id);
+
+                                                store.writeQuery<GetPostLikesQuery>(
+                                                    {
+                                                        query: GetPostLikesDocument,
+                                                        data: {
+                                                            getPostLikes:
+                                                                postLikes,
+                                                        },
+                                                        variables: {
+                                                            itemId: post.itemId,
+                                                            type: post.type,
+                                                        },
+                                                    }
+                                                );
+                                            }
+                                        },
+                                    }).then(() => {
+                                        setLike(false);
+                                    });
+                                } else {
+                                    await likePost({
+                                        variables: {
+                                            itemId: post.itemId,
+                                            origin,
+                                            itemOpened: false,
+                                            itemType: post.type,
+                                        },
+                                        update: (
+                                            store,
+                                            { data: likePostData }
+                                        ) => {
+                                            if (
+                                                likePostData &&
+                                                likePostData.likePost &&
+                                                postLikesData && postLikesData.getPostLikes
+                                            ) {
+                                                store.writeQuery<GetPostLikesQuery>(
+                                                    {
+                                                        query: GetPostLikesDocument,
+                                                        data: {
+                                                            getPostLikes: [
+                                                                me,
+                                                                ...postLikesData.getPostLikes,
+                                                            ],
+                                                        },
+                                                        variables: {
+                                                            itemId: post.itemId,
+                                                            type: post.type,
+                                                        },
+                                                    }
+                                                );
+                                            }
+                                        },
+                                    }).then(() => {
+                                        setLike(true);
+                                    });
+                                }
+                            }
                         }}
                         isActive={like}
                     >
@@ -415,7 +583,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             <Like isActive={like} />
                         </PostActionIcon>
                         <PostActionInfo>
-                            {formatter.format(1200)}
+                            {formatter.format(postLikes)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
@@ -430,7 +598,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             <Comment />
                         </PostActionIcon>
                         <PostActionInfo>
-                            {formatter.format(1700)}
+                            {formatter.format((commentsData && commentsData.postComments) ? commentsData.postComments.length : 0)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
@@ -445,7 +613,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             <Views />
                         </PostActionIcon>
                         <PostActionInfo>
-                            {formatter.format(10000)}
+                            {formatter.format(post.views)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer

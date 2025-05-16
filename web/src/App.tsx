@@ -18,6 +18,7 @@ import { AppErrorContainer, AppErrorWrapper, PageBlock, PageText, StandardButton
 import SearchPage from "./pages/search/SearchPage";
 import Notifications from "./pages/Notifications";
 import Messages from "./pages/messages/Messages";
+import ReportPage from "./pages/ReportPage";
 
 function App() {
     const location = useLocation();
@@ -181,7 +182,16 @@ function App() {
                             children={<Messages />}
                         />
                     }
-                />           
+                />    
+                <Route
+                    path="/report/:type/:contentId"
+                    element={
+                        <Modal
+                            headerText="Report"
+                            children={<ReportPage />}
+                        />
+                    }
+                />       
             </Routes>
             {(state && state.backgroundLocation) && (
                 <Routes>
@@ -191,6 +201,15 @@ function App() {
                             <Modal
                                 headerText="Verify OTP"
                                 children={<VerifyOTP />}
+                            />
+                        }
+                    />
+                    <Route
+                        path="/report/:type/:contentId"
+                        element={
+                            <Modal
+                                headerText="Report"
+                                children={<ReportPage />}
                             />
                         }
                     />

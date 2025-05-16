@@ -1,0 +1,22 @@
+mutation LikePost(
+    $itemId: String!,
+    $origin: String!,
+    $itemOpened: Boolean!,
+    $itemType: String!,
+) {
+    likePost(
+        itemId: $itemId,
+        origin: $origin,
+        itemOpened: $itemOpened,
+        itemType: $itemType,
+    ) {
+        id
+        userId
+        likedItemId
+        itemOpened
+        itemType
+        origin
+        createdAt
+        updatedAt
+    }
+}

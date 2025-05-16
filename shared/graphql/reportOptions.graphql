@@ -1,0 +1,13 @@
+query ReportOptions($type: String!) {
+    reportOptions(type: $type) {
+        id
+        title
+        description
+        subcategories {
+            categoryId
+            id
+            title
+            description
+        }
+    }
+}

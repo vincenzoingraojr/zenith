@@ -32,12 +32,10 @@ export const processDate = (
             if (daysDifference * 24 * 60 < 1) {
                 if (short) {
                     return "Now";
+                } else if (capitalize) {
+                    return "Just now";
                 } else {
-                    if (capitalize) {
-                        return "Just now";
-                    } else {
-                        return "just now";
-                    }
+                    return "just now";
                 }
             } else {
                 if (short) {

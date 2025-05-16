@@ -1,5 +1,10 @@
 export const BAD_REQUEST_MESSAGE = "Bad request. Please try again.";
 
+export const ERROR_SOMETHING_WENT_WRONG: { title: string; message: string } = {
+    title: "Something went wrong",
+    message: "An error has occurred. Try to refresh the page.",
+};
+
 export const genderOptions = [
     { value: "Gender", label: "Gender" },
     { value: "Female", label: "Female" },

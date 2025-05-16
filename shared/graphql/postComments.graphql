@@ -1,0 +1,67 @@
+query PostComments(
+    $id: Int,
+    $type: String!,
+    $offset: Int,
+    $limit: Int,
+) {
+    postComments(
+        id: $id,
+        type: $type,
+        offset: $offset,
+        limit: $limit,
+    ) {
+        id
+        itemId
+        authorId
+        type
+        content
+        isEdited
+        views
+        lang
+        topics
+        author {
+            id
+            name
+            username
+            email
+            type
+            gender
+            birthDate {
+                date
+                monthAndDayVisibility
+                yearVisibility
+            }
+            emailVerified
+            profile {
+                profilePicture
+                profileBanner
+                bio
+                website
+            }
+            userSettings {
+                incomingMessages
+                twoFactorAuth
+            }
+            searchSettings {
+                hideSensitiveContent
+                hideBlockedAccounts
+            }
+            createdAt
+            updatedAt
+            hiddenPosts
+        }
+        isReplyToId
+        isReplyToType
+        quotedPostId
+        media {
+            id
+            type
+            src
+            alt
+        }
+        mentions
+        hashtags
+        createdAt
+        updatedAt
+    }
+}

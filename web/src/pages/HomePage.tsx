@@ -8,6 +8,7 @@ import LoadingComponent from "../components/utils/LoadingComponent";
 import { FeedLoading, NoElementsAlert } from "../styles/global";
 import ErrorOrItemNotFound from "../components/utils/ErrorOrItemNotFound";
 import PostComponent from "../components/layouts/items/post/PostComponent";
+import { ERROR_SOMETHING_WENT_WRONG } from "../utils/constants";
 
 const HomePageContainer = styled.div`
     display: flex;
@@ -77,8 +78,8 @@ function HomePage() {
                                             ) : (
                                                 <ErrorOrItemNotFound
                                                     isError={true}
-                                                    title="Something went wrong"
-                                                    content="An error has occurred. Try to refresh the page."
+                                                    title={ERROR_SOMETHING_WENT_WRONG.title}
+                                                    content={ERROR_SOMETHING_WENT_WRONG.message}
                                                 />
                                             )}
                                         </>

@@ -755,7 +755,7 @@ export type Post = {
   id: Scalars['Int']['output'];
   isEdited: Scalars['Boolean']['output'];
   isReplyToId?: Maybe<Scalars['Int']['output']>;
-  isReplyToType: Scalars['String']['output'];
+  isReplyToType?: Maybe<Scalars['String']['output']>;
   itemId: Scalars['String']['output'];
   lang: Scalars['String']['output'];
   media?: Maybe<Array<MediaItem>>;
@@ -1092,7 +1092,7 @@ export type Report = {
   __typename?: 'Report';
   additionalContentIds?: Maybe<Array<Scalars['Int']['output']>>;
   additionalContentType?: Maybe<Scalars['String']['output']>;
-  authorId: Scalars['Int']['output'];
+  authorId?: Maybe<Scalars['Int']['output']>;
   categoryId: Scalars['Int']['output'];
   contentId: Scalars['String']['output'];
   contentType: Scalars['String']['output'];
@@ -1102,6 +1102,7 @@ export type Report = {
   reportId: Scalars['String']['output'];
   status: ReportStatus;
   subCategoryId?: Maybe<Scalars['Int']['output']>;
+  uniqueIdentifier: Scalars['String']['output'];
   updatedAt: Scalars['String']['output'];
 };
 
@@ -1358,7 +1359,19 @@ export type CreatePostMutationVariables = Exact<{
 }>;
 
 
-export type CreatePostMutation = { __typename?: 'Mutation', createPost: { __typename?: 'PostResponse', ok: boolean, status?: string | null, post?: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType: string, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
+export type CreatePostMutation = { __typename?: 'Mutation', createPost: { __typename?: 'PostResponse', ok: boolean, status?: string | null, post?: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
+
+export type CreateReportMutationVariables = Exact<{
+  contentId: Scalars['String']['input'];
+  contentType: Scalars['String']['input'];
+  categoryId: Scalars['Int']['input'];
+  subCategoryId?: InputMaybe<Scalars['Int']['input']>;
+  additionalContentIds?: InputMaybe<Array<Scalars['Int']['input']> | Scalars['Int']['input']>;
+  additionalContentType?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CreateReportMutation = { __typename?: 'Mutation', createReport: { __typename?: 'ReportResponse', status?: string | null, ok: boolean } };
 
 export type EditPostMutationVariables = Exact<{
   postId: Scalars['String']['input'];
@@ -1370,14 +1383,14 @@ export type EditPostMutationVariables = Exact<{
 }>;
 
 
-export type EditPostMutation = { __typename?: 'Mutation', editPost: { __typename?: 'PostResponse', ok: boolean, status?: string | null, post?: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType: string, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
+export type EditPostMutation = { __typename?: 'Mutation', editPost: { __typename?: 'PostResponse', ok: boolean, status?: string | null, post?: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
 
 export type FindPostQueryVariables = Exact<{
   postId: Scalars['String']['input'];
 }>;
 
 
-export type FindPostQuery = { __typename?: 'Query', findPost?: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType: string, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } | null };
+export type FindPostQuery = { __typename?: 'Query', findPost?: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } | null };
 
 export type FindUserBeforeLogInMutationVariables = Exact<{
   input: Scalars['String']['input'];
@@ -1385,6 +1398,44 @@ export type FindUserBeforeLogInMutationVariables = Exact<{
 
 
 export type FindUserBeforeLogInMutation = { __typename?: 'Mutation', findUserBeforeLogIn: { __typename?: 'UserResponse', status?: string | null, ok: boolean, user?: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
+
+export type GetPostLikesQueryVariables = Exact<{
+  itemId: Scalars['String']['input'];
+  type: Scalars['String']['input'];
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetPostLikesQuery = { __typename?: 'Query', getPostLikes?: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }> | null };
+
+export type IncrementPostViewsMutationVariables = Exact<{
+  itemId: Scalars['String']['input'];
+  type: Scalars['String']['input'];
+  itemOpened: Scalars['Boolean']['input'];
+  origin: Scalars['String']['input'];
+}>;
+
+
+export type IncrementPostViewsMutation = { __typename?: 'Mutation', incrementPostViews?: { __typename?: 'FeedItem', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, createdAt: string, updatedAt: string } | null };
+
+export type IsPostLikedByMeQueryVariables = Exact<{
+  itemId: Scalars['String']['input'];
+  type: Scalars['String']['input'];
+}>;
+
+
+export type IsPostLikedByMeQuery = { __typename?: 'Query', isPostLikedByMe: boolean };
+
+export type LikePostMutationVariables = Exact<{
+  itemId: Scalars['String']['input'];
+  origin: Scalars['String']['input'];
+  itemOpened: Scalars['Boolean']['input'];
+  itemType: Scalars['String']['input'];
+}>;
+
+
+export type LikePostMutation = { __typename?: 'Mutation', likePost?: { __typename?: 'Like', id: number, userId: number, likedItemId: string, itemOpened: boolean, itemType: string, origin: string, createdAt: string, updatedAt: string } | null };
 
 export type LoginMutationVariables = Exact<{
   input: Scalars['String']['input'];
@@ -1418,13 +1469,23 @@ export type NotAuthModifyPasswordMutationVariables = Exact<{
 
 export type NotAuthModifyPasswordMutation = { __typename?: 'Mutation', notAuthModifyPassword: { __typename?: 'UserResponse', status?: string | null, ok: boolean, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
 
+export type PostCommentsQueryVariables = Exact<{
+  id?: InputMaybe<Scalars['Int']['input']>;
+  type: Scalars['String']['input'];
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type PostCommentsQuery = { __typename?: 'Query', postComments?: Array<{ __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null }> | null };
+
 export type PostFeedQueryVariables = Exact<{
   offset?: InputMaybe<Scalars['Int']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
-export type PostFeedQuery = { __typename?: 'Query', postFeed?: Array<{ __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType: string, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null }> | null };
+export type PostFeedQuery = { __typename?: 'Query', postFeed?: Array<{ __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null }> | null };
 
 export type ReactivateAccountMutationVariables = Exact<{
   input: Scalars['String']['input'];
@@ -1433,6 +1494,21 @@ export type ReactivateAccountMutationVariables = Exact<{
 
 
 export type ReactivateAccountMutation = { __typename?: 'Mutation', reactivateAccount: { __typename?: 'UserResponse', status?: string | null, ok: boolean, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
+
+export type RemoveLikeMutationVariables = Exact<{
+  itemId: Scalars['String']['input'];
+  itemType: Scalars['String']['input'];
+}>;
+
+
+export type RemoveLikeMutation = { __typename?: 'Mutation', removeLike: boolean };
+
+export type ReportOptionsQueryVariables = Exact<{
+  type: Scalars['String']['input'];
+}>;
+
+
+export type ReportOptionsQuery = { __typename?: 'Query', reportOptions?: Array<{ __typename?: 'ReportOption', id: number, title: string, description: string, subcategories?: Array<{ __typename?: 'SubCategoryOption', categoryId: number, id: number, title: string, description?: string | null }> | null }> | null };
 
 export type ResendOtpMutationVariables = Exact<{
   input: Scalars['String']['input'];
@@ -1597,6 +1673,52 @@ export function useCreatePostMutation(baseOptions?: Apollo.MutationHookOptions<C
 export type CreatePostMutationHookResult = ReturnType<typeof useCreatePostMutation>;
 export type CreatePostMutationResult = Apollo.MutationResult<CreatePostMutation>;
 export type CreatePostMutationOptions = Apollo.BaseMutationOptions<CreatePostMutation, CreatePostMutationVariables>;
+export const CreateReportDocument = gql`
+    mutation CreateReport($contentId: String!, $contentType: String!, $categoryId: Int!, $subCategoryId: Int, $additionalContentIds: [Int!], $additionalContentType: String) {
+  createReport(
+    contentId: $contentId
+    contentType: $contentType
+    categoryId: $categoryId
+    subCategoryId: $subCategoryId
+    additionalContentIds: $additionalContentIds
+    additionalContentType: $additionalContentType
+  ) {
+    status
+    ok
+  }
+}
+    `;
+export type CreateReportMutationFn = Apollo.MutationFunction<CreateReportMutation, CreateReportMutationVariables>;
+
+/**
+ * __useCreateReportMutation__
+ *
+ * To run a mutation, you first call `useCreateReportMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateReportMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createReportMutation, { data, loading, error }] = useCreateReportMutation({
+ *   variables: {
+ *      contentId: // value for 'contentId'
+ *      contentType: // value for 'contentType'
+ *      categoryId: // value for 'categoryId'
+ *      subCategoryId: // value for 'subCategoryId'
+ *      additionalContentIds: // value for 'additionalContentIds'
+ *      additionalContentType: // value for 'additionalContentType'
+ *   },
+ * });
+ */
+export function useCreateReportMutation(baseOptions?: Apollo.MutationHookOptions<CreateReportMutation, CreateReportMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateReportMutation, CreateReportMutationVariables>(CreateReportDocument, options);
+      }
+export type CreateReportMutationHookResult = ReturnType<typeof useCreateReportMutation>;
+export type CreateReportMutationResult = Apollo.MutationResult<CreateReportMutation>;
+export type CreateReportMutationOptions = Apollo.BaseMutationOptions<CreateReportMutation, CreateReportMutationVariables>;
 export const EditPostDocument = gql`
     mutation EditPost($postId: String!, $type: String!, $content: String!, $media: String!, $deletedMedia: String!, $existingAltTexts: String!) {
   editPost(
@@ -1863,6 +1985,215 @@ export function useFindUserBeforeLogInMutation(baseOptions?: Apollo.MutationHook
 export type FindUserBeforeLogInMutationHookResult = ReturnType<typeof useFindUserBeforeLogInMutation>;
 export type FindUserBeforeLogInMutationResult = Apollo.MutationResult<FindUserBeforeLogInMutation>;
 export type FindUserBeforeLogInMutationOptions = Apollo.BaseMutationOptions<FindUserBeforeLogInMutation, FindUserBeforeLogInMutationVariables>;
+export const GetPostLikesDocument = gql`
+    query GetPostLikes($itemId: String!, $type: String!, $offset: Int, $limit: Int) {
+  getPostLikes(itemId: $itemId, type: $type, offset: $offset, limit: $limit) {
+    id
+    name
+    username
+    email
+    type
+    gender
+    birthDate {
+      date
+      monthAndDayVisibility
+      yearVisibility
+    }
+    emailVerified
+    profile {
+      profilePicture
+      profileBanner
+      bio
+      website
+    }
+    userSettings {
+      incomingMessages
+      twoFactorAuth
+    }
+    searchSettings {
+      hideSensitiveContent
+      hideBlockedAccounts
+    }
+    createdAt
+    updatedAt
+    hiddenPosts
+  }
+}
+    `;
+
+/**
+ * __useGetPostLikesQuery__
+ *
+ * To run a query within a React component, call `useGetPostLikesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetPostLikesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetPostLikesQuery({
+ *   variables: {
+ *      itemId: // value for 'itemId'
+ *      type: // value for 'type'
+ *      offset: // value for 'offset'
+ *      limit: // value for 'limit'
+ *   },
+ * });
+ */
+export function useGetPostLikesQuery(baseOptions: Apollo.QueryHookOptions<GetPostLikesQuery, GetPostLikesQueryVariables> & ({ variables: GetPostLikesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetPostLikesQuery, GetPostLikesQueryVariables>(GetPostLikesDocument, options);
+      }
+export function useGetPostLikesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPostLikesQuery, GetPostLikesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetPostLikesQuery, GetPostLikesQueryVariables>(GetPostLikesDocument, options);
+        }
+export function useGetPostLikesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPostLikesQuery, GetPostLikesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetPostLikesQuery, GetPostLikesQueryVariables>(GetPostLikesDocument, options);
+        }
+export type GetPostLikesQueryHookResult = ReturnType<typeof useGetPostLikesQuery>;
+export type GetPostLikesLazyQueryHookResult = ReturnType<typeof useGetPostLikesLazyQuery>;
+export type GetPostLikesSuspenseQueryHookResult = ReturnType<typeof useGetPostLikesSuspenseQuery>;
+export type GetPostLikesQueryResult = Apollo.QueryResult<GetPostLikesQuery, GetPostLikesQueryVariables>;
+export const IncrementPostViewsDocument = gql`
+    mutation IncrementPostViews($itemId: String!, $type: String!, $itemOpened: Boolean!, $origin: String!) {
+  incrementPostViews(
+    itemId: $itemId
+    type: $type
+    itemOpened: $itemOpened
+    origin: $origin
+  ) {
+    id
+    itemId
+    authorId
+    type
+    content
+    isEdited
+    views
+    lang
+    topics
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type IncrementPostViewsMutationFn = Apollo.MutationFunction<IncrementPostViewsMutation, IncrementPostViewsMutationVariables>;
+
+/**
+ * __useIncrementPostViewsMutation__
+ *
+ * To run a mutation, you first call `useIncrementPostViewsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useIncrementPostViewsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [incrementPostViewsMutation, { data, loading, error }] = useIncrementPostViewsMutation({
+ *   variables: {
+ *      itemId: // value for 'itemId'
+ *      type: // value for 'type'
+ *      itemOpened: // value for 'itemOpened'
+ *      origin: // value for 'origin'
+ *   },
+ * });
+ */
+export function useIncrementPostViewsMutation(baseOptions?: Apollo.MutationHookOptions<IncrementPostViewsMutation, IncrementPostViewsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<IncrementPostViewsMutation, IncrementPostViewsMutationVariables>(IncrementPostViewsDocument, options);
+      }
+export type IncrementPostViewsMutationHookResult = ReturnType<typeof useIncrementPostViewsMutation>;
+export type IncrementPostViewsMutationResult = Apollo.MutationResult<IncrementPostViewsMutation>;
+export type IncrementPostViewsMutationOptions = Apollo.BaseMutationOptions<IncrementPostViewsMutation, IncrementPostViewsMutationVariables>;
+export const IsPostLikedByMeDocument = gql`
+    query IsPostLikedByMe($itemId: String!, $type: String!) {
+  isPostLikedByMe(itemId: $itemId, type: $type)
+}
+    `;
+
+/**
+ * __useIsPostLikedByMeQuery__
+ *
+ * To run a query within a React component, call `useIsPostLikedByMeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useIsPostLikedByMeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useIsPostLikedByMeQuery({
+ *   variables: {
+ *      itemId: // value for 'itemId'
+ *      type: // value for 'type'
+ *   },
+ * });
+ */
+export function useIsPostLikedByMeQuery(baseOptions: Apollo.QueryHookOptions<IsPostLikedByMeQuery, IsPostLikedByMeQueryVariables> & ({ variables: IsPostLikedByMeQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<IsPostLikedByMeQuery, IsPostLikedByMeQueryVariables>(IsPostLikedByMeDocument, options);
+      }
+export function useIsPostLikedByMeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<IsPostLikedByMeQuery, IsPostLikedByMeQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<IsPostLikedByMeQuery, IsPostLikedByMeQueryVariables>(IsPostLikedByMeDocument, options);
+        }
+export function useIsPostLikedByMeSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<IsPostLikedByMeQuery, IsPostLikedByMeQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<IsPostLikedByMeQuery, IsPostLikedByMeQueryVariables>(IsPostLikedByMeDocument, options);
+        }
+export type IsPostLikedByMeQueryHookResult = ReturnType<typeof useIsPostLikedByMeQuery>;
+export type IsPostLikedByMeLazyQueryHookResult = ReturnType<typeof useIsPostLikedByMeLazyQuery>;
+export type IsPostLikedByMeSuspenseQueryHookResult = ReturnType<typeof useIsPostLikedByMeSuspenseQuery>;
+export type IsPostLikedByMeQueryResult = Apollo.QueryResult<IsPostLikedByMeQuery, IsPostLikedByMeQueryVariables>;
+export const LikePostDocument = gql`
+    mutation LikePost($itemId: String!, $origin: String!, $itemOpened: Boolean!, $itemType: String!) {
+  likePost(
+    itemId: $itemId
+    origin: $origin
+    itemOpened: $itemOpened
+    itemType: $itemType
+  ) {
+    id
+    userId
+    likedItemId
+    itemOpened
+    itemType
+    origin
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type LikePostMutationFn = Apollo.MutationFunction<LikePostMutation, LikePostMutationVariables>;
+
+/**
+ * __useLikePostMutation__
+ *
+ * To run a mutation, you first call `useLikePostMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useLikePostMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [likePostMutation, { data, loading, error }] = useLikePostMutation({
+ *   variables: {
+ *      itemId: // value for 'itemId'
+ *      origin: // value for 'origin'
+ *      itemOpened: // value for 'itemOpened'
+ *      itemType: // value for 'itemType'
+ *   },
+ * });
+ */
+export function useLikePostMutation(baseOptions?: Apollo.MutationHookOptions<LikePostMutation, LikePostMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<LikePostMutation, LikePostMutationVariables>(LikePostDocument, options);
+      }
+export type LikePostMutationHookResult = ReturnType<typeof useLikePostMutation>;
+export type LikePostMutationResult = Apollo.MutationResult<LikePostMutation>;
+export type LikePostMutationOptions = Apollo.BaseMutationOptions<LikePostMutation, LikePostMutationVariables>;
 export const LoginDocument = gql`
     mutation Login($input: String!, $password: String!, $clientOS: String!, $clientType: String!, $clientName: String!, $deviceLocation: String!, $country: String!) {
   login(
@@ -2088,6 +2419,101 @@ export function useNotAuthModifyPasswordMutation(baseOptions?: Apollo.MutationHo
 export type NotAuthModifyPasswordMutationHookResult = ReturnType<typeof useNotAuthModifyPasswordMutation>;
 export type NotAuthModifyPasswordMutationResult = Apollo.MutationResult<NotAuthModifyPasswordMutation>;
 export type NotAuthModifyPasswordMutationOptions = Apollo.BaseMutationOptions<NotAuthModifyPasswordMutation, NotAuthModifyPasswordMutationVariables>;
+export const PostCommentsDocument = gql`
+    query PostComments($id: Int, $type: String!, $offset: Int, $limit: Int) {
+  postComments(id: $id, type: $type, offset: $offset, limit: $limit) {
+    id
+    itemId
+    authorId
+    type
+    content
+    isEdited
+    views
+    lang
+    topics
+    author {
+      id
+      name
+      username
+      email
+      type
+      gender
+      birthDate {
+        date
+        monthAndDayVisibility
+        yearVisibility
+      }
+      emailVerified
+      profile {
+        profilePicture
+        profileBanner
+        bio
+        website
+      }
+      userSettings {
+        incomingMessages
+        twoFactorAuth
+      }
+      searchSettings {
+        hideSensitiveContent
+        hideBlockedAccounts
+      }
+      createdAt
+      updatedAt
+      hiddenPosts
+    }
+    isReplyToId
+    isReplyToType
+    quotedPostId
+    media {
+      id
+      type
+      src
+      alt
+    }
+    mentions
+    hashtags
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __usePostCommentsQuery__
+ *
+ * To run a query within a React component, call `usePostCommentsQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePostCommentsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePostCommentsQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *      type: // value for 'type'
+ *      offset: // value for 'offset'
+ *      limit: // value for 'limit'
+ *   },
+ * });
+ */
+export function usePostCommentsQuery(baseOptions: Apollo.QueryHookOptions<PostCommentsQuery, PostCommentsQueryVariables> & ({ variables: PostCommentsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<PostCommentsQuery, PostCommentsQueryVariables>(PostCommentsDocument, options);
+      }
+export function usePostCommentsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<PostCommentsQuery, PostCommentsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<PostCommentsQuery, PostCommentsQueryVariables>(PostCommentsDocument, options);
+        }
+export function usePostCommentsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<PostCommentsQuery, PostCommentsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<PostCommentsQuery, PostCommentsQueryVariables>(PostCommentsDocument, options);
+        }
+export type PostCommentsQueryHookResult = ReturnType<typeof usePostCommentsQuery>;
+export type PostCommentsLazyQueryHookResult = ReturnType<typeof usePostCommentsLazyQuery>;
+export type PostCommentsSuspenseQueryHookResult = ReturnType<typeof usePostCommentsSuspenseQuery>;
+export type PostCommentsQueryResult = Apollo.QueryResult<PostCommentsQuery, PostCommentsQueryVariables>;
 export const PostFeedDocument = gql`
     query PostFeed($offset: Int, $limit: Int) {
   postFeed(offset: $offset, limit: $limit) {
@@ -2220,6 +2646,86 @@ export function useReactivateAccountMutation(baseOptions?: Apollo.MutationHookOp
 export type ReactivateAccountMutationHookResult = ReturnType<typeof useReactivateAccountMutation>;
 export type ReactivateAccountMutationResult = Apollo.MutationResult<ReactivateAccountMutation>;
 export type ReactivateAccountMutationOptions = Apollo.BaseMutationOptions<ReactivateAccountMutation, ReactivateAccountMutationVariables>;
+export const RemoveLikeDocument = gql`
+    mutation RemoveLike($itemId: String!, $itemType: String!) {
+  removeLike(itemId: $itemId, itemType: $itemType)
+}
+    `;
+export type RemoveLikeMutationFn = Apollo.MutationFunction<RemoveLikeMutation, RemoveLikeMutationVariables>;
+
+/**
+ * __useRemoveLikeMutation__
+ *
+ * To run a mutation, you first call `useRemoveLikeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRemoveLikeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [removeLikeMutation, { data, loading, error }] = useRemoveLikeMutation({
+ *   variables: {
+ *      itemId: // value for 'itemId'
+ *      itemType: // value for 'itemType'
+ *   },
+ * });
+ */
+export function useRemoveLikeMutation(baseOptions?: Apollo.MutationHookOptions<RemoveLikeMutation, RemoveLikeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RemoveLikeMutation, RemoveLikeMutationVariables>(RemoveLikeDocument, options);
+      }
+export type RemoveLikeMutationHookResult = ReturnType<typeof useRemoveLikeMutation>;
+export type RemoveLikeMutationResult = Apollo.MutationResult<RemoveLikeMutation>;
+export type RemoveLikeMutationOptions = Apollo.BaseMutationOptions<RemoveLikeMutation, RemoveLikeMutationVariables>;
+export const ReportOptionsDocument = gql`
+    query ReportOptions($type: String!) {
+  reportOptions(type: $type) {
+    id
+    title
+    description
+    subcategories {
+      categoryId
+      id
+      title
+      description
+    }
+  }
+}
+    `;
+
+/**
+ * __useReportOptionsQuery__
+ *
+ * To run a query within a React component, call `useReportOptionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useReportOptionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useReportOptionsQuery({
+ *   variables: {
+ *      type: // value for 'type'
+ *   },
+ * });
+ */
+export function useReportOptionsQuery(baseOptions: Apollo.QueryHookOptions<ReportOptionsQuery, ReportOptionsQueryVariables> & ({ variables: ReportOptionsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ReportOptionsQuery, ReportOptionsQueryVariables>(ReportOptionsDocument, options);
+      }
+export function useReportOptionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ReportOptionsQuery, ReportOptionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ReportOptionsQuery, ReportOptionsQueryVariables>(ReportOptionsDocument, options);
+        }
+export function useReportOptionsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ReportOptionsQuery, ReportOptionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ReportOptionsQuery, ReportOptionsQueryVariables>(ReportOptionsDocument, options);
+        }
+export type ReportOptionsQueryHookResult = ReturnType<typeof useReportOptionsQuery>;
+export type ReportOptionsLazyQueryHookResult = ReturnType<typeof useReportOptionsLazyQuery>;
+export type ReportOptionsSuspenseQueryHookResult = ReturnType<typeof useReportOptionsSuspenseQuery>;
+export type ReportOptionsQueryResult = Apollo.QueryResult<ReportOptionsQuery, ReportOptionsQueryVariables>;
 export const ResendOtpDocument = gql`
     mutation ResendOTP($input: String!, $password: String!) {
   resendOTP(input: $input, password: $password)

@@ -1,0 +1,15 @@
+mutation IncrementPostViews($itemId: String!, $type: String!, $itemOpened: Boolean!, $origin: String!) {
+    incrementPostViews(itemId: $itemId, type: $type, itemOpened: $itemOpened, origin: $origin) {
+        id
+        itemId
+        authorId
+        type
+        content
+        isEdited
+        views
+        lang
+        topics
+        createdAt
+        updatedAt
+    }
+}

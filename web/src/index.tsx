@@ -27,7 +27,24 @@ import App from "./App";
 import { AuthProvider } from "./utils/AuthContext";
 import { ToastProvider } from "./components/utils/ToastProvider";
 
-const cache = new InMemoryCache();
+const cache = new InMemoryCache({
+    typePolicies: {
+        Query: {
+            fields: {
+                postFeed: {
+                    merge: (_existing = [], incoming) => {
+                        return incoming;
+                    },
+                },
+                getPostLikes: {
+                    merge: (_existing = [], incoming) => {
+                        return incoming;
+                    },
+                },
+            },
+        },
+    },
+});
 
 const requestLink = new ApolloLink(
     (operation, forward) =>

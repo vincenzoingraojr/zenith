@@ -172,7 +172,7 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
     const navRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
-        const navRefVar = navRef.current;
+        let navRefVar = navRef.current;
 
         const handleOptions = () => {
             if (divRef.current) {
@@ -198,6 +198,8 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
             navRefVar?.removeEventListener("scroll", handleOptions);
             window.removeEventListener("scroll", handleOptions);
             window.removeEventListener("resize", handleOptions);
+
+            navRefVar = null;
         };
     }, []);
 
