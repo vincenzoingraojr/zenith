@@ -30,7 +30,7 @@ const OptionsContainerBackground = styled.div`
 `;
 
 const OptionsContainer = styled.div.attrs(
-    (props: { isInUpperHalf: boolean; position: { top: number; side: number }, mirrored?: boolean }) => props
+    (props: { isInUpperHalf: boolean; position: { top: number; left: number }, mirrored: boolean }) => props
 )`
     display: flex;
     flex-direction: column;
@@ -54,8 +54,8 @@ const OptionsContainer = styled.div.attrs(
         border-radius: 12px;
         background-color: ${({ theme }) => theme.background};
         top: ${(props) => props.position.top}px;
-        left: ${(props) => props.mirrored ? `${props.position.side}px` : "unset"};
-        right: ${(props) => props.mirrored ? "unset" : `${props.position.side}px`};
+        left: ${(props) => props.position.left}px;
+        right: unset;
         bottom: unset;
         max-height: unset;
         overflow: hidden;
@@ -65,7 +65,7 @@ const OptionsContainer = styled.div.attrs(
         transform: ${(props) =>
             props.isInUpperHalf
                 ? "translateY(0)"
-                : "translateY(calc(-100% + 36px))"};
+                : "translateY(calc(-100% + 36px))"} ${(props) => !props.mirrored && "translateX(calc(-100% + 36px))"};
         padding-top: 0px;
         box-shadow: 0px 0px 2px ${({ theme }) => theme.overlayGrey};
     }
@@ -137,17 +137,17 @@ export const OptionItemText = styled.div.attrs(
 const Options: FunctionComponent<OptionsProps> = ({ icon, title, isOpen, toggleOptions, children, mirrored }) => {
     const buttonRef = useRef<HTMLDivElement | null>(null);
 
-    const [position, setPosition] = useState<{ top: number; side: number }>({
+    const [position, setPosition] = useState<{ top: number; left: number }>({
         top: 0,
-        side: 0,
+        left: 0,
     });
 
     const [isInUpperHalf, setIsInUpperHalf] = useState(true);
 
     useEffect(() => {
+        let buttonElement = buttonRef.current;
+
         const handleScroll = () => {
-            const buttonElement = buttonRef.current;
-            
             if (buttonElement) {
                 const rect = buttonElement.getBoundingClientRect();
                 const screenHeight = window.innerHeight;
@@ -156,7 +156,7 @@ const Options: FunctionComponent<OptionsProps> = ({ icon, title, isOpen, toggleO
 
                 setPosition({
                     top: rect.top,
-                    side: mirrored ? rect.left : document.body.clientWidth - rect.right,
+                    left: rect.left,
                 });
             }
         };
@@ -171,8 +171,10 @@ const Options: FunctionComponent<OptionsProps> = ({ icon, title, isOpen, toggleO
             window.removeEventListener("scroll", handleScroll);
             window.removeEventListener("resize", handleScroll);
             window.removeEventListener("click", handleScroll);
+
+            buttonElement = null;
         };
-    }, [mirrored]);
+    }, []);
 
     return (
         <PageBlock onClick={(e) => e.stopPropagation()}>
@@ -200,6 +202,7 @@ const Options: FunctionComponent<OptionsProps> = ({ icon, title, isOpen, toggleO
                         role="menu"
                         position={position}
                         isInUpperHalf={isInUpperHalf}
+                        mirrored={mirrored || false}
                     >
                         <OptionsContent
                             onClick={() => toggleOptions()}
