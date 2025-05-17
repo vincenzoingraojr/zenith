@@ -41,7 +41,7 @@ const OptionsContainer = styled.div.attrs(
     right: 0;
     bottom: 0;
     height: auto;
-    background-color: ${({ theme }) => theme.background};;
+    background-color: ${({ theme }) => theme.background};
     border-radius: 24px 24px 0px 0px;
     z-index: 100;
     max-height: 50vh;

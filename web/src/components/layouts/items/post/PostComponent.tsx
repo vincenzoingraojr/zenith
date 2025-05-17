@@ -21,6 +21,10 @@ import Pen from "../../../icons/Pen";
 import { useMeData } from "../../../../utils/userQueries";
 import Bin from "../../../icons/Bin";
 import FollowIcon from "../../../icons/FollowIcon";
+import Chain from "../../../icons/Chain";
+import copy from "copy-to-clipboard";
+import { useToasts } from "../../../utils/ToastProvider";
+import Repost from "../../../icons/Repost";
 
 interface PostComponentProps {
     post: Post;
@@ -214,13 +218,11 @@ const PostActionContainer = styled.div.attrs((props: { color?: string, isActive:
         color: ${props => props.color || COLORS.blue};
     }
 
-    &:hover div div svg, &:focus div div svg {
+    &:hover div div svg, &:focus div div svg, &:hover div div div svg, &:focus div div div svg {
         fill: ${props => props.color || COLORS.blue};
     }
-`;
 
-const PostActionIcon = styled(ControlContainer)`
-    ${PostActionContainer}:hover &, ${PostActionContainer}:focus & {
+    &:hover ${ControlContainer}, &:focus ${ControlContainer} {
         background-color: ${({ theme }) => theme.overlayGrey};
     }
 `;
@@ -228,6 +230,7 @@ const PostActionIcon = styled(ControlContainer)`
 const PostActionInfo = styled(PageText)`
     font-size: 16px;
     color: inherit;
+    background-color: transparent;
 `;
 
 const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplying, origin }) => {
@@ -324,6 +327,8 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
         fetchPolicy: "cache-and-network",
         variables: { id: post.id, type: post.type },
     });
+
+    const { addToast } = useToasts();
 
     return (
         <PostWrapper>
@@ -579,11 +584,62 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         }}
                         isActive={like}
                     >
-                        <PostActionIcon>
+                        <ControlContainer>
                             <Like isActive={like} />
-                        </PostActionIcon>
+                        </ControlContainer>
                         <PostActionInfo>
                             {formatter.format(postLikes)}
+                        </PostActionInfo>
+                    </PostActionContainer>
+                    <PostActionContainer
+                        role="button"
+                        aria-label={"Repost options"}
+                        title={"Repost options"}
+                        color={COLORS.green}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                        }}
+                    >
+                        <Options
+                            key={`repost-options-${post.id}`}
+                            title="Repost options" 
+                            icon={<Repost />}
+                            isOpen={activeOptions === -2}
+                            toggleOptions={() =>
+                                handleOptionsClick(-2)
+                            }
+                            mirrored={true}
+                            children={
+                                <>
+                                    <OptionItem
+                                        role="menuitem"
+                                        title="Repost this post"
+                                        aria-label="Repost this post"
+                                    >
+                                        <OptionItemIcon>
+                                            <Repost />
+                                        </OptionItemIcon>
+                                        <OptionItemText>
+                                            Repost this post
+                                        </OptionItemText>
+                                    </OptionItem>
+                                    <OptionItem
+                                        role="menuitem"
+                                        title="Quote this post"
+                                        aria-label="Quote this post"
+                                    >
+                                        <OptionItemIcon>
+                                            <Pen />
+                                        </OptionItemIcon>
+                                        <OptionItemText>
+                                            Quote this post
+                                        </OptionItemText>
+                                    </OptionItem>
+                                </>
+                            }
+                        />
+                        <PostActionInfo>
+                            {formatter.format(0)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
@@ -594,9 +650,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             e.stopPropagation();
                         }}
                     >
-                        <PostActionIcon>
+                        <ControlContainer>
                             <Comment />
-                        </PostActionIcon>
+                        </ControlContainer>
                         <PostActionInfo>
                             {formatter.format((commentsData && commentsData.postComments) ? commentsData.postComments.length : 0)}
                         </PostActionInfo>
@@ -609,24 +665,57 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             e.stopPropagation();
                         }}
                     >
-                        <PostActionIcon>
+                        <ControlContainer>
                             <Views />
-                        </PostActionIcon>
+                        </ControlContainer>
                         <PostActionInfo>
                             {formatter.format(post.views)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
                         role="button"
-                        aria-label={"Share this post"}
-                        title={"Share this post"}
+                        aria-label={"Share options"}
+                        title={"Share options"}
                         onClick={(e) => {
                             e.stopPropagation();
                         }}
                     >
-                        <PostActionIcon>
-                            <Share />
-                        </PostActionIcon>
+                        <Options
+                            key={`share-options-${post.id}`}
+                            title="Share options" 
+                            icon={<Share />}
+                            isOpen={activeOptions === -1}
+                            toggleOptions={() =>
+                                handleOptionsClick(-1)
+                            }
+                            children={
+                                <>
+                                    <OptionItem
+                                        role="menuitem"
+                                        title="Copy link to this post"
+                                        aria-label="Copy link to this post"
+                                        onClick={() => {
+                                            const currentUrl = `${window.location.origin}/${post.author.username}/post/${post.itemId}`;
+
+                                            const response = copy(currentUrl);
+
+                                            if (response) {
+                                                addToast("Link copied to clipboard.");
+                                            } else {
+                                                addToast("Failed to copy link.");
+                                            }
+                                        }}
+                                    >
+                                        <OptionItemIcon>
+                                            <Chain />
+                                        </OptionItemIcon>
+                                        <OptionItemText>
+                                            Copy link to this post
+                                        </OptionItemText>
+                                    </OptionItem>
+                                </>
+                            }
+                        />
                     </PostActionContainer>
                 </PostActionsContainer>
             </PostContainer>
