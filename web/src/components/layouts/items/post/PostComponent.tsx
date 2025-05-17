@@ -2,7 +2,7 @@ import { FunctionComponent, useEffect, useRef, useState } from "react";
 import { GetPostLikesDocument, GetPostLikesQuery, Post, useGetPostLikesQuery, useIncrementPostViewsMutation, useIsPostLikedByMeQuery, useLikePostMutation, usePostCommentsQuery, useRemoveLikeMutation } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ControlContainer, PageBlock, PageText } from "../../../../styles/global";
+import { ControlContainer, OptionBaseIcon, PageBlock, PageText } from "../../../../styles/global";
 import profilePicture from "../../../../images/profile-picture.png";
 import TextContainerRender from "../../../utils/TextContainerRender";
 import { USER_TYPES } from "../../../../utils/constants";
@@ -11,7 +11,7 @@ import { formatter } from "../../../../utils/formatter";
 import { COLORS } from "../../../../styles/colors";
 import Share from "../../../icons/Share";
 import Views from "../../../icons/Views";
-import Options, { OptionItem, OptionItemIcon, OptionItemText } from "../../../Options";
+import Options, { OptionItem, OptionItemText } from "../../../Options";
 import More from "../../../icons/More";
 import { useOptions } from "../../../utils/hooks";
 import Flag from "../../../icons/Flag";
@@ -25,6 +25,7 @@ import Chain from "../../../icons/Chain";
 import copy from "copy-to-clipboard";
 import { useToasts } from "../../../utils/ToastProvider";
 import Repost from "../../../icons/Repost";
+import AddMessage from "../../../icons/AddMessage";
 
 interface PostComponentProps {
     post: Post;
@@ -417,9 +418,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                             });
                                         }}
                                     >
-                                        <OptionItemIcon>
+                                        <OptionBaseIcon>
                                             <Flag />
-                                        </OptionItemIcon>
+                                        </OptionBaseIcon>
                                         <OptionItemText>
                                             Report this post
                                         </OptionItemText>
@@ -431,9 +432,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                     <OptionItem
                                                         role="menuitem"
                                                     >
-                                                        <OptionItemIcon>
+                                                        <OptionBaseIcon>
                                                             <Pen />
-                                                        </OptionItemIcon>
+                                                        </OptionBaseIcon>
                                                         <OptionItemText>
                                                             Edit this post
                                                         </OptionItemText>
@@ -441,9 +442,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                     <OptionItem
                                                         role="menuitem"
                                                     >
-                                                        <OptionItemIcon>
+                                                        <OptionBaseIcon>
                                                             <Bin color={COLORS.red} />
-                                                        </OptionItemIcon>
+                                                        </OptionBaseIcon>
                                                         <OptionItemText isRed={true}>
                                                             Delete this post
                                                         </OptionItemText>
@@ -460,9 +461,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                             setFollow(!follow);
                                                         }}
                                                     >
-                                                        <OptionItemIcon>
+                                                        <OptionBaseIcon>
                                                             <FollowIcon isActive={follow} />
-                                                        </OptionItemIcon>
+                                                        </OptionBaseIcon>
                                                         <OptionItemText>
                                                             {follow ? "Unfollow" : "Follow"} @{post.author.username}
                                                         </OptionItemText>
@@ -616,9 +617,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                         title="Repost this post"
                                         aria-label="Repost this post"
                                     >
-                                        <OptionItemIcon>
+                                        <OptionBaseIcon>
                                             <Repost />
-                                        </OptionItemIcon>
+                                        </OptionBaseIcon>
                                         <OptionItemText>
                                             Repost this post
                                         </OptionItemText>
@@ -628,9 +629,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                         title="Quote this post"
                                         aria-label="Quote this post"
                                     >
-                                        <OptionItemIcon>
+                                        <OptionBaseIcon>
                                             <Pen />
-                                        </OptionItemIcon>
+                                        </OptionBaseIcon>
                                         <OptionItemText>
                                             Quote this post
                                         </OptionItemText>
@@ -706,11 +707,23 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                             }
                                         }}
                                     >
-                                        <OptionItemIcon>
+                                        <OptionBaseIcon>
                                             <Chain />
-                                        </OptionItemIcon>
+                                        </OptionBaseIcon>
                                         <OptionItemText>
                                             Copy link to this post
+                                        </OptionItemText>
+                                    </OptionItem>
+                                    <OptionItem
+                                        role="menuitem"
+                                        title="Send this post"
+                                        aria-label="Send this post"
+                                    >
+                                        <OptionBaseIcon>
+                                            <AddMessage />
+                                        </OptionBaseIcon>
+                                        <OptionItemText>
+                                            Send this post
                                         </OptionItemText>
                                     </OptionItem>
                                 </>

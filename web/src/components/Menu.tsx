@@ -2,7 +2,7 @@ import { FunctionComponent, useState } from "react";
 import styled from "styled-components";
 import { mediaQuery } from "../utils/mediaQuery";
 import { devices } from "../styles/devices";
-import { ControlContainer, CustomSpanOption, PageText } from "../styles/global";
+import { ControlContainer, CustomSpanOption, LinkOptionBaseItem, OptionBaseIcon, PageText } from "../styles/global";
 import Close from "./icons/Close";
 import { useMeData } from "../utils/userQueries";
 import profilePicture from "../images/profile-picture.png";
@@ -207,43 +207,18 @@ const MenuNav = styled.nav`
     overflow: hidden;
 `;
 
-const MenuNavEntry = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    width: 100%;
+const MenuNavEntry = styled(LinkOptionBaseItem)`
     height: 60px;
 
     a, span {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        color: ${({ theme }) => theme.color};
         font-weight: 500;
         gap: 16px;
         padding-left: 16px;
         padding-right: 16px;
-        background-color: transparent;
-        transition: background-color ease 0.2s;
-        width: 100%;
         height: 60px;
         overflow: hidden;
+        justify-content: flex-start;
     }
-
-    a, a:hover, a:active {
-        text-decoration: none;
-    }
-
-    a:hover, span:hover,
-    a:active, span:focus {
-        background-color: ${({ theme }) => theme.overlayGrey};
-    }
-`;
-
-const MenuNavEntryIcon = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: center;
 `;
 
 const MenuNavEntryText = styled(PageText).attrs(
@@ -330,9 +305,9 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                     aria-label={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
                                     onClick={() => toggleTheme()}
                                 >
-                                    <MenuNavEntryIcon>
+                                    <OptionBaseIcon>
                                         <ThemeIcon type="nav" />
-                                    </MenuNavEntryIcon>
+                                    </OptionBaseIcon>
                                     <MenuNavEntryText>Switch to {isDarkMode ? "light" : "dark"}</MenuNavEntryText>
                                 </CustomSpanOption>
                             </MenuNavEntry>
@@ -342,9 +317,9 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                     title={me.name}
                                     aria-label={me.name}
                                 >
-                                    <MenuNavEntryIcon>
+                                    <OptionBaseIcon>
                                         <Profile isActive={false} />
-                                    </MenuNavEntryIcon>
+                                    </OptionBaseIcon>
                                     <MenuNavEntryText>Profile</MenuNavEntryText>
                                 </Link>
                             </MenuNavEntry>
@@ -354,9 +329,9 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                     title={"Settings page"}
                                     aria-label={"Settings page"}
                                 >
-                                    <MenuNavEntryIcon>
+                                    <OptionBaseIcon>
                                         <Settings type="nav" />
-                                    </MenuNavEntryIcon>
+                                    </OptionBaseIcon>
                                     <MenuNavEntryText>Settings</MenuNavEntryText>
                                 </Link>
                             </MenuNavEntry>
@@ -366,9 +341,9 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                     title={`Log out from @${me.username}`}
                                     aria-label={`Log out from @${me.username}`}
                                 >
-                                    <MenuNavEntryIcon>
+                                    <OptionBaseIcon>
                                         <Exit type="nav" color={COLORS.red} />
-                                    </MenuNavEntryIcon>
+                                    </OptionBaseIcon>
                                     <MenuNavEntryText color={COLORS.red}>
                                         Log out
                                     </MenuNavEntryText>

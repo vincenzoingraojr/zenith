@@ -19,6 +19,7 @@ import SearchPage from "./pages/search/SearchPage";
 import Notifications from "./pages/Notifications";
 import Messages from "./pages/messages/Messages";
 import ReportPage from "./pages/ReportPage";
+import SettingsPage from "./pages/settings/Index";
 
 function App() {
     const location = useLocation();
@@ -180,6 +181,15 @@ function App() {
                         <IsAuthenticated
                             isAuth={isAuth}
                             children={<Messages />}
+                        />
+                    }
+                />    
+                <Route
+                    path="/settings"
+                    element={
+                        <IsAuthenticated
+                            isAuth={isAuth}
+                            children={<SettingsPage />}
                         />
                     }
                 />    

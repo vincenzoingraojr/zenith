@@ -1,7 +1,8 @@
 import Head from "../components/Head";
+import Settings from "../components/icons/Settings";
 import PageLayout from "../components/layouts/PageLayout";
 import PageContentLayout from "../components/layouts/sublayouts/PageContentLayout";
-import { PageText } from "../styles/global";
+import { ControlContainer, PageText } from "../styles/global";
 
 function Notifications() {
     return (
@@ -19,6 +20,15 @@ function Notifications() {
                             <>
                                 <PageText>View your notifications on Zenith.</PageText>
                             </>
+                        }
+                        headerIconsComponent={
+                            <ControlContainer
+                                role="link"
+                                title="Notification settings"
+                                aria-label="Notification settings"
+                            >
+                                <Settings type="options" />
+                            </ControlContainer>
                         }
                     />
                 }

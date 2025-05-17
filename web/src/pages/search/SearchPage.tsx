@@ -1,14 +1,17 @@
+import { useSearchParams } from "react-router-dom";
 import Head from "../../components/Head";
 import Magnifier from "../../components/icons/Magnifier";
 import Settings from "../../components/icons/Settings";
+import SearchBar from "../../components/layouts/items/search/SearchBar";
 import PageLayout from "../../components/layouts/PageLayout";
 import PageContentLayout from "../../components/layouts/sublayouts/PageContentLayout";
-import Options, { OptionItem, OptionItemIcon, OptionItemText } from "../../components/Options";
+import Options, { OptionItem, OptionItemText } from "../../components/Options";
 import { useOptions } from "../../components/utils/hooks";
-import { PageText } from "../../styles/global";
+import { OptionBaseIcon, PageText } from "../../styles/global";
 
 function SearchPage() {
     const { activeOptions, handleOptionsClick } = useOptions();
+    const [_, setSearchParams] = useSearchParams();
 
     return (
         <>
@@ -21,7 +24,13 @@ function SearchPage() {
                     <PageContentLayout
                         title="Search"
                         type="main"
-                        customHeaderComponent={<>SearchBar</>}
+                        customHeaderComponent={
+                            <SearchBar placeholder="Search" onkeyDown={(e: any) => {
+                                if (e.key === "Enter") {
+                                    setSearchParams({ q: e.target.value });
+                                }
+                            }} />
+                        }
                         children={
                             <>
                                 <PageText>Search on Zenith.</PageText>
@@ -39,11 +48,19 @@ function SearchPage() {
                                 children={
                                     <>
                                         <OptionItem>
-                                            <OptionItemIcon>
+                                            <OptionBaseIcon>
                                                 <Magnifier type="options" isActive={false} />
-                                            </OptionItemIcon>
+                                            </OptionBaseIcon>
                                             <OptionItemText>
                                                 Advanced search
+                                            </OptionItemText>
+                                        </OptionItem>
+                                        <OptionItem>
+                                            <OptionBaseIcon>
+                                                <Settings type="options" isActive={false} />
+                                            </OptionBaseIcon>
+                                            <OptionItemText>
+                                                Search settings
                                             </OptionItemText>
                                         </OptionItem>
                                     </>

@@ -17,7 +17,7 @@ const Magnifier: FunctionComponent<MagnifierProps> = ({ type, isActive }) => {
         } else if (type === "options") {
             setSize(24);
         } else {
-            setSize(18);
+            setSize(20);
         }
     }, [type]);
 

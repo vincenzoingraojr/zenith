@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect, useRef, useState } from "react";
-import { ControlContainer, PageBlock, SmallButton } from "../styles/global";
+import { ControlContainer, OptionBaseItem, PageBlock, PageText, SmallButton } from "../styles/global";
 import PortalComponent from "../utils/PortalComponent";
 import styled from "styled-components";
 import { devices } from "../styles/devices";
@@ -99,37 +99,16 @@ const CloseOptionsButton = styled(SmallButton)`
     width: 100%;
 `;
 
-export const OptionItem = styled.div`
-    display: flex;
-    background-color: transparent;
-    color: ${({ theme }) => theme.color};
-    flex-direction: row;
-    align-items: center;
+export const OptionItem = styled(OptionBaseItem)`
     justify-content: flex-start;
     gap: 16px;
     padding: 12px 16px;
     font-weight: 700;
-    cursor: pointer;
-    width: 100%;
-    background-color: transparent;
-    transition: background-color ease 0.2s;
-
-    &:hover,
-    &:focus {
-        background-color: ${({ theme }) => theme.overlayGrey};
-    }
 `;
 
-export const OptionItemIcon = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-`;
-
-export const OptionItemText = styled.div.attrs(
+export const OptionItemText = styled(PageText).attrs(
     (props: { isRed?: boolean }) => props
 )`
-    display: block;
     font-weight: inherit;
     color: ${({ theme, isRed }) => (isRed ? COLORS.red : theme.color)};
 `;

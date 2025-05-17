@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import ModalLoading from "../components/layouts/modal/ModalLoading";
 import styled from "styled-components";
-import { NoElementsAlert, PageBlock, PageText, StandardButton, Status } from "../styles/global";
+import { NoElementsAlert, OptionBaseIcon, OptionBaseItem, PageBlock, PageText, StandardButton, Status } from "../styles/global";
 import { useCreateReportMutation, useReportOptionsQuery } from "../generated/graphql";
 import ErrorOrItemNotFound from "../components/utils/ErrorOrItemNotFound";
 import { useState } from "react";
@@ -23,22 +23,11 @@ const OptionFeedContainer = styled.div`
     flex-direction: column;
 `;
 
-const OptionItem = styled.div`
-    display: flex;
-    align-items: center;
+const OptionItem = styled(OptionBaseItem)`
     justify-content: space-between;
     gap: 12px;
-    width: 100%;
     overflow: hidden;
     padding: 16px 24px;
-    cursor: pointer;
-    background-color: transparent;
-    transition: background-color ease 0.2s;
-
-    &:hover,
-    &:focus {
-        background-color: ${({ theme }) => theme.overlayGrey};
-    }
 `;
 
 const OptionInfoContainer = styled.div`
@@ -59,12 +48,6 @@ const OptionItemText = styled(PageText)`
 const OptionItemDescription = styled(PageText)`
     font-size: 14px;
     color: ${({ theme }) => theme.inputText};
-`;
-
-const SelectedOptionContainer = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: center;
 `;
 
 const SubCategoriesFeed = styled(OptionFeedContainer)`
@@ -204,9 +187,9 @@ function ReportPage() {
                                                                             {(option.description && option.description.length > 0) && (<OptionItemDescription>{option.description}</OptionItemDescription>)}
                                                                         </OptionInfoContainer>
                                                                         {(selectedCategoryId === option.id) && (
-                                                                            <SelectedOptionContainer>
+                                                                            <OptionBaseIcon>
                                                                                 <Checkmark color={COLORS.blue} />
-                                                                            </SelectedOptionContainer>
+                                                                            </OptionBaseIcon>
                                                                         )}
                                                                     </OptionItem>
                                                                     {selectedCategoryId === option.id && option.subcategories && option.subcategories.length > 0 && (
@@ -225,9 +208,9 @@ function ReportPage() {
                                                                                         {(subOption.description && subOption.description.length > 0) && (<OptionItemDescription>{subOption.description}</OptionItemDescription>)}
                                                                                     </OptionInfoContainer>
                                                                                     {(selectedSubCategoryId === subOption.id) && (
-                                                                                        <SelectedOptionContainer>
+                                                                                        <OptionBaseIcon>
                                                                                             <Checkmark color={COLORS.blue} />
-                                                                                        </SelectedOptionContainer>
+                                                                                        </OptionBaseIcon>
                                                                                     )}
                                                                                 </OptionItem>
                                                                             ))}

@@ -71,9 +71,10 @@ const MainHeaderLeftContainer = styled.div.attrs((props: { type: string }) => pr
 `;
 
 const MainHeaderTitle = styled.div`
-    display: block;
+    display: flex;
     font-weight: 700;
-    width: 100%;
+    width: auto;
+    flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

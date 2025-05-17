@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 import Settings from "../icons/Settings";
 import Exit from "../icons/Exit";
-import { CustomSpanOption, PageText } from "../../styles/global";
+import { CustomSpanOption, LinkOptionBaseItem, OptionBaseIcon, PageText } from "../../styles/global";
 import { COLORS } from "../../styles/colors";
 import { useMeData } from "../../utils/userQueries";
 import { useThemeContext } from "../../styles/ThemeContext";
@@ -31,32 +31,12 @@ const NavOptionsContainer = styled.div.attrs(
     transform-origin: top;
 `;
 
-const NavOption = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    width: 100%;
-
+const NavOption = styled(LinkOptionBaseItem)`
     a, span {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        color: ${({ theme }) => theme.color};
         gap: 12px;
         font-weight: 500;
         padding: 12px 24px;
-        width: 100%;
-        background-color: transparent;
-        transition: background-color ease 0.2s;
-    }
-
-    a, a:hover, a:active {
-        text-decoration: none;
-    }
-
-    a:hover, span:hover,
-    a:active, span:focus {
-        background-color: ${({ theme }) => theme.overlayGrey};
+        justify-content: flex-start;
     }
     
     &:first-child a, &:first-child span {
@@ -66,12 +46,6 @@ const NavOption = styled.div`
     &:last-child a, &:last-child span {
         border-radius: 0px 0px 16px 16px;
     }
-`;
-
-const NavOptionIcon = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: center;
 `;
 
 const NavOptionText = styled(PageText).attrs(
@@ -129,9 +103,9 @@ const NavOptions: FunctionComponent<NavOptionsProps> = ({ position, closeOptions
                     aria-label={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
                     onClick={() => toggleTheme()}
                 >
-                    <NavOptionIcon>
+                    <OptionBaseIcon>
                         <ThemeIcon type="options" />
-                    </NavOptionIcon>
+                    </OptionBaseIcon>
                     <NavOptionText>
                         Switch to {isDarkMode ? "light" : "dark"}
                     </NavOptionText>
@@ -145,9 +119,9 @@ const NavOptions: FunctionComponent<NavOptionsProps> = ({ position, closeOptions
                             title="Settings"
                             aria-label="Settings"
                         >
-                            <NavOptionIcon>
+                            <OptionBaseIcon>
                                 <Settings type="options" />
-                            </NavOptionIcon>
+                            </OptionBaseIcon>
                             <NavOptionText>
                                 Settings
                             </NavOptionText>
@@ -159,9 +133,9 @@ const NavOptions: FunctionComponent<NavOptionsProps> = ({ position, closeOptions
                             title="Log out"
                             aria-label="Log out"
                         >
-                            <NavOptionIcon>
+                            <OptionBaseIcon>
                                 <Exit type="options" color={COLORS.red} />
-                            </NavOptionIcon>
+                            </OptionBaseIcon>
                             <NavOptionText color={COLORS.red}>
                                 Log out
                             </NavOptionText>

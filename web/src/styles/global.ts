@@ -1233,3 +1233,49 @@ export const NoElementsAlert = styled.div`
     padding-right: 16px;
     padding-bottom: 24px;
 `;
+
+export const OptionBaseItem = styled.div`
+    display: flex;
+    cursor: pointer;
+    background-color: transparent;
+    transition: background-color ease 0.2s;
+    width: 100%;
+    align-items: center;
+    flex-direction: row;
+
+    &:hover,
+    &:focus {
+        background-color: ${({ theme }) => theme.overlayGrey};
+    }
+`;
+
+export const OptionBaseIcon = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+`;
+
+export const LinkOptionBaseItem = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+
+    a, span {
+        display: flex;
+        align-items: center;
+        color: ${({ theme }) => theme.color};
+        background-color: transparent;
+        transition: background-color ease 0.2s;
+        width: 100%;
+    }
+
+    a, a:hover, a:active {
+        text-decoration: none;
+    }
+
+    a:hover, span:hover,
+    a:active, span:focus {
+        background-color: ${({ theme }) => theme.overlayGrey};
+    }
+`;
