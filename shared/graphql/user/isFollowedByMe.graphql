@@ -1,0 +1,3 @@
+query IsFollowedByMe($id: Int) {
+    isFollowedByMe(id: $id)
+}

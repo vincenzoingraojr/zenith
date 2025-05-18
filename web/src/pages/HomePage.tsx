@@ -83,7 +83,6 @@ function HomePage() {
                                                 />
                                             )}
                                         </>
-
                                     )}
                                 </PostFeedContainer>
                             </HomePageContainer>

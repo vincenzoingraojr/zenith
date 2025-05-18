@@ -435,26 +435,28 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             }
                             children={
                                 <>
-                                    <OptionItem
-                                        role="menuitem"
-                                        title="Report this post"
-                                        aria-label="Report this post"
-                                        onClick={() => {
-                                            navigate(`/report/post/${post.itemId}`, {
-                                                state: {
-                                                    backgroundLocation:
-                                                        location,
-                                                },
-                                            });
-                                        }}
-                                    >
-                                        <OptionBaseIcon>
-                                            <Flag />
-                                        </OptionBaseIcon>
-                                        <OptionItemText>
-                                            Report this post
-                                        </OptionItemText>
-                                    </OptionItem>
+                                    {((me && post.authorId !== me.id) || !me) && (
+                                        <OptionItem
+                                            role="menuitem"
+                                            title="Report this post"
+                                            aria-label="Report this post"
+                                            onClick={() => {
+                                                navigate(`/report/post/${post.itemId}`, {
+                                                    state: {
+                                                        backgroundLocation:
+                                                            location,
+                                                    },
+                                                });
+                                            }}
+                                        >
+                                            <OptionBaseIcon>
+                                                <Flag />
+                                            </OptionBaseIcon>
+                                            <OptionItemText>
+                                                Report this post
+                                            </OptionItemText>
+                                        </OptionItem>
+                                    )}
                                     {me && (
                                         <>
                                             {post.authorId === me.id ? (

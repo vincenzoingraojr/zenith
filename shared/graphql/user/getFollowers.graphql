@@ -1,0 +1,41 @@
+query GetFollowers(
+    $id: Int
+    $offset: Int
+    $limit: Int
+) {
+    getFollowers(
+        id: $id
+        offset: $offset
+        limit: $limit
+    ) {
+        id
+        name
+        username
+        email
+        type
+        gender
+        birthDate {
+            date
+            monthAndDayVisibility
+            yearVisibility
+        }
+        emailVerified
+        profile {
+            profilePicture
+            profileBanner
+            bio
+            website
+        }
+        userSettings {
+            incomingMessages
+            twoFactorAuth
+        }
+        searchSettings {
+            hideSensitiveContent
+            hideBlockedAccounts
+        }
+        createdAt
+        updatedAt
+        hiddenPosts
+    }
+}

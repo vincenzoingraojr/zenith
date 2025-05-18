@@ -1221,7 +1221,7 @@ export const FeedLoading = styled.div`
     width: 100%;
     align-items: center;
     justify-content: center;
-    height: 42px;
+    height: 64px;
 `;
 
 export const NoElementsAlert = styled.div`
@@ -1278,4 +1278,10 @@ export const LinkOptionBaseItem = styled.div`
     a:active, span:focus {
         background-color: ${({ theme }) => theme.overlayGrey};
     }
+`;
+
+export const EndContainer = styled(PageText)`
+    text-align: center;
+    color: ${({ theme }) => theme.inputText};
+    padding: 4px 16px;
 `;

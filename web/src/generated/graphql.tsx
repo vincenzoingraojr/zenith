@@ -1546,6 +1546,30 @@ export type FindUserBeforeLogInMutationVariables = Exact<{
 
 export type FindUserBeforeLogInMutation = { __typename?: 'Mutation', findUserBeforeLogIn: { __typename?: 'UserResponse', status?: string | null, ok: boolean, user?: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
 
+export type FollowUserMutationVariables = Exact<{
+  userId?: InputMaybe<Scalars['Int']['input']>;
+  origin: Scalars['String']['input'];
+}>;
+
+
+export type FollowUserMutation = { __typename?: 'Mutation', followUser?: { __typename?: 'Follow', id: number, origin: string, createdAt: string, updatedAt: string, follower: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, user: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } } } | null };
+
+export type GetFollowersQueryVariables = Exact<{
+  id?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetFollowersQuery = { __typename?: 'Query', getFollowers?: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }> | null };
+
+export type IsFollowedByMeQueryVariables = Exact<{
+  id?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type IsFollowedByMeQuery = { __typename?: 'Query', isFollowedByMe: boolean };
+
 export type LoginMutationVariables = Exact<{
   input: Scalars['String']['input'];
   password: Scalars['String']['input'];
@@ -1612,6 +1636,13 @@ export type SignupMutationVariables = Exact<{
 
 
 export type SignupMutation = { __typename?: 'Mutation', signup: { __typename?: 'UserResponse', status?: string | null, ok: boolean, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
+
+export type UnfollowUserMutationVariables = Exact<{
+  userId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type UnfollowUserMutation = { __typename?: 'Mutation', unfollowUser: boolean };
 
 export type VerifyEmailAddressMutationVariables = Exact<{
   token: Scalars['String']['input'];
@@ -2754,6 +2785,213 @@ export function useFindUserBeforeLogInMutation(baseOptions?: Apollo.MutationHook
 export type FindUserBeforeLogInMutationHookResult = ReturnType<typeof useFindUserBeforeLogInMutation>;
 export type FindUserBeforeLogInMutationResult = Apollo.MutationResult<FindUserBeforeLogInMutation>;
 export type FindUserBeforeLogInMutationOptions = Apollo.BaseMutationOptions<FindUserBeforeLogInMutation, FindUserBeforeLogInMutationVariables>;
+export const FollowUserDocument = gql`
+    mutation FollowUser($userId: Int, $origin: String!) {
+  followUser(userId: $userId, origin: $origin) {
+    id
+    follower {
+      id
+      name
+      username
+      email
+      type
+      gender
+      birthDate {
+        date
+        monthAndDayVisibility
+        yearVisibility
+      }
+      emailVerified
+      profile {
+        profilePicture
+        profileBanner
+        bio
+        website
+      }
+      userSettings {
+        incomingMessages
+        twoFactorAuth
+      }
+      searchSettings {
+        hideSensitiveContent
+        hideBlockedAccounts
+      }
+      createdAt
+      updatedAt
+      hiddenPosts
+    }
+    user {
+      id
+      name
+      username
+      email
+      type
+      gender
+      birthDate {
+        date
+        monthAndDayVisibility
+        yearVisibility
+      }
+      emailVerified
+      profile {
+        profilePicture
+        profileBanner
+        bio
+        website
+      }
+      userSettings {
+        incomingMessages
+        twoFactorAuth
+      }
+      searchSettings {
+        hideSensitiveContent
+        hideBlockedAccounts
+      }
+      createdAt
+      updatedAt
+      hiddenPosts
+    }
+    origin
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type FollowUserMutationFn = Apollo.MutationFunction<FollowUserMutation, FollowUserMutationVariables>;
+
+/**
+ * __useFollowUserMutation__
+ *
+ * To run a mutation, you first call `useFollowUserMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useFollowUserMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [followUserMutation, { data, loading, error }] = useFollowUserMutation({
+ *   variables: {
+ *      userId: // value for 'userId'
+ *      origin: // value for 'origin'
+ *   },
+ * });
+ */
+export function useFollowUserMutation(baseOptions?: Apollo.MutationHookOptions<FollowUserMutation, FollowUserMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<FollowUserMutation, FollowUserMutationVariables>(FollowUserDocument, options);
+      }
+export type FollowUserMutationHookResult = ReturnType<typeof useFollowUserMutation>;
+export type FollowUserMutationResult = Apollo.MutationResult<FollowUserMutation>;
+export type FollowUserMutationOptions = Apollo.BaseMutationOptions<FollowUserMutation, FollowUserMutationVariables>;
+export const GetFollowersDocument = gql`
+    query GetFollowers($id: Int, $offset: Int, $limit: Int) {
+  getFollowers(id: $id, offset: $offset, limit: $limit) {
+    id
+    name
+    username
+    email
+    type
+    gender
+    birthDate {
+      date
+      monthAndDayVisibility
+      yearVisibility
+    }
+    emailVerified
+    profile {
+      profilePicture
+      profileBanner
+      bio
+      website
+    }
+    userSettings {
+      incomingMessages
+      twoFactorAuth
+    }
+    searchSettings {
+      hideSensitiveContent
+      hideBlockedAccounts
+    }
+    createdAt
+    updatedAt
+    hiddenPosts
+  }
+}
+    `;
+
+/**
+ * __useGetFollowersQuery__
+ *
+ * To run a query within a React component, call `useGetFollowersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetFollowersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetFollowersQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *      offset: // value for 'offset'
+ *      limit: // value for 'limit'
+ *   },
+ * });
+ */
+export function useGetFollowersQuery(baseOptions?: Apollo.QueryHookOptions<GetFollowersQuery, GetFollowersQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetFollowersQuery, GetFollowersQueryVariables>(GetFollowersDocument, options);
+      }
+export function useGetFollowersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetFollowersQuery, GetFollowersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetFollowersQuery, GetFollowersQueryVariables>(GetFollowersDocument, options);
+        }
+export function useGetFollowersSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetFollowersQuery, GetFollowersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetFollowersQuery, GetFollowersQueryVariables>(GetFollowersDocument, options);
+        }
+export type GetFollowersQueryHookResult = ReturnType<typeof useGetFollowersQuery>;
+export type GetFollowersLazyQueryHookResult = ReturnType<typeof useGetFollowersLazyQuery>;
+export type GetFollowersSuspenseQueryHookResult = ReturnType<typeof useGetFollowersSuspenseQuery>;
+export type GetFollowersQueryResult = Apollo.QueryResult<GetFollowersQuery, GetFollowersQueryVariables>;
+export const IsFollowedByMeDocument = gql`
+    query IsFollowedByMe($id: Int) {
+  isFollowedByMe(id: $id)
+}
+    `;
+
+/**
+ * __useIsFollowedByMeQuery__
+ *
+ * To run a query within a React component, call `useIsFollowedByMeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useIsFollowedByMeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useIsFollowedByMeQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useIsFollowedByMeQuery(baseOptions?: Apollo.QueryHookOptions<IsFollowedByMeQuery, IsFollowedByMeQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<IsFollowedByMeQuery, IsFollowedByMeQueryVariables>(IsFollowedByMeDocument, options);
+      }
+export function useIsFollowedByMeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<IsFollowedByMeQuery, IsFollowedByMeQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<IsFollowedByMeQuery, IsFollowedByMeQueryVariables>(IsFollowedByMeDocument, options);
+        }
+export function useIsFollowedByMeSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<IsFollowedByMeQuery, IsFollowedByMeQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<IsFollowedByMeQuery, IsFollowedByMeQueryVariables>(IsFollowedByMeDocument, options);
+        }
+export type IsFollowedByMeQueryHookResult = ReturnType<typeof useIsFollowedByMeQuery>;
+export type IsFollowedByMeLazyQueryHookResult = ReturnType<typeof useIsFollowedByMeLazyQuery>;
+export type IsFollowedByMeSuspenseQueryHookResult = ReturnType<typeof useIsFollowedByMeSuspenseQuery>;
+export type IsFollowedByMeQueryResult = Apollo.QueryResult<IsFollowedByMeQuery, IsFollowedByMeQueryVariables>;
 export const LoginDocument = gql`
     mutation Login($input: String!, $password: String!, $clientOS: String!, $clientType: String!, $clientName: String!, $deviceLocation: String!, $country: String!) {
   login(
@@ -3138,6 +3376,37 @@ export function useSignupMutation(baseOptions?: Apollo.MutationHookOptions<Signu
 export type SignupMutationHookResult = ReturnType<typeof useSignupMutation>;
 export type SignupMutationResult = Apollo.MutationResult<SignupMutation>;
 export type SignupMutationOptions = Apollo.BaseMutationOptions<SignupMutation, SignupMutationVariables>;
+export const UnfollowUserDocument = gql`
+    mutation UnfollowUser($userId: Int) {
+  unfollowUser(userId: $userId)
+}
+    `;
+export type UnfollowUserMutationFn = Apollo.MutationFunction<UnfollowUserMutation, UnfollowUserMutationVariables>;
+
+/**
+ * __useUnfollowUserMutation__
+ *
+ * To run a mutation, you first call `useUnfollowUserMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUnfollowUserMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [unfollowUserMutation, { data, loading, error }] = useUnfollowUserMutation({
+ *   variables: {
+ *      userId: // value for 'userId'
+ *   },
+ * });
+ */
+export function useUnfollowUserMutation(baseOptions?: Apollo.MutationHookOptions<UnfollowUserMutation, UnfollowUserMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UnfollowUserMutation, UnfollowUserMutationVariables>(UnfollowUserDocument, options);
+      }
+export type UnfollowUserMutationHookResult = ReturnType<typeof useUnfollowUserMutation>;
+export type UnfollowUserMutationResult = Apollo.MutationResult<UnfollowUserMutation>;
+export type UnfollowUserMutationOptions = Apollo.BaseMutationOptions<UnfollowUserMutation, UnfollowUserMutationVariables>;
 export const VerifyEmailAddressDocument = gql`
     mutation VerifyEmailAddress($token: String!) {
   verifyEmailAddress(token: $token) {
