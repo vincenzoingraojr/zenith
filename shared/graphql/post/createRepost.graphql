@@ -1,0 +1,14 @@
+mutation CreateRepost(
+    $postId: String!
+) {
+    createRepost(
+        postId: $postId
+    ) {
+        id
+        repostId
+        postId
+        authorId
+        createdAt
+        updatedAt
+    }
+}

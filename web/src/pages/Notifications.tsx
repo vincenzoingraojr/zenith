@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import Head from "../components/Head";
 import Settings from "../components/icons/Settings";
 import PageLayout from "../components/layouts/PageLayout";
@@ -5,6 +6,8 @@ import PageContentLayout from "../components/layouts/sublayouts/PageContentLayou
 import { ControlContainer, PageText } from "../styles/global";
 
 function Notifications() {
+    const navigate = useNavigate();
+
     return (
         <>
             <Head 
@@ -26,6 +29,9 @@ function Notifications() {
                                 role="link"
                                 title="Notification settings"
                                 aria-label="Notification settings"
+                                onClick={() => {
+                                    navigate("/settings/notifications");
+                                }}
                             >
                                 <Settings type="options" />
                             </ControlContainer>

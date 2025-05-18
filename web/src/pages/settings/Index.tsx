@@ -79,6 +79,20 @@ function SettingsPage() {
                                 </SettingsEntry>
                                 <SettingsEntry>
                                     <Link
+                                        to="/settings/notifications"
+                                        title="Notifications"
+                                        aria-label="Notifications"
+                                    >
+                                        <PageText>
+                                            Notifications
+                                        </PageText>
+                                        <OptionBaseIcon>
+                                            <Chevron direction="right" />
+                                        </OptionBaseIcon>
+                                    </Link>
+                                </SettingsEntry>
+                                <SettingsEntry>
+                                    <Link
                                         to="/settings/organizations"
                                         title="Organizations on Zenith"
                                         aria-label="Organizations on Zenith"

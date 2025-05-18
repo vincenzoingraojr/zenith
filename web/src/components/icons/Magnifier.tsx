@@ -9,7 +9,7 @@ interface MagnifierProps extends IconProps {
 
 const Magnifier: FunctionComponent<MagnifierProps> = ({ type, isActive }) => {
     const theme = useTheme();
-    const [size, setSize] = useState(26);
+    const [size, setSize] = useState(type === "normal" ? 26 : (type === "options" ? 24 : 22));
 
     useEffect(() => {
         if (type === "normal") {
@@ -17,7 +17,7 @@ const Magnifier: FunctionComponent<MagnifierProps> = ({ type, isActive }) => {
         } else if (type === "options") {
             setSize(24);
         } else {
-            setSize(20);
+            setSize(22);
         }
     }, [type]);
 

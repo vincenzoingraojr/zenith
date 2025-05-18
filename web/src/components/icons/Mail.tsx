@@ -1,13 +1,22 @@
-import { FunctionComponent } from "react";
-import { DynamicSizeIcon, IconProps } from "./common";
+import { FunctionComponent, useEffect, useState } from "react";
+import { DynamicSizeIcon, LinkIconProps } from "./common";
 import { COLORS } from "../../styles/colors";
 import { useTheme } from "../../styles/theme";
 
-const Mail: FunctionComponent<IconProps> = ({ isActive }) => {
+const Mail: FunctionComponent<LinkIconProps> = ({ type, isActive }) => {
+    const [size, setSize] = useState(type === "nav" ? 26 : 24);
     const theme = useTheme();
 
+    useEffect(() => {
+        if (type === "nav") {
+            setSize(26);
+        } else {
+            setSize(24);
+        }
+    }, [type]);
+
     return (
-        <DynamicSizeIcon size={26} isFilled={isActive ? COLORS.blue : theme.color}>
+        <DynamicSizeIcon size={size} isFilled={isActive ? COLORS.blue : theme.color}>
             {isActive ? (
                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M4 2C2.34315 2 1 3.34315 1 5V5.38197L12 10.882L23 5.38197V5C23 3.34315 21.6569 2 20 2H4Z" />

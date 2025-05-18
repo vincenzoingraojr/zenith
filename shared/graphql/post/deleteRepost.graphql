@@ -1,0 +1,7 @@
+mutation DeleteRepost(
+    $postId: Int!
+) {
+    deleteRepost(
+        postId: $postId
+    )
+}

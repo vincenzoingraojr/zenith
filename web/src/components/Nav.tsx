@@ -284,7 +284,7 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                                 aria-label="Messages"
                             >
                                 {({ isActive }) => (
-                                    <Mail isActive={isActive} />
+                                    <Mail type="nav" isActive={isActive} />
                                 )}
                             </NavLink>
                         </NavItemLink>

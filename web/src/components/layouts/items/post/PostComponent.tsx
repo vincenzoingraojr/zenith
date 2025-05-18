@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useRef, useState } from "react";
-import { GetPostLikesDocument, GetPostLikesQuery, Post, useGetPostLikesQuery, useIncrementPostViewsMutation, useIsPostLikedByMeQuery, useLikePostMutation, usePostCommentsQuery, useRemoveLikeMutation } from "../../../../generated/graphql";
+import { GetPostLikesDocument, GetPostLikesQuery, GetRepostsDocument, GetRepostsQuery, Post, useCreateRepostMutation, useDeleteRepostMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveLikeMutation } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ControlContainer, OptionBaseIcon, PageBlock, PageText } from "../../../../styles/global";
@@ -25,7 +25,7 @@ import Chain from "../../../icons/Chain";
 import copy from "copy-to-clipboard";
 import { useToasts } from "../../../utils/ToastProvider";
 import Repost from "../../../icons/Repost";
-import AddMessage from "../../../icons/AddMessage";
+import Mail from "../../../icons/Mail";
 
 interface PostComponentProps {
     post: Post;
@@ -331,6 +331,36 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
 
     const { addToast } = useToasts();
 
+    const [createRepost] = useCreateRepostMutation();
+    const [deleteRepost] = useDeleteRepostMutation();
+
+    const [repost, setRepost] = useState(false);
+
+    const { data: repostData } = useIsRepostedByUserQuery({
+        fetchPolicy: "cache-and-network",
+        variables: { postId: post.id, userId: me ? me.id : null },
+    });
+
+    useEffect(() => {
+        if (repostData) {
+            setRepost(repostData.isRepostedByUser);
+        }
+    }, [repostData]);
+
+    const { data: repostsData } = useGetRepostsQuery({
+        fetchPolicy: "cache-and-network",
+        variables: { postId: post.id },
+    });
+
+    const [reposts, setReposts] = useState(
+        (repostsData && repostsData.getReposts) ? repostsData.getReposts.length : 0
+    );
+    useEffect(() => {
+        if (repostsData && repostsData.getReposts) {
+            setReposts(repostsData.getReposts.length);
+        }
+    }, [repostsData]);
+
     return (
         <PostWrapper>
             <PostContainer
@@ -409,7 +439,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                         role="menuitem"
                                         title="Report this post"
                                         aria-label="Report this post"
-                                        onClick={(e) => {
+                                        onClick={() => {
                                             navigate(`/report/post/${post.itemId}`, {
                                                 state: {
                                                     backgroundLocation:
@@ -431,6 +461,8 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                 <>
                                                     <OptionItem
                                                         role="menuitem"
+                                                        title="Edit this post"
+                                                        aria-label="Edit this post"
                                                     >
                                                         <OptionBaseIcon>
                                                             <Pen />
@@ -441,6 +473,8 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                     </OptionItem>
                                                     <OptionItem
                                                         role="menuitem"
+                                                        title="Delete this post"
+                                                        aria-label="Delete this post"
                                                     >
                                                         <OptionBaseIcon>
                                                             <Bin color={COLORS.red} />
@@ -600,11 +634,12 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         onClick={(e) => {
                             e.stopPropagation();
                         }}
+                        isActive={repost}
                     >
                         <Options
                             key={`repost-options-${post.id}`}
                             title="Repost options" 
-                            icon={<Repost />}
+                            icon={<Repost isActive={repost} />}
                             isOpen={activeOptions === -2}
                             toggleOptions={() =>
                                 handleOptionsClick(-2)
@@ -614,14 +649,88 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                 <>
                                     <OptionItem
                                         role="menuitem"
-                                        title="Repost this post"
-                                        aria-label="Repost this post"
+                                        title={repost ? "Remove repost" : "Repost this post"}
+                                        aria-label={repost ? "Remove repost" : "Repost this post"}
+                                        onClick={async (e) => {
+                                            e.stopPropagation();
+                            
+                                            if (me) {
+                                                if (repost) {
+                                                    await deleteRepost({
+                                                        variables: {
+                                                            postId: post.id,
+                                                        },
+                                                        update: (
+                                                            store,
+                                                            { data: deleteRepostData }
+                                                        ) => {
+                                                            if (
+                                                                deleteRepostData &&
+                                                                deleteRepostData.deleteRepost &&
+                                                                repostsData && repostsData.getReposts
+                                                            ) {
+                                                                const reposts =
+                                                                    repostsData.getReposts.filter((item) => item.authorId !== me.id);
+
+                                                                store.writeQuery<GetRepostsQuery>(
+                                                                    {
+                                                                        query: GetRepostsDocument,
+                                                                        data: {
+                                                                            getReposts:
+                                                                                reposts,
+                                                                        },
+                                                                        variables: {
+                                                                            postId: post.id,
+                                                                        },
+                                                                    }
+                                                                );
+                                                            }
+                                                        },
+                                                    }).then(() => {
+                                                        setRepost(false);
+                                                    });
+                                                } else {
+                                                    await createRepost({
+                                                        variables: {
+                                                            postId: post.itemId
+                                                        },
+                                                        update: (
+                                                            store,
+                                                            { data: createRepostData }
+                                                        ) => {
+                                                            if (
+                                                                createRepostData &&
+                                                                createRepostData.createRepost &&
+                                                                repostsData && repostsData.getReposts
+                                                            ) {
+                                                                store.writeQuery<GetRepostsQuery>(
+                                                                    {
+                                                                        query: GetRepostsDocument,
+                                                                        data: {
+                                                                            getReposts: [
+                                                                                createRepostData.createRepost,
+                                                                                ...repostsData.getReposts,
+                                                                            ],
+                                                                        },
+                                                                        variables: {
+                                                                            postId: post.id,
+                                                                        },
+                                                                    }
+                                                                );
+                                                            }
+                                                        },
+                                                    }).then(() => {
+                                                        setRepost(true);
+                                                    });
+                                                }
+                                            }
+                                        }}
                                     >
                                         <OptionBaseIcon>
                                             <Repost />
                                         </OptionBaseIcon>
                                         <OptionItemText>
-                                            Repost this post
+                                            {repost ? "Remove repost" : "Repost this post"}
                                         </OptionItemText>
                                     </OptionItem>
                                     <OptionItem
@@ -640,7 +749,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             }
                         />
                         <PostActionInfo>
-                            {formatter.format(0)}
+                            {formatter.format(reposts)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
@@ -720,7 +829,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                         aria-label="Send this post"
                                     >
                                         <OptionBaseIcon>
-                                            <AddMessage />
+                                            <Mail type="options" />
                                         </OptionBaseIcon>
                                         <OptionItemText>
                                             Send this post

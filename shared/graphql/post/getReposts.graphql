@@ -1,0 +1,18 @@
+query GetReposts(
+    $postId: Int!
+    $offset: Int
+    $limit: Int
+) {
+    getReposts(
+        postId: $postId,
+        offset: $offset,
+        limit: $limit,
+    ) {
+        id
+        repostId
+        postId
+        authorId
+        createdAt
+        updatedAt
+    }
+}

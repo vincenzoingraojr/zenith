@@ -1,6 +1,6 @@
 import { Arg, Ctx, Field, Int, Mutation, ObjectType, Query, Resolver, Root, Subscription, UseMiddleware } from "type-graphql";
 import { FieldError } from "./common";
-import { Article, Bookmark, FeedItem, Like, MediaItem, Post, ViewLog } from "../entities/Post";
+import { Article, Bookmark, FeedItem, Like, MediaItem, Post, Repost, ViewLog } from "../entities/Post";
 import { isAuth } from "../middleware/isAuth";
 import { AuthContext } from "../types";
 import { v4 as uuidv4 } from "uuid";
@@ -50,6 +50,7 @@ export class PostResolver {
     private readonly viewLogRepository: Repository<ViewLog>;
     private readonly userDeviceTokenRepository: Repository<UserDeviceToken>;
     private readonly bookmarkRepository: Repository<Bookmark>;
+    private readonly repostRepository: Repository<Repost>;
     private readonly comprehend: ComprehendClient;
 
     constructor() {
@@ -63,6 +64,7 @@ export class PostResolver {
         this.viewLogRepository = appDataSource.getRepository(ViewLog);
         this.userDeviceTokenRepository = appDataSource.getRepository(UserDeviceToken);
         this.bookmarkRepository = appDataSource.getRepository(Bookmark);
+        this.repostRepository = appDataSource.getRepository(Repost);
         this.comprehend = new ComprehendClient({ 
             region: "us-east-1",
             credentials: {
@@ -1031,7 +1033,7 @@ export class PostResolver {
         
             const userIds = likes.map(like => like.userId);
         
-            const users = await this.userService.findUsersById(userIds, true);
+            const users = await this.userService.findUsersById(userIds);
         
             return users || [];
         } catch (error) {
@@ -1275,12 +1277,6 @@ export class PostResolver {
             return false;
         }
 
-        if (!isUUID(itemId)) {
-            logger.warn("Invalid itemId provided.");
-
-            return false;
-        }
-
         try {
             const bookmark = await this.bookmarkRepository.findOne({ where: { authorId: payload.id, itemId, itemType: type } });
 
@@ -1325,6 +1321,139 @@ export class PostResolver {
             });
     
             return posts;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
+    }
+
+    @Mutation(() => Repost, { nullable: true })
+    @UseMiddleware(isAuth)
+    async createRepost(
+        @Arg("postId") postId: string,
+        @Ctx() { payload }: AuthContext
+    ): Promise<Repost | null> {
+        if (!isUUID(postId)) {
+            logger.warn("Invalid postId provided.");
+
+            return null;
+        }
+
+        if (!payload) {
+            logger.warn("User not authenticated.");
+
+            return null;
+        }
+        
+        try {
+            let item: Post | null = null;
+
+            item = await this.findPost(postId);
+
+            if (!item) {
+                return null;
+            }
+
+            const repost = await this.repostRepository.create({
+                repostId: uuidv4(),
+                postId: item.id,
+                authorId: payload.id,
+            }).save();
+
+            if (!repost) {
+                logger.warn("An error has occurred while reposting the post.");
+
+                return null;
+            }
+
+            return repost;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
+    }
+
+    @Mutation(() => Boolean)
+    @UseMiddleware(isAuth)
+    async deleteRepost(
+        @Arg("postId", () => Int) postId: number,
+        @Ctx() { payload }: AuthContext
+    ) {
+        if (!payload) {
+            logger.warn("User not authenticated.");
+
+            return false;
+        }
+
+        try {
+            let item: Repost | null = null;
+
+            item = await this.repostRepository.findOne({ where: { postId, authorId: payload.id } });
+
+            if (!item) {
+                logger.warn("Item not found.");
+
+                return false;
+            }
+
+            await this.repostRepository.delete({ authorId: payload.id, postId }).catch((error) => {
+                logger.error(error);
+
+                return false;
+            });
+    
+            return true;
+        } catch (error) {
+            logger.error(error);
+
+            return false;
+        }
+    }
+
+    @Query(() => Boolean)
+    @UseMiddleware(isAuth)
+    async isRepostedByUser(
+        @Arg("postId", () => Int) postId: number,
+        @Arg("userId", () => Int, { nullable: true }) userId: number,
+    ) {
+        if (!userId) {
+            logger.warn("User id not provided.");
+
+            return false;
+        }
+
+        try {
+            const repost = await this.repostRepository.findOne({ where: { authorId: userId, postId } });
+
+            if (repost) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (error) {
+            logger.error(error);
+
+            return false;
+        }
+    }
+
+    @Query(() => [Repost], { nullable: true })
+    async getReposts(
+        @Arg("postId", () => Int) postId: number,
+        @Arg("offset", () => Int, { nullable: true }) offset?: number,
+        @Arg("limit", () => Int, { nullable: true }) limit?: number,
+    ) {
+        try {
+            const reposts = await this.repostRepository.find({
+                where: { postId },
+                skip: offset,
+                take: limit,
+                order: { createdAt: "DESC" }
+            });
+        
+            return reposts;
         } catch (error) {
             logger.error(error);
 

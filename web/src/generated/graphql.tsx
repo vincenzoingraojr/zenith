@@ -303,6 +303,7 @@ export type Mutation = {
   createOrganization: UserResponse;
   createPost: PostResponse;
   createReport: ReportResponse;
+  createRepost?: Maybe<Repost>;
   deactivateAccount: Scalars['Boolean']['output'];
   deleteAccountData: Scalars['Boolean']['output'];
   deleteDeviceToken: Scalars['Boolean']['output'];
@@ -313,6 +314,7 @@ export type Mutation = {
   deleteOrAbandonChatOrGroup: Scalars['Boolean']['output'];
   deleteOtherSessions: Scalars['Boolean']['output'];
   deletePost: Scalars['Boolean']['output'];
+  deleteRepost: Scalars['Boolean']['output'];
   deleteSession: Scalars['Boolean']['output'];
   editBirthDate: UserResponse;
   editEmailAddress: UserResponse;
@@ -447,6 +449,11 @@ export type MutationCreateReportArgs = {
 };
 
 
+export type MutationCreateRepostArgs = {
+  postId: Scalars['String']['input'];
+};
+
+
 export type MutationDeleteAccountDataArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -482,6 +489,11 @@ export type MutationDeleteOrAbandonChatOrGroupArgs = {
 
 export type MutationDeletePostArgs = {
   postId: Scalars['String']['input'];
+};
+
+
+export type MutationDeleteRepostArgs = {
+  postId: Scalars['Int']['input'];
 };
 
 
@@ -812,11 +824,13 @@ export type Query = {
   getFollowing?: Maybe<Array<User>>;
   getLikedPosts?: Maybe<Array<Post>>;
   getPostLikes?: Maybe<Array<User>>;
+  getReposts?: Maybe<Array<Repost>>;
   hasUserBlockedMe: Scalars['Boolean']['output'];
   isAffiliatedTo?: Maybe<User>;
   isBookmarked: Scalars['Boolean']['output'];
   isFollowedByMe: Scalars['Boolean']['output'];
   isPostLikedByMe: Scalars['Boolean']['output'];
+  isRepostedByUser: Scalars['Boolean']['output'];
   isUserBlockedByMe: Scalars['Boolean']['output'];
   isUserFollowingMe: Scalars['Boolean']['output'];
   landingUsers: Array<LandingUser>;
@@ -981,6 +995,13 @@ export type QueryGetPostLikesArgs = {
 };
 
 
+export type QueryGetRepostsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  postId: Scalars['Int']['input'];
+};
+
+
 export type QueryHasUserBlockedMeArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -1005,6 +1026,12 @@ export type QueryIsFollowedByMeArgs = {
 export type QueryIsPostLikedByMeArgs = {
   itemId: Scalars['String']['input'];
   type: Scalars['String']['input'];
+};
+
+
+export type QueryIsRepostedByUserArgs = {
+  postId: Scalars['Int']['input'];
+  userId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1129,6 +1156,16 @@ export enum ReportStatus {
   Resolved = 'RESOLVED',
   UnderReview = 'UNDER_REVIEW'
 }
+
+export type Repost = {
+  __typename?: 'Repost';
+  authorId: Scalars['Int']['output'];
+  createdAt: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  postId: Scalars['Int']['output'];
+  repostId: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+};
 
 export type SearchResult = {
   __typename?: 'SearchResult';
@@ -1369,6 +1406,20 @@ export type CreatePostMutationVariables = Exact<{
 
 export type CreatePostMutation = { __typename?: 'Mutation', createPost: { __typename?: 'PostResponse', ok: boolean, status?: string | null, post?: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
 
+export type CreateRepostMutationVariables = Exact<{
+  postId: Scalars['String']['input'];
+}>;
+
+
+export type CreateRepostMutation = { __typename?: 'Mutation', createRepost?: { __typename?: 'Repost', id: number, repostId: string, postId: number, authorId: number, createdAt: string, updatedAt: string } | null };
+
+export type DeleteRepostMutationVariables = Exact<{
+  postId: Scalars['Int']['input'];
+}>;
+
+
+export type DeleteRepostMutation = { __typename?: 'Mutation', deleteRepost: boolean };
+
 export type EditPostMutationVariables = Exact<{
   postId: Scalars['String']['input'];
   type: Scalars['String']['input'];
@@ -1398,6 +1449,15 @@ export type GetPostLikesQueryVariables = Exact<{
 
 export type GetPostLikesQuery = { __typename?: 'Query', getPostLikes?: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }> | null };
 
+export type GetRepostsQueryVariables = Exact<{
+  postId: Scalars['Int']['input'];
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetRepostsQuery = { __typename?: 'Query', getReposts?: Array<{ __typename?: 'Repost', id: number, repostId: string, postId: number, authorId: number, createdAt: string, updatedAt: string }> | null };
+
 export type IncrementPostViewsMutationVariables = Exact<{
   itemId: Scalars['String']['input'];
   type: Scalars['String']['input'];
@@ -1415,6 +1475,14 @@ export type IsPostLikedByMeQueryVariables = Exact<{
 
 
 export type IsPostLikedByMeQuery = { __typename?: 'Query', isPostLikedByMe: boolean };
+
+export type IsRepostedByUserQueryVariables = Exact<{
+  postId: Scalars['Int']['input'];
+  userId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type IsRepostedByUserQuery = { __typename?: 'Query', isRepostedByUser: boolean };
 
 export type LikePostMutationVariables = Exact<{
   itemId: Scalars['String']['input'];
@@ -1742,6 +1810,75 @@ export function useCreatePostMutation(baseOptions?: Apollo.MutationHookOptions<C
 export type CreatePostMutationHookResult = ReturnType<typeof useCreatePostMutation>;
 export type CreatePostMutationResult = Apollo.MutationResult<CreatePostMutation>;
 export type CreatePostMutationOptions = Apollo.BaseMutationOptions<CreatePostMutation, CreatePostMutationVariables>;
+export const CreateRepostDocument = gql`
+    mutation CreateRepost($postId: String!) {
+  createRepost(postId: $postId) {
+    id
+    repostId
+    postId
+    authorId
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type CreateRepostMutationFn = Apollo.MutationFunction<CreateRepostMutation, CreateRepostMutationVariables>;
+
+/**
+ * __useCreateRepostMutation__
+ *
+ * To run a mutation, you first call `useCreateRepostMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateRepostMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createRepostMutation, { data, loading, error }] = useCreateRepostMutation({
+ *   variables: {
+ *      postId: // value for 'postId'
+ *   },
+ * });
+ */
+export function useCreateRepostMutation(baseOptions?: Apollo.MutationHookOptions<CreateRepostMutation, CreateRepostMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateRepostMutation, CreateRepostMutationVariables>(CreateRepostDocument, options);
+      }
+export type CreateRepostMutationHookResult = ReturnType<typeof useCreateRepostMutation>;
+export type CreateRepostMutationResult = Apollo.MutationResult<CreateRepostMutation>;
+export type CreateRepostMutationOptions = Apollo.BaseMutationOptions<CreateRepostMutation, CreateRepostMutationVariables>;
+export const DeleteRepostDocument = gql`
+    mutation DeleteRepost($postId: Int!) {
+  deleteRepost(postId: $postId)
+}
+    `;
+export type DeleteRepostMutationFn = Apollo.MutationFunction<DeleteRepostMutation, DeleteRepostMutationVariables>;
+
+/**
+ * __useDeleteRepostMutation__
+ *
+ * To run a mutation, you first call `useDeleteRepostMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteRepostMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteRepostMutation, { data, loading, error }] = useDeleteRepostMutation({
+ *   variables: {
+ *      postId: // value for 'postId'
+ *   },
+ * });
+ */
+export function useDeleteRepostMutation(baseOptions?: Apollo.MutationHookOptions<DeleteRepostMutation, DeleteRepostMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteRepostMutation, DeleteRepostMutationVariables>(DeleteRepostDocument, options);
+      }
+export type DeleteRepostMutationHookResult = ReturnType<typeof useDeleteRepostMutation>;
+export type DeleteRepostMutationResult = Apollo.MutationResult<DeleteRepostMutation>;
+export type DeleteRepostMutationOptions = Apollo.BaseMutationOptions<DeleteRepostMutation, DeleteRepostMutationVariables>;
 export const EditPostDocument = gql`
     mutation EditPost($postId: String!, $type: String!, $content: String!, $media: String!, $deletedMedia: String!, $existingAltTexts: String!) {
   editPost(
@@ -2010,6 +2147,53 @@ export type GetPostLikesQueryHookResult = ReturnType<typeof useGetPostLikesQuery
 export type GetPostLikesLazyQueryHookResult = ReturnType<typeof useGetPostLikesLazyQuery>;
 export type GetPostLikesSuspenseQueryHookResult = ReturnType<typeof useGetPostLikesSuspenseQuery>;
 export type GetPostLikesQueryResult = Apollo.QueryResult<GetPostLikesQuery, GetPostLikesQueryVariables>;
+export const GetRepostsDocument = gql`
+    query GetReposts($postId: Int!, $offset: Int, $limit: Int) {
+  getReposts(postId: $postId, offset: $offset, limit: $limit) {
+    id
+    repostId
+    postId
+    authorId
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useGetRepostsQuery__
+ *
+ * To run a query within a React component, call `useGetRepostsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetRepostsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetRepostsQuery({
+ *   variables: {
+ *      postId: // value for 'postId'
+ *      offset: // value for 'offset'
+ *      limit: // value for 'limit'
+ *   },
+ * });
+ */
+export function useGetRepostsQuery(baseOptions: Apollo.QueryHookOptions<GetRepostsQuery, GetRepostsQueryVariables> & ({ variables: GetRepostsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetRepostsQuery, GetRepostsQueryVariables>(GetRepostsDocument, options);
+      }
+export function useGetRepostsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetRepostsQuery, GetRepostsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetRepostsQuery, GetRepostsQueryVariables>(GetRepostsDocument, options);
+        }
+export function useGetRepostsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetRepostsQuery, GetRepostsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetRepostsQuery, GetRepostsQueryVariables>(GetRepostsDocument, options);
+        }
+export type GetRepostsQueryHookResult = ReturnType<typeof useGetRepostsQuery>;
+export type GetRepostsLazyQueryHookResult = ReturnType<typeof useGetRepostsLazyQuery>;
+export type GetRepostsSuspenseQueryHookResult = ReturnType<typeof useGetRepostsSuspenseQuery>;
+export type GetRepostsQueryResult = Apollo.QueryResult<GetRepostsQuery, GetRepostsQueryVariables>;
 export const IncrementPostViewsDocument = gql`
     mutation IncrementPostViews($itemId: String!, $type: String!, $itemOpened: Boolean!, $origin: String!) {
   incrementPostViews(
@@ -2100,6 +2284,45 @@ export type IsPostLikedByMeQueryHookResult = ReturnType<typeof useIsPostLikedByM
 export type IsPostLikedByMeLazyQueryHookResult = ReturnType<typeof useIsPostLikedByMeLazyQuery>;
 export type IsPostLikedByMeSuspenseQueryHookResult = ReturnType<typeof useIsPostLikedByMeSuspenseQuery>;
 export type IsPostLikedByMeQueryResult = Apollo.QueryResult<IsPostLikedByMeQuery, IsPostLikedByMeQueryVariables>;
+export const IsRepostedByUserDocument = gql`
+    query IsRepostedByUser($postId: Int!, $userId: Int) {
+  isRepostedByUser(postId: $postId, userId: $userId)
+}
+    `;
+
+/**
+ * __useIsRepostedByUserQuery__
+ *
+ * To run a query within a React component, call `useIsRepostedByUserQuery` and pass it any options that fit your needs.
+ * When your component renders, `useIsRepostedByUserQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useIsRepostedByUserQuery({
+ *   variables: {
+ *      postId: // value for 'postId'
+ *      userId: // value for 'userId'
+ *   },
+ * });
+ */
+export function useIsRepostedByUserQuery(baseOptions: Apollo.QueryHookOptions<IsRepostedByUserQuery, IsRepostedByUserQueryVariables> & ({ variables: IsRepostedByUserQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<IsRepostedByUserQuery, IsRepostedByUserQueryVariables>(IsRepostedByUserDocument, options);
+      }
+export function useIsRepostedByUserLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<IsRepostedByUserQuery, IsRepostedByUserQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<IsRepostedByUserQuery, IsRepostedByUserQueryVariables>(IsRepostedByUserDocument, options);
+        }
+export function useIsRepostedByUserSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<IsRepostedByUserQuery, IsRepostedByUserQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<IsRepostedByUserQuery, IsRepostedByUserQueryVariables>(IsRepostedByUserDocument, options);
+        }
+export type IsRepostedByUserQueryHookResult = ReturnType<typeof useIsRepostedByUserQuery>;
+export type IsRepostedByUserLazyQueryHookResult = ReturnType<typeof useIsRepostedByUserLazyQuery>;
+export type IsRepostedByUserSuspenseQueryHookResult = ReturnType<typeof useIsRepostedByUserSuspenseQuery>;
+export type IsRepostedByUserQueryResult = Apollo.QueryResult<IsRepostedByUserQuery, IsRepostedByUserQueryVariables>;
 export const LikePostDocument = gql`
     mutation LikePost($itemId: String!, $origin: String!, $itemOpened: Boolean!, $itemType: String!) {
   likePost(

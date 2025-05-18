@@ -41,6 +41,11 @@ const cache = new InMemoryCache({
                         return incoming;
                     },
                 },
+                getReposts: {
+                    merge: (_existing = [], incoming) => {
+                        return incoming;
+                    },
+                },
             },
         },
     },
