@@ -20,6 +20,7 @@ import Notifications from "./pages/Notifications";
 import Messages from "./pages/messages/Messages";
 import ReportPage from "./pages/ReportPage";
 import SettingsPage from "./pages/settings/Index";
+import Payments from "./pages/payments/Payments";
 
 function App() {
     const location = useLocation();
@@ -183,7 +184,16 @@ function App() {
                             children={<Messages />}
                         />
                     }
-                />    
+                />
+                <Route
+                    path="/payments"
+                    element={
+                        <IsAuthenticated
+                            isAuth={isAuth}
+                            children={<Payments />}
+                        />
+                    }
+                />
                 <Route
                     path="/settings"
                     element={

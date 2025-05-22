@@ -10,12 +10,7 @@ import { Article, Post } from "./Post";
 import { BaseItem } from "./BaseItem";
 import { USER_TYPES } from "../helpers/user/userTypes";
 import { GraphQLJSONObject } from "graphql-scalars";
-import { MatchStatus, VerificationStatus } from "../helpers/enums";
-
-registerEnumType(MatchStatus, {
-    name: "MatchStatus",
-    description: "Possible documents and form data match status",
-});
+import { VerificationStatus } from "../helpers/enums";
 
 registerEnumType(VerificationStatus, {
     name: "VerificationStatus",
@@ -301,14 +296,6 @@ export class IdentityVerification extends Verification {
     @Field(() => String)
     @Column()
     birthOrCreationDate: Date;
-
-    @Field(() => MatchStatus)
-    @Column({
-        type: "enum",
-        enum: MatchStatus,
-        default: null,
-    })
-    matchStatus: MatchStatus;
 }
 
 @ObjectType()

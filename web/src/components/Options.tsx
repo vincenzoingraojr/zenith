@@ -11,6 +11,7 @@ interface OptionsProps {
     isOpen: boolean;
     toggleOptions: () => void;
     children: React.ReactNode;
+    size?: number;
     mirrored?: boolean;
 }
 
@@ -30,7 +31,7 @@ const OptionsContainerBackground = styled.div`
 `;
 
 const OptionsContainer = styled.div.attrs(
-    (props: { isInUpperHalf: boolean; position: { top: number; left: number }, mirrored: boolean }) => props
+    (props: { isInUpperHalf: boolean; position: { top: number; left: number }, mirrored: boolean, size: number }) => props
 )`
     display: flex;
     flex-direction: column;
@@ -65,7 +66,7 @@ const OptionsContainer = styled.div.attrs(
         transform: ${(props) =>
             props.isInUpperHalf
                 ? "translateY(0)"
-                : "translateY(calc(-100% + 36px))"} ${(props) => !props.mirrored && "translateX(calc(-100% + 36px))"};
+                : `translateY(calc(-100% + ${props.size}px))`} ${(props) => !props.mirrored && `translateX(calc(-100% + ${props.size}px))`};
         padding-top: 0px;
         box-shadow: 0px 0px 2px ${({ theme }) => theme.overlayGrey};
     }
@@ -113,7 +114,7 @@ export const OptionItemText = styled(PageText).attrs(
     color: ${({ theme, isRed }) => (isRed ? COLORS.red : theme.color)};
 `;
 
-const Options: FunctionComponent<OptionsProps> = ({ icon, title, isOpen, toggleOptions, children, mirrored }) => {
+const Options: FunctionComponent<OptionsProps> = ({ icon, title, isOpen, toggleOptions, children, size, mirrored }) => {
     const buttonRef = useRef<HTMLDivElement | null>(null);
 
     const [position, setPosition] = useState<{ top: number; left: number }>({
@@ -165,6 +166,7 @@ const Options: FunctionComponent<OptionsProps> = ({ icon, title, isOpen, toggleO
                     e.stopPropagation();
                     toggleOptions();
                 }}
+                size={size}
                 ref={buttonRef}
             >
                 {icon}
@@ -182,6 +184,7 @@ const Options: FunctionComponent<OptionsProps> = ({ icon, title, isOpen, toggleO
                         position={position}
                         isInUpperHalf={isInUpperHalf}
                         mirrored={mirrored || false}
+                        size={size || 36}
                     >
                         <OptionsContent
                             onClick={() => toggleOptions()}

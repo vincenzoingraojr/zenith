@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { encrypt } from "../crypto";
 import { logger } from "../logger";
 import { USER_TYPES } from "./userTypes";
-import { MatchStatus, VerificationStatus } from "../enums";
+import { VerificationStatus } from "../enums";
 
 export async function initAccounts() {
     const userRepository = appDataSource.getRepository(User);
@@ -55,7 +55,6 @@ export async function initAccounts() {
                 fullName: newGeneralAccount.name,
                 entityIdentifier: "",
                 birthOrCreationDate: newGeneralAccount.birthDate.date,
-                matchStatus: MatchStatus.GREEN,
                 outcome: "Account identity verified automatically.",
             }).save();
     
@@ -123,7 +122,6 @@ export async function initAccounts() {
                 fullName: newPersonalAccount.name,
                 entityIdentifier: "",
                 birthOrCreationDate: newPersonalAccount.birthDate.date,
-                matchStatus: MatchStatus.GREEN,
                 outcome: "Account identity verified automatically.",
             }).save();
 

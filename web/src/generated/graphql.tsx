@@ -174,7 +174,6 @@ export type IdentityVerification = {
   entityIdentifier: Scalars['String']['output'];
   fullName: Scalars['String']['output'];
   id: Scalars['Int']['output'];
-  matchStatus: MatchStatus;
   outcome?: Maybe<Scalars['String']['output']>;
   type: Scalars['String']['output'];
   updatedAt: Scalars['String']['output'];
@@ -212,13 +211,6 @@ export type Like = {
   updatedAt: Scalars['String']['output'];
   userId: Scalars['Int']['output'];
 };
-
-/** Possible documents and form data match status */
-export enum MatchStatus {
-  Green = 'GREEN',
-  Red = 'RED',
-  Yellow = 'YELLOW'
-}
 
 export type MediaItem = {
   __typename?: 'MediaItem';

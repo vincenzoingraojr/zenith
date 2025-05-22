@@ -93,6 +93,20 @@ function SettingsPage() {
                                 </SettingsEntry>
                                 <SettingsEntry>
                                     <Link
+                                        to="/settings/payments"
+                                        title="Payments"
+                                        aria-label="Payments"
+                                    >
+                                        <PageText>
+                                            Payments
+                                        </PageText>
+                                        <OptionBaseIcon>
+                                            <Chevron direction="right" />
+                                        </OptionBaseIcon>
+                                    </Link>
+                                </SettingsEntry>
+                                <SettingsEntry>
+                                    <Link
                                         to="/settings/organizations"
                                         title="Organizations on Zenith"
                                         aria-label="Organizations on Zenith"

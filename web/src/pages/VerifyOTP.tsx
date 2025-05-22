@@ -131,7 +131,7 @@ function VerifyOTP() {
                                 <AuthFormContent>
                                     <InputField
                                         field="otp"
-                                        type="text"
+                                        type="otp"
                                         placeholder="One-time password"
                                     />
                                     <PageBlock>

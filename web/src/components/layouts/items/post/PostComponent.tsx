@@ -229,7 +229,7 @@ const PostActionContainer = styled.div.attrs((props: { color?: string, isActive:
 `;
 
 const PostActionInfo = styled(PageText)`
-    font-size: 16px;
+    font-size: 14px;
     color: inherit;
     background-color: transparent;
 `;
@@ -621,7 +621,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         }}
                         isActive={like}
                     >
-                        <ControlContainer>
+                        <ControlContainer size={32}>
                             <Like isActive={like} />
                         </ControlContainer>
                         <PostActionInfo>
@@ -641,11 +641,12 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         <Options
                             key={`repost-options-${post.id}`}
                             title="Repost options" 
-                            icon={<Repost isActive={repost} />}
+                            icon={<Repost type="nav" isActive={repost} />}
                             isOpen={activeOptions === -2}
                             toggleOptions={() =>
                                 handleOptionsClick(-2)
                             }
+                            size={32}
                             mirrored={true}
                             children={
                                 <>
@@ -729,7 +730,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                         }}
                                     >
                                         <OptionBaseIcon>
-                                            <Repost />
+                                            <Repost type="options" />
                                         </OptionBaseIcon>
                                         <OptionItemText>
                                             {repost ? "Remove repost" : "Repost this post"}
@@ -762,7 +763,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             e.stopPropagation();
                         }}
                     >
-                        <ControlContainer>
+                        <ControlContainer size={32}>
                             <Comment />
                         </ControlContainer>
                         <PostActionInfo>
@@ -777,7 +778,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             e.stopPropagation();
                         }}
                     >
-                        <ControlContainer>
+                        <ControlContainer size={32}>
                             <Views />
                         </ControlContainer>
                         <PostActionInfo>
@@ -800,6 +801,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             toggleOptions={() =>
                                 handleOptionsClick(-1)
                             }
+                            size={32}
                             children={
                                 <>
                                     <OptionItem

@@ -11,12 +11,6 @@ export enum ReportStatus {
     REOPENED = "REOPENED",
 }
 
-export enum MatchStatus {
-    GREEN = "GREEN",
-    YELLOW = "YELLOW",
-    RED = "RED",
-}
-
 export enum VerificationStatus {
     VERIFIED = "VERIFIED",
     UNDER_REVIEW = "UNDER REVIEW",

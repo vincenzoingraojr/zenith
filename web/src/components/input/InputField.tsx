@@ -123,8 +123,10 @@ const TextField: FunctionComponent<TextFieldProps> = ({
                 spellCheck="false"
                 autoComplete="off"
                 autoCorrect="off"
+                maxLength={type === "textarea" ? 1000 : (type === "otp" ? 6 : 100)}
                 name={field}
-                type={isPassword ? showType : type}
+                type={isPassword ? showType : (type === "otp" ? "tel" : type)}
+                pattern={type === "otp" ? "[0-9]*" : undefined}
                 onFocus={() => {
                     setIsFocused(true);
                 }}

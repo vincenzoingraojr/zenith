@@ -40,7 +40,7 @@ import { isEmail, isJWT, isUUID } from "class-validator";
 import { isValidUserInput } from "../helpers/user/isValidUserInput";
 import { USER_TYPES } from "../helpers/user/userTypes";
 import { NOTIFICATION_TYPES } from "../helpers/notification/notificationTypes";
-import { MatchStatus, VerificationStatus } from "../helpers/enums";
+import { VerificationStatus } from "../helpers/enums";
 import { NotificationService } from "./NotificationService";
 import { UserService } from "./UserService";
 
@@ -3008,7 +3008,9 @@ export class UserResolver {
                     if (!me.emailVerified) {
                         status = "Your email address is not verified.";
                     } else {
-                        if (identity && identity.verified === VerificationStatus.VERIFIED) {
+                        const affiliatedOrganization = await this.isAffiliatedTo(me.id);
+
+                        if (identity && (identity.verified === VerificationStatus.VERIFIED || (me.type === USER_TYPES.ORGANIZATION && affiliatedOrganization))) {
                             const verification = await this.findVerificationRequest(me.id, me.type);
                     
                             if (verification && verification.verified === VerificationStatus.VERIFIED) {
@@ -3021,16 +3023,34 @@ export class UserResolver {
                                 verification.verified = VerificationStatus.UNDER_REVIEW;
 
                                 await verification.save();
+                                
+                                status = "Verification request updated.";
 
                                 userVerification = verification;
                             } else {
-                                userVerification = await this.userVerificationRepository.create({
-                                    userId: me.id,
-                                    type: me.type,
-                                    documents: documentsArray,
-                                }).save();
+                                if (me.type === USER_TYPES.ORGANIZATION && affiliatedOrganization) {
+                                    const organizationVerification = await this.findVerificationRequest(affiliatedOrganization.id, affiliatedOrganization.type);
 
-                                status = "Verification request submitted.";
+                                    if (organizationVerification && organizationVerification.verified === VerificationStatus.VERIFIED) {
+                                        userVerification = await this.userVerificationRepository.create({
+                                            userId: me.id,
+                                            type: me.type,
+                                            verifiedSince: new Date(),
+                                            verified: VerificationStatus.VERIFIED,
+                                            outcome: "Verified by affiliated organization.",
+                                        }).save();
+                                    } else {
+                                        status = "The organization you're affiliated to is not verified.";
+                                    }
+                                } else {
+                                    userVerification = await this.userVerificationRepository.create({
+                                        userId: me.id,
+                                        type: me.type,
+                                        documents: documentsArray,
+                                    }).save();
+
+                                    status = "Verification request submitted.";
+                                }
                             }
                             
                             ok = true;
@@ -3163,9 +3183,8 @@ export class UserResolver {
                                 status = "You're already verified.";
                             } else if (identity && identity.verified === VerificationStatus.UNDER_REVIEW) {
                                 status = "You've already submitted an identity verification request for your account.";
-                            } else if (identity && identity.matchStatus === MatchStatus.RED && documentsArray && documentsArray.length > 0) {
+                            } else if (identity && documentsArray && documentsArray.length > 0) {
                                 identity.documents = documentsArray;
-                                identity.matchStatus = MatchStatus.YELLOW;
                                 identity.outcome = "";
                                 identity.country = country;
                                 identity.fullName = fullName;

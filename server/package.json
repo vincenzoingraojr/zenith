@@ -42,6 +42,7 @@
         "pg": "^8.4.0",
         "reflect-metadata": "^0.1.10",
         "serve-favicon": "^2.5.0",
+        "stripe": "^18.1.1",
         "ts-node": "10.4.0",
         "type-graphql": "2.0.0-beta.6",
         "typeorm": "0.3.20",
