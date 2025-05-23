@@ -14,7 +14,7 @@ import { ControlContainer } from "../styles/global";
 import Menu from "./icons/Menu";
 import { useNavOptions } from "./utils/hooks";
 import { useMeData } from "../utils/userQueries";
-import Money from "./icons/Money";
+import Wallet from "./icons/Wallet";
 
 interface NavProps {
     noNav?: boolean;
@@ -296,7 +296,7 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                                 aria-label="Payments"
                             >
                                 {({ isActive }) => (
-                                    <Money isActive={isActive} />
+                                    <Wallet isActive={isActive} />
                                 )}
                             </NavLink>
                         </NavItemLink>
