@@ -2884,11 +2884,17 @@ export class UserResolver {
             const affiliation = await this.findAffiliationRequest(affiliationId, { payload } as AuthContext);
 
             if (me && affiliation) {
-                affiliation.status = accepted;
+                if (accepted) {
+                    affiliation.status = accepted;
 
-                await affiliation.save();
+                    await affiliation.save();
 
-                return affiliation;
+                    return affiliation;
+                } else {
+                    await this.affiliationRepository.delete({ affiliationId: affiliationId });
+
+                    return null;
+                }
             } else {
                 return null;
             }
@@ -3010,7 +3016,7 @@ export class UserResolver {
                     } else {
                         const affiliatedOrganization = await this.isAffiliatedTo(me.id);
 
-                        if (identity && (identity.verified === VerificationStatus.VERIFIED || (me.type === USER_TYPES.ORGANIZATION && affiliatedOrganization))) {
+                        if ((identity && identity.verified === VerificationStatus.VERIFIED) || (me.type === USER_TYPES.ORGANIZATION && affiliatedOrganization)) {
                             const verification = await this.findVerificationRequest(me.id, me.type);
                     
                             if (verification && verification.verified === VerificationStatus.VERIFIED) {
@@ -3037,7 +3043,7 @@ export class UserResolver {
                                             type: me.type,
                                             verifiedSince: new Date(),
                                             verified: VerificationStatus.VERIFIED,
-                                            outcome: "Verified by affiliated organization.",
+                                            outcome: "Verified through organization.",
                                         }).save();
                                     } else {
                                         status = "The organization you're affiliated to is not verified.";

@@ -1538,6 +1538,14 @@ export type FindUserBeforeLogInMutationVariables = Exact<{
 
 export type FindUserBeforeLogInMutation = { __typename?: 'Mutation', findUserBeforeLogIn: { __typename?: 'UserResponse', status?: string | null, ok: boolean, user?: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
 
+export type FindVerificationRequestQueryVariables = Exact<{
+  id?: InputMaybe<Scalars['Int']['input']>;
+  type: Scalars['String']['input'];
+}>;
+
+
+export type FindVerificationRequestQuery = { __typename?: 'Query', findVerificationRequest?: { __typename?: 'UserVerification', id: number, userId: number, verified: VerificationStatus, type: string, verifiedSince?: string | null, documents: Array<any>, outcome?: string | null, createdAt: string, updatedAt: string } | null };
+
 export type FollowUserMutationVariables = Exact<{
   userId?: InputMaybe<Scalars['Int']['input']>;
   origin: Scalars['String']['input'];
@@ -2777,6 +2785,55 @@ export function useFindUserBeforeLogInMutation(baseOptions?: Apollo.MutationHook
 export type FindUserBeforeLogInMutationHookResult = ReturnType<typeof useFindUserBeforeLogInMutation>;
 export type FindUserBeforeLogInMutationResult = Apollo.MutationResult<FindUserBeforeLogInMutation>;
 export type FindUserBeforeLogInMutationOptions = Apollo.BaseMutationOptions<FindUserBeforeLogInMutation, FindUserBeforeLogInMutationVariables>;
+export const FindVerificationRequestDocument = gql`
+    query FindVerificationRequest($id: Int, $type: String!) {
+  findVerificationRequest(id: $id, type: $type) {
+    id
+    userId
+    verified
+    type
+    verifiedSince
+    documents
+    outcome
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useFindVerificationRequestQuery__
+ *
+ * To run a query within a React component, call `useFindVerificationRequestQuery` and pass it any options that fit your needs.
+ * When your component renders, `useFindVerificationRequestQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useFindVerificationRequestQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *      type: // value for 'type'
+ *   },
+ * });
+ */
+export function useFindVerificationRequestQuery(baseOptions: Apollo.QueryHookOptions<FindVerificationRequestQuery, FindVerificationRequestQueryVariables> & ({ variables: FindVerificationRequestQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<FindVerificationRequestQuery, FindVerificationRequestQueryVariables>(FindVerificationRequestDocument, options);
+      }
+export function useFindVerificationRequestLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<FindVerificationRequestQuery, FindVerificationRequestQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<FindVerificationRequestQuery, FindVerificationRequestQueryVariables>(FindVerificationRequestDocument, options);
+        }
+export function useFindVerificationRequestSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<FindVerificationRequestQuery, FindVerificationRequestQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<FindVerificationRequestQuery, FindVerificationRequestQueryVariables>(FindVerificationRequestDocument, options);
+        }
+export type FindVerificationRequestQueryHookResult = ReturnType<typeof useFindVerificationRequestQuery>;
+export type FindVerificationRequestLazyQueryHookResult = ReturnType<typeof useFindVerificationRequestLazyQuery>;
+export type FindVerificationRequestSuspenseQueryHookResult = ReturnType<typeof useFindVerificationRequestSuspenseQuery>;
+export type FindVerificationRequestQueryResult = Apollo.QueryResult<FindVerificationRequestQuery, FindVerificationRequestQueryVariables>;
 export const FollowUserDocument = gql`
     mutation FollowUser($userId: Int, $origin: String!) {
   followUser(userId: $userId, origin: $origin) {

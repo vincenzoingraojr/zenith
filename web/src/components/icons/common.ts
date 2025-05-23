@@ -10,6 +10,10 @@ export interface LinkIconProps extends IconProps {
     type: "nav" | "options";
 }
 
+export interface IconSizeProps extends IconProps {
+    size?: number;
+}
+
 export const StandardIcon = styled(SvgIcon).attrs(
     (props: { isFilled?: string, hasStroke?: string }) => props
 )`

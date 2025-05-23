@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useRef, useState } from "react";
-import { GetPostLikesDocument, GetPostLikesQuery, GetRepostsDocument, GetRepostsQuery, Post, useCreateRepostMutation, useDeleteRepostMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveLikeMutation } from "../../../../generated/graphql";
+import { GetPostLikesDocument, GetPostLikesQuery, GetRepostsDocument, GetRepostsQuery, Post, useCreateRepostMutation, useDeleteRepostMutation, useFindVerificationRequestQuery, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveLikeMutation } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ControlContainer, OptionBaseIcon, PageBlock, PageText } from "../../../../styles/global";
@@ -26,6 +26,7 @@ import copy from "copy-to-clipboard";
 import { useToasts } from "../../../utils/ToastProvider";
 import Repost from "../../../icons/Repost";
 import Mail from "../../../icons/Mail";
+import VerificationBadge from "../../../utils/VerificationBadge";
 
 interface PostComponentProps {
     post: Post;
@@ -74,7 +75,7 @@ const PostAuthorContainer = styled(Link)`
     align-items: center;
     justify-content: flex-start;
     gap: 12px;
-    width: 100%;
+    width: auto;
     overflow: hidden;
     cursor: pointer;
     text-decoration: none;
@@ -104,14 +105,25 @@ const AuthorInfo = styled.div`
     display: flex;
     flex-direction: column;
     gap: 4px;
-    width: 100%;
+    width: auto;
+    flex: 1;
     overflow: hidden;
+`;
+
+const AuthorFullNameContainer = styled.div`
+    display: flex;
+    align-items: center;
+    width: auto;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: clip;
+    gap: 8px;
 `;
 
 const AuthorFullName = styled(PageText)`
     font-weight: 700;
     font-size: 16px;
-    width: 100%;
+    width: auto;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -127,7 +139,7 @@ const AuthorFullName = styled(PageText)`
 
 const AuthorUsername = styled(PageText)`
     font-size: 14px;
-    width: 100%;
+    width: auto;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -361,6 +373,24 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
         }
     }, [repostsData]);
 
+    const { data: verificationData } = useFindVerificationRequestQuery({ variables: { id: post.authorId, type: post.author.type }, fetchPolicy: "cache-and-network" });
+
+    const [verified, setVerified] = useState("");
+
+    useEffect(() => {
+        if (verificationData && verificationData.findVerificationRequest) {
+            setVerified(verificationData.findVerificationRequest.verified);
+        }
+    }, [verificationData]);
+
+    const verifiedSince = new Date(parseInt(verificationData?.findVerificationRequest?.verifiedSince as string)).toLocaleString(
+        "en-us",
+        {
+            month: "long",
+            year: "numeric",
+        }
+    );
+
     return (
         <PostWrapper>
             <PostContainer
@@ -386,9 +416,8 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         title={`${post.author.name}'s profile`}
                         to={`/${post.author.username}`}
                         onClick={(e) => e.stopPropagation()}
-                        type={post.author.type}
                     >
-                        <AuthorImageContainer>
+                        <AuthorImageContainer type={post.author.type}>
                             <img
                                 src={
                                     post.author.profile.profilePicture.length > 0
@@ -400,9 +429,18 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             />
                         </AuthorImageContainer>
                         <AuthorInfo>
-                            <AuthorFullName>
-                                {post.author.name}
-                            </AuthorFullName>
+                            <AuthorFullNameContainer>
+                                <AuthorFullName>
+                                    {post.author.name}
+                                </AuthorFullName>
+                                {verified === "VERIFIED" && (
+                                    <VerificationBadge
+                                        type={post.author.type}
+                                        verifiedSince={verifiedSince}
+                                        size={18}
+                                    />
+                                )}
+                            </AuthorFullNameContainer>
                             <AuthorUsername>
                                 @{post.author.username}
                             </AuthorUsername>

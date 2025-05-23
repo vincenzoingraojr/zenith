@@ -1,0 +1,19 @@
+query FindVerificationRequest(
+    $id: Int
+    $type: String!
+) {
+    findVerificationRequest(
+        id: $id
+        type: $type
+    ) {
+        id
+        userId
+        verified
+        type
+        verifiedSince
+        documents
+        outcome
+        createdAt
+        updatedAt
+    }
+}
