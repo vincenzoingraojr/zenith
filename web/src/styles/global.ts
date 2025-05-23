@@ -40,6 +40,7 @@ const GlobalStyle = createGlobalStyle`
     input[type="email"],
     input[type="password"],
     input[type="search"],
+    input[type="tel"],
     textarea {
         display: block;
         background-color: transparent;
