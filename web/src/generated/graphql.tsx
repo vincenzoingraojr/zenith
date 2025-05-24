@@ -749,6 +749,13 @@ export type PaginatedNotifications = {
   notifications: Array<Notification>;
 };
 
+export type PaginatedPosts = {
+  __typename?: 'PaginatedPosts';
+  hasMore: Scalars['Boolean']['output'];
+  posts: Array<Post>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type Post = {
   __typename?: 'Post';
   author: User;
@@ -832,7 +839,7 @@ export type Query = {
   notificationFeed: PaginatedNotifications;
   otherSessions?: Maybe<Array<Session>>;
   postComments?: Maybe<Array<Post>>;
-  postFeed?: Maybe<Array<Post>>;
+  postFeed: PaginatedPosts;
   postMedia?: Maybe<Array<MediaItem>>;
   reportOptions?: Maybe<Array<ReportOption>>;
   search: SearchResult;
@@ -1062,8 +1069,8 @@ export type QueryPostCommentsArgs = {
 
 
 export type QueryPostFeedArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit: Scalars['Int']['input'];
 };
 
 
@@ -1486,6 +1493,14 @@ export type LikePostMutationVariables = Exact<{
 
 export type LikePostMutation = { __typename?: 'Mutation', likePost?: { __typename?: 'Like', id: number, userId: number, likedItemId: string, itemOpened: boolean, itemType: string, origin: string, createdAt: string, updatedAt: string } | null };
 
+export type NewPostSubscriptionVariables = Exact<{
+  postId?: InputMaybe<Scalars['Int']['input']>;
+  userId: Scalars['Int']['input'];
+}>;
+
+
+export type NewPostSubscription = { __typename?: 'Subscription', newPost: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } };
+
 export type PostCommentsQueryVariables = Exact<{
   id?: InputMaybe<Scalars['Int']['input']>;
   type: Scalars['String']['input'];
@@ -1497,12 +1512,12 @@ export type PostCommentsQueryVariables = Exact<{
 export type PostCommentsQuery = { __typename?: 'Query', postComments?: Array<{ __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null }> | null };
 
 export type PostFeedQueryVariables = Exact<{
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
+  limit: Scalars['Int']['input'];
+  cursor?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type PostFeedQuery = { __typename?: 'Query', postFeed?: Array<{ __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null }> | null };
+export type PostFeedQuery = { __typename?: 'Query', postFeed: { __typename?: 'PaginatedPosts', hasMore: boolean, totalCount: number, posts: Array<{ __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null }> } };
 
 export type RemoveLikeMutationVariables = Exact<{
   itemId: Scalars['String']['input'];
@@ -2409,6 +2424,89 @@ export function useLikePostMutation(baseOptions?: Apollo.MutationHookOptions<Lik
 export type LikePostMutationHookResult = ReturnType<typeof useLikePostMutation>;
 export type LikePostMutationResult = Apollo.MutationResult<LikePostMutation>;
 export type LikePostMutationOptions = Apollo.BaseMutationOptions<LikePostMutation, LikePostMutationVariables>;
+export const NewPostDocument = gql`
+    subscription NewPost($postId: Int, $userId: Int!) {
+  newPost(postId: $postId, userId: $userId) {
+    id
+    itemId
+    authorId
+    type
+    content
+    isEdited
+    views
+    lang
+    topics
+    author {
+      id
+      name
+      username
+      email
+      type
+      gender
+      birthDate {
+        date
+        monthAndDayVisibility
+        yearVisibility
+      }
+      emailVerified
+      profile {
+        profilePicture
+        profileBanner
+        bio
+        website
+      }
+      userSettings {
+        incomingMessages
+        twoFactorAuth
+      }
+      searchSettings {
+        hideSensitiveContent
+        hideBlockedAccounts
+      }
+      createdAt
+      updatedAt
+      hiddenPosts
+    }
+    isReplyToId
+    isReplyToType
+    quotedPostId
+    media {
+      id
+      type
+      src
+      alt
+    }
+    mentions
+    hashtags
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useNewPostSubscription__
+ *
+ * To run a query within a React component, call `useNewPostSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useNewPostSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useNewPostSubscription({
+ *   variables: {
+ *      postId: // value for 'postId'
+ *      userId: // value for 'userId'
+ *   },
+ * });
+ */
+export function useNewPostSubscription(baseOptions: Apollo.SubscriptionHookOptions<NewPostSubscription, NewPostSubscriptionVariables> & ({ variables: NewPostSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<NewPostSubscription, NewPostSubscriptionVariables>(NewPostDocument, options);
+      }
+export type NewPostSubscriptionHookResult = ReturnType<typeof useNewPostSubscription>;
+export type NewPostSubscriptionResult = Apollo.SubscriptionResult<NewPostSubscription>;
 export const PostCommentsDocument = gql`
     query PostComments($id: Int, $type: String!, $offset: Int, $limit: Int) {
   postComments(id: $id, type: $type, offset: $offset, limit: $limit) {
@@ -2505,61 +2603,65 @@ export type PostCommentsLazyQueryHookResult = ReturnType<typeof usePostCommentsL
 export type PostCommentsSuspenseQueryHookResult = ReturnType<typeof usePostCommentsSuspenseQuery>;
 export type PostCommentsQueryResult = Apollo.QueryResult<PostCommentsQuery, PostCommentsQueryVariables>;
 export const PostFeedDocument = gql`
-    query PostFeed($offset: Int, $limit: Int) {
-  postFeed(offset: $offset, limit: $limit) {
-    id
-    itemId
-    authorId
-    type
-    content
-    isEdited
-    views
-    lang
-    topics
-    author {
+    query PostFeed($limit: Int!, $cursor: String) {
+  postFeed(limit: $limit, cursor: $cursor) {
+    posts {
       id
-      name
-      username
-      email
+      itemId
+      authorId
       type
-      gender
-      birthDate {
-        date
-        monthAndDayVisibility
-        yearVisibility
+      content
+      isEdited
+      views
+      lang
+      topics
+      author {
+        id
+        name
+        username
+        email
+        type
+        gender
+        birthDate {
+          date
+          monthAndDayVisibility
+          yearVisibility
+        }
+        emailVerified
+        profile {
+          profilePicture
+          profileBanner
+          bio
+          website
+        }
+        userSettings {
+          incomingMessages
+          twoFactorAuth
+        }
+        searchSettings {
+          hideSensitiveContent
+          hideBlockedAccounts
+        }
+        createdAt
+        updatedAt
+        hiddenPosts
       }
-      emailVerified
-      profile {
-        profilePicture
-        profileBanner
-        bio
-        website
+      isReplyToId
+      isReplyToType
+      quotedPostId
+      media {
+        id
+        type
+        src
+        alt
       }
-      userSettings {
-        incomingMessages
-        twoFactorAuth
-      }
-      searchSettings {
-        hideSensitiveContent
-        hideBlockedAccounts
-      }
+      mentions
+      hashtags
       createdAt
       updatedAt
-      hiddenPosts
     }
-    isReplyToId
-    isReplyToType
-    quotedPostId
-    media {
-      id
-      type
-      src
-      alt
-    }
-    mentions
-    hashtags
-    createdAt
-    updatedAt
+    hasMore
+    totalCount
   }
 }
     `;
@@ -2576,12 +2678,12 @@ export const PostFeedDocument = gql`
  * @example
  * const { data, loading, error } = usePostFeedQuery({
  *   variables: {
- *      offset: // value for 'offset'
  *      limit: // value for 'limit'
+ *      cursor: // value for 'cursor'
  *   },
  * });
  */
-export function usePostFeedQuery(baseOptions?: Apollo.QueryHookOptions<PostFeedQuery, PostFeedQueryVariables>) {
+export function usePostFeedQuery(baseOptions: Apollo.QueryHookOptions<PostFeedQuery, PostFeedQueryVariables> & ({ variables: PostFeedQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<PostFeedQuery, PostFeedQueryVariables>(PostFeedDocument, options);
       }

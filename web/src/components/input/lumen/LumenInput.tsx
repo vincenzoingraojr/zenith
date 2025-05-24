@@ -6,7 +6,7 @@ import { useMeData } from "../../../utils/userQueries";
 import axios from "axios";
 import { useToasts } from "../../utils/ToastProvider";
 import { FileWrapper, ProgressStatus } from "../commons";
-import { PostFeedDocument, PostFeedQuery, useCreatePostMutation, usePostFeedQuery } from "../../../generated/graphql";
+import { useCreatePostMutation } from "../../../generated/graphql";
 import { BAD_REQUEST_MESSAGE } from "../../../utils/constants";
 import { toErrorMap } from "../../../utils/toErrorMap";
 
@@ -37,10 +37,6 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
     const { addToast } = useToasts();
 
     const [createPost] = useCreatePostMutation();
-
-    const { data: postFeedData } = usePostFeedQuery({
-        fetchPolicy: "cache-and-network",
-    });
 
     return (
         <LumenInputContainer>
@@ -135,26 +131,6 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                             isReplyToId: values.isReplyToId,
                             isReplyToType: values.isReplyToType,
                             quotedPostId: values.quotedPostId,
-                        },
-                        update: (store, { data }) => {
-                            if (
-                                data &&
-                                data.createPost &&
-                                data.createPost.post
-                            ) {
-                                if (type === "post" && postFeedData) {
-                                    store.writeQuery<PostFeedQuery>({
-                                        query: PostFeedDocument,
-                                        data: {
-                                            postFeed: [
-                                                data.createPost.post,
-                                                ...(postFeedData.postFeed ||
-                                                    []),
-                                            ],
-                                        },
-                                    });
-                                }
-                            }
                         },
                     });
 

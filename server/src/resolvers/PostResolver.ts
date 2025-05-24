@@ -6,7 +6,7 @@ import { AuthContext } from "../types";
 import { v4 as uuidv4 } from "uuid";
 import { User, UserDeviceToken } from "../entities/User";
 import { Notification } from "../entities/Notification";
-import { In, IsNull, Repository } from "typeorm";
+import { In, IsNull, LessThan, Repository } from "typeorm";
 import appDataSource from "../dataSource";
 import { pubSub } from "../helpers/createPubSub";
 import { Notification as FirebaseNotification } from "firebase-admin/messaging";
@@ -36,6 +36,21 @@ export class PostResponse {
 
     @Field(() => Boolean)
     ok: boolean;
+}
+
+@ObjectType()
+export class FeedWrapper {
+    @Field(() => Boolean)
+    hasMore: boolean;
+
+    @Field(() => Int)
+    totalCount: number;
+}
+
+@ObjectType()
+export class PaginatedPosts extends FeedWrapper {
+    @Field(() => [Post])
+    posts: Post[];
 }
 
 @Resolver(Post)
@@ -112,32 +127,50 @@ export class PostResolver {
         return post;
     }
 
-    @Query(() => [Post], { nullable: true }) // implement algorithm
+    @Query(() => PaginatedPosts) // implement algorithm
     async postFeed(
-        @Arg("offset", () => Int, { nullable: true }) offset?: number,
-        @Arg("limit", () => Int, { nullable: true }) limit?: number,
-    ): Promise<Post[] | null> {
+        @Arg("limit", () => Int) limit: number,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+    ): Promise<PaginatedPosts> {
         try {
-            const posts = await this.postRepository.find({
-                where: {
-                    type: POST_TYPES.POST,
-                    author: {
-                        deletedAt: IsNull(),
+            const [posts, totalCount] = await Promise.all([
+                this.postRepository.find({
+                    where: {
+                        type: POST_TYPES.POST,
+                        ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
+                        author: {
+                            deletedAt: IsNull(),
+                        },
                     },
-                },
-                order: {
-                    createdAt: "DESC",
-                },
-                skip: offset,
-                take: limit,
-                relations: ["author", "media"],
-            });
-    
-            return posts;
+                    order: {
+                        createdAt: "DESC",
+                    },
+                    take: limit + 1,
+                    relations: ["author", "media"],
+                }),
+                this.postRepository.count({
+                    where: {
+                        type: POST_TYPES.POST,
+                        author: {
+                            deletedAt: IsNull(),
+                        },
+                    },
+                }),
+            ]);
+
+            return {
+                posts: posts.slice(0, limit),
+                hasMore:  posts.length === limit + 1,
+                totalCount,
+            };
         } catch (error) {
             logger.error(error);
 
-            return null;
+            return {
+                posts: [],
+                hasMore: false,
+                totalCount: 0,
+            };
         }
     }
 

@@ -10,9 +10,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { $createMentionNode } from "./MentionNode";
 import profilePicture from "../../../../images/profile-picture.png";
-import { useFindUserQuery, User, useUsersToMessageQuery } from "../../../../generated/graphql";
+import { User, useUsersToMessageQuery } from "../../../../generated/graphql";
 import { useFindVerification } from "../../../../utils/userQueries";
 import VerificationBadge from "../../../utils/VerificationBadge";
+import { USER_TYPES } from "../../../../utils/constants";
 
 const MentionsMenuContainer = styled.div`
     display: block;
@@ -42,11 +43,11 @@ const MentionItem = styled.div`
     }
 `;
 
-const MentionImageContainer = styled.div`
+const MentionImageContainer = styled.div.attrs((props: { type: string }) => props)`
     display: block;
     width: 32px;
     height: 32px;
-    border-radius: 16px;
+    border-radius: ${(props) => (props.type === USER_TYPES.ORGANIZATION ? "4px" : "16px")};
 
     img {
         display: block;
@@ -173,9 +174,9 @@ const usersLookupService = {
 
 function useMentionLookupService(
     mentionString: string | null,
-    mentionData: any
+    mentionData: UserMention[]
 ) {
-    const [results, setResults] = useState<Array<any>>([]);
+    const [results, setResults] = useState<UserMention[]>([]);
 
     useEffect(() => {
         const cachedResults = mentionsCache.get(mentionString);
@@ -232,15 +233,19 @@ function getPossibleQueryMatch(text: string): QueryMatch | null {
 }
 
 class MentionTypeaheadOption extends TypeaheadOption {
+    id: number;
     name: string;
     username: string;
     avatar: string;
+    type: string;
 
-    constructor(name: string, username: string, avatar: string) {
+    constructor(id: number, name: string, username: string, avatar: string, type: string) {
         super(username);
+        this.id = id;
         this.name = name;
         this.username = username;
         this.avatar = avatar;
+        this.type = type;
     }
 }
 
@@ -262,9 +267,7 @@ function MentionsTypeaheadMenuItem({
         className += " selected";
     }
 
-    const { data } = useFindUserQuery({ variables: { username: option.username }, fetchPolicy: "cache-first" });
-
-    const { userVerified, verifiedSince } = useFindVerification(data?.findUser?.id as number, data?.findUser?.type as string);
+    const { userVerified, verifiedSince } = useFindVerification(option.id, option.type);
 
     return (
         <MentionItem
@@ -278,7 +281,7 @@ function MentionsTypeaheadMenuItem({
             onMouseEnter={onMouseEnter}
             onClick={onClick}
         >
-            <MentionImageContainer>
+            <MentionImageContainer type={option.type}>
                 <img
                     src={
                         option.avatar && option.avatar.length > 0
@@ -293,7 +296,7 @@ function MentionsTypeaheadMenuItem({
                     <MentionName>{option.name}</MentionName>
                         {userVerified && (
                             <VerificationBadge
-                                type={data?.findUser?.type as string}
+                                type={option.type}
                                 verifiedSince={verifiedSince}
                                 size={18}
                             />
@@ -308,9 +311,9 @@ function MentionsTypeaheadMenuItem({
 type UserMention = {
     id: number;
     name: string;
-    link: string;
     username: string;
     avatar: string;
+    type: string;
 }
 
 export default function MentionsPlugin(): JSX.Element | null {
@@ -331,9 +334,9 @@ export default function MentionsPlugin(): JSX.Element | null {
                 users.push({
                     id: user.id,
                     name: user.name,
-                    link: "/" + user.username,
                     username: user.username,
                     avatar: user.profile.profilePicture,
+                    type: user.type,
                 })
             ));
 
@@ -350,8 +353,8 @@ export default function MentionsPlugin(): JSX.Element | null {
     const options = useMemo(
         () =>
             results
-                .map(({ name, username, avatar }) => {
-                    return new MentionTypeaheadOption(name, username, avatar);
+                .map(({ id, name, username, avatar, type }) => {
+                    return new MentionTypeaheadOption(id, name, username, avatar, type);
                 })
                 .slice(0, SUGGESTION_LIST_LENGTH_LIMIT),
         [results]
