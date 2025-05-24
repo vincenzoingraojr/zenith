@@ -1531,6 +1531,13 @@ export type ReportOptionsQueryVariables = Exact<{
 
 export type ReportOptionsQuery = { __typename?: 'Query', reportOptions?: Array<{ __typename?: 'ReportOption', id: number, title: string, description: string, subcategories?: Array<{ __typename?: 'SubCategoryOption', categoryId: number, id: number, title: string, description?: string | null }> | null }> | null };
 
+export type FindUserQueryVariables = Exact<{
+  username: Scalars['String']['input'];
+}>;
+
+
+export type FindUserQuery = { __typename?: 'Query', findUser?: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } } | null };
+
 export type FindUserBeforeLogInMutationVariables = Exact<{
   input: Scalars['String']['input'];
 }>;
@@ -2716,6 +2723,74 @@ export type ReportOptionsQueryHookResult = ReturnType<typeof useReportOptionsQue
 export type ReportOptionsLazyQueryHookResult = ReturnType<typeof useReportOptionsLazyQuery>;
 export type ReportOptionsSuspenseQueryHookResult = ReturnType<typeof useReportOptionsSuspenseQuery>;
 export type ReportOptionsQueryResult = Apollo.QueryResult<ReportOptionsQuery, ReportOptionsQueryVariables>;
+export const FindUserDocument = gql`
+    query FindUser($username: String!) {
+  findUser(username: $username) {
+    id
+    name
+    username
+    email
+    type
+    gender
+    birthDate {
+      date
+      monthAndDayVisibility
+      yearVisibility
+    }
+    emailVerified
+    profile {
+      profilePicture
+      profileBanner
+      bio
+      website
+    }
+    userSettings {
+      incomingMessages
+      twoFactorAuth
+    }
+    searchSettings {
+      hideSensitiveContent
+      hideBlockedAccounts
+    }
+    createdAt
+    updatedAt
+    hiddenPosts
+  }
+}
+    `;
+
+/**
+ * __useFindUserQuery__
+ *
+ * To run a query within a React component, call `useFindUserQuery` and pass it any options that fit your needs.
+ * When your component renders, `useFindUserQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useFindUserQuery({
+ *   variables: {
+ *      username: // value for 'username'
+ *   },
+ * });
+ */
+export function useFindUserQuery(baseOptions: Apollo.QueryHookOptions<FindUserQuery, FindUserQueryVariables> & ({ variables: FindUserQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<FindUserQuery, FindUserQueryVariables>(FindUserDocument, options);
+      }
+export function useFindUserLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<FindUserQuery, FindUserQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<FindUserQuery, FindUserQueryVariables>(FindUserDocument, options);
+        }
+export function useFindUserSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<FindUserQuery, FindUserQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<FindUserQuery, FindUserQueryVariables>(FindUserDocument, options);
+        }
+export type FindUserQueryHookResult = ReturnType<typeof useFindUserQuery>;
+export type FindUserLazyQueryHookResult = ReturnType<typeof useFindUserLazyQuery>;
+export type FindUserSuspenseQueryHookResult = ReturnType<typeof useFindUserSuspenseQuery>;
+export type FindUserQueryResult = Apollo.QueryResult<FindUserQuery, FindUserQueryVariables>;
 export const FindUserBeforeLogInDocument = gql`
     mutation FindUserBeforeLogIn($input: String!) {
   findUserBeforeLogIn(input: $input) {

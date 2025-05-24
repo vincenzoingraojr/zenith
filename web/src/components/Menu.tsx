@@ -4,7 +4,7 @@ import { mediaQuery } from "../utils/mediaQuery";
 import { devices } from "../styles/devices";
 import { ControlContainer, CustomSpanOption, LinkOptionBaseItem, OptionBaseIcon, PageText } from "../styles/global";
 import Close from "./icons/Close";
-import { useMeData } from "../utils/userQueries";
+import { useFindVerification, useMeData } from "../utils/userQueries";
 import profilePicture from "../images/profile-picture.png";
 import { Link } from "react-router-dom";
 import Profile from "./icons/Profile";
@@ -14,6 +14,7 @@ import { COLORS } from "../styles/colors";
 import { USER_TYPES } from "../utils/constants";
 import { useThemeContext } from "../styles/ThemeContext";
 import ThemeIcon from "./icons/ThemeIcon";
+import VerificationBadge from "./utils/VerificationBadge";
 
 interface MenuProps {
     closeMenu: () => void;
@@ -174,10 +175,20 @@ const ProfileMenuInfo = styled.div`
     overflow: hidden;
 `;
 
+const ProfileMenuInfoFullNameContainer = styled.div`
+    display: flex;
+    align-items: center;
+    width: auto;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: clip;
+    gap: 8px;
+`;
+
 const ProfileMenuInfoFullName = styled(PageText)`
     font-weight: 700;
     font-size: 20px;
-    width: 100%;
+    width: auto;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -193,7 +204,7 @@ const ProfileMenuInfoFullName = styled(PageText)`
 
 const ProfileMenuInfoUsername = styled(PageText)`
     font-size: 16px;
-    width: 100%;
+    width: auto;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -236,6 +247,8 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
     const [visible, setVisible] = useState(true);
     const { me, loading } = useMeData();
     const { toggleTheme, isDarkMode } = useThemeContext();
+
+    const { userVerified, verifiedSince } = useFindVerification(me?.id as number, me?.type as string);
 
     return (
         <MenuWrapper>
@@ -288,9 +301,18 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                     />
                                 </ProfileMenuImageContainer>
                                 <ProfileMenuInfo>
-                                    <ProfileMenuInfoFullName>
-                                        {me.name}
-                                    </ProfileMenuInfoFullName>
+                                    <ProfileMenuInfoFullNameContainer>
+                                        <ProfileMenuInfoFullName>
+                                            {me.name}
+                                        </ProfileMenuInfoFullName>
+                                        {userVerified && (
+                                            <VerificationBadge
+                                                type={me.type}
+                                                verifiedSince={verifiedSince}
+                                                size={22}
+                                            />
+                                        )}
+                                    </ProfileMenuInfoFullNameContainer>
                                     <ProfileMenuInfoUsername>
                                         @{me.username}
                                     </ProfileMenuInfoUsername>

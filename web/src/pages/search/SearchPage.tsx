@@ -8,6 +8,7 @@ import PageContentLayout from "../../components/layouts/sublayouts/PageContentLa
 import Options, { OptionItem, OptionItemText } from "../../components/Options";
 import { useOptions } from "../../components/utils/hooks";
 import { OptionBaseIcon, PageText } from "../../styles/global";
+import More from "../../components/icons/More";
 
 function SearchPage() {
     const { activeOptions, handleOptionsClick } = useOptions();
@@ -40,7 +41,7 @@ function SearchPage() {
                             <Options
                                 key={0}
                                 title="Search options" 
-                                icon={<Settings type="options" />}
+                                icon={<More />}
                                 isOpen={activeOptions === 0}
                                 toggleOptions={() =>
                                     handleOptionsClick(0)

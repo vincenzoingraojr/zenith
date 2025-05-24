@@ -350,9 +350,9 @@ export class UserResolver {
             const isEmailAddress = isEmail(input);
 
             if (isEmailAddress) {
-                user = await this.userService.findUserByEmail(input);
+                user = await this.userService.findUserByEmail(input, true);
             } else {
-                user = await this.findUser(input);
+                user = await this.findUser(input, true);
             }
 
             if (!user || (user && user.deletedAt !== null && processDays(user.deletedAt) > 90)) {

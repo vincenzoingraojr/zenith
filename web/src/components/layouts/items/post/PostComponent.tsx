@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useRef, useState } from "react";
-import { GetPostLikesDocument, GetPostLikesQuery, GetRepostsDocument, GetRepostsQuery, Post, useCreateRepostMutation, useDeleteRepostMutation, useFindVerificationRequestQuery, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveLikeMutation } from "../../../../generated/graphql";
+import { GetPostLikesDocument, GetPostLikesQuery, GetRepostsDocument, GetRepostsQuery, Post, useCreateRepostMutation, useDeleteRepostMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveLikeMutation } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ControlContainer, OptionBaseIcon, PageBlock, PageText } from "../../../../styles/global";
@@ -18,7 +18,7 @@ import Flag from "../../../icons/Flag";
 import Comment from "../../../icons/Comment";
 import { processDate } from "../../../../utils/processDate";
 import Pen from "../../../icons/Pen";
-import { useMeData } from "../../../../utils/userQueries";
+import { useFindVerification, useMeData } from "../../../../utils/userQueries";
 import Bin from "../../../icons/Bin";
 import FollowIcon from "../../../icons/FollowIcon";
 import Chain from "../../../icons/Chain";
@@ -320,6 +320,10 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
         if (likeData) {
             setLike(likeData.isPostLikedByMe);
         }
+
+        return () => {
+            setLike(false);
+        }
     }, [likeData]);
 
     const { data: postLikesData } = useGetPostLikesQuery({
@@ -333,6 +337,10 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
     useEffect(() => {
         if (postLikesData && postLikesData.getPostLikes) {
             setPostLikes(postLikesData.getPostLikes.length);
+        }
+
+        return () => {
+            setPostLikes(0);
         }
     }, [postLikesData]);
 
@@ -357,6 +365,10 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
         if (repostData) {
             setRepost(repostData.isRepostedByUser);
         }
+
+        return () => {
+            setRepost(false);
+        }
     }, [repostData]);
 
     const { data: repostsData } = useGetRepostsQuery({
@@ -371,25 +383,13 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
         if (repostsData && repostsData.getReposts) {
             setReposts(repostsData.getReposts.length);
         }
+
+        return () => {
+            setReposts(0);
+        }
     }, [repostsData]);
 
-    const { data: verificationData } = useFindVerificationRequestQuery({ variables: { id: post.authorId, type: post.author.type }, fetchPolicy: "cache-and-network" });
-
-    const [verified, setVerified] = useState("");
-
-    useEffect(() => {
-        if (verificationData && verificationData.findVerificationRequest) {
-            setVerified(verificationData.findVerificationRequest.verified);
-        }
-    }, [verificationData]);
-
-    const verifiedSince = new Date(parseInt(verificationData?.findVerificationRequest?.verifiedSince as string)).toLocaleString(
-        "en-us",
-        {
-            month: "long",
-            year: "numeric",
-        }
-    );
+    const { userVerified, verifiedSince } = useFindVerification(post.authorId, post.author.type);
 
     return (
         <PostWrapper>
@@ -433,7 +433,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                 <AuthorFullName>
                                     {post.author.name}
                                 </AuthorFullName>
-                                {verified === "VERIFIED" && (
+                                {userVerified && (
                                     <VerificationBadge
                                         type={post.author.type}
                                         verifiedSince={verifiedSince}

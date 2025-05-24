@@ -10,7 +10,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { $createMentionNode } from "./MentionNode";
 import profilePicture from "../../../../images/profile-picture.png";
-import { User, useUsersToMessageQuery } from "../../../../generated/graphql";
+import { useFindUserQuery, User, useUsersToMessageQuery } from "../../../../generated/graphql";
+import { useFindVerification } from "../../../../utils/userQueries";
+import VerificationBadge from "../../../utils/VerificationBadge";
 
 const MentionsMenuContainer = styled.div`
     display: block;
@@ -65,13 +67,23 @@ const MentionUserInfo = styled.div`
     width: 100%;
 `;
 
+const MentionNameContainer = styled.div`
+    display: flex;
+    align-items: center;
+    width: auto;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: clip;
+    gap: 8px;
+`;
+
 const MentionName = styled.div`
     display: block;
     font-size: 16px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    width: 100%;
+    width: auto;
     font-weight: 700;
     color: ${({ theme }) => theme.color};
 `;
@@ -82,7 +94,7 @@ const MentionUsername = styled.div`
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    width: 100%;
+    width: auto;
     font-weight: 400;
     color: ${({ theme }) => theme.inputText};
 `;
@@ -225,7 +237,7 @@ class MentionTypeaheadOption extends TypeaheadOption {
     avatar: string;
 
     constructor(name: string, username: string, avatar: string) {
-        super(name);
+        super(username);
         this.name = name;
         this.username = username;
         this.avatar = avatar;
@@ -249,6 +261,11 @@ function MentionsTypeaheadMenuItem({
     if (isSelected) {
         className += " selected";
     }
+
+    const { data } = useFindUserQuery({ variables: { username: option.username }, fetchPolicy: "cache-first" });
+
+    const { userVerified, verifiedSince } = useFindVerification(data?.findUser?.id as number, data?.findUser?.type as string);
+
     return (
         <MentionItem
             key={option.key}
@@ -272,7 +289,16 @@ function MentionsTypeaheadMenuItem({
                 />
             </MentionImageContainer>
             <MentionUserInfo>
-                <MentionName>{option.name}</MentionName>
+                <MentionNameContainer>
+                    <MentionName>{option.name}</MentionName>
+                        {userVerified && (
+                            <VerificationBadge
+                                type={data?.findUser?.type as string}
+                                verifiedSince={verifiedSince}
+                                size={18}
+                            />
+                        )}
+                </MentionNameContainer>
                 <MentionUsername>@{option.username}</MentionUsername>
             </MentionUserInfo>
         </MentionItem>

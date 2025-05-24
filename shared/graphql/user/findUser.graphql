@@ -1,0 +1,37 @@
+query FindUser(
+    $username: String!
+) {
+    findUser(
+        username: $username
+    ) {
+        id
+        name
+        username
+        email
+        type
+        gender
+        birthDate {
+            date
+            monthAndDayVisibility
+            yearVisibility
+        }
+        emailVerified
+        profile {
+            profilePicture
+            profileBanner
+            bio
+            website
+        }
+        userSettings {
+            incomingMessages
+            twoFactorAuth
+        }
+        searchSettings {
+            hideSensitiveContent
+            hideBlockedAccounts
+        }
+        createdAt
+        updatedAt
+        hiddenPosts
+    }
+}
