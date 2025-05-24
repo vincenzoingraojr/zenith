@@ -20,7 +20,7 @@ import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import Image from "../../icons/Image";
-import { EMPTY_CONTENT_REGEXP, MATCHERS } from "../../../utils/constants";
+import { EMPTY_CONTENT_REGEXP, MATCHERS, USER_TYPES } from "../../../utils/constants";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 import MentionsPlugin from "./mentions/MentionsPlugin";
@@ -135,13 +135,13 @@ const ProfileImageContainer = styled.div`
     }
 `;
 
-const ProfileImage = styled.div`
+const ProfileImage = styled.div.attrs((props: { type: string }) => props)`
     display: flex;
     align-items: center;
     justify-content: center;
     width: 48px;
     height: 48px;
-    border-radius: 24px;
+    border-radius: ${(props) => (props.type === USER_TYPES.ORGANIZATION ? "6px" : "24px")};
 
     img {
         width: inherit;
@@ -342,7 +342,7 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
                     title={me ? `${me.name}` : ""}
                     aria-label={me ? `${me.name}` : ""}
                 >
-                    <ProfileImage>
+                    <ProfileImage type={me?.type}>
                         <img
                             src={
                                 (me && me.profile.profilePicture.length > 0)

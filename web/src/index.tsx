@@ -15,7 +15,7 @@ import { getAccessToken, setAccessToken } from "./utils/token";
 import "./styles/index.css";
 import { BrowserRouter } from "react-router-dom";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
-import { getMainDefinition } from "@apollo/client/utilities";
+import { getMainDefinition, relayStylePagination } from "@apollo/client/utilities";
 import { createClient } from "graphql-ws";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 import reportWebVitals from "./reportWebVitals";
@@ -31,11 +31,7 @@ const cache = new InMemoryCache({
     typePolicies: {
         Query: {
             fields: {
-                postFeed: {
-                    merge: (_existing = [], incoming) => {
-                        return incoming;
-                    },
-                },
+                postFeed: relayStylePagination(),
                 getPostLikes: {
                     merge: (_existing = [], incoming) => {
                         return incoming;
