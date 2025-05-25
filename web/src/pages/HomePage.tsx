@@ -3,7 +3,7 @@ import Head from "../components/Head";
 import LumenInput from "../components/input/lumen/LumenInput";
 import PageLayout from "../components/layouts/PageLayout";
 import PageContentLayout from "../components/layouts/sublayouts/PageContentLayout";
-import { Post, useNewPostSubscription, usePostFeedQuery } from "../generated/graphql";
+import { Post, useDeletedPostSubscription, useNewPostSubscription, usePostFeedQuery } from "../generated/graphql";
 import LoadingComponent from "../components/utils/LoadingComponent";
 import { EndContainer, FeedLoading, NoElementsAlert, PageBlock } from "../styles/global";
 import ErrorOrItemNotFound from "../components/utils/ErrorOrItemNotFound";
@@ -179,7 +179,34 @@ function HomePage() {
                 }
             });
         }
-    }, [newPostData, client, data]);
+    }, [newPostData, client]);
+
+    const { data: deletedPostData } = useDeletedPostSubscription({ variables: { userId: me?.id as number, postId: null } });
+
+    useEffect(() => {
+        if (deletedPostData && deletedPostData.deletedPost) {
+            const deletedPost = deletedPostData.deletedPost;
+            const refId = `Post:${deletedPost.id}`;
+
+            client.cache.modify({
+                fields: {
+                    postFeed(existing = { posts: [], hasMore: true }) {
+                        const filteredPosts = existing.posts.filter((p: any) =>
+                            p.__ref ? p.__ref !== refId : p.id !== deletedPost.id
+                        );
+
+                        return {
+                            ...existing,
+                            posts: filteredPosts
+                        };
+                    },
+                },
+            });
+
+            client.cache.evict({ id: refId });
+            client.cache.gc();
+        }
+    }, [deletedPostData, client]);
 
     return (
         <>

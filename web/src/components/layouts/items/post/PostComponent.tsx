@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useRef, useState } from "react";
-import { GetPostLikesDocument, GetPostLikesQuery, GetRepostsDocument, GetRepostsQuery, Post, useCreateRepostMutation, useDeleteRepostMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveLikeMutation } from "../../../../generated/graphql";
+import { GetPostLikesDocument, GetPostLikesQuery, GetRepostsDocument, GetRepostsQuery, Post, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveLikeMutation } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ControlContainer, OptionBaseIcon, PageBlock, PageText } from "../../../../styles/global";
@@ -391,6 +391,8 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
 
     const { userVerified, verifiedSince } = useFindVerification(post.authorId, post.author.type);
 
+    const [deletePost] = useDeletePostMutation();
+
     return (
         <PostWrapper>
             <PostContainer
@@ -515,6 +517,13 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                         role="menuitem"
                                                         title="Delete this post"
                                                         aria-label="Delete this post"
+                                                        onClick={async () => {
+                                                            await deletePost({
+                                                                variables: {
+                                                                    postId: post.itemId,
+                                                                },
+                                                            });
+                                                        }}
                                                     >
                                                         <OptionBaseIcon>
                                                             <Bin color={COLORS.red} />
