@@ -55,7 +55,7 @@ function HomePage() {
                 return {
                     postFeed: {
                         __typename: prev.postFeed.__typename,
-                        posts: [...prev.postFeed.posts, ...fetchMoreResult.postFeed.posts],
+                        posts: [...fetchMoreResult.postFeed.posts],
                         hasMore: fetchMoreResult.postFeed.hasMore,
                         totalCount: prev.postFeed.totalCount,
                     }
