@@ -9,6 +9,7 @@ import { FileWrapper, ProgressStatus } from "../commons";
 import { useCreatePostMutation } from "../../../generated/graphql";
 import { BAD_REQUEST_MESSAGE } from "../../../utils/constants";
 import { toErrorMap } from "../../../utils/toErrorMap";
+import { useNavigate } from "react-router-dom";
 
 interface LumenInputProps {
     type: "post" | "comment";
@@ -17,6 +18,7 @@ interface LumenInputProps {
     isReplyToType?: string;
     quotedPostId?: number;
     buttonText: string;
+    closingOnSubmit?: boolean;
 }
 
 const LumenInputContainer = styled.div`
@@ -27,7 +29,7 @@ const LumenInputContainer = styled.div`
     padding-bottom: 12px;
 `;
 
-const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isReplyToId, isReplyToType, quotedPostId, buttonText }) => {
+const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isReplyToId, isReplyToType, quotedPostId, buttonText, closingOnSubmit }) => {
     const [mediaUploadStatusArray, setMediaUploadStatusArray] = useState<ProgressStatus[]>([]);
 
     const folder = process.env.NODE_ENV === "development" ? "local-media" : "media";
@@ -38,6 +40,8 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
 
     const [createPost] = useCreatePostMutation();
 
+    const navigate = useNavigate();
+
     return (
         <LumenInputContainer>
             <Formik
@@ -45,9 +49,6 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                     type,
                     content: "",
                     media: [],
-                    isReplyToId,
-                    isReplyToType,
-                    quotedPostId,
                 }}
                 onSubmit={async (values, { setErrors, setStatus }) => {
                     let postMediaDirectory = "";
@@ -128,9 +129,9 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                             type: values.type,
                             content: values.content,
                             media: JSON.stringify(mediaArray),
-                            isReplyToId: values.isReplyToId,
-                            isReplyToType: values.isReplyToType,
-                            quotedPostId: values.quotedPostId,
+                            isReplyToId,
+                            isReplyToType,
+                            quotedPostId,
                         },
                     });
 
@@ -143,6 +144,14 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                             setStatus(false);
                         } else if (response.data.createPost.ok && response.data.createPost.post) {
                             setStatus(true);
+
+                            if (closingOnSubmit) {
+                                if (window.history.length > 2) {
+                                    navigate(-1);
+                                } else {
+                                    navigate("/");
+                                }
+                            }
                         } else {
                             addToast(response.data.createPost.status as string);
                         }

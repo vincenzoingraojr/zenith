@@ -224,7 +224,7 @@ function HomePage() {
                                 <LumenInput
                                     type="post"
                                     placeholder="What's happening right now?"
-                                    buttonText="Publish"
+                                    buttonText="Create"
                                 />
                                 <PostFeedContainer>
                                     {(loading && !data) ? (

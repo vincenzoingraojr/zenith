@@ -1,9 +1,9 @@
 import { Formik, Form } from "formik";
-import Head from "../components/Head";
-import { AuthForm, AuthFormContent, AuthFormTitle, PageBlock, PageTextMB24, StandardButton, Status } from "../styles/global";
-import InputField from "../components/input/InputField";
+import Head from "../../components/Head";
+import { AuthForm, AuthFormContent, AuthFormTitle, PageBlock, PageTextMB24, StandardButton, Status } from "../../styles/global";
+import InputField from "../../components/input/InputField";
 import { useEffect, useState } from "react";
-import { getUserLocationFromAPI } from "../utils/getLocation";
+import { getUserLocationFromAPI } from "../../utils/getLocation";
 import {
     browserName,
     isMobile,
@@ -12,12 +12,12 @@ import {
     osName,
     deviceType,
 } from "react-device-detect";
-import { MeDocument, MeQuery, useLoginMutation, User } from "../generated/graphql";
+import { MeDocument, MeQuery, useLoginMutation, User } from "../../generated/graphql";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { toErrorMap } from "../utils/toErrorMap";
-import { BAD_REQUEST_MESSAGE } from "../utils/constants";
-import AuthLayout from "../components/layouts/AuthLayout";
-import { useAuth } from "../utils/AuthContext";
+import { toErrorMap } from "../../utils/toErrorMap";
+import { BAD_REQUEST_MESSAGE } from "../../utils/constants";
+import AuthLayout from "../../components/layouts/AuthLayout";
+import { useAuth } from "../../utils/AuthContext";
 
 function LogIn() {
     const [clientName, setClientName] = useState<string>("");

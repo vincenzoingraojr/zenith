@@ -1,13 +1,13 @@
 import { Form, Formik } from "formik";
-import Head from "../components/Head";
-import AuthLayout from "../components/layouts/AuthLayout";
-import { useSignupMutation } from "../generated/graphql";
-import { AuthForm, AuthFormContent, AuthFormTitle, AuthHalfInput, PageBlock, StandardButton, Status } from "../styles/global";
-import InputField from "../components/input/InputField";
-import { BAD_REQUEST_MESSAGE, genderOptions } from "../utils/constants";
-import { toErrorMap } from "../utils/toErrorMap";
-import SelectField from "../components/input/select/SelectField";
-import DatePickerField from "../components/input/datepicker/DatePickerField";
+import Head from "../../components/Head";
+import AuthLayout from "../../components/layouts/AuthLayout";
+import { useSignupMutation } from "../../generated/graphql";
+import { AuthForm, AuthFormContent, AuthFormTitle, AuthHalfInput, PageBlock, StandardButton, Status } from "../../styles/global";
+import InputField from "../../components/input/InputField";
+import { BAD_REQUEST_MESSAGE, genderOptions } from "../../utils/constants";
+import { toErrorMap } from "../../utils/toErrorMap";
+import SelectField from "../../components/input/select/SelectField";
+import DatePickerField from "../../components/input/datepicker/DatePickerField";
 
 function SignUp() {
     const [signup] = useSignupMutation();

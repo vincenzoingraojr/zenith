@@ -1,11 +1,11 @@
 import { Form, Formik } from "formik";
-import Head from "../components/Head";
-import AuthLayout from "../components/layouts/AuthLayout";
-import { AuthForm, AuthFormContent, AuthFormTitle, PageBlock, PageTextMB24, StandardButton, Status } from "../styles/global";
-import { useSendRecoveryEmailMutation } from "../generated/graphql";
-import InputField from "../components/input/InputField";
-import { BAD_REQUEST_MESSAGE } from "../utils/constants";
-import { toErrorMap } from "../utils/toErrorMap";
+import Head from "../../components/Head";
+import AuthLayout from "../../components/layouts/AuthLayout";
+import { AuthForm, AuthFormContent, AuthFormTitle, PageBlock, PageTextMB24, StandardButton, Status } from "../../styles/global";
+import { useSendRecoveryEmailMutation } from "../../generated/graphql";
+import InputField from "../../components/input/InputField";
+import { BAD_REQUEST_MESSAGE } from "../../utils/constants";
+import { toErrorMap } from "../../utils/toErrorMap";
 
 function RecoverPassword() {
     const [sendEmail] = useSendRecoveryEmailMutation();

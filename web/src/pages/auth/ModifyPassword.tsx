@@ -1,48 +1,51 @@
 import { Form, Formik } from "formik";
-import Head from "../components/Head";
-import AuthLayout from "../components/layouts/AuthLayout";
-import { AuthForm, AuthFormContent, AuthFormTitle, PageBlock, PageTextMB24, StandardButton, Status } from "../styles/global";
-import InputField from "../components/input/InputField";
-import { useReactivateAccountMutation } from "../generated/graphql";
-import { toErrorMap } from "../utils/toErrorMap";
-import { BAD_REQUEST_MESSAGE } from "../utils/constants";
+import Head from "../../components/Head";
+import AuthLayout from "../../components/layouts/AuthLayout";
+import { AuthForm, AuthFormContent, AuthFormTitle, PageBlock, PageTextMB24, StandardButton, Status } from "../../styles/global";
+import { useNotAuthModifyPasswordMutation } from "../../generated/graphql";
+import InputField from "../../components/input/InputField";
+import { BAD_REQUEST_MESSAGE } from "../../utils/constants";
+import { toErrorMap } from "../../utils/toErrorMap";
+import { useParams } from "react-router-dom";
 
-function ReactivateAccount() {
-    const [reactivateAccount] = useReactivateAccountMutation();
+function ModifyPassword() {
+    const [modifyPassword] = useNotAuthModifyPasswordMutation();
+    const params = useParams();
 
     return (
         <>
             <Head
-                title="Reactivate your account | Zenith"
-                description="Reactivate your account on Zenith."
+                title="Modify your password | Zenith"
+                description="Modify your account password in order to log in to Zenith."
             />
             <AuthLayout
                 children={
                     <AuthForm>
-                        <AuthFormTitle>Reactivate your account</AuthFormTitle>
+                        <AuthFormTitle>Modify your password</AuthFormTitle>
                         <PageTextMB24>
-                            In this page you can reactivate your account.
+                            In this page you can modify your account password.
                         </PageTextMB24>
                         <Formik
-                            initialValues={{
-                                input: "",
+                            initialValues={{ 
+                                token: params.token!,
                                 password: "",
+                                confirmPassword: "",
                             }}
                             onSubmit={async (
                                 values,
                                 { setErrors, setStatus }
                             ) => {
-                                const response = await reactivateAccount({
+                                const response = await modifyPassword({
                                     variables: values,
                                 });
 
                                 setStatus(null);
 
                                 if (response.data) {
-                                    if (response.data.reactivateAccount.errors && response.data.reactivateAccount.errors.length > 0) {
-                                        setErrors(toErrorMap(response.data.reactivateAccount.errors));
+                                    if (response.data.notAuthModifyPassword.errors && response.data.notAuthModifyPassword.errors.length > 0) {
+                                        setErrors(toErrorMap(response.data.notAuthModifyPassword.errors));
                                     } else {
-                                        setStatus(response.data.reactivateAccount.status);
+                                        setStatus(response.data.notAuthModifyPassword.status);
                                     }
                                 } else {
                                     setStatus(BAD_REQUEST_MESSAGE);
@@ -52,31 +55,29 @@ function ReactivateAccount() {
                             {({ errors, status }) => (
                                 <Form>
                                     {status && (
-                                        <Status>
-                                            {status}
-                                        </Status>
+                                        <Status>{status}</Status>
                                     )}
                                     <AuthFormContent>
-                                        <InputField
-                                            field="input"
-                                            type="text"
-                                            placeholder="Username or email"
-                                            errors={errors}
-                                        />
                                         <InputField
                                             field="password"
                                             type="password"
                                             placeholder="Password"
                                             errors={errors}
                                         />
+                                        <InputField
+                                            field="confirmPassword"
+                                            type="password"
+                                            placeholder="Confirmation password"
+                                            errors={errors}
+                                        />
                                         <PageBlock>
                                             <StandardButton
                                                 type="submit"
-                                                title="Reactivate your account"
+                                                title="Modify your password"
                                                 role="button"
-                                                aria-label="Reactivate your account"
+                                                aria-label="Modify your password"
                                             >
-                                                Reactivate your account
+                                                Recover your password
                                             </StandardButton>
                                         </PageBlock>
                                     </AuthFormContent>
@@ -90,4 +91,4 @@ function ReactivateAccount() {
     );
 }
 
-export default ReactivateAccount;
+export default ModifyPassword;

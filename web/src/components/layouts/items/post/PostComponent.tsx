@@ -27,6 +27,8 @@ import { useToasts } from "../../../utils/ToastProvider";
 import Repost from "../../../icons/Repost";
 import Mail from "../../../icons/Mail";
 import VerificationBadge from "../../../utils/VerificationBadge";
+import { useFindPostById } from "../../../../utils/postQueries";
+import QuotedPost from "./QuotedPost";
 
 interface PostComponentProps {
     post: Post;
@@ -86,7 +88,7 @@ const PostAuthorContainer = styled(Link)`
     }
 `;
 
-const AuthorImageContainer = styled.div.attrs((props: { type: string }) => props)`
+export const AuthorImageContainer = styled.div.attrs((props: { type: string }) => props)`
     display: flex;
     align-items: center;
     justify-content: center;
@@ -101,7 +103,7 @@ const AuthorImageContainer = styled.div.attrs((props: { type: string }) => props
     }
 `;
 
-const AuthorInfo = styled.div`
+export const AuthorInfo = styled.div`
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -110,7 +112,7 @@ const AuthorInfo = styled.div`
     overflow: hidden;
 `;
 
-const AuthorFullNameContainer = styled.div`
+export const AuthorFullNameContainer = styled.div`
     display: flex;
     align-items: center;
     width: auto;
@@ -137,7 +139,7 @@ const AuthorFullName = styled(PageText)`
     }
 `;
 
-const AuthorUsername = styled(PageText)`
+export const AuthorUsername = styled(PageText)`
     font-size: 14px;
     width: auto;
     overflow: hidden;
@@ -146,14 +148,14 @@ const AuthorUsername = styled(PageText)`
     color: ${({ theme }) => theme.inputText};
 `;
 
-const PostRightContainer = styled.div`
+export const PostRightContainer = styled.div`
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 12px;
 `;
 
-const PostDate = styled(PageText)`
+export const PostDate = styled(PageText)`
     font-size: 14px;
     color: ${({ theme }) => theme.inputText};
     white-space: nowrap;
@@ -192,7 +194,7 @@ const PostMediaContainer = styled.div`
     }
 `;
 
-const PostMediaItem = styled.div`
+export const PostMediaItem = styled.div`
     display: flex;
     width: 100%;
     height: auto;
@@ -393,6 +395,8 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
 
     const [deletePost] = useDeletePostMutation();
 
+    const { post: quotedPost } = useFindPostById(post.quotedPostId as number | undefined);
+
     return (
         <PostWrapper>
             <PostContainer
@@ -505,6 +509,14 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                         role="menuitem"
                                                         title="Edit this post"
                                                         aria-label="Edit this post"
+                                                        onClick={() => {
+                                                            navigate(`/edit_post/${post.itemId}`, {
+                                                                state: {
+                                                                    backgroundLocation:
+                                                                        location,
+                                                                },
+                                                            });
+                                                        }}
                                                     >
                                                         <OptionBaseIcon>
                                                             <Pen />
@@ -578,6 +590,12 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                 </PostMediaItem>
                             ))}
                         </PostMediaContainer>
+                    )}
+                    {quotedPost && (
+                        <QuotedPost 
+                            post={quotedPost as Post}
+                            origin="feed"
+                        />
                     )}
                 </PostContentContainer>
                 <PostActionsContainer>
@@ -787,6 +805,14 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                         role="menuitem"
                                         title="Quote this post"
                                         aria-label="Quote this post"
+                                        onClick={() => {
+                                            navigate(`/create_post/quote/post/${post.itemId}`, {
+                                                state: {
+                                                    backgroundLocation:
+                                                        location,
+                                                },
+                                            });
+                                        }}
                                     >
                                         <OptionBaseIcon>
                                             <Pen />
@@ -808,6 +834,13 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         title={"Comment this post"}
                         onClick={(e) => {
                             e.stopPropagation();
+
+                            navigate(`/create_post/reply/post/${post.itemId}`, {
+                                state: {
+                                    backgroundLocation:
+                                        location,
+                                },
+                            });
                         }}
                     >
                         <ControlContainer size={32}>

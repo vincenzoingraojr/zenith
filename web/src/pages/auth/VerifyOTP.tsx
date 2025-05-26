@@ -1,13 +1,13 @@
 import { Form, Formik } from "formik";
-import Head from "../components/Head";
-import { AuthFormContent, AuthForm, PageBlock, StandardButton, Status, ModalFormContainer, PageTextMB24, SmallButton, PageText } from "../styles/global";
-import InputField from "../components/input/InputField";
+import Head from "../../components/Head";
+import { AuthFormContent, AuthForm, PageBlock, StandardButton, Status, ModalFormContainer, PageTextMB24, SmallButton, PageText } from "../../styles/global";
+import InputField from "../../components/input/InputField";
 import { useLocation } from "react-router-dom";
-import { MeDocument, MeQuery, User, useResendOtpMutation, useVerifyOtpMutation } from "../generated/graphql";
-import { BAD_REQUEST_MESSAGE } from "../utils/constants";
+import { MeDocument, MeQuery, User, useResendOtpMutation, useVerifyOtpMutation } from "../../generated/graphql";
+import { BAD_REQUEST_MESSAGE } from "../../utils/constants";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
-import { useAuth } from "../utils/AuthContext";
+import { useAuth } from "../../utils/AuthContext";
 
 const ResendOTPContainer = styled.div`
     display: flex;

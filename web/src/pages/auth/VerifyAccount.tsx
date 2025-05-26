@@ -1,10 +1,10 @@
 import { Form, Formik } from "formik";
-import Head from "../components/Head";
-import AuthLayout from "../components/layouts/AuthLayout";
-import { useVerifyEmailAddressMutation } from "../generated/graphql";
-import { AuthForm, AuthFormContent, AuthFormTitle, PageBlock, PageTextMB24, StandardButton, Status } from "../styles/global";
+import Head from "../../components/Head";
+import AuthLayout from "../../components/layouts/AuthLayout";
+import { useVerifyEmailAddressMutation } from "../../generated/graphql";
+import { AuthForm, AuthFormContent, AuthFormTitle, PageBlock, PageTextMB24, StandardButton, Status } from "../../styles/global";
 import { useParams } from "react-router-dom";
-import { BAD_REQUEST_MESSAGE } from "../utils/constants";
+import { BAD_REQUEST_MESSAGE } from "../../utils/constants";
 
 function VerifyAccount() {
     const [verifyEmailAddress] = useVerifyEmailAddressMutation();

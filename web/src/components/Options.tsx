@@ -126,6 +126,7 @@ const Options: FunctionComponent<OptionsProps> = ({ icon, title, isOpen, toggleO
 
     useEffect(() => {
         let buttonElement = buttonRef.current;
+        const body = document.body;
 
         const handleScroll = () => {
             if (buttonElement) {
@@ -146,11 +147,31 @@ const Options: FunctionComponent<OptionsProps> = ({ icon, title, isOpen, toggleO
         window.addEventListener("scroll", handleScroll);
         window.addEventListener("resize", handleScroll);
         window.addEventListener("click", handleScroll);
+        window.addEventListener("change", handleScroll);
+
+        let lastScrollHeight = body.scrollHeight;
+
+        const observer = new MutationObserver(() => {
+            const currentHeight = body.scrollHeight;
+            if (currentHeight !== lastScrollHeight) {
+                handleScroll();
+
+                lastScrollHeight = currentHeight;
+            }
+        });
+
+        observer.observe(body, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+        });
 
         return () => {
             window.removeEventListener("scroll", handleScroll);
             window.removeEventListener("resize", handleScroll);
             window.removeEventListener("click", handleScroll);
+            window.removeEventListener("change", handleScroll);
+            observer.disconnect();
 
             buttonElement = null;
         };

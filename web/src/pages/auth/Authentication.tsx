@@ -1,11 +1,11 @@
 import styled from "styled-components";
-import Head from "../components/Head";
-import { devices } from "../styles/devices";
-import { Button, PageBlock, PageText } from "../styles/global";
-import Logo from "../components/icons/Logo";
+import Head from "../../components/Head";
+import { devices } from "../../styles/devices";
+import { Button, PageBlock, PageText } from "../../styles/global";
+import Logo from "../../components/icons/Logo";
 import { useNavigate } from "react-router-dom";
-import { COLORS } from "../styles/colors";
-import { useThemeContext } from "../styles/ThemeContext";
+import { COLORS } from "../../styles/colors";
+import { useThemeContext } from "../../styles/ThemeContext";
 
 const PageWrapper = styled.div`
     display: flex;

@@ -1,18 +1,18 @@
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import IsNotAuthenticated from "./components/routes/IsNotAuthenticated";
-import Authentication from "./pages/Authentication";
+import Authentication from "./pages/auth/Authentication";
 import Preloader from "./components/utils/Preloader";
 import Modal from "./components/layouts/modal/Modal";
-import LogIn from "./pages/LogIn";
+import LogIn from "./pages/auth/LogIn";
 import IsAuthenticated from "./components/routes/IsAuthenticated";
 import HomePage from "./pages/HomePage";
-import VerifyOTP from "./pages/VerifyOTP";
-import RecoverPassword from "./pages/RecoverPassword";
-import ModifyPassword from "./pages/ModifyPassword";
-import VerifyAccount from "./pages/VerifyAccount";
-import SignUp from "./pages/SignUp";
-import ReactivateAccount from "./pages/ReactivateAccount";
-import LogOut from "./pages/LogOut";
+import VerifyOTP from "./pages/auth/VerifyOTP";
+import RecoverPassword from "./pages/auth/RecoverPassword";
+import ModifyPassword from "./pages/auth/ModifyPassword";
+import VerifyAccount from "./pages/auth/VerifyAccount";
+import SignUp from "./pages/auth/SignUp";
+import ReactivateAccount from "./pages/auth/ReactivateAccount";
+import LogOut from "./pages/auth/LogOut";
 import { useAuth } from "./utils/AuthContext";
 import { AppErrorContainer, AppErrorWrapper, PageBlock, PageText, StandardButton } from "./styles/global";
 import SearchPage from "./pages/search/SearchPage";
@@ -21,6 +21,8 @@ import Messages from "./pages/messages/Messages";
 import ReportPage from "./pages/ReportPage";
 import SettingsPage from "./pages/settings/Index";
 import Payments from "./pages/payments/Payments";
+import CreatePost from "./pages/post/CreatePost";
+import EditPost from "./pages/post/EditPost";
 
 function App() {
     const location = useLocation();
@@ -211,7 +213,37 @@ function App() {
                             children={<ReportPage />}
                         />
                     }
-                />       
+                />
+                <Route
+                    path="/create_post/:operation/:itemType/:itemId"
+                    element={
+                        <IsAuthenticated
+                            isAuth={isAuth}
+                            children={
+                                <Modal
+                                    hasLogo={true}
+                                    isBack={true}
+                                    children={<CreatePost />}
+                                />
+                            }
+                        />
+                    }
+                />
+                <Route
+                    path="/edit_post/:itemId"
+                    element={
+                        <IsAuthenticated
+                            isAuth={isAuth}
+                            children={
+                                <Modal
+                                    headerText="Edit post"
+                                    isBack={true}
+                                    children={<EditPost />}
+                                />
+                            }
+                        />
+                    }
+                />
             </Routes>
             {(state && state.backgroundLocation) && (
                 <Routes>
@@ -230,6 +262,36 @@ function App() {
                             <Modal
                                 headerText="Report"
                                 children={<ReportPage />}
+                            />
+                        }
+                    />
+                    <Route
+                        path="/create_post/:operation/:itemType/:itemId"
+                        element={
+                            <IsAuthenticated
+                                isAuth={isAuth}
+                                children={
+                                    <Modal
+                                        hasLogo={true}
+                                        isBack={true}
+                                        children={<CreatePost />}
+                                    />
+                                }
+                            />
+                        }
+                    />
+                    <Route
+                        path="/edit_post/:itemId"
+                        element={
+                            <IsAuthenticated
+                                isAuth={isAuth}
+                                children={
+                                    <Modal
+                                        headerText="Edit post"
+                                        isBack={true}
+                                        children={<EditPost />}
+                                    />
+                                }
                             />
                         }
                     />
