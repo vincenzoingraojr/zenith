@@ -20,7 +20,7 @@ export const useFindVerification = (userId: number, type: string) => {
         };
     }
 
-    const verifiedSince = new Date(verificationData.findVerificationRequest.verifiedSince as string).toLocaleString(
+    const verifiedSince = new Date(parseInt(verificationData.findVerificationRequest.verifiedSince as string)).toLocaleString(
         "en-us",
         {
             month: "long",
