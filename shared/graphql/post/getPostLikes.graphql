@@ -1,43 +1,47 @@
 query GetPostLikes(
     $itemId: String!,
     $type: String!,
-    $offset: Int
-    $limit: Int
+    $limit: Int!,
+    $cursor: String
 ) {
     getPostLikes(
         itemId: $itemId,
         type: $type,
-        offset: $offset,
         limit: $limit,
+        cursor: $cursor
     ) {
-        id
-        name
-        username
-        email
-        type
-        gender
-        birthDate {
-            date
-            monthAndDayVisibility
-            yearVisibility
+        users {
+            id
+            name
+            username
+            email
+            type
+            gender
+            birthDate {
+                date
+                monthAndDayVisibility
+                yearVisibility
+            }
+            emailVerified
+            profile {
+                profilePicture
+                profileBanner
+                bio
+                website
+            }
+            userSettings {
+                incomingMessages
+                twoFactorAuth
+            }
+            searchSettings {
+                hideSensitiveContent
+                hideBlockedAccounts
+            }
+            createdAt
+            updatedAt
+            hiddenPosts
         }
-        emailVerified
-        profile {
-            profilePicture
-            profileBanner
-            bio
-            website
-        }
-        userSettings {
-            incomingMessages
-            twoFactorAuth
-        }
-        searchSettings {
-            hideSensitiveContent
-            hideBlockedAccounts
-        }
-        createdAt
-        updatedAt
-        hiddenPosts
+        hasMore
+        totalCount
     }
 }

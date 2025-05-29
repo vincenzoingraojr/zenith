@@ -4,7 +4,7 @@ import { Article, Bookmark, FeedItem, Like, MediaItem, Post, Repost, ViewLog } f
 import { isAuth } from "../middleware/isAuth";
 import { AuthContext } from "../types";
 import { v4 as uuidv4 } from "uuid";
-import { User, UserDeviceToken } from "../entities/User";
+import { UserDeviceToken } from "../entities/User";
 import { Notification } from "../entities/Notification";
 import { In, IsNull, LessThan, Repository } from "typeorm";
 import appDataSource from "../dataSource";
@@ -22,6 +22,7 @@ import { NotificationService } from "./NotificationService";
 import { POST_TYPES } from "../helpers/post/postTypes";
 import { NOTIFICATION_TYPES } from "../helpers/notification/notificationTypes";
 import { EMPTY_CONTENT_REGEXP } from "../helpers/textConstants";
+import { PaginatedUsers } from "./UserResolver";
 
 @ObjectType()
 export class PostResponse {
@@ -165,16 +166,20 @@ export class PostResolver {
         }
     }
 
-    @Query(() => [Post], { nullable: true })
+    @Query(() => PaginatedPosts)
     async userPostFeed(
         @Arg("userId", () => Int, { nullable: true }) userId: number,
-        @Arg("offset", () => Int, { nullable: true }) offset?: number,
-        @Arg("limit", () => Int, { nullable: true }) limit?: number,
-    ): Promise<Post[] | null> {
+        @Arg("limit", () => Int) limit: number,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+    ): Promise<PaginatedPosts> {
         if (!userId) {
             logger.warn("User id not provided.");
 
-            return null;
+            return {
+                posts: [],
+                hasMore: false,
+                totalCount: 0,
+            };
         }
 
         try {
@@ -183,77 +188,127 @@ export class PostResolver {
             if (!author) {
                 logger.warn("Post author not found.");
 
-                return null;
+                return {
+                    posts: [],
+                    hasMore: false,
+                    totalCount: 0,
+                };
             }
 
-            return await this.postRepository.find({
-                order: {
-                    createdAt: "DESC",
-                },
-                where: {
-                    type: POST_TYPES.POST,
-                    author,
-                },
-                skip: offset,
-                take: limit,
-                relations: ["author", "media"],
-            });
+            const [posts, totalCount] = await Promise.all([
+                this.postRepository.find({
+                    where: {
+                        type: POST_TYPES.POST,
+                        ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
+                        author,
+                    },
+                    order: {
+                        createdAt: "DESC",
+                    },
+                    take: limit + 1,
+                    relations: ["author", "media"],
+                }),
+                this.postRepository.count({
+                    where: {
+                        type: POST_TYPES.POST,
+                        author,
+                    },
+                }),
+            ]);
+
+            return {
+                posts: posts.slice(0, limit),
+                hasMore:  posts.length === limit + 1,
+                totalCount,
+            };
         } catch (error) {
             logger.error(error);
 
-            return null;
+            return {
+                posts: [],
+                hasMore: false,
+                totalCount: 0,
+            };
         }
     }
 
-    @Query(() => [Post], { nullable: true })
+    @Query(() => PaginatedPosts)
     async postComments(
         @Arg("id", () => Int, { nullable: true }) id: number,
         @Arg("type") type: string,
-        @Arg("offset", () => Int, { nullable: true }) offset?: number,
-        @Arg("limit", () => Int, { nullable: true }) limit?: number,
-    ): Promise<Post[] | null> {
+        @Arg("limit", () => Int) limit: number,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+    ): Promise<PaginatedPosts> {
         if (!id) {
             logger.warn("Post id not provided.");
 
-            return null;
+            return {
+                posts: [],
+                hasMore: false,
+                totalCount: 0,
+            };
         }
     
         try {
-            const comments = await this.postRepository.find({
-                order: {
-                    createdAt: "DESC",
-                },
-                where: {
-                    type: POST_TYPES.COMMENT,
-                    isReplyToId: id,
-                    isReplyToType: type,
-                    author: {
-                        deletedAt: IsNull(),
-                    }
-                }, 
-                skip: offset,
-                take: limit,
-                relations: ["author", "media"],
-            });
-    
-            return comments;
+            const [posts, totalCount] = await Promise.all([
+                this.postRepository.find({
+                    where: {
+                        type: POST_TYPES.COMMENT,
+                        ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
+                        isReplyToId: id,
+                        isReplyToType: type,
+                        author: {
+                            deletedAt: IsNull(),
+                        }
+                    },
+                    order: {
+                        createdAt: "DESC",
+                    },
+                    take: limit + 1,
+                    relations: ["author", "media"],
+                }),
+                this.postRepository.count({
+                    where: {
+                        type: POST_TYPES.COMMENT,
+                        isReplyToId: id,
+                        isReplyToType: type,
+                        author: {
+                            deletedAt: IsNull(),
+                        }
+                    },
+                }),
+            ]);
+
+            return {
+                posts: posts.slice(0, limit),
+                hasMore:  posts.length === limit + 1,
+                totalCount,
+            };
         } catch (error) {
             logger.error(error);
 
-            return null;
+            return {
+                posts: [],
+                hasMore: false,
+                totalCount: 0,
+            };
         }
     }
 
-    @Query(() => [Post], { nullable: true })
+    @Query(() => PaginatedPosts)
     async userComments(
         @Arg("userId", () => Int, { nullable: true }) userId: number,
-        @Arg("offset", () => Int, { nullable: true }) offset?: number,
-        @Arg("limit", () => Int, { nullable: true }) limit?: number,
-    ): Promise<Post[] | null> {
+        @Arg("limit", () => Int) limit: number,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+    ): Promise<PaginatedPosts> {
         if (!userId) {
             logger.warn("User id not provided.");
 
-            return null;
+            return {
+                posts: [],
+                hasMore: false,
+                totalCount: 0,
+            };
         }
     
         try {
@@ -262,25 +317,47 @@ export class PostResolver {
             if (!author) {
                 logger.warn("Post author not found.");
 
-                return null;
+                return {
+                    posts: [],
+                    hasMore: false,
+                    totalCount: 0,
+                };
             }
-    
-            return await this.postRepository.find({
-                order: {
-                    createdAt: "DESC",
-                },
-                where: {
-                    type: POST_TYPES.COMMENT,
-                    author,
-                }, 
-                skip: offset,
-                take: limit,
-                relations: ["author", "media"],
-            });
+
+            const [posts, totalCount] = await Promise.all([
+                this.postRepository.find({
+                    where: {
+                        type: POST_TYPES.COMMENT,
+                        ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
+                        author,
+                    },
+                    order: {
+                        createdAt: "DESC",
+                    },
+                    take: limit + 1,
+                    relations: ["author", "media"],
+                }),
+                this.postRepository.count({
+                    where: {
+                        type: POST_TYPES.COMMENT,
+                        author,
+                    },
+                }),
+            ]);
+
+            return {
+                posts: posts.slice(0, limit),
+                hasMore:  posts.length === limit + 1,
+                totalCount,
+            };
         } catch (error) {
             logger.error(error);
 
-            return null;
+            return {
+                posts: [],
+                hasMore: false,
+                totalCount: 0,
+            };
         }
     }
 
@@ -511,9 +588,7 @@ export class PostResolver {
                                 }
                             }
                         }
-    
-                        pubSub.publish("NEW_POST", post);
-    
+
                         ok = true;
                     } else {
                         status = "Can't find the user.";
@@ -795,9 +870,7 @@ export class PostResolver {
 
                 return false;
             });
-    
-            pubSub.publish("DELETED_POST", post);
-    
+
             return true;
         } catch (error) {
             logger.error(error);
@@ -1034,36 +1107,69 @@ export class PostResolver {
         }
     }
 
-    @Query(() => [User], { nullable: true })
+    @Query(() => PaginatedUsers)
     async getPostLikes(
         @Arg("itemId") itemId: string,
         @Arg("type") type: string,
-        @Arg("offset", () => Int, { nullable: true }) offset?: number,
-        @Arg("limit", () => Int, { nullable: true }) limit?: number,
-    ) {
+        @Arg("limit", () => Int) limit: number,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+    ): Promise<PaginatedUsers> {
         if (!isUUID(itemId)) {
             logger.warn("Invalid itemId provided.");
 
-            return null;
+            return {
+                users: [],
+                hasMore: false,
+                totalCount: 0,
+            };
         }
 
-        try {
-            const likes = await this.likeRepository.find({
-                where: { likedItemId: itemId, itemType: type },
-                skip: offset,
-                take: limit,
-                order: { createdAt: "DESC" }
-            });
-        
+        try {        
+            const [likes, totalCount] = await Promise.all([
+                this.likeRepository.find({
+                    where: { 
+                        likedItemId: itemId, 
+                        itemType: type,
+                        ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
+                    },
+                    take: limit + 1,
+                    order: { createdAt: "DESC" }
+                }),
+                this.likeRepository.count({
+                    where: { 
+                        likedItemId: itemId, 
+                        itemType: type,
+                    },
+                }),
+            ]);
+
             const userIds = likes.map(like => like.userId);
         
             const users = await this.userService.findUsersById(userIds);
+
+            if (!users) {
+                logger.warn("No users found.");
+
+                return {
+                    users: [],
+                    hasMore: false,
+                    totalCount: 0,
+                }
+            }
         
-            return users || [];
+            return {
+                users: users.slice(0, limit),
+                hasMore:  likes.length === limit + 1,
+                totalCount,
+            };
         } catch (error) {
             logger.error(error);
 
-            return null;
+            return {
+                users: [],
+                hasMore: false,
+                totalCount: 0,
+            };
         }
     }
 

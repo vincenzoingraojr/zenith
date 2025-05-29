@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useRef, useState } from "react";
-import { GetPostLikesDocument, GetPostLikesQuery, GetRepostsDocument, GetRepostsQuery, Post, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveLikeMutation } from "../../../../generated/graphql";
+import { GetRepostsDocument, GetRepostsQuery, Post, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveLikeMutation } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ControlContainer, OptionBaseIcon, PageBlock, PageText } from "../../../../styles/global";
@@ -325,25 +325,12 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
 
     const { data: postLikesData } = useGetPostLikesQuery({
         fetchPolicy: "cache-and-network",
-        variables: { itemId: post.itemId, type: post.type },
+        variables: { itemId: post.itemId, type: post.type, limit: 3 },
     });
-
-    const [postLikes, setPostLikes] = useState(
-        (postLikesData && postLikesData.getPostLikes) ? postLikesData.getPostLikes.length : 0
-    );
-    useEffect(() => {
-        if (postLikesData && postLikesData.getPostLikes) {
-            setPostLikes(postLikesData.getPostLikes.length);
-        }
-
-        return () => {
-            setPostLikes(0);
-        }
-    }, [postLikesData]);
 
     const { data: commentsData } = usePostCommentsQuery({
         fetchPolicy: "cache-and-network",
-        variables: { id: post.id, type: post.type },
+        variables: { id: post.id, type: post.type, limit: 3 },
     });
 
     const { addToast } = useToasts();
@@ -373,22 +360,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
         variables: { postId: post.id },
     });
 
-    const [reposts, setReposts] = useState(
-        (repostsData && repostsData.getReposts) ? repostsData.getReposts.length : 0
-    );
-    useEffect(() => {
-        if (repostsData && repostsData.getReposts) {
-            setReposts(repostsData.getReposts.length);
-        }
-
-        return () => {
-            setReposts(0);
-        }
-    }, [repostsData]);
-
     const { userVerified, verifiedSince } = useFindVerification(post.authorId, post.author.type);
 
-    const [deletePost] = useDeletePostMutation();
+    const [deletePost, { client }] = useDeletePostMutation();
 
     const { post: quotedPost } = useFindPostById(post.quotedPostId as number | undefined);
 
@@ -532,11 +506,35 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                         title="Delete this post"
                                                         aria-label="Delete this post"
                                                         onClick={async () => {
-                                                            await deletePost({
+                                                            const response = await deletePost({
                                                                 variables: {
                                                                     postId: post.itemId,
                                                                 },
                                                             });
+
+                                                            if (response.data && response.data.deletePost) {
+                                                                const refId = `Post:${post.id}`;
+
+                                                                client.cache.modify({
+                                                                    fields: {
+                                                                        postFeed(existing = { posts: [], hasMore: true }) {
+                                                                            const filteredPosts = existing.posts.filter((p: any) =>
+                                                                                p.__ref ? p.__ref !== refId : p.id !== post.id
+                                                                            );
+
+                                                                            return {
+                                                                                ...existing,
+                                                                                posts: filteredPosts
+                                                                            };
+                                                                        },
+                                                                    },
+                                                                });
+
+                                                                client.cache.evict({ id: refId });
+                                                                client.cache.gc();
+                                                            } else {
+                                                                addToast("An error occurred while deleting the post.");
+                                                            }
                                                         }}
                                                     >
                                                         <OptionBaseIcon>
@@ -619,33 +617,6 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                             itemId: post.itemId,
                                             itemType: post.type,
                                         },
-                                        update: (
-                                            store,
-                                            { data: removeLikeData }
-                                        ) => {
-                                            if (
-                                                removeLikeData &&
-                                                removeLikeData.removeLike &&
-                                                postLikesData && postLikesData.getPostLikes
-                                            ) {
-                                                const postLikes =
-                                                    postLikesData.getPostLikes.filter((item) => item.id !== me.id);
-
-                                                store.writeQuery<GetPostLikesQuery>(
-                                                    {
-                                                        query: GetPostLikesDocument,
-                                                        data: {
-                                                            getPostLikes:
-                                                                postLikes,
-                                                        },
-                                                        variables: {
-                                                            itemId: post.itemId,
-                                                            type: post.type,
-                                                        },
-                                                    }
-                                                );
-                                            }
-                                        },
                                     }).then(() => {
                                         setLike(false);
                                     });
@@ -656,32 +627,6 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                             origin,
                                             itemOpened: false,
                                             itemType: post.type,
-                                        },
-                                        update: (
-                                            store,
-                                            { data: likePostData }
-                                        ) => {
-                                            if (
-                                                likePostData &&
-                                                likePostData.likePost &&
-                                                postLikesData && postLikesData.getPostLikes
-                                            ) {
-                                                store.writeQuery<GetPostLikesQuery>(
-                                                    {
-                                                        query: GetPostLikesDocument,
-                                                        data: {
-                                                            getPostLikes: [
-                                                                me,
-                                                                ...postLikesData.getPostLikes,
-                                                            ],
-                                                        },
-                                                        variables: {
-                                                            itemId: post.itemId,
-                                                            type: post.type,
-                                                        },
-                                                    }
-                                                );
-                                            }
                                         },
                                     }).then(() => {
                                         setLike(true);
@@ -695,7 +640,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             <Like isActive={like} />
                         </ControlContainer>
                         <PostActionInfo>
-                            {formatter.format(postLikes)}
+                            {formatter.format(postLikesData ? postLikesData.getPostLikes.totalCount : 0)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
@@ -830,7 +775,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             }
                         />
                         <PostActionInfo>
-                            {formatter.format(reposts)}
+                            {formatter.format((repostsData && repostsData.getReposts) ? repostsData.getReposts.length : 0)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
@@ -852,7 +797,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             <Comment />
                         </ControlContainer>
                         <PostActionInfo>
-                            {formatter.format((commentsData && commentsData.postComments) ? commentsData.postComments.length : 0)}
+                            {formatter.format(commentsData ? commentsData.postComments.totalCount : 0)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer

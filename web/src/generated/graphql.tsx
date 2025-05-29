@@ -756,6 +756,13 @@ export type PaginatedPosts = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type PaginatedUsers = {
+  __typename?: 'PaginatedUsers';
+  hasMore: Scalars['Boolean']['output'];
+  totalCount: Scalars['Int']['output'];
+  users: Array<User>;
+};
+
 export type Post = {
   __typename?: 'Post';
   author: User;
@@ -822,7 +829,7 @@ export type Query = {
   getFollowers?: Maybe<Array<User>>;
   getFollowing?: Maybe<Array<User>>;
   getLikedPosts?: Maybe<Array<Post>>;
-  getPostLikes?: Maybe<Array<User>>;
+  getPostLikes: PaginatedUsers;
   getReposts?: Maybe<Array<Repost>>;
   hasUserBlockedMe: Scalars['Boolean']['output'];
   isAffiliatedTo?: Maybe<User>;
@@ -838,7 +845,7 @@ export type Query = {
   messagesAndEvents?: Maybe<Array<MessageOrEvent>>;
   notificationFeed: PaginatedNotifications;
   otherSessions?: Maybe<Array<Session>>;
-  postComments?: Maybe<Array<Post>>;
+  postComments: PaginatedPosts;
   postFeed: PaginatedPosts;
   postMedia?: Maybe<Array<MediaItem>>;
   reportOptions?: Maybe<Array<ReportOption>>;
@@ -846,8 +853,8 @@ export type Query = {
   topics?: Maybe<Array<Topic>>;
   unseenMessageNotifications?: Maybe<Array<MessageNotification>>;
   unseenNotifications: Array<Notification>;
-  userComments?: Maybe<Array<Post>>;
-  userPostFeed?: Maybe<Array<Post>>;
+  userComments: PaginatedPosts;
+  userPostFeed: PaginatedPosts;
   usersToMessage?: Maybe<Array<User>>;
 };
 
@@ -987,9 +994,9 @@ export type QueryGetLikedPostsArgs = {
 
 
 export type QueryGetPostLikesArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
   itemId: Scalars['String']['input'];
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit: Scalars['Int']['input'];
   type: Scalars['String']['input'];
 };
 
@@ -1061,9 +1068,9 @@ export type QueryNotificationFeedArgs = {
 
 
 export type QueryPostCommentsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['Int']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit: Scalars['Int']['input'];
   type: Scalars['String']['input'];
 };
 
@@ -1096,15 +1103,15 @@ export type QueryUnseenMessageNotificationsArgs = {
 
 
 export type QueryUserCommentsArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit: Scalars['Int']['input'];
   userId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
 export type QueryUserPostFeedArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit: Scalars['Int']['input'];
   userId?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -1426,14 +1433,6 @@ export type DeleteRepostMutationVariables = Exact<{
 
 export type DeleteRepostMutation = { __typename?: 'Mutation', deleteRepost: boolean };
 
-export type DeletedPostSubscriptionVariables = Exact<{
-  postId?: InputMaybe<Scalars['Int']['input']>;
-  userId: Scalars['Int']['input'];
-}>;
-
-
-export type DeletedPostSubscription = { __typename?: 'Subscription', deletedPost: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } };
-
 export type EditPostMutationVariables = Exact<{
   postId: Scalars['String']['input'];
   type: Scalars['String']['input'];
@@ -1463,12 +1462,12 @@ export type FindPostByIdQuery = { __typename?: 'Query', findPostById?: { __typen
 export type GetPostLikesQueryVariables = Exact<{
   itemId: Scalars['String']['input'];
   type: Scalars['String']['input'];
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
+  limit: Scalars['Int']['input'];
+  cursor?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type GetPostLikesQuery = { __typename?: 'Query', getPostLikes?: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }> | null };
+export type GetPostLikesQuery = { __typename?: 'Query', getPostLikes: { __typename?: 'PaginatedUsers', hasMore: boolean, totalCount: number, users: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }> } };
 
 export type GetRepostsQueryVariables = Exact<{
   postId: Scalars['Int']['input'];
@@ -1515,23 +1514,15 @@ export type LikePostMutationVariables = Exact<{
 
 export type LikePostMutation = { __typename?: 'Mutation', likePost?: { __typename?: 'Like', id: number, userId: number, likedItemId: string, itemOpened: boolean, itemType: string, origin: string, createdAt: string, updatedAt: string } | null };
 
-export type NewPostSubscriptionVariables = Exact<{
-  postId?: InputMaybe<Scalars['Int']['input']>;
-  userId: Scalars['Int']['input'];
-}>;
-
-
-export type NewPostSubscription = { __typename?: 'Subscription', newPost: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } };
-
 export type PostCommentsQueryVariables = Exact<{
   id?: InputMaybe<Scalars['Int']['input']>;
   type: Scalars['String']['input'];
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
+  limit: Scalars['Int']['input'];
+  cursor?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type PostCommentsQuery = { __typename?: 'Query', postComments?: Array<{ __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null }> | null };
+export type PostCommentsQuery = { __typename?: 'Query', postComments: { __typename?: 'PaginatedPosts', hasMore: boolean, totalCount: number, posts: Array<{ __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null }> } };
 
 export type PostFeedQueryVariables = Exact<{
   limit: Scalars['Int']['input'];
@@ -1985,89 +1976,6 @@ export function useDeleteRepostMutation(baseOptions?: Apollo.MutationHookOptions
 export type DeleteRepostMutationHookResult = ReturnType<typeof useDeleteRepostMutation>;
 export type DeleteRepostMutationResult = Apollo.MutationResult<DeleteRepostMutation>;
 export type DeleteRepostMutationOptions = Apollo.BaseMutationOptions<DeleteRepostMutation, DeleteRepostMutationVariables>;
-export const DeletedPostDocument = gql`
-    subscription DeletedPost($postId: Int, $userId: Int!) {
-  deletedPost(postId: $postId, userId: $userId) {
-    id
-    itemId
-    authorId
-    type
-    content
-    isEdited
-    views
-    lang
-    topics
-    author {
-      id
-      name
-      username
-      email
-      type
-      gender
-      birthDate {
-        date
-        monthAndDayVisibility
-        yearVisibility
-      }
-      emailVerified
-      profile {
-        profilePicture
-        profileBanner
-        bio
-        website
-      }
-      userSettings {
-        incomingMessages
-        twoFactorAuth
-      }
-      searchSettings {
-        hideSensitiveContent
-        hideBlockedAccounts
-      }
-      createdAt
-      updatedAt
-      hiddenPosts
-    }
-    isReplyToId
-    isReplyToType
-    quotedPostId
-    media {
-      id
-      type
-      src
-      alt
-    }
-    mentions
-    hashtags
-    createdAt
-    updatedAt
-  }
-}
-    `;
-
-/**
- * __useDeletedPostSubscription__
- *
- * To run a query within a React component, call `useDeletedPostSubscription` and pass it any options that fit your needs.
- * When your component renders, `useDeletedPostSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useDeletedPostSubscription({
- *   variables: {
- *      postId: // value for 'postId'
- *      userId: // value for 'userId'
- *   },
- * });
- */
-export function useDeletedPostSubscription(baseOptions: Apollo.SubscriptionHookOptions<DeletedPostSubscription, DeletedPostSubscriptionVariables> & ({ variables: DeletedPostSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<DeletedPostSubscription, DeletedPostSubscriptionVariables>(DeletedPostDocument, options);
-      }
-export type DeletedPostSubscriptionHookResult = ReturnType<typeof useDeletedPostSubscription>;
-export type DeletedPostSubscriptionResult = Apollo.SubscriptionResult<DeletedPostSubscription>;
 export const EditPostDocument = gql`
     mutation EditPost($postId: String!, $type: String!, $content: String!, $media: String!, $deletedMedia: String!, $existingAltTexts: String!) {
   editPost(
@@ -2358,37 +2266,41 @@ export type FindPostByIdLazyQueryHookResult = ReturnType<typeof useFindPostByIdL
 export type FindPostByIdSuspenseQueryHookResult = ReturnType<typeof useFindPostByIdSuspenseQuery>;
 export type FindPostByIdQueryResult = Apollo.QueryResult<FindPostByIdQuery, FindPostByIdQueryVariables>;
 export const GetPostLikesDocument = gql`
-    query GetPostLikes($itemId: String!, $type: String!, $offset: Int, $limit: Int) {
-  getPostLikes(itemId: $itemId, type: $type, offset: $offset, limit: $limit) {
-    id
-    name
-    username
-    email
-    type
-    gender
-    birthDate {
-      date
-      monthAndDayVisibility
-      yearVisibility
+    query GetPostLikes($itemId: String!, $type: String!, $limit: Int!, $cursor: String) {
+  getPostLikes(itemId: $itemId, type: $type, limit: $limit, cursor: $cursor) {
+    users {
+      id
+      name
+      username
+      email
+      type
+      gender
+      birthDate {
+        date
+        monthAndDayVisibility
+        yearVisibility
+      }
+      emailVerified
+      profile {
+        profilePicture
+        profileBanner
+        bio
+        website
+      }
+      userSettings {
+        incomingMessages
+        twoFactorAuth
+      }
+      searchSettings {
+        hideSensitiveContent
+        hideBlockedAccounts
+      }
+      createdAt
+      updatedAt
+      hiddenPosts
     }
-    emailVerified
-    profile {
-      profilePicture
-      profileBanner
-      bio
-      website
-    }
-    userSettings {
-      incomingMessages
-      twoFactorAuth
-    }
-    searchSettings {
-      hideSensitiveContent
-      hideBlockedAccounts
-    }
-    createdAt
-    updatedAt
-    hiddenPosts
+    hasMore
+    totalCount
   }
 }
     `;
@@ -2407,8 +2319,8 @@ export const GetPostLikesDocument = gql`
  *   variables: {
  *      itemId: // value for 'itemId'
  *      type: // value for 'type'
- *      offset: // value for 'offset'
  *      limit: // value for 'limit'
+ *      cursor: // value for 'cursor'
  *   },
  * });
  */
@@ -2652,145 +2564,66 @@ export function useLikePostMutation(baseOptions?: Apollo.MutationHookOptions<Lik
 export type LikePostMutationHookResult = ReturnType<typeof useLikePostMutation>;
 export type LikePostMutationResult = Apollo.MutationResult<LikePostMutation>;
 export type LikePostMutationOptions = Apollo.BaseMutationOptions<LikePostMutation, LikePostMutationVariables>;
-export const NewPostDocument = gql`
-    subscription NewPost($postId: Int, $userId: Int!) {
-  newPost(postId: $postId, userId: $userId) {
-    id
-    itemId
-    authorId
-    type
-    content
-    isEdited
-    views
-    lang
-    topics
-    author {
-      id
-      name
-      username
-      email
-      type
-      gender
-      birthDate {
-        date
-        monthAndDayVisibility
-        yearVisibility
-      }
-      emailVerified
-      profile {
-        profilePicture
-        profileBanner
-        bio
-        website
-      }
-      userSettings {
-        incomingMessages
-        twoFactorAuth
-      }
-      searchSettings {
-        hideSensitiveContent
-        hideBlockedAccounts
-      }
-      createdAt
-      updatedAt
-      hiddenPosts
-    }
-    isReplyToId
-    isReplyToType
-    quotedPostId
-    media {
-      id
-      type
-      src
-      alt
-    }
-    mentions
-    hashtags
-    createdAt
-    updatedAt
-  }
-}
-    `;
-
-/**
- * __useNewPostSubscription__
- *
- * To run a query within a React component, call `useNewPostSubscription` and pass it any options that fit your needs.
- * When your component renders, `useNewPostSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useNewPostSubscription({
- *   variables: {
- *      postId: // value for 'postId'
- *      userId: // value for 'userId'
- *   },
- * });
- */
-export function useNewPostSubscription(baseOptions: Apollo.SubscriptionHookOptions<NewPostSubscription, NewPostSubscriptionVariables> & ({ variables: NewPostSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<NewPostSubscription, NewPostSubscriptionVariables>(NewPostDocument, options);
-      }
-export type NewPostSubscriptionHookResult = ReturnType<typeof useNewPostSubscription>;
-export type NewPostSubscriptionResult = Apollo.SubscriptionResult<NewPostSubscription>;
 export const PostCommentsDocument = gql`
-    query PostComments($id: Int, $type: String!, $offset: Int, $limit: Int) {
-  postComments(id: $id, type: $type, offset: $offset, limit: $limit) {
-    id
-    itemId
-    authorId
-    type
-    content
-    isEdited
-    views
-    lang
-    topics
-    author {
+    query PostComments($id: Int, $type: String!, $limit: Int!, $cursor: String) {
+  postComments(id: $id, type: $type, limit: $limit, cursor: $cursor) {
+    posts {
       id
-      name
-      username
-      email
+      itemId
+      authorId
       type
-      gender
-      birthDate {
-        date
-        monthAndDayVisibility
-        yearVisibility
+      content
+      isEdited
+      views
+      lang
+      topics
+      author {
+        id
+        name
+        username
+        email
+        type
+        gender
+        birthDate {
+          date
+          monthAndDayVisibility
+          yearVisibility
+        }
+        emailVerified
+        profile {
+          profilePicture
+          profileBanner
+          bio
+          website
+        }
+        userSettings {
+          incomingMessages
+          twoFactorAuth
+        }
+        searchSettings {
+          hideSensitiveContent
+          hideBlockedAccounts
+        }
+        createdAt
+        updatedAt
+        hiddenPosts
       }
-      emailVerified
-      profile {
-        profilePicture
-        profileBanner
-        bio
-        website
+      isReplyToId
+      isReplyToType
+      quotedPostId
+      media {
+        id
+        type
+        src
+        alt
       }
-      userSettings {
-        incomingMessages
-        twoFactorAuth
-      }
-      searchSettings {
-        hideSensitiveContent
-        hideBlockedAccounts
-      }
+      mentions
+      hashtags
       createdAt
       updatedAt
-      hiddenPosts
     }
-    isReplyToId
-    isReplyToType
-    quotedPostId
-    media {
-      id
-      type
-      src
-      alt
-    }
-    mentions
-    hashtags
-    createdAt
-    updatedAt
+    hasMore
+    totalCount
   }
 }
     `;
@@ -2809,8 +2642,8 @@ export const PostCommentsDocument = gql`
  *   variables: {
  *      id: // value for 'id'
  *      type: // value for 'type'
- *      offset: // value for 'offset'
  *      limit: // value for 'limit'
+ *      cursor: // value for 'cursor'
  *   },
  * });
  */

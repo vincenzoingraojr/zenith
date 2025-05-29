@@ -19,7 +19,7 @@ import { verify } from "jsonwebtoken";
 import { sendVerificationEmail } from "../helpers/mail/sendVerificationEmail";
 import ejs from "ejs";
 import path from "path";
-import { FieldError } from "./common";
+import { FeedWrapper, FieldError } from "./common";
 import { isAuth } from "../middleware/isAuth";
 import { processBirthDate, processDays } from "../helpers/dates";
 import { v4 as uuidv4 } from "uuid";
@@ -87,6 +87,12 @@ export class IdentityVerificationResponse {
 
     @Field(() => Boolean)
     ok: boolean;
+}
+
+@ObjectType()
+export class PaginatedUsers extends FeedWrapper {
+    @Field(() => [User])
+    users: User[];
 }
 
 @Resolver(User)
