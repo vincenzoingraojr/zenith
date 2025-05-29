@@ -46,17 +46,12 @@ const PostWrapper = styled.div`
     }
 `;
 
-const PostContainer = styled.div`
+const PostContainer = styled.div.attrs((props: { isHovered: boolean }) => props)`
     display: flex;
     flex-direction: column;
-    background-color: transparent;
+    background-color: ${(props) => props.isHovered ? props.theme.overlayGrey : "transparent"};
     transition: 0.2s background-color ease;
     cursor: pointer;
-
-    &:hover,
-    &:focus {
-        background-color: ${({ theme }) => theme.overlayGrey};
-    }
 `;
 
 const PostHeader = styled.div`
@@ -397,6 +392,10 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
 
     const { post: quotedPost } = useFindPostById(post.quotedPostId as number | undefined);
 
+    const [isParentHovered, setParentHovered] = useState(false);
+    const [isChildHovered, setChildHovered] = useState(false);
+    const shouldHighlightParent = isParentHovered && !isChildHovered;
+
     return (
         <PostWrapper>
             <PostContainer
@@ -414,6 +413,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         );
                     }
                 }}
+                isHovered={shouldHighlightParent}
+                onMouseEnter={() => setParentHovered(true)}
+                onMouseLeave={() => setParentHovered(false)}
             >
                 <PostHeader>
                     <PostAuthorContainer
@@ -595,6 +597,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         <QuotedPost 
                             post={quotedPost as Post}
                             origin="feed"
+                            isHovered={isChildHovered}
+                            onMouseEnter={() => setChildHovered(true)}
+                            onMouseLeave={() => setChildHovered(false)}
                         />
                     )}
                 </PostContentContainer>

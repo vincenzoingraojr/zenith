@@ -1,5 +1,5 @@
 import { Arg, Ctx, Field, Int, Mutation, ObjectType, Query, Resolver, Root, Subscription, UseMiddleware } from "type-graphql";
-import { FieldError } from "./common";
+import { FeedWrapper, FieldError } from "./common";
 import { Article, Bookmark, FeedItem, Like, MediaItem, Post, Repost, ViewLog } from "../entities/Post";
 import { isAuth } from "../middleware/isAuth";
 import { AuthContext } from "../types";
@@ -36,15 +36,6 @@ export class PostResponse {
 
     @Field(() => Boolean)
     ok: boolean;
-}
-
-@ObjectType()
-export class FeedWrapper {
-    @Field(() => Boolean)
-    hasMore: boolean;
-
-    @Field(() => Int)
-    totalCount: number;
 }
 
 @ObjectType()

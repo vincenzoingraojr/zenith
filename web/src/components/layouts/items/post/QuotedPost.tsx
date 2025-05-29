@@ -14,6 +14,9 @@ import { COLORS } from "../../../../styles/colors";
 interface QuotedPostProps {
     post: Post;
     origin: "create-post" | "feed";
+    isHovered?: boolean;
+    onMouseEnter?: React.MouseEventHandler<HTMLDivElement>;
+    onMouseLeave?: React.MouseEventHandler<HTMLDivElement>;
 }
 
 const QuotedPostWrapper = styled.div`
@@ -22,18 +25,13 @@ const QuotedPostWrapper = styled.div`
     border-radius: 12px;
 `;
 
-const QuotedPostContainer = styled.div`
+const QuotedPostContainer = styled.div.attrs((props: { isHovered: boolean }) => props)`
     display: flex;
     flex-direction: column;
-    background-color: transparent;
+    background-color: ${(props) => props.isHovered ? props.theme.overlayGrey : props.theme.background};
     transition: 0.2s background-color ease;
     border-radius: inherit;
     cursor: pointer;
-
-    &:hover,
-    &:focus {
-        background-color: ${({ theme }) => theme.overlayGrey};
-    }
 `;
 
 const QuotedPostHeader = styled.div`
@@ -91,7 +89,7 @@ const QuotedPostMediaContainer = styled.div`
     }
 `;
 
-const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin }) => {
+const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin, isHovered, onMouseEnter, onMouseLeave }) => {
     const navigate = useNavigate();
 
     const { userVerified, verifiedSince } = useFindVerification(post.authorId, post.author.type);
@@ -122,6 +120,9 @@ const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin }) => {
                         );
                     }
                 }}
+                isHovered={isHovered}
+                onMouseEnter={onMouseEnter}
+                onMouseLeave={onMouseLeave}
             >
                 <QuotedPostHeader>
                     <QuotedPostAuthorContainer>

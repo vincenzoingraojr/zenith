@@ -1286,3 +1286,12 @@ export const EndContainer = styled(PageText)`
     color: ${({ theme }) => theme.inputText};
     padding: 4px 16px;
 `;
+
+export const LumenModalContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-bottom: 36px;
+`;

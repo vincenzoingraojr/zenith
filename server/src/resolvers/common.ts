@@ -1,4 +1,4 @@
-import { Field, ObjectType } from "type-graphql";
+import { Field, Int, ObjectType } from "type-graphql";
 
 @ObjectType()
 export class FieldError {
@@ -7,4 +7,13 @@ export class FieldError {
 
     @Field()
     message: string;
+}
+
+@ObjectType()
+export class FeedWrapper {
+    @Field(() => Boolean)
+    hasMore: boolean;
+
+    @Field(() => Int)
+    totalCount: number;
 }
