@@ -108,19 +108,19 @@ export class Verification {
 @ObjectType()
 export class IdentityVerification extends Verification {
     @Field(() => String)
-    @Column()
+    @Column({ default: "" })
     country: string;
 
     @Field(() => String)
-    @Column()
+    @Column({ default: "" })
     fullName: string;
 
     @Field(() => String)
-    @Column()
+    @Column({ default: "" })
     entityIdentifier: string;
 
-    @Field(() => String)
-    @Column()
+    @Field(() => String, { nullable: true, defaultValue: null })
+    @Column({ default: null, nullable: true })
     birthOrCreationDate: Date;
 }
 
