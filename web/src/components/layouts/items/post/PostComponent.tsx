@@ -390,6 +390,8 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                 isHovered={shouldHighlightParent}
                 onMouseEnter={() => setParentHovered(true)}
                 onMouseLeave={() => setParentHovered(false)}
+                onTouchStart={() => setParentHovered(true)}
+                onTouchEnd={() => setParentHovered(false)}
             >
                 <PostHeader>
                     <PostAuthorContainer

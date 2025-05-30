@@ -15,8 +15,8 @@ interface QuotedPostProps {
     post: Post;
     origin: "create-post" | "feed";
     isHovered?: boolean;
-    onMouseEnter?: React.MouseEventHandler<HTMLDivElement>;
-    onMouseLeave?: React.MouseEventHandler<HTMLDivElement>;
+    onMouseEnter?: () => void;
+    onMouseLeave?: () => void;
 }
 
 const QuotedPostWrapper = styled.div`
@@ -123,6 +123,8 @@ const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin, isHovere
                 isHovered={isHovered}
                 onMouseEnter={onMouseEnter}
                 onMouseLeave={onMouseLeave}
+                onTouchStart={onMouseEnter}
+                onTouchEnd={onMouseLeave}
             >
                 <QuotedPostHeader>
                     <QuotedPostAuthorContainer>
