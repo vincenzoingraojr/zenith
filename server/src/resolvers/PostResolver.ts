@@ -45,6 +45,12 @@ export class PaginatedPosts extends FeedWrapper {
     posts: Post[];
 }
 
+@ObjectType()
+export class PaginatedReposts extends FeedWrapper {
+    @Field(() => [Repost])
+    reposts: Repost[];
+}
+
 @Resolver(Post)
 export class PostResolver {
     private readonly userService: UserService;
@@ -79,34 +85,6 @@ export class PostResolver {
                 secretAccessKey: process.env.COMPREHEND_SECRET_KEY!,
             },
         });
-    }
-
-    @Subscription(() => Post, {
-        topics: "NEW_POST",
-        filter: ({ payload, args }) => {
-            if (!args.postId) {
-                return payload.isReplyToId === args.postId && payload.authorId === args.userId;
-            } else {
-                return payload.authorId === args.userId;
-            }
-        },
-    })
-    newPost(@Arg("postId", () => Int, { nullable: true }) _postId: number, @Arg("userId", () => Int) _userId: number, @Root() post: Post): Post {
-        return post;
-    }
-
-    @Subscription(() => Post, {
-        topics: "DELETED_POST",
-        filter: ({ payload, args }) => {
-            if (!args.postId) {
-                return payload.isReplyToId === args.postId && payload.authorId === args.userId;
-            } else {
-                return payload.authorId === args.userId;
-            }
-        },
-    })
-    deletedPost(@Arg("postId", () => Int, { nullable: true }) _postId: number, @Arg("userId", () => Int) _userId: number, @Root() post: Post): Post {
-        return post;
     }
 
     @Subscription(() => Post, {
@@ -1072,25 +1050,38 @@ export class PostResolver {
         }
     }
 
-    @Query(() => [Post], { nullable: true })
+    @Query(() => PaginatedPosts)
     async getLikedPosts(
         @Arg("id", () => Int, { nullable: true }) id: number,
-        @Arg("offset", () => Int, { nullable: true }) offset?: number,
-        @Arg("limit", () => Int, { nullable: true }) limit?: number,
-    ) {
+        @Arg("limit", () => Int) limit: number,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+    ): Promise<PaginatedPosts> {
         if (!id) {
             logger.warn("User id not provied.");
 
-            return null;
+            return {
+                posts: [],
+                hasMore: false,
+                totalCount: 0,
+            };
         }
     
         try {
-            const likes = await this.likeRepository.find({
-                where: { userId: id },
-                skip: offset,
-                take: limit,
-                order: { createdAt: "DESC" }
-            });
+            const [likes, totalCount] = await Promise.all([
+                this.likeRepository.find({
+                    where: { 
+                        userId: id,
+                        ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
+                    },
+                    take: limit + 1,
+                    order: { createdAt: "DESC" }
+                }),
+                this.likeRepository.count({
+                    where: { 
+                        userId: id,
+                    },
+                }),
+            ]);
     
             const likedPostIds = likes.filter(like => like.itemType !== POST_TYPES.ARTICLE).map(like => like.likedItemId);
             
@@ -1099,11 +1090,19 @@ export class PostResolver {
                 relations: ["author", "media"],
             });
     
-            return posts;
+            return {
+                posts: posts.slice(0, limit),
+                hasMore:  likes.length === limit + 1,
+                totalCount,
+            };
         } catch (error) {
             logger.error(error);
 
-            return null;
+            return {
+                posts: [],
+                hasMore: false,
+                totalCount: 0,
+            };
         }
     }
 
@@ -1173,37 +1172,33 @@ export class PostResolver {
         }
     }
 
-    @Query(() => Boolean)
+    @Query(() => Like, { nullable: true })
     @UseMiddleware(isAuth)
     async isPostLikedByMe(
         @Arg("itemId") itemId: string,
         @Arg("type") type: string,
         @Ctx() { payload }: AuthContext
-    ) {
+    ): Promise<Like | null> {
         if (!payload) {
             logger.warn("User not authenticated.");
 
-            return false;
+            return null;
         }
 
         if (!isUUID(itemId)) {
             logger.warn("Invalid itemId provided.");
 
-            return false;
+            return null;
         }
 
         try {
             const like = await this.likeRepository.findOne({ where: { userId: payload.id, likedItemId: itemId, itemType: type } });
 
-            if (like) {
-                return true;
-            } else {
-                return false;
-            }
+            return like;
         } catch (error) {
             logger.error(error);
 
-            return false;
+            return null;
         }
     }
 
@@ -1394,55 +1389,65 @@ export class PostResolver {
         }
     }
 
-    @Query(() => Boolean)
+    @Query(() => Bookmark, { nullable: true })
     @UseMiddleware(isAuth)
     async isBookmarked(
         @Arg("itemId", () => Int) itemId: number,
         @Arg("type") type: string,
         @Ctx() { payload }: AuthContext
-    ) {
-        if (!payload) {
-            logger.warn("User not authenticated.");
-
-            return false;
-        }
-
-        try {
-            const bookmark = await this.bookmarkRepository.findOne({ where: { authorId: payload.id, itemId, itemType: type } });
-
-            if (bookmark) {
-                return true;
-            } else {
-                return false;
-            }
-        } catch (error) {
-            logger.error(error);
-
-            return false;
-        }
-    }
-
-    @Query(() => [Post], { nullable: true })
-    @UseMiddleware(isAuth)
-    async getBookmarks(
-        @Ctx() { payload }: AuthContext,
-        @Arg("offset", () => Int, { nullable: true }) offset?: number,
-        @Arg("limit", () => Int, { nullable: true }) limit?: number,
-    ) {
+    ): Promise<Bookmark | null> {
         if (!payload) {
             logger.warn("User not authenticated.");
 
             return null;
         }
+
+        try {
+            const bookmark = await this.bookmarkRepository.findOne({ where: { authorId: payload.id, itemId, itemType: type } });
+
+            return bookmark;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
+    }
+
+    // da sistemare per includere gli articoli, quando sarà il momento giusto.
+    @Query(() => PaginatedPosts)
+    @UseMiddleware(isAuth)
+    async getBookmarks(
+        @Ctx() { payload }: AuthContext,
+        @Arg("limit", () => Int) limit: number,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+    ): Promise<PaginatedPosts> {
+        if (!payload) {
+            logger.warn("User not authenticated.");
+
+            return {
+                posts: [],
+                hasMore: false,
+                totalCount: 0,
+            };
+        }
     
         try {
-            const bookmarks = await this.bookmarkRepository.find({
-                where: { authorId: payload.id },
-                skip: offset,
-                take: limit,
-                order: { createdAt: "DESC" }
-            });
-    
+            const [bookmarks, totalCount] = await Promise.all([
+                this.bookmarkRepository.find({
+                    where: { 
+                        authorId: payload.id,
+                        ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
+                    },
+                    take: limit + 1,
+                    order: { createdAt: "DESC" }
+                }),
+                this.bookmarkRepository.count({
+                    where: {
+                        authorId: payload.id,
+                    },
+                })
+            ]);
+
             const savedPostIds = bookmarks.filter(bookmark => bookmark.itemType !== POST_TYPES.ARTICLE).map(bookmark => bookmark.itemId);
             
             const posts = await this.postRepository.find({
@@ -1450,11 +1455,19 @@ export class PostResolver {
                 relations: ["author", "media"],
             });
     
-            return posts;
+            return {
+                posts: posts.slice(0, limit),
+                hasMore: bookmarks.length === limit + 1,
+                totalCount,
+            };
         } catch (error) {
             logger.error(error);
 
-            return null;
+            return {
+                posts: [],
+                hasMore: false,
+                totalCount: 0,
+            };
         }
     }
 
@@ -1542,52 +1555,75 @@ export class PostResolver {
         }
     }
 
-    @Query(() => Boolean)
+    @Query(() => Repost, { nullable: true })
     @UseMiddleware(isAuth)
     async isRepostedByUser(
         @Arg("postId", () => Int) postId: number,
         @Arg("userId", () => Int, { nullable: true }) userId: number,
-    ) {
+    ): Promise<Repost | null> {
         if (!userId) {
             logger.warn("User id not provided.");
 
-            return false;
+            return null;
         }
 
         try {
             const repost = await this.repostRepository.findOne({ where: { authorId: userId, postId } });
 
-            if (repost) {
-                return true;
-            } else {
-                return false;
-            }
-        } catch (error) {
-            logger.error(error);
-
-            return false;
-        }
-    }
-
-    @Query(() => [Repost], { nullable: true })
-    async getReposts(
-        @Arg("postId", () => Int) postId: number,
-        @Arg("offset", () => Int, { nullable: true }) offset?: number,
-        @Arg("limit", () => Int, { nullable: true }) limit?: number,
-    ) {
-        try {
-            const reposts = await this.repostRepository.find({
-                where: { postId },
-                skip: offset,
-                take: limit,
-                order: { createdAt: "DESC" }
-            });
-        
-            return reposts;
+            return repost;
         } catch (error) {
             logger.error(error);
 
             return null;
+        }
+    }
+
+    @Query(() => PaginatedReposts)
+    async getReposts(
+        @Arg("postId", () => Int, { nullable: true }) postId: number,
+        @Arg("limit", () => Int) limit: number,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+    ): Promise<PaginatedReposts> {
+        if (!postId) {
+            logger.warn("Post id not provided.");
+
+            return {
+                reposts: [],
+                hasMore: false,
+                totalCount: 0,
+            };
+        }
+
+        try {
+            const [reposts, totalCount] = await Promise.all([
+                this.repostRepository.find({
+                    where: { 
+                        postId,
+                        ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
+                    },
+                    take: limit + 1,
+                    order: { createdAt: "DESC" }
+                }),
+                this.repostRepository.count({
+                    where: {
+                        postId,
+                    }
+                })
+            ]);
+        
+            return {
+                reposts: reposts.slice(0, limit),
+                hasMore: reposts.length === limit + 1,
+                totalCount,
+            };
+        } catch (error) {
+            logger.error(error);
+
+            return {
+                reposts: [],
+                hasMore: false,
+                totalCount: 0,
+            };
         }
     }
 }

@@ -1317,7 +1317,7 @@ export class UserResolver {
                         ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
                     }, 
                     relations: ["follower", "user"], 
-                    take: limit,
+                    take: limit + 1,
                     order: { createdAt: "DESC" } 
                 }),
                 this.followRepository.count({
@@ -1346,24 +1346,81 @@ export class UserResolver {
         }
     }
 
-    // da qui
-
-    @Query(() => [User], { nullable: true })
+    @Query(() => PaginatedUsers)
     async getFollowing(
         @Arg("id", () => Int, { nullable: true }) id: number,
-        @Arg("offset", () => Int, { nullable: true }) offset?: number,
-        @Arg("limit", () => Int, { nullable: true }) limit?: number,
-    ): Promise<User[] | null> {
+        @Arg("limit", () => Int) limit: number,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+    ): Promise<PaginatedUsers> {
         if (!id) {
             logger.warn("User id not provided.");
+
+            return {
+                users: [],
+                hasMore: false,
+                totalCount: 0,
+            };
         }
 
         try {
-            const followRelations = await this.followRepository.find({ where: { follower: { id } }, relations: ["user", "follower"], take: limit, skip: offset, order: { createdAt: "DESC" } });
+            const [followRelations, totalCount] = await Promise.all([
+                this.followRepository.find({
+                    where: { 
+                        follower: { id },
+                        ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
+                    },
+                    relations: ["user", "follower"],
+                    take: limit + 1,
+                    order: { createdAt: "DESC" },
+                }),
+                this.followRepository.count({
+                    where: { 
+                        follower: { id },
+                    },
+                    relations: ["follower"],
+                })
+            ]);
 
             const users = followRelations.map(follow => follow.user);
 
-            return users;
+            return {
+                users: users.slice(0, limit),
+                hasMore: followRelations.length === limit + 1,
+                totalCount,
+            }
+        } catch (error) {
+            logger.error(error);
+
+            return {
+                users: [],
+                hasMore: false,
+                totalCount: 0,
+            };
+        }
+    }
+
+    @Query(() => Follow, { nullable: true })
+    @UseMiddleware(isAuth)
+    async isFollowedByMe(
+        @Arg("id", () => Int, { nullable: true }) id: number,
+        @Ctx() { payload }: AuthContext
+    ): Promise<Follow | null> {
+        if (!payload) {
+            logger.warn("Payload not provided.");
+
+            return null;
+        }
+
+        if (!id) {
+            logger.warn("User id not provided.");
+
+            return null;
+        }
+
+        try {
+            const follow = await this.followRepository.findOne({ where: { follower: { id: payload.id }, user: { id } }, relations: ["user", "follower"] });
+
+            return follow;
         } catch (error) {
             logger.error(error);
 
@@ -1371,69 +1428,32 @@ export class UserResolver {
         }
     }
 
-    @Query(() => Boolean)
-    @UseMiddleware(isAuth)
-    async isFollowedByMe(
-        @Arg("id", () => Int, { nullable: true }) id: number,
-        @Ctx() { payload }: AuthContext
-    ) {
-        if (!payload) {
-            logger.warn("Payload not provided.");
-
-            return false;
-        }
-
-        if (!id) {
-            logger.warn("User id not provided.");
-
-            return false;
-        }
-
-        try {
-            const follow = await this.followRepository.findOne({ where: { follower: { id: payload.id }, user: { id } }, relations: ["user", "follower"] });
-
-            if (follow) {
-                return true;
-            } else {
-                return false;
-            }
-        } catch (error) {
-            logger.error(error);
-
-            return false;
-        }
-    }
-
-    @Query(() => Boolean)
+    @Query(() => Follow, { nullable: true })
     @UseMiddleware(isAuth)
     async isUserFollowingMe(
         @Arg("id", () => Int, { nullable: true }) id: number,
         @Ctx() { payload }: AuthContext
-    ) {
+    ): Promise<Follow | null> {
         if (!payload) {
             logger.warn("Payload not provided.");
 
-            return false;
+            return null;
         }
 
         if (!id) {
             logger.warn("User id not provided.");
 
-            return false;
+            return null;
         }
 
         try {
             const follow = await this.followRepository.findOne({ where: { follower: { id }, user: { id: payload.id } }, relations: ["user", "follower"] });
 
-            if (follow) {
-                return true;
-            } else {
-                return false;
-            }
+            return follow;
         } catch (error) {
             logger.error(error);
 
-            return false;
+            return null;
         }
     }
 
@@ -2257,110 +2277,135 @@ export class UserResolver {
         }
     }
 
-    @Query(() => [User], { nullable: true })
+    @Query(() => PaginatedUsers)
     @UseMiddleware(isAuth)
     async blockedUsers(
         @Ctx() { payload }: AuthContext,
-        @Arg("offset", () => Int, { nullable: true }) offset?: number,
-        @Arg("limit", () => Int, { nullable: true }) limit?: number,
-    ): Promise<User[] | null> {
+        @Arg("limit", () => Int) limit: number,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+    ): Promise<PaginatedUsers> {
         if (!payload) {
             logger.warn("Payload not provided.");
 
-            return null;
+            return {
+                users: [],
+                hasMore: false,
+                totalCount: 0,
+            };
         } else {
             try {
                 const me = await this.findUserById(payload.id);
-                const users: User[] = [];
 
                 if (me) {
-                    const blockActions = await this.blockRepository.find({ where: { userId: payload.id }, take: limit, skip: offset, order: { createdAt: "DESC" } });
-
-                    await Promise.all(
-                        blockActions.map(async (item) => {
-                            const user = await this.findUserById(item.blockedId);
-
-                            if (user) {
-                                users.push(user);
+                    const [blockActions, totalCount] = await Promise.all([
+                        this.blockRepository.find({ 
+                            where: { 
+                                userId: payload.id,
+                                ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
+                            }, 
+                            take: limit + 1,
+                            order: { createdAt: "DESC" } 
+                        }),
+                        this.blockRepository.count({
+                            where: {
+                                userId: payload.id,
                             }
                         })
-                    );
+                    ]);
 
-                    return users;
+                    const userIds = blockActions.map(block => block.blockedId);
+
+                    const users = await this.userService.findUsersById(userIds);
+
+                    if (!users) {
+                        logger.warn("No users found.");
+        
+                        return {
+                            users: [],
+                            hasMore: false,
+                            totalCount: 0,
+                        }
+                    }
+
+                    return {
+                        users: users.slice(0, limit),
+                        hasMore: blockActions.length === limit + 1,
+                        totalCount,
+                    };
                 } else {
-                    return null;
+                    return {
+                        users: [],
+                        hasMore: false,
+                        totalCount: 0,
+                    };
                 }
             } catch (error) {
                 logger.error(error);
 
-                return null;
+                return {
+                    users: [],
+                    hasMore: false,
+                    totalCount: 0,
+                };
             }
         }
     }
 
-    @Query(() => Boolean)
+    @Query(() => Block, { nullable: true })
     @UseMiddleware(isAuth)
     async isUserBlockedByMe(
         @Arg("id", () => Int, { nullable: true }) id: number,
         @Ctx() { payload }: AuthContext
-    ) {
+    ): Promise<Block | null> {
         if (!payload) {
             logger.warn("Payload not provided.");
 
-            return false;
+            return null;
         }
 
         if (!id) {
             logger.warn("User id not provided.");
 
-            return false;
+            return null;
         }
 
         try {
             const block = await this.blockRepository.findOne({ where: { blockedId: id, userId: payload.id } });
 
-            if (block) {
-                return true;
-            } else {
-                return false;
-            }
+            return block;
         } catch (error) {
             logger.error(error);
 
-            return false;
+            return null;
         }
     }
 
-    @Query(() => Boolean)
+    @Query(() => Block, { nullable: true })
     @UseMiddleware(isAuth)
     async hasUserBlockedMe(
         @Arg("id", () => Int, { nullable: true }) id: number,
         @Ctx() { payload }: AuthContext
-    ) {
+    ): Promise<Block | null> {
         if (!payload) {
             logger.warn("Payload not provided.");
 
-            return false;
+            return null;
         }
 
         if (!id) {
             logger.warn("User id not provided.");
 
-            return false;
+            return null;
         }
 
         try {
             const block = await this.blockRepository.findOne({ where: { blockedId: payload.id, userId: id } });
 
-            if (block) {
-                return true;
-            } else {
-                return false;
-            }   
+            return block;
         } catch (error) {
             logger.error(error);
 
-            return false;
+            return null;
         }
     }
 
@@ -2779,42 +2824,73 @@ export class UserResolver {
         }
     }
 
-    @Query(() => [User], { nullable: true })
+    @Query(() => PaginatedUsers)
     async affiliates(
         @Arg("id", () => Int, { nullable: true }) id: number,
-        @Arg("offset", () => Int, { nullable: true }) offset?: number,
-        @Arg("limit", () => Int, { nullable: true }) limit?: number,
-    ): Promise<User[] | null> {
+        @Arg("limit", () => Int) limit: number,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+    ): Promise<PaginatedUsers> {
         if (!id) {
             logger.warn("User id not provided.");
 
-            return null;
+            return {
+                users: [],
+                hasMore: false,
+                totalCount: 0,
+            };
         } else {
             try {
                 const organization = await this.findUserById(id, false);
-                const users: User[] = [];
 
                 if (organization && organization.type === USER_TYPES.ORGANIZATION) {
-                    const affiliations = await this.affiliationRepository.find({ where: { organizationId: organization.id }, take: limit, skip: offset, order: { createdAt: "DESC" } });
+                    const [affiliations, totalCount] = await Promise.all([
+                        this.affiliationRepository.find({ 
+                            where: { 
+                                organizationId: organization.id,
+                                ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
+                            }, 
+                            take: limit + 1, 
+                            order: { createdAt: "DESC" } 
+                        }),
+                        this.affiliationRepository.count({
+                            where: { organizationId: organization.id }, 
+                        }),
+                    ]);
 
-                    await Promise.all(
-                        affiliations.map(async (item) => {
-                            const user = await this.findUserById(item.userId);
+                    const userIds = affiliations.map(affiliation => affiliation.userId);
 
-                            if (user) {
-                                users.push(user);
-                            }
-                        })
-                    );
+                    const users = await this.userService.findUsersById(userIds);
 
-                    return users;
+                    if (!users) {
+                        logger.warn("No users found.");
+
+                        return {
+                            users: [],
+                            hasMore: false,
+                            totalCount: 0,
+                        }
+                    }
+
+                    return {
+                        users: users.slice(0, limit),
+                        hasMore: affiliations.length === limit + 1,
+                        totalCount,
+                    };
                 } else {
-                    return null;
+                    return {
+                        users: [],
+                        hasMore: false,
+                        totalCount: 0,
+                    };
                 }
             } catch (error) {
                 logger.error(error);
 
-                return null;
+                return {
+                    users: [],
+                    hasMore: false,
+                    totalCount: 0,
+                };
             }
         }
     }

@@ -14,6 +14,6 @@ export class FeedWrapper {
     @Field(() => Boolean)
     hasMore: boolean;
 
-    @Field(() => Int)
-    totalCount: number;
+    @Field(() => Int, { nullable: true })
+    totalCount?: number;
 }
