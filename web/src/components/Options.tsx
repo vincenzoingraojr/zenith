@@ -147,7 +147,6 @@ const Options: FunctionComponent<OptionsProps> = ({ icon, title, isOpen, toggleO
         window.addEventListener("scroll", handleScroll);
         window.addEventListener("resize", handleScroll);
         window.addEventListener("click", handleScroll);
-        window.addEventListener("change", handleScroll);
 
         let lastScrollHeight = body.scrollHeight;
 
@@ -170,7 +169,6 @@ const Options: FunctionComponent<OptionsProps> = ({ icon, title, isOpen, toggleO
             window.removeEventListener("scroll", handleScroll);
             window.removeEventListener("resize", handleScroll);
             window.removeEventListener("click", handleScroll);
-            window.removeEventListener("change", handleScroll);
             observer.disconnect();
 
             buttonElement = null;

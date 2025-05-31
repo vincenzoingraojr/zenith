@@ -1,12 +1,12 @@
 import { FunctionComponent, useEffect, useRef, useState } from "react";
-import { GetRepostsDocument, GetRepostsQuery, Post, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveLikeMutation } from "../../../../generated/graphql";
+import { Like, Post, Repost, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, User, useRemoveLikeMutation } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ControlContainer, OptionBaseIcon, PageBlock, PageText } from "../../../../styles/global";
 import profilePicture from "../../../../images/profile-picture.png";
 import TextContainerRender from "../../../utils/TextContainerRender";
 import { USER_TYPES } from "../../../../utils/constants";
-import Like from "../../../icons/Like";
+import LikeIcon from "../../../icons/Like";
 import { formatter } from "../../../../utils/formatter";
 import { COLORS } from "../../../../styles/colors";
 import Share from "../../../icons/Share";
@@ -18,17 +18,18 @@ import Flag from "../../../icons/Flag";
 import Comment from "../../../icons/Comment";
 import { processDate } from "../../../../utils/processDate";
 import Pen from "../../../icons/Pen";
-import { useFindVerification, useMeData } from "../../../../utils/userQueries";
+import { useMeData } from "../../../../utils/userQueries";
 import Bin from "../../../icons/Bin";
 import FollowIcon from "../../../icons/FollowIcon";
 import Chain from "../../../icons/Chain";
 import copy from "copy-to-clipboard";
 import { useToasts } from "../../../utils/ToastProvider";
-import Repost from "../../../icons/Repost";
+import RepostIcon from "../../../icons/Repost";
 import Mail from "../../../icons/Mail";
 import VerificationBadge from "../../../utils/VerificationBadge";
 import { useFindPostById } from "../../../../utils/postQueries";
 import QuotedPost from "./QuotedPost";
+import { gql } from "@apollo/client";
 
 interface PostComponentProps {
     post: Post;
@@ -245,7 +246,7 @@ const PostActionInfo = styled(PageText)`
 
 const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplying, origin }) => {
     const navigate = useNavigate();
-    const [like, setLike] = useState(false);
+    const [like, setLike] = useState<Like | null>(null);
     const [follow, setFollow] = useState(false);
 
     const { activeOptions, handleOptionsClick } = useOptions();
@@ -315,11 +316,11 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
 
     useEffect(() => {
         if (likeData) {
-            setLike(likeData.isPostLikedByMe);
+            setLike(likeData.isPostLikedByMe as Like | null);
         }
 
         return () => {
-            setLike(false);
+            setLike(null);
         }
     }, [likeData]);
 
@@ -338,7 +339,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
     const [createRepost] = useCreateRepostMutation();
     const [deleteRepost] = useDeleteRepostMutation();
 
-    const [repost, setRepost] = useState(false);
+    const [repost, setRepost] = useState<Repost | null>(null);
 
     const { data: repostData } = useIsRepostedByUserQuery({
         fetchPolicy: "cache-and-network",
@@ -347,20 +348,18 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
 
     useEffect(() => {
         if (repostData) {
-            setRepost(repostData.isRepostedByUser);
+            setRepost(repostData.isRepostedByUser as Repost | null);
         }
 
         return () => {
-            setRepost(false);
+            setRepost(null);
         }
     }, [repostData]);
 
     const { data: repostsData } = useGetRepostsQuery({
         fetchPolicy: "cache-and-network",
-        variables: { postId: post.id },
+        variables: { postId: post.id, limit: 3 },
     });
-
-    const { userVerified, verifiedSince } = useFindVerification(post.authorId, post.author.type);
 
     const [deletePost, { client }] = useDeletePostMutation();
 
@@ -417,10 +416,10 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                 <AuthorFullName>
                                     {post.author.name}
                                 </AuthorFullName>
-                                {userVerified && (
+                                {post.author.verification.verified === "VERIFIED" && (
                                     <VerificationBadge
                                         type={post.author.type}
-                                        verifiedSince={verifiedSince}
+                                        verifiedSince={post.author.verification.verifiedSince ? new Date(parseInt(post.author.verification.verifiedSince)).toLocaleString("en-us", { month: "long", year: "numeric" }) : undefined}
                                         size={18}
                                     />
                                 )}
@@ -525,8 +524,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                                             );
 
                                                                             return {
-                                                                                ...existing,
-                                                                                posts: filteredPosts
+                                                                                hasMore: existing.hasMore,
+                                                                                posts: filteredPosts,
+                                                                                totalCount: existing.totalCount - 1,
                                                                             };
                                                                         },
                                                                     },
@@ -619,8 +619,26 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                             itemId: post.itemId,
                                             itemType: post.type,
                                         },
+                                        update: (cache, { data: removeLikeData }) => {
+                                            if (removeLikeData && removeLikeData.removeLike) {
+                                                const postId = cache.identify({ __typename: post.__typename, id: post.itemId });
+
+                                                cache.modify({
+                                                    id: postId,
+                                                    fields: {
+                                                        getPostLikes(existing = { users: [], hasMore: true }) {
+                                                            return {
+                                                                hasMore: existing.hasMore,
+                                                                users: existing.users.filter((user: User) => user.id !== me.id),
+                                                                totalCount: existing.totalCount - 1,
+                                                            };
+                                                        },
+                                                    },
+                                                });
+                                            }
+                                        }
                                     }).then(() => {
-                                        setLike(false);
+                                        setLike(null);
                                     });
                                 } else {
                                     await likePost({
@@ -630,19 +648,90 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                             itemOpened: false,
                                             itemType: post.type,
                                         },
-                                    }).then(() => {
-                                        setLike(true);
+                                        update: (cache, { data: likePostData }) => {
+                                            if (likePostData && likePostData.likePost) {
+                                                const postId = cache.identify({ __typename: post.__typename, id: post.itemId });
+                                                
+                                                cache.modify({
+                                                    id: postId,
+                                                    fields: {
+                                                        getPostLikes(existing = { users: [], hasMore: true }) {
+                                                            const exists = existing.users.some((user: User) => user.id === me.id);
+
+                                                            if (!exists) return existing;
+
+                                                            return {
+                                                                hasMore: existing.hasMore,
+                                                                users: [cache.writeFragment({
+                                                                    data: me,
+                                                                    fragment: gql`
+                                                                        fragment NewUser on User {
+                                                                            id
+                                                                            name
+                                                                            username
+                                                                            email
+                                                                            type
+                                                                            gender
+                                                                            birthDate {
+                                                                                date
+                                                                                monthAndDayVisibility
+                                                                                yearVisibility
+                                                                            }
+                                                                            emailVerified
+                                                                            profile {
+                                                                                profilePicture
+                                                                                profileBanner
+                                                                                bio
+                                                                                website
+                                                                            }
+                                                                            userSettings {
+                                                                                incomingMessages
+                                                                                twoFactorAuth
+                                                                            }
+                                                                            searchSettings {
+                                                                                hideSensitiveContent
+                                                                                hideBlockedAccounts
+                                                                            }
+                                                                            createdAt
+                                                                            updatedAt
+                                                                            hiddenPosts
+                                                                            identity {
+                                                                                verified
+                                                                                verifiedSince
+                                                                            }
+                                                                            verification {
+                                                                                verified
+                                                                                verifiedSince
+                                                                            }
+                                                                        }
+                                                                    `
+                                                                }), ...existing.users],
+                                                                totalCount: existing.totalCount + 1,
+                                                            }
+                                                        }
+                                                    }
+                                                })
+                                            }
+                                        }
+                                    }).then((response) => {
+                                        if (response.data && response.data.likePost) {
+                                            setLike(response.data.likePost as Like);
+                                        } else {
+                                            addToast("An error occurred while trying to like this post.");
+
+                                            setLike(null);
+                                        }
                                     });
                                 }
                             }
                         }}
-                        isActive={like}
+                        isActive={like ? true : false}
                     >
                         <ControlContainer size={32}>
-                            <Like isActive={like} />
+                            <LikeIcon isActive={like ? true : false} />
                         </ControlContainer>
                         <PostActionInfo>
-                            {formatter.format(postLikesData ? postLikesData.getPostLikes.totalCount : 0)}
+                            {formatter.format(postLikesData && postLikesData.getPostLikes.totalCount ? postLikesData.getPostLikes.totalCount : 0)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
@@ -653,12 +742,12 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         onClick={(e) => {
                             e.stopPropagation();
                         }}
-                        isActive={repost}
+                        isActive={repost ? true : false}
                     >
                         <Options
                             key={`repost-options-${post.id}`}
                             title="Repost options" 
-                            icon={<Repost type="nav" isActive={repost} />}
+                            icon={<RepostIcon type="nav" isActive={repost ? true : false} />}
                             isOpen={activeOptions === -2}
                             toggleOptions={() =>
                                 handleOptionsClick(-2)
@@ -680,74 +769,77 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                         variables: {
                                                             postId: post.id,
                                                         },
-                                                        update: (
-                                                            store,
-                                                            { data: deleteRepostData }
-                                                        ) => {
-                                                            if (
-                                                                deleteRepostData &&
-                                                                deleteRepostData.deleteRepost &&
-                                                                repostsData && repostsData.getReposts
-                                                            ) {
-                                                                const reposts =
-                                                                    repostsData.getReposts.filter((item) => item.authorId !== me.id);
+                                                        update: (cache, { data: deleteRepostData }) => {
+                                                            if (deleteRepostData && deleteRepostData.deleteRepost && repost) {
+                                                                const postId = cache.identify({ __typename: post.__typename, id: post.itemId });
 
-                                                                store.writeQuery<GetRepostsQuery>(
-                                                                    {
-                                                                        query: GetRepostsDocument,
-                                                                        data: {
-                                                                            getReposts:
-                                                                                reposts,
-                                                                        },
-                                                                        variables: {
-                                                                            postId: post.id,
-                                                                        },
+                                                                cache.modify({
+                                                                    id: postId,
+                                                                    fields: {
+                                                                        getReposts(existing = { reposts: [], hasMore: true }) {
+                                                                            return {
+                                                                                hasMore: existing.hasMore,
+                                                                                reposts: existing.reposts.filter((r: Repost) => r.id !== repost.id),
+                                                                                totalCount: existing.totalCount - 1,
+                                                                            };
+                                                                        }
                                                                     }
-                                                                );
+                                                                });
                                                             }
                                                         },
                                                     }).then(() => {
-                                                        setRepost(false);
+                                                        setRepost(null);
                                                     });
                                                 } else {
                                                     await createRepost({
                                                         variables: {
                                                             postId: post.itemId
                                                         },
-                                                        update: (
-                                                            store,
-                                                            { data: createRepostData }
-                                                        ) => {
-                                                            if (
-                                                                createRepostData &&
-                                                                createRepostData.createRepost &&
-                                                                repostsData && repostsData.getReposts
-                                                            ) {
-                                                                store.writeQuery<GetRepostsQuery>(
-                                                                    {
-                                                                        query: GetRepostsDocument,
-                                                                        data: {
-                                                                            getReposts: [
-                                                                                createRepostData.createRepost,
-                                                                                ...repostsData.getReposts,
-                                                                            ],
-                                                                        },
-                                                                        variables: {
-                                                                            postId: post.id,
-                                                                        },
+                                                        update: (cache, { data: createRepostData }) => {
+                                                            if (createRepostData && createRepostData.createRepost && !repost) {
+                                                                const postId = cache.identify({ __typename: post.__typename, id: post.itemId });
+
+                                                                cache.modify({
+                                                                    id: postId,
+                                                                    fields: {
+                                                                        getReposts(existing = { reposts: [], hasMore: true }, {  }) {
+                                                                            return {
+                                                                                hasMore: existing.hasMore,
+                                                                                reposts: [cache.writeFragment({
+                                                                                    data: createRepostData.createRepost,
+                                                                                    fragment: gql`
+                                                                                        fragment NewRepost on Repost {
+                                                                                            id
+                                                                                            repostId
+                                                                                            postId
+                                                                                            authorId
+                                                                                            createdAt
+                                                                                            updatedAt
+                                                                                        }
+                                                                                    `
+                                                                                }), ...existing.reposts],
+                                                                                totalCount: existing.totalCount + 1,
+                                                                            }
+                                                                        }
                                                                     }
-                                                                );
+                                                                });
                                                             }
                                                         },
-                                                    }).then(() => {
-                                                        setRepost(true);
+                                                    }).then((response) => {
+                                                        if (response.data && response.data.createRepost) {
+                                                            setRepost(response.data.createRepost as Repost);
+                                                        } else {
+                                                            addToast("An error occurred while trying to repost this post.");
+
+                                                            setRepost(null);
+                                                        }
                                                     });
                                                 }
                                             }
                                         }}
                                     >
                                         <OptionBaseIcon>
-                                            <Repost type="options" />
+                                            <RepostIcon type="options" />
                                         </OptionBaseIcon>
                                         <OptionItemText>
                                             {repost ? "Remove repost" : "Repost this post"}
@@ -777,7 +869,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             }
                         />
                         <PostActionInfo>
-                            {formatter.format((repostsData && repostsData.getReposts) ? repostsData.getReposts.length : 0)}
+                            {formatter.format(repostsData && repostsData.getReposts.totalCount ? repostsData.getReposts.totalCount : 0)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
@@ -799,7 +891,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             <Comment />
                         </ControlContainer>
                         <PostActionInfo>
-                            {formatter.format(commentsData ? commentsData.postComments.totalCount : 0)}
+                            {formatter.format(commentsData && commentsData.postComments.totalCount ? commentsData.postComments.totalCount : 0)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer

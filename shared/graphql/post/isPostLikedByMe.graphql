@@ -5,5 +5,14 @@ query IsPostLikedByMe(
     isPostLikedByMe(
         itemId: $itemId,
         type: $type,
-    )
+    ) {
+        id
+        userId
+        likedItemId
+        itemOpened
+        itemType
+        origin
+        createdAt
+        updatedAt
+    }
 }

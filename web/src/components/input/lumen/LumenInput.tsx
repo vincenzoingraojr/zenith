@@ -156,7 +156,7 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                                         if (exists) return existing;
                                         
                                         return {
-                                            ...existing,
+                                            hasMore: existing.hasMore,
                                             posts: [client.cache.writeFragment({
                                                 data: newPost,
                                                 fragment: gql`
@@ -200,6 +200,14 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                                                             createdAt
                                                             updatedAt
                                                             hiddenPosts
+                                                            identity {
+                                                                verified
+                                                                verifiedSince
+                                                            }
+                                                            verification {
+                                                                verified
+                                                                verifiedSince
+                                                            }
                                                         }
                                                         isReplyToId
                                                         isReplyToType
@@ -216,7 +224,8 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                                                         updatedAt
                                                     }
                                                 `
-                                            }), ...existing.posts]
+                                            }), ...existing.posts],
+                                            totalCount: existing.totalCount + 1,
                                         };
                                     }
                                 }

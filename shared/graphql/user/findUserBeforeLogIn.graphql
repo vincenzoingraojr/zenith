@@ -34,6 +34,14 @@ mutation FindUserBeforeLogIn(
             createdAt
             updatedAt
             hiddenPosts
+            identity {
+                verified
+                verifiedSince
+            }
+            verification {
+                verified
+                verifiedSince
+            }
         }
         status
         ok

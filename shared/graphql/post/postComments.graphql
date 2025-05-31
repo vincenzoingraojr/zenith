@@ -50,6 +50,14 @@ query PostComments(
                 createdAt
                 updatedAt
                 hiddenPosts
+                identity {
+                    verified
+                    verifiedSince
+                }
+                verification {
+                    verified
+                    verifiedSince
+                }
             }
             isReplyToId
             isReplyToType

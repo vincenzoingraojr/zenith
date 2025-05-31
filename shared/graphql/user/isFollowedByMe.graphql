@@ -1,3 +1,86 @@
 query IsFollowedByMe($id: Int) {
-    isFollowedByMe(id: $id)
+    isFollowedByMe(id: $id) {
+        id
+        follower {
+            id
+            name
+            username
+            email
+            type
+            gender
+            birthDate {
+                date
+                monthAndDayVisibility
+                yearVisibility
+            }
+            emailVerified
+            profile {
+                profilePicture
+                profileBanner
+                bio
+                website
+            }
+            userSettings {
+                incomingMessages
+                twoFactorAuth
+            }
+            searchSettings {
+                hideSensitiveContent
+                hideBlockedAccounts
+            }
+            createdAt
+            updatedAt
+            hiddenPosts
+            identity {
+                verified
+                verifiedSince
+            }
+            verification {
+                verified
+                verifiedSince
+            }
+        }
+        user {
+            id
+            name
+            username
+            email
+            type
+            gender
+            birthDate {
+                date
+                monthAndDayVisibility
+                yearVisibility
+            }
+            emailVerified
+            profile {
+                profilePicture
+                profileBanner
+                bio
+                website
+            }
+            userSettings {
+                incomingMessages
+                twoFactorAuth
+            }
+            searchSettings {
+                hideSensitiveContent
+                hideBlockedAccounts
+            }
+            createdAt
+            updatedAt
+            hiddenPosts
+            identity {
+                verified
+                verifiedSince
+            }
+            verification {
+                verified
+                verifiedSince
+            }
+        }
+        origin
+        createdAt
+        updatedAt
+    }
 }

@@ -235,14 +235,20 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({ title, t
                             <>
                                 {type === "home" ? (
                                     <HomeContainer>
-                                        <HomeLogo
-                                            onClick={() => {
-                                                addToast("This is Zenith!");
-                                            }}
-                                        >
-                                            <Logo type="inline" />
-                                        </HomeLogo>
-                                        <HomeHeaderTitle>{title}</HomeHeaderTitle>
+                                        {(error || loading) ? (
+                                            <MainHeaderTitle>{error ? "An error occurred. Refresh the page." :  "Loading..."}</MainHeaderTitle>
+                                        ) : (
+                                            <>
+                                                <HomeLogo
+                                                    onClick={() => {
+                                                        addToast("This is Zenith!");
+                                                    }}
+                                                >
+                                                    <Logo type="inline" />
+                                                </HomeLogo>
+                                                <HomeHeaderTitle>{title}</HomeHeaderTitle>
+                                            </>
+                                        )}
                                     </HomeContainer>
                                 ) : (
                                     <MainHeaderTitle>{title}</MainHeaderTitle>

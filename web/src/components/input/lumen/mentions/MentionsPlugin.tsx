@@ -11,7 +11,6 @@ import styled from "styled-components";
 import { $createMentionNode } from "./MentionNode";
 import profilePicture from "../../../../images/profile-picture.png";
 import { User, useUsersToMessageQuery } from "../../../../generated/graphql";
-import { useFindVerification } from "../../../../utils/userQueries";
 import VerificationBadge from "../../../utils/VerificationBadge";
 import { USER_TYPES } from "../../../../utils/constants";
 
@@ -181,7 +180,7 @@ function useMentionLookupService(
     useEffect(() => {
         const cachedResults = mentionsCache.get(mentionString);
 
-        if (mentionString == null) {
+        if (mentionString === null) {
             setResults([]);
             return;
         }
@@ -238,14 +237,16 @@ class MentionTypeaheadOption extends TypeaheadOption {
     username: string;
     avatar: string;
     type: string;
+    verified: boolean;
 
-    constructor(id: number, name: string, username: string, avatar: string, type: string) {
+    constructor(id: number, name: string, username: string, avatar: string, type: string, verified: boolean) {
         super(username);
         this.id = id;
         this.name = name;
         this.username = username;
         this.avatar = avatar;
         this.type = type;
+        this.verified = verified;
     }
 }
 
@@ -266,8 +267,6 @@ function MentionsTypeaheadMenuItem({
     if (isSelected) {
         className += " selected";
     }
-
-    const { userVerified, verifiedSince } = useFindVerification(option.id, option.type);
 
     return (
         <MentionItem
@@ -294,10 +293,9 @@ function MentionsTypeaheadMenuItem({
             <MentionUserInfo>
                 <MentionNameContainer>
                     <MentionName>{option.name}</MentionName>
-                        {userVerified && (
+                        {option.verified && (
                             <VerificationBadge
                                 type={option.type}
-                                verifiedSince={verifiedSince}
                                 size={18}
                             />
                         )}
@@ -314,6 +312,7 @@ type UserMention = {
     username: string;
     avatar: string;
     type: string;
+    verified: boolean;
 }
 
 export default function MentionsPlugin(): JSX.Element | null {
@@ -323,11 +322,11 @@ export default function MentionsPlugin(): JSX.Element | null {
 
     const [mentionData, setMentionData] = useState<UserMention[]>([]);
     
-    const { data } = useUsersToMessageQuery({ fetchPolicy: "cache-and-network" });
+    const { data } = useUsersToMessageQuery({ variables: { limit: 10 }, fetchPolicy: "cache-and-network" });
 
     useEffect(() => {
         if (data && data.usersToMessage) {
-            const rawUsers = data.usersToMessage;
+            const rawUsers = data.usersToMessage.users;
             const users: UserMention[] = [];
 
             rawUsers.map((user: User) => (
@@ -337,6 +336,7 @@ export default function MentionsPlugin(): JSX.Element | null {
                     username: user.username,
                     avatar: user.profile.profilePicture,
                     type: user.type,
+                    verified: user.verification.verified === "VERIFIED",
                 })
             ));
 
@@ -353,8 +353,8 @@ export default function MentionsPlugin(): JSX.Element | null {
     const options = useMemo(
         () =>
             results
-                .map(({ id, name, username, avatar, type }) => {
-                    return new MentionTypeaheadOption(id, name, username, avatar, type);
+                .map(({ id, name, username, avatar, type, verified }) => {
+                    return new MentionTypeaheadOption(id, name, username, avatar, type, verified);
                 })
                 .slice(0, SUGGESTION_LIST_LENGTH_LIMIT),
         [results]

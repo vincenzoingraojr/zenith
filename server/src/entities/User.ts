@@ -96,30 +96,24 @@ export class Verification {
     @Column({ nullable: true, default: null })
     verifiedSince: Date;
 
-    @Field(() => [GraphQLJSONObject])
     @Column({ type: "jsonb", default: [] })
     documents: { type: string; url: string }[];
 
-    @Field(() => String, { nullable: true, defaultValue: null })
     @Column({ default: null, nullable: true })
     outcome: string;
 }
 
 @ObjectType()
 export class IdentityVerification extends Verification {
-    @Field(() => String)
     @Column({ default: "" })
     country: string;
 
-    @Field(() => String)
     @Column({ default: "" })
     fullName: string;
 
-    @Field(() => String)
     @Column({ default: "" })
     entityIdentifier: string;
 
-    @Field(() => String, { nullable: true, defaultValue: null })
     @Column({ default: null, nullable: true })
     birthOrCreationDate: Date;
 }

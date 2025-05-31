@@ -40,6 +40,14 @@ query GetPostLikes(
             createdAt
             updatedAt
             hiddenPosts
+            identity {
+                verified
+                verifiedSince
+            }
+            verification {
+                verified
+                verifiedSince
+            }
         }
         hasMore
         totalCount
