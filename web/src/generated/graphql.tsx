@@ -167,27 +167,8 @@ export type Follow = {
 
 export type IdentityVerification = {
   __typename?: 'IdentityVerification';
-  birthOrCreationDate: Scalars['String']['output'];
-  country: Scalars['String']['output'];
-  createdAt: Scalars['String']['output'];
-  documents: Array<Scalars['JSONObject']['output']>;
-  entityIdentifier: Scalars['String']['output'];
-  fullName: Scalars['String']['output'];
-  id: Scalars['Int']['output'];
-  outcome?: Maybe<Scalars['String']['output']>;
-  type: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
-  userId: Scalars['Int']['output'];
   verified: VerificationStatus;
   verifiedSince?: Maybe<Scalars['String']['output']>;
-};
-
-export type IdentityVerificationResponse = {
-  __typename?: 'IdentityVerificationResponse';
-  errors?: Maybe<Array<FieldError>>;
-  identityVerification?: Maybe<UserVerification>;
-  ok: Scalars['Boolean']['output'];
-  status?: Maybe<Scalars['String']['output']>;
 };
 
 export type LandingUser = {
@@ -331,8 +312,8 @@ export type Mutation = {
   removeBookmark: Scalars['Boolean']['output'];
   removeLike: Scalars['Boolean']['output'];
   removeUserFromGroup: Scalars['Boolean']['output'];
-  requestIdentityVerification: IdentityVerificationResponse;
-  requestVerification: UserVerificationResponse;
+  requestIdentityVerification: UserResponse;
+  requestVerification: UserResponse;
   resendOTP: Scalars['Boolean']['output'];
   revokeMention: PostResponse;
   sendMessage?: Maybe<Message>;
@@ -743,6 +724,13 @@ export type Notification = {
   viewed: Scalars['Boolean']['output'];
 };
 
+export type PaginatedChatItems = {
+  __typename?: 'PaginatedChatItems';
+  chatItems: Array<MessageOrEvent>;
+  hasMore: Scalars['Boolean']['output'];
+  totalCount?: Maybe<Scalars['Int']['output']>;
+};
+
 export type PaginatedNotifications = {
   __typename?: 'PaginatedNotifications';
   nextCursor?: Maybe<Scalars['String']['output']>;
@@ -753,7 +741,21 @@ export type PaginatedPosts = {
   __typename?: 'PaginatedPosts';
   hasMore: Scalars['Boolean']['output'];
   posts: Array<Post>;
-  totalCount: Scalars['Int']['output'];
+  totalCount?: Maybe<Scalars['Int']['output']>;
+};
+
+export type PaginatedReposts = {
+  __typename?: 'PaginatedReposts';
+  hasMore: Scalars['Boolean']['output'];
+  reposts: Array<Repost>;
+  totalCount?: Maybe<Scalars['Int']['output']>;
+};
+
+export type PaginatedUsers = {
+  __typename?: 'PaginatedUsers';
+  hasMore: Scalars['Boolean']['output'];
+  totalCount?: Maybe<Scalars['Int']['output']>;
+  users: Array<User>;
 };
 
 export type Post = {
@@ -796,16 +798,15 @@ export type Profile = {
 
 export type Query = {
   __typename?: 'Query';
-  affiliates?: Maybe<Array<User>>;
+  affiliates: PaginatedUsers;
   allUnseenMessageNotifications?: Maybe<Array<MessageNotification>>;
-  blockedUsers?: Maybe<Array<User>>;
+  blockedUsers: PaginatedUsers;
   chatUsers?: Maybe<Array<User>>;
   chats?: Maybe<Array<Chat>>;
   currentSession?: Maybe<Session>;
   findAffiliationByUserId?: Maybe<Affiliation>;
   findAffiliationRequest?: Maybe<Affiliation>;
   findChat?: Maybe<Chat>;
-  findIdentityVerificationRequest?: Maybe<IdentityVerification>;
   findMessage?: Maybe<Message>;
   findMessageById?: Maybe<Message>;
   findPost?: Maybe<Post>;
@@ -817,28 +818,27 @@ export type Query = {
   findUserDeviceTokenBySessionId?: Maybe<UserDeviceToken>;
   findUserDeviceTokenByToken?: Maybe<UserDeviceToken>;
   findUserDeviceTokensByUserId?: Maybe<Array<UserDeviceToken>>;
-  findVerificationRequest?: Maybe<UserVerification>;
-  getBookmarks?: Maybe<Array<Post>>;
-  getFollowers?: Maybe<Array<User>>;
-  getFollowing?: Maybe<Array<User>>;
-  getLikedPosts?: Maybe<Array<Post>>;
-  getPostLikes?: Maybe<Array<User>>;
-  getReposts?: Maybe<Array<Repost>>;
-  hasUserBlockedMe: Scalars['Boolean']['output'];
+  getBookmarks: PaginatedPosts;
+  getFollowers: PaginatedUsers;
+  getFollowing: PaginatedUsers;
+  getLikedPosts: PaginatedPosts;
+  getPostLikes: PaginatedUsers;
+  getReposts: PaginatedReposts;
+  hasUserBlockedMe?: Maybe<Block>;
   isAffiliatedTo?: Maybe<User>;
-  isBookmarked: Scalars['Boolean']['output'];
-  isFollowedByMe: Scalars['Boolean']['output'];
-  isPostLikedByMe: Scalars['Boolean']['output'];
-  isRepostedByUser: Scalars['Boolean']['output'];
-  isUserBlockedByMe: Scalars['Boolean']['output'];
-  isUserFollowingMe: Scalars['Boolean']['output'];
+  isBookmarked?: Maybe<Bookmark>;
+  isFollowedByMe?: Maybe<Follow>;
+  isPostLikedByMe?: Maybe<Like>;
+  isRepostedByUser?: Maybe<Repost>;
+  isUserBlockedByMe?: Maybe<Block>;
+  isUserFollowingMe?: Maybe<Follow>;
   landingUsers: Array<LandingUser>;
   latestMessageOrEvent?: Maybe<MessageOrEvent>;
   me?: Maybe<User>;
-  messagesAndEvents?: Maybe<Array<MessageOrEvent>>;
+  messagesAndEvents: PaginatedChatItems;
   notificationFeed: PaginatedNotifications;
   otherSessions?: Maybe<Array<Session>>;
-  postComments?: Maybe<Array<Post>>;
+  postComments: PaginatedPosts;
   postFeed: PaginatedPosts;
   postMedia?: Maybe<Array<MediaItem>>;
   reportOptions?: Maybe<Array<ReportOption>>;
@@ -846,22 +846,22 @@ export type Query = {
   topics?: Maybe<Array<Topic>>;
   unseenMessageNotifications?: Maybe<Array<MessageNotification>>;
   unseenNotifications: Array<Notification>;
-  userComments?: Maybe<Array<Post>>;
-  userPostFeed?: Maybe<Array<Post>>;
-  usersToMessage?: Maybe<Array<User>>;
+  userComments: PaginatedPosts;
+  userPostFeed: PaginatedPosts;
+  usersToMessage: PaginatedUsers;
 };
 
 
 export type QueryAffiliatesArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['Int']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit: Scalars['Int']['input'];
 };
 
 
 export type QueryBlockedUsersArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit: Scalars['Int']['input'];
 };
 
 
@@ -882,12 +882,6 @@ export type QueryFindAffiliationRequestArgs = {
 
 export type QueryFindChatArgs = {
   chatId: Scalars['String']['input'];
-};
-
-
-export type QueryFindIdentityVerificationRequestArgs = {
-  id?: InputMaybe<Scalars['Int']['input']>;
-  type: Scalars['String']['input'];
 };
 
 
@@ -953,51 +947,45 @@ export type QueryFindUserDeviceTokensByUserIdArgs = {
 };
 
 
-export type QueryFindVerificationRequestArgs = {
-  id?: InputMaybe<Scalars['Int']['input']>;
-  type: Scalars['String']['input'];
-};
-
-
 export type QueryGetBookmarksArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit: Scalars['Int']['input'];
 };
 
 
 export type QueryGetFollowersArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['Int']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit: Scalars['Int']['input'];
 };
 
 
 export type QueryGetFollowingArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['Int']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit: Scalars['Int']['input'];
 };
 
 
 export type QueryGetLikedPostsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['Int']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit: Scalars['Int']['input'];
 };
 
 
 export type QueryGetPostLikesArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
   itemId: Scalars['String']['input'];
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit: Scalars['Int']['input'];
   type: Scalars['String']['input'];
 };
 
 
 export type QueryGetRepostsArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  postId: Scalars['Int']['input'];
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit: Scalars['Int']['input'];
+  postId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1051,6 +1039,8 @@ export type QueryLatestMessageOrEventArgs = {
 
 export type QueryMessagesAndEventsArgs = {
   chatId?: InputMaybe<Scalars['String']['input']>;
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit: Scalars['Int']['input'];
 };
 
 
@@ -1061,9 +1051,9 @@ export type QueryNotificationFeedArgs = {
 
 
 export type QueryPostCommentsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['Int']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  limit: Scalars['Int']['input'];
   type: Scalars['String']['input'];
 };
 
@@ -1096,22 +1086,22 @@ export type QueryUnseenMessageNotificationsArgs = {
 
 
 export type QueryUserCommentsArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit: Scalars['Int']['input'];
   userId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
 export type QueryUserPostFeedArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit: Scalars['Int']['input'];
   userId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
 export type QueryUsersToMessageArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit: Scalars['Int']['input'];
 };
 
 export type Report = {
@@ -1213,7 +1203,6 @@ export type Subscription = {
   deletedMessageNotification: MessageNotification;
   deletedMessageOrEvent: MessageOrEvent;
   deletedNotification: Notification;
-  deletedPost: Post;
   editedChat: Chat;
   editedChatUser: ChatUser;
   editedMessage: Message;
@@ -1222,7 +1211,6 @@ export type Subscription = {
   newMessageNotification: MessageNotification;
   newMessageOrEvent: MessageOrEvent;
   newNotification: Notification;
-  newPost: Post;
 };
 
 
@@ -1249,12 +1237,6 @@ export type SubscriptionDeletedMessageOrEventArgs = {
 
 
 export type SubscriptionDeletedNotificationArgs = {
-  userId: Scalars['Int']['input'];
-};
-
-
-export type SubscriptionDeletedPostArgs = {
-  postId?: InputMaybe<Scalars['Int']['input']>;
   userId: Scalars['Int']['input'];
 };
 
@@ -1301,12 +1283,6 @@ export type SubscriptionNewNotificationArgs = {
   userId: Scalars['Int']['input'];
 };
 
-
-export type SubscriptionNewPostArgs = {
-  postId?: InputMaybe<Scalars['Int']['input']>;
-  userId: Scalars['Int']['input'];
-};
-
 export type Topic = {
   __typename?: 'Topic';
   createdAt: Scalars['String']['output'];
@@ -1327,6 +1303,7 @@ export type User = {
   gender: Scalars['String']['output'];
   hiddenPosts: Array<Scalars['Int']['output']>;
   id: Scalars['Int']['output'];
+  identity: IdentityVerification;
   name: Scalars['String']['output'];
   posts?: Maybe<Array<Post>>;
   profile: Profile;
@@ -1337,6 +1314,7 @@ export type User = {
   updatedAt: Scalars['String']['output'];
   userSettings: Settings;
   username: Scalars['String']['output'];
+  verification: Verification;
 };
 
 export type UserDeviceToken = {
@@ -1358,24 +1336,10 @@ export type UserResponse = {
   user?: Maybe<User>;
 };
 
-export type UserVerification = {
-  __typename?: 'UserVerification';
-  createdAt: Scalars['String']['output'];
-  documents: Array<Scalars['JSONObject']['output']>;
-  id: Scalars['Int']['output'];
-  outcome?: Maybe<Scalars['String']['output']>;
-  type: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
-  userId: Scalars['Int']['output'];
+export type Verification = {
+  __typename?: 'Verification';
   verified: VerificationStatus;
   verifiedSince?: Maybe<Scalars['String']['output']>;
-};
-
-export type UserVerificationResponse = {
-  __typename?: 'UserVerificationResponse';
-  ok: Scalars['Boolean']['output'];
-  status?: Maybe<Scalars['String']['output']>;
-  userVerification?: Maybe<UserVerification>;
 };
 
 /** Possible verification request status values */
@@ -1386,12 +1350,12 @@ export enum VerificationStatus {
 }
 
 export type UsersToMessageQueryVariables = Exact<{
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
+  limit: Scalars['Int']['input'];
+  cursor?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type UsersToMessageQuery = { __typename?: 'Query', usersToMessage?: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }> | null };
+export type UsersToMessageQuery = { __typename?: 'Query', usersToMessage: { __typename?: 'PaginatedUsers', hasMore: boolean, users: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }> } };
 
 export type CreatePostMutationVariables = Exact<{
   type: Scalars['String']['input'];
@@ -1403,7 +1367,7 @@ export type CreatePostMutationVariables = Exact<{
 }>;
 
 
-export type CreatePostMutation = { __typename?: 'Mutation', createPost: { __typename?: 'PostResponse', ok: boolean, status?: string | null, post?: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
+export type CreatePostMutation = { __typename?: 'Mutation', createPost: { __typename?: 'PostResponse', ok: boolean, status?: string | null, post?: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
 
 export type CreateRepostMutationVariables = Exact<{
   postId: Scalars['String']['input'];
@@ -1426,14 +1390,6 @@ export type DeleteRepostMutationVariables = Exact<{
 
 export type DeleteRepostMutation = { __typename?: 'Mutation', deleteRepost: boolean };
 
-export type DeletedPostSubscriptionVariables = Exact<{
-  postId?: InputMaybe<Scalars['Int']['input']>;
-  userId: Scalars['Int']['input'];
-}>;
-
-
-export type DeletedPostSubscription = { __typename?: 'Subscription', deletedPost: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } };
-
 export type EditPostMutationVariables = Exact<{
   postId: Scalars['String']['input'];
   type: Scalars['String']['input'];
@@ -1444,40 +1400,40 @@ export type EditPostMutationVariables = Exact<{
 }>;
 
 
-export type EditPostMutation = { __typename?: 'Mutation', editPost: { __typename?: 'PostResponse', ok: boolean, status?: string | null, post?: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
+export type EditPostMutation = { __typename?: 'Mutation', editPost: { __typename?: 'PostResponse', ok: boolean, status?: string | null, post?: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
 
 export type FindPostQueryVariables = Exact<{
   postId: Scalars['String']['input'];
 }>;
 
 
-export type FindPostQuery = { __typename?: 'Query', findPost?: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } | null };
+export type FindPostQuery = { __typename?: 'Query', findPost?: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } | null };
 
 export type FindPostByIdQueryVariables = Exact<{
   id?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
-export type FindPostByIdQuery = { __typename?: 'Query', findPostById?: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } | null };
+export type FindPostByIdQuery = { __typename?: 'Query', findPostById?: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } | null };
 
 export type GetPostLikesQueryVariables = Exact<{
   itemId: Scalars['String']['input'];
   type: Scalars['String']['input'];
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
+  limit: Scalars['Int']['input'];
+  cursor?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type GetPostLikesQuery = { __typename?: 'Query', getPostLikes?: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }> | null };
+export type GetPostLikesQuery = { __typename?: 'Query', getPostLikes: { __typename?: 'PaginatedUsers', hasMore: boolean, totalCount?: number | null, users: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }> } };
 
 export type GetRepostsQueryVariables = Exact<{
   postId: Scalars['Int']['input'];
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
+  limit: Scalars['Int']['input'];
+  cursor?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type GetRepostsQuery = { __typename?: 'Query', getReposts?: Array<{ __typename?: 'Repost', id: number, repostId: string, postId: number, authorId: number, createdAt: string, updatedAt: string }> | null };
+export type GetRepostsQuery = { __typename?: 'Query', getReposts: { __typename?: 'PaginatedReposts', hasMore: boolean, totalCount?: number | null, reposts: Array<{ __typename?: 'Repost', id: number, repostId: string, postId: number, authorId: number, createdAt: string, updatedAt: string }> } };
 
 export type IncrementPostViewsMutationVariables = Exact<{
   itemId: Scalars['String']['input'];
@@ -1495,7 +1451,7 @@ export type IsPostLikedByMeQueryVariables = Exact<{
 }>;
 
 
-export type IsPostLikedByMeQuery = { __typename?: 'Query', isPostLikedByMe: boolean };
+export type IsPostLikedByMeQuery = { __typename?: 'Query', isPostLikedByMe?: { __typename?: 'Like', id: number, userId: number, likedItemId: string, itemOpened: boolean, itemType: string, origin: string, createdAt: string, updatedAt: string } | null };
 
 export type IsRepostedByUserQueryVariables = Exact<{
   postId: Scalars['Int']['input'];
@@ -1503,7 +1459,7 @@ export type IsRepostedByUserQueryVariables = Exact<{
 }>;
 
 
-export type IsRepostedByUserQuery = { __typename?: 'Query', isRepostedByUser: boolean };
+export type IsRepostedByUserQuery = { __typename?: 'Query', isRepostedByUser?: { __typename?: 'Repost', id: number, repostId: string, postId: number, authorId: number, createdAt: string, updatedAt: string } | null };
 
 export type LikePostMutationVariables = Exact<{
   itemId: Scalars['String']['input'];
@@ -1515,23 +1471,15 @@ export type LikePostMutationVariables = Exact<{
 
 export type LikePostMutation = { __typename?: 'Mutation', likePost?: { __typename?: 'Like', id: number, userId: number, likedItemId: string, itemOpened: boolean, itemType: string, origin: string, createdAt: string, updatedAt: string } | null };
 
-export type NewPostSubscriptionVariables = Exact<{
-  postId?: InputMaybe<Scalars['Int']['input']>;
-  userId: Scalars['Int']['input'];
-}>;
-
-
-export type NewPostSubscription = { __typename?: 'Subscription', newPost: { __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null } };
-
 export type PostCommentsQueryVariables = Exact<{
   id?: InputMaybe<Scalars['Int']['input']>;
   type: Scalars['String']['input'];
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
+  limit: Scalars['Int']['input'];
+  cursor?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type PostCommentsQuery = { __typename?: 'Query', postComments?: Array<{ __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null }> | null };
+export type PostCommentsQuery = { __typename?: 'Query', postComments: { __typename?: 'PaginatedPosts', hasMore: boolean, totalCount?: number | null, posts: Array<{ __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null }> } };
 
 export type PostFeedQueryVariables = Exact<{
   limit: Scalars['Int']['input'];
@@ -1539,7 +1487,7 @@ export type PostFeedQueryVariables = Exact<{
 }>;
 
 
-export type PostFeedQuery = { __typename?: 'Query', postFeed: { __typename?: 'PaginatedPosts', hasMore: boolean, totalCount: number, posts: Array<{ __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null }> } };
+export type PostFeedQuery = { __typename?: 'Query', postFeed: { __typename?: 'PaginatedPosts', hasMore: boolean, totalCount?: number | null, posts: Array<{ __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null }> } };
 
 export type RemoveLikeMutationVariables = Exact<{
   itemId: Scalars['String']['input'];
@@ -1573,22 +1521,14 @@ export type FindUserQueryVariables = Exact<{
 }>;
 
 
-export type FindUserQuery = { __typename?: 'Query', findUser?: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } } | null };
+export type FindUserQuery = { __typename?: 'Query', findUser?: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } } | null };
 
 export type FindUserBeforeLogInMutationVariables = Exact<{
   input: Scalars['String']['input'];
 }>;
 
 
-export type FindUserBeforeLogInMutation = { __typename?: 'Mutation', findUserBeforeLogIn: { __typename?: 'UserResponse', status?: string | null, ok: boolean, user?: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
-
-export type FindVerificationRequestQueryVariables = Exact<{
-  id?: InputMaybe<Scalars['Int']['input']>;
-  type: Scalars['String']['input'];
-}>;
-
-
-export type FindVerificationRequestQuery = { __typename?: 'Query', findVerificationRequest?: { __typename?: 'UserVerification', id: number, userId: number, verified: VerificationStatus, type: string, verifiedSince?: string | null, documents: Array<any>, outcome?: string | null, createdAt: string, updatedAt: string } | null };
+export type FindUserBeforeLogInMutation = { __typename?: 'Mutation', findUserBeforeLogIn: { __typename?: 'UserResponse', status?: string | null, ok: boolean, user?: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
 
 export type FollowUserMutationVariables = Exact<{
   userId?: InputMaybe<Scalars['Int']['input']>;
@@ -1596,23 +1536,23 @@ export type FollowUserMutationVariables = Exact<{
 }>;
 
 
-export type FollowUserMutation = { __typename?: 'Mutation', followUser?: { __typename?: 'Follow', id: number, origin: string, createdAt: string, updatedAt: string, follower: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }, user: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } } } | null };
+export type FollowUserMutation = { __typename?: 'Mutation', followUser?: { __typename?: 'Follow', id: number, origin: string, createdAt: string, updatedAt: string, follower: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }, user: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } } } | null };
 
 export type GetFollowersQueryVariables = Exact<{
   id?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
+  limit: Scalars['Int']['input'];
+  cursor?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type GetFollowersQuery = { __typename?: 'Query', getFollowers?: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } }> | null };
+export type GetFollowersQuery = { __typename?: 'Query', getFollowers: { __typename?: 'PaginatedUsers', hasMore: boolean, totalCount?: number | null, users: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }> } };
 
 export type IsFollowedByMeQueryVariables = Exact<{
   id?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
-export type IsFollowedByMeQuery = { __typename?: 'Query', isFollowedByMe: boolean };
+export type IsFollowedByMeQuery = { __typename?: 'Query', isFollowedByMe?: { __typename?: 'Follow', id: number, origin: string, createdAt: string, updatedAt: string, follower: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }, user: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } } } | null };
 
 export type LoginMutationVariables = Exact<{
   input: Scalars['String']['input'];
@@ -1625,7 +1565,7 @@ export type LoginMutationVariables = Exact<{
 }>;
 
 
-export type LoginMutation = { __typename?: 'Mutation', login: { __typename?: 'UserResponse', accessToken?: string | null, status?: string | null, ok: boolean, user?: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
+export type LoginMutation = { __typename?: 'Mutation', login: { __typename?: 'UserResponse', accessToken?: string | null, status?: string | null, ok: boolean, user?: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
 
 export type LogoutMutationVariables = Exact<{ [key: string]: never; }>;
 
@@ -1635,7 +1575,7 @@ export type LogoutMutation = { __typename?: 'Mutation', logout: boolean };
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'Query', me?: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } } | null };
+export type MeQuery = { __typename?: 'Query', me?: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } } | null };
 
 export type NotAuthModifyPasswordMutationVariables = Exact<{
   password: Scalars['String']['input'];
@@ -1708,41 +1648,52 @@ export type VerifyOtpMutationVariables = Exact<{
 }>;
 
 
-export type VerifyOtpMutation = { __typename?: 'Mutation', verifyOTP: { __typename?: 'UserResponse', status?: string | null, accessToken?: string | null, ok: boolean, user?: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean } } | null } };
+export type VerifyOtpMutation = { __typename?: 'Mutation', verifyOTP: { __typename?: 'UserResponse', status?: string | null, accessToken?: string | null, ok: boolean, user?: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } } | null } };
 
 
 export const UsersToMessageDocument = gql`
-    query UsersToMessage($offset: Int, $limit: Int) {
-  usersToMessage(offset: $offset, limit: $limit) {
-    id
-    name
-    username
-    email
-    type
-    gender
-    birthDate {
-      date
-      monthAndDayVisibility
-      yearVisibility
+    query UsersToMessage($limit: Int!, $cursor: String) {
+  usersToMessage(limit: $limit, cursor: $cursor) {
+    users {
+      id
+      name
+      username
+      email
+      type
+      gender
+      birthDate {
+        date
+        monthAndDayVisibility
+        yearVisibility
+      }
+      emailVerified
+      profile {
+        profilePicture
+        profileBanner
+        bio
+        website
+      }
+      userSettings {
+        incomingMessages
+        twoFactorAuth
+      }
+      searchSettings {
+        hideSensitiveContent
+        hideBlockedAccounts
+      }
+      createdAt
+      updatedAt
+      hiddenPosts
+      identity {
+        verified
+        verifiedSince
+      }
+      verification {
+        verified
+        verifiedSince
+      }
     }
-    emailVerified
-    profile {
-      profilePicture
-      profileBanner
-      bio
-      website
-    }
-    userSettings {
-      incomingMessages
-      twoFactorAuth
-    }
-    searchSettings {
-      hideSensitiveContent
-      hideBlockedAccounts
-    }
-    createdAt
-    updatedAt
-    hiddenPosts
+    hasMore
   }
 }
     `;
@@ -1759,12 +1710,12 @@ export const UsersToMessageDocument = gql`
  * @example
  * const { data, loading, error } = useUsersToMessageQuery({
  *   variables: {
- *      offset: // value for 'offset'
  *      limit: // value for 'limit'
+ *      cursor: // value for 'cursor'
  *   },
  * });
  */
-export function useUsersToMessageQuery(baseOptions?: Apollo.QueryHookOptions<UsersToMessageQuery, UsersToMessageQueryVariables>) {
+export function useUsersToMessageQuery(baseOptions: Apollo.QueryHookOptions<UsersToMessageQuery, UsersToMessageQueryVariables> & ({ variables: UsersToMessageQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<UsersToMessageQuery, UsersToMessageQueryVariables>(UsersToMessageDocument, options);
       }
@@ -1830,6 +1781,14 @@ export const CreatePostDocument = gql`
         createdAt
         updatedAt
         hiddenPosts
+        identity {
+          verified
+          verifiedSince
+        }
+        verification {
+          verified
+          verifiedSince
+        }
       }
       isReplyToId
       isReplyToType
@@ -1985,89 +1944,6 @@ export function useDeleteRepostMutation(baseOptions?: Apollo.MutationHookOptions
 export type DeleteRepostMutationHookResult = ReturnType<typeof useDeleteRepostMutation>;
 export type DeleteRepostMutationResult = Apollo.MutationResult<DeleteRepostMutation>;
 export type DeleteRepostMutationOptions = Apollo.BaseMutationOptions<DeleteRepostMutation, DeleteRepostMutationVariables>;
-export const DeletedPostDocument = gql`
-    subscription DeletedPost($postId: Int, $userId: Int!) {
-  deletedPost(postId: $postId, userId: $userId) {
-    id
-    itemId
-    authorId
-    type
-    content
-    isEdited
-    views
-    lang
-    topics
-    author {
-      id
-      name
-      username
-      email
-      type
-      gender
-      birthDate {
-        date
-        monthAndDayVisibility
-        yearVisibility
-      }
-      emailVerified
-      profile {
-        profilePicture
-        profileBanner
-        bio
-        website
-      }
-      userSettings {
-        incomingMessages
-        twoFactorAuth
-      }
-      searchSettings {
-        hideSensitiveContent
-        hideBlockedAccounts
-      }
-      createdAt
-      updatedAt
-      hiddenPosts
-    }
-    isReplyToId
-    isReplyToType
-    quotedPostId
-    media {
-      id
-      type
-      src
-      alt
-    }
-    mentions
-    hashtags
-    createdAt
-    updatedAt
-  }
-}
-    `;
-
-/**
- * __useDeletedPostSubscription__
- *
- * To run a query within a React component, call `useDeletedPostSubscription` and pass it any options that fit your needs.
- * When your component renders, `useDeletedPostSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useDeletedPostSubscription({
- *   variables: {
- *      postId: // value for 'postId'
- *      userId: // value for 'userId'
- *   },
- * });
- */
-export function useDeletedPostSubscription(baseOptions: Apollo.SubscriptionHookOptions<DeletedPostSubscription, DeletedPostSubscriptionVariables> & ({ variables: DeletedPostSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<DeletedPostSubscription, DeletedPostSubscriptionVariables>(DeletedPostDocument, options);
-      }
-export type DeletedPostSubscriptionHookResult = ReturnType<typeof useDeletedPostSubscription>;
-export type DeletedPostSubscriptionResult = Apollo.SubscriptionResult<DeletedPostSubscription>;
 export const EditPostDocument = gql`
     mutation EditPost($postId: String!, $type: String!, $content: String!, $media: String!, $deletedMedia: String!, $existingAltTexts: String!) {
   editPost(
@@ -2118,6 +1994,14 @@ export const EditPostDocument = gql`
         createdAt
         updatedAt
         hiddenPosts
+        identity {
+          verified
+          verifiedSince
+        }
+        verification {
+          verified
+          verifiedSince
+        }
       }
       isReplyToId
       isReplyToType
@@ -2215,6 +2099,14 @@ export const FindPostDocument = gql`
       createdAt
       updatedAt
       hiddenPosts
+      identity {
+        verified
+        verifiedSince
+      }
+      verification {
+        verified
+        verifiedSince
+      }
     }
     isReplyToId
     isReplyToType
@@ -2307,6 +2199,14 @@ export const FindPostByIdDocument = gql`
       createdAt
       updatedAt
       hiddenPosts
+      identity {
+        verified
+        verifiedSince
+      }
+      verification {
+        verified
+        verifiedSince
+      }
     }
     isReplyToId
     isReplyToType
@@ -2358,37 +2258,49 @@ export type FindPostByIdLazyQueryHookResult = ReturnType<typeof useFindPostByIdL
 export type FindPostByIdSuspenseQueryHookResult = ReturnType<typeof useFindPostByIdSuspenseQuery>;
 export type FindPostByIdQueryResult = Apollo.QueryResult<FindPostByIdQuery, FindPostByIdQueryVariables>;
 export const GetPostLikesDocument = gql`
-    query GetPostLikes($itemId: String!, $type: String!, $offset: Int, $limit: Int) {
-  getPostLikes(itemId: $itemId, type: $type, offset: $offset, limit: $limit) {
-    id
-    name
-    username
-    email
-    type
-    gender
-    birthDate {
-      date
-      monthAndDayVisibility
-      yearVisibility
+    query GetPostLikes($itemId: String!, $type: String!, $limit: Int!, $cursor: String) {
+  getPostLikes(itemId: $itemId, type: $type, limit: $limit, cursor: $cursor) {
+    users {
+      id
+      name
+      username
+      email
+      type
+      gender
+      birthDate {
+        date
+        monthAndDayVisibility
+        yearVisibility
+      }
+      emailVerified
+      profile {
+        profilePicture
+        profileBanner
+        bio
+        website
+      }
+      userSettings {
+        incomingMessages
+        twoFactorAuth
+      }
+      searchSettings {
+        hideSensitiveContent
+        hideBlockedAccounts
+      }
+      createdAt
+      updatedAt
+      hiddenPosts
+      identity {
+        verified
+        verifiedSince
+      }
+      verification {
+        verified
+        verifiedSince
+      }
     }
-    emailVerified
-    profile {
-      profilePicture
-      profileBanner
-      bio
-      website
-    }
-    userSettings {
-      incomingMessages
-      twoFactorAuth
-    }
-    searchSettings {
-      hideSensitiveContent
-      hideBlockedAccounts
-    }
-    createdAt
-    updatedAt
-    hiddenPosts
+    hasMore
+    totalCount
   }
 }
     `;
@@ -2407,8 +2319,8 @@ export const GetPostLikesDocument = gql`
  *   variables: {
  *      itemId: // value for 'itemId'
  *      type: // value for 'type'
- *      offset: // value for 'offset'
  *      limit: // value for 'limit'
+ *      cursor: // value for 'cursor'
  *   },
  * });
  */
@@ -2429,14 +2341,18 @@ export type GetPostLikesLazyQueryHookResult = ReturnType<typeof useGetPostLikesL
 export type GetPostLikesSuspenseQueryHookResult = ReturnType<typeof useGetPostLikesSuspenseQuery>;
 export type GetPostLikesQueryResult = Apollo.QueryResult<GetPostLikesQuery, GetPostLikesQueryVariables>;
 export const GetRepostsDocument = gql`
-    query GetReposts($postId: Int!, $offset: Int, $limit: Int) {
-  getReposts(postId: $postId, offset: $offset, limit: $limit) {
-    id
-    repostId
-    postId
-    authorId
-    createdAt
-    updatedAt
+    query GetReposts($postId: Int!, $limit: Int!, $cursor: String) {
+  getReposts(postId: $postId, limit: $limit, cursor: $cursor) {
+    reposts {
+      id
+      repostId
+      postId
+      authorId
+      createdAt
+      updatedAt
+    }
+    hasMore
+    totalCount
   }
 }
     `;
@@ -2454,8 +2370,8 @@ export const GetRepostsDocument = gql`
  * const { data, loading, error } = useGetRepostsQuery({
  *   variables: {
  *      postId: // value for 'postId'
- *      offset: // value for 'offset'
  *      limit: // value for 'limit'
+ *      cursor: // value for 'cursor'
  *   },
  * });
  */
@@ -2528,7 +2444,16 @@ export type IncrementPostViewsMutationResult = Apollo.MutationResult<IncrementPo
 export type IncrementPostViewsMutationOptions = Apollo.BaseMutationOptions<IncrementPostViewsMutation, IncrementPostViewsMutationVariables>;
 export const IsPostLikedByMeDocument = gql`
     query IsPostLikedByMe($itemId: String!, $type: String!) {
-  isPostLikedByMe(itemId: $itemId, type: $type)
+  isPostLikedByMe(itemId: $itemId, type: $type) {
+    id
+    userId
+    likedItemId
+    itemOpened
+    itemType
+    origin
+    createdAt
+    updatedAt
+  }
 }
     `;
 
@@ -2567,7 +2492,14 @@ export type IsPostLikedByMeSuspenseQueryHookResult = ReturnType<typeof useIsPost
 export type IsPostLikedByMeQueryResult = Apollo.QueryResult<IsPostLikedByMeQuery, IsPostLikedByMeQueryVariables>;
 export const IsRepostedByUserDocument = gql`
     query IsRepostedByUser($postId: Int!, $userId: Int) {
-  isRepostedByUser(postId: $postId, userId: $userId)
+  isRepostedByUser(postId: $postId, userId: $userId) {
+    id
+    repostId
+    postId
+    authorId
+    createdAt
+    updatedAt
+  }
 }
     `;
 
@@ -2652,145 +2584,74 @@ export function useLikePostMutation(baseOptions?: Apollo.MutationHookOptions<Lik
 export type LikePostMutationHookResult = ReturnType<typeof useLikePostMutation>;
 export type LikePostMutationResult = Apollo.MutationResult<LikePostMutation>;
 export type LikePostMutationOptions = Apollo.BaseMutationOptions<LikePostMutation, LikePostMutationVariables>;
-export const NewPostDocument = gql`
-    subscription NewPost($postId: Int, $userId: Int!) {
-  newPost(postId: $postId, userId: $userId) {
-    id
-    itemId
-    authorId
-    type
-    content
-    isEdited
-    views
-    lang
-    topics
-    author {
-      id
-      name
-      username
-      email
-      type
-      gender
-      birthDate {
-        date
-        monthAndDayVisibility
-        yearVisibility
-      }
-      emailVerified
-      profile {
-        profilePicture
-        profileBanner
-        bio
-        website
-      }
-      userSettings {
-        incomingMessages
-        twoFactorAuth
-      }
-      searchSettings {
-        hideSensitiveContent
-        hideBlockedAccounts
-      }
-      createdAt
-      updatedAt
-      hiddenPosts
-    }
-    isReplyToId
-    isReplyToType
-    quotedPostId
-    media {
-      id
-      type
-      src
-      alt
-    }
-    mentions
-    hashtags
-    createdAt
-    updatedAt
-  }
-}
-    `;
-
-/**
- * __useNewPostSubscription__
- *
- * To run a query within a React component, call `useNewPostSubscription` and pass it any options that fit your needs.
- * When your component renders, `useNewPostSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useNewPostSubscription({
- *   variables: {
- *      postId: // value for 'postId'
- *      userId: // value for 'userId'
- *   },
- * });
- */
-export function useNewPostSubscription(baseOptions: Apollo.SubscriptionHookOptions<NewPostSubscription, NewPostSubscriptionVariables> & ({ variables: NewPostSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<NewPostSubscription, NewPostSubscriptionVariables>(NewPostDocument, options);
-      }
-export type NewPostSubscriptionHookResult = ReturnType<typeof useNewPostSubscription>;
-export type NewPostSubscriptionResult = Apollo.SubscriptionResult<NewPostSubscription>;
 export const PostCommentsDocument = gql`
-    query PostComments($id: Int, $type: String!, $offset: Int, $limit: Int) {
-  postComments(id: $id, type: $type, offset: $offset, limit: $limit) {
-    id
-    itemId
-    authorId
-    type
-    content
-    isEdited
-    views
-    lang
-    topics
-    author {
+    query PostComments($id: Int, $type: String!, $limit: Int!, $cursor: String) {
+  postComments(id: $id, type: $type, limit: $limit, cursor: $cursor) {
+    posts {
       id
-      name
-      username
-      email
+      itemId
+      authorId
       type
-      gender
-      birthDate {
-        date
-        monthAndDayVisibility
-        yearVisibility
+      content
+      isEdited
+      views
+      lang
+      topics
+      author {
+        id
+        name
+        username
+        email
+        type
+        gender
+        birthDate {
+          date
+          monthAndDayVisibility
+          yearVisibility
+        }
+        emailVerified
+        profile {
+          profilePicture
+          profileBanner
+          bio
+          website
+        }
+        userSettings {
+          incomingMessages
+          twoFactorAuth
+        }
+        searchSettings {
+          hideSensitiveContent
+          hideBlockedAccounts
+        }
+        createdAt
+        updatedAt
+        hiddenPosts
+        identity {
+          verified
+          verifiedSince
+        }
+        verification {
+          verified
+          verifiedSince
+        }
       }
-      emailVerified
-      profile {
-        profilePicture
-        profileBanner
-        bio
-        website
+      isReplyToId
+      isReplyToType
+      quotedPostId
+      media {
+        id
+        type
+        src
+        alt
       }
-      userSettings {
-        incomingMessages
-        twoFactorAuth
-      }
-      searchSettings {
-        hideSensitiveContent
-        hideBlockedAccounts
-      }
+      mentions
+      hashtags
       createdAt
       updatedAt
-      hiddenPosts
     }
-    isReplyToId
-    isReplyToType
-    quotedPostId
-    media {
-      id
-      type
-      src
-      alt
-    }
-    mentions
-    hashtags
-    createdAt
-    updatedAt
+    hasMore
+    totalCount
   }
 }
     `;
@@ -2809,8 +2670,8 @@ export const PostCommentsDocument = gql`
  *   variables: {
  *      id: // value for 'id'
  *      type: // value for 'type'
- *      offset: // value for 'offset'
  *      limit: // value for 'limit'
+ *      cursor: // value for 'cursor'
  *   },
  * });
  */
@@ -2873,6 +2734,14 @@ export const PostFeedDocument = gql`
         createdAt
         updatedAt
         hiddenPosts
+        identity {
+          verified
+          verifiedSince
+        }
+        verification {
+          verified
+          verifiedSince
+        }
       }
       isReplyToId
       isReplyToType
@@ -3085,6 +2954,14 @@ export const FindUserDocument = gql`
     createdAt
     updatedAt
     hiddenPosts
+    identity {
+      verified
+      verifiedSince
+    }
+    verification {
+      verified
+      verifiedSince
+    }
   }
 }
     `;
@@ -3154,6 +3031,14 @@ export const FindUserBeforeLogInDocument = gql`
       createdAt
       updatedAt
       hiddenPosts
+      identity {
+        verified
+        verifiedSince
+      }
+      verification {
+        verified
+        verifiedSince
+      }
     }
     status
     ok
@@ -3190,55 +3075,6 @@ export function useFindUserBeforeLogInMutation(baseOptions?: Apollo.MutationHook
 export type FindUserBeforeLogInMutationHookResult = ReturnType<typeof useFindUserBeforeLogInMutation>;
 export type FindUserBeforeLogInMutationResult = Apollo.MutationResult<FindUserBeforeLogInMutation>;
 export type FindUserBeforeLogInMutationOptions = Apollo.BaseMutationOptions<FindUserBeforeLogInMutation, FindUserBeforeLogInMutationVariables>;
-export const FindVerificationRequestDocument = gql`
-    query FindVerificationRequest($id: Int, $type: String!) {
-  findVerificationRequest(id: $id, type: $type) {
-    id
-    userId
-    verified
-    type
-    verifiedSince
-    documents
-    outcome
-    createdAt
-    updatedAt
-  }
-}
-    `;
-
-/**
- * __useFindVerificationRequestQuery__
- *
- * To run a query within a React component, call `useFindVerificationRequestQuery` and pass it any options that fit your needs.
- * When your component renders, `useFindVerificationRequestQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useFindVerificationRequestQuery({
- *   variables: {
- *      id: // value for 'id'
- *      type: // value for 'type'
- *   },
- * });
- */
-export function useFindVerificationRequestQuery(baseOptions: Apollo.QueryHookOptions<FindVerificationRequestQuery, FindVerificationRequestQueryVariables> & ({ variables: FindVerificationRequestQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<FindVerificationRequestQuery, FindVerificationRequestQueryVariables>(FindVerificationRequestDocument, options);
-      }
-export function useFindVerificationRequestLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<FindVerificationRequestQuery, FindVerificationRequestQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<FindVerificationRequestQuery, FindVerificationRequestQueryVariables>(FindVerificationRequestDocument, options);
-        }
-export function useFindVerificationRequestSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<FindVerificationRequestQuery, FindVerificationRequestQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<FindVerificationRequestQuery, FindVerificationRequestQueryVariables>(FindVerificationRequestDocument, options);
-        }
-export type FindVerificationRequestQueryHookResult = ReturnType<typeof useFindVerificationRequestQuery>;
-export type FindVerificationRequestLazyQueryHookResult = ReturnType<typeof useFindVerificationRequestLazyQuery>;
-export type FindVerificationRequestSuspenseQueryHookResult = ReturnType<typeof useFindVerificationRequestSuspenseQuery>;
-export type FindVerificationRequestQueryResult = Apollo.QueryResult<FindVerificationRequestQuery, FindVerificationRequestQueryVariables>;
 export const FollowUserDocument = gql`
     mutation FollowUser($userId: Int, $origin: String!) {
   followUser(userId: $userId, origin: $origin) {
@@ -3273,6 +3109,14 @@ export const FollowUserDocument = gql`
       createdAt
       updatedAt
       hiddenPosts
+      identity {
+        verified
+        verifiedSince
+      }
+      verification {
+        verified
+        verifiedSince
+      }
     }
     user {
       id
@@ -3304,6 +3148,14 @@ export const FollowUserDocument = gql`
       createdAt
       updatedAt
       hiddenPosts
+      identity {
+        verified
+        verifiedSince
+      }
+      verification {
+        verified
+        verifiedSince
+      }
     }
     origin
     createdAt
@@ -3339,37 +3191,49 @@ export type FollowUserMutationHookResult = ReturnType<typeof useFollowUserMutati
 export type FollowUserMutationResult = Apollo.MutationResult<FollowUserMutation>;
 export type FollowUserMutationOptions = Apollo.BaseMutationOptions<FollowUserMutation, FollowUserMutationVariables>;
 export const GetFollowersDocument = gql`
-    query GetFollowers($id: Int, $offset: Int, $limit: Int) {
-  getFollowers(id: $id, offset: $offset, limit: $limit) {
-    id
-    name
-    username
-    email
-    type
-    gender
-    birthDate {
-      date
-      monthAndDayVisibility
-      yearVisibility
+    query GetFollowers($id: Int, $limit: Int!, $cursor: String) {
+  getFollowers(id: $id, limit: $limit, cursor: $cursor) {
+    users {
+      id
+      name
+      username
+      email
+      type
+      gender
+      birthDate {
+        date
+        monthAndDayVisibility
+        yearVisibility
+      }
+      emailVerified
+      profile {
+        profilePicture
+        profileBanner
+        bio
+        website
+      }
+      userSettings {
+        incomingMessages
+        twoFactorAuth
+      }
+      searchSettings {
+        hideSensitiveContent
+        hideBlockedAccounts
+      }
+      createdAt
+      updatedAt
+      hiddenPosts
+      identity {
+        verified
+        verifiedSince
+      }
+      verification {
+        verified
+        verifiedSince
+      }
     }
-    emailVerified
-    profile {
-      profilePicture
-      profileBanner
-      bio
-      website
-    }
-    userSettings {
-      incomingMessages
-      twoFactorAuth
-    }
-    searchSettings {
-      hideSensitiveContent
-      hideBlockedAccounts
-    }
-    createdAt
-    updatedAt
-    hiddenPosts
+    hasMore
+    totalCount
   }
 }
     `;
@@ -3387,12 +3251,12 @@ export const GetFollowersDocument = gql`
  * const { data, loading, error } = useGetFollowersQuery({
  *   variables: {
  *      id: // value for 'id'
- *      offset: // value for 'offset'
  *      limit: // value for 'limit'
+ *      cursor: // value for 'cursor'
  *   },
  * });
  */
-export function useGetFollowersQuery(baseOptions?: Apollo.QueryHookOptions<GetFollowersQuery, GetFollowersQueryVariables>) {
+export function useGetFollowersQuery(baseOptions: Apollo.QueryHookOptions<GetFollowersQuery, GetFollowersQueryVariables> & ({ variables: GetFollowersQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetFollowersQuery, GetFollowersQueryVariables>(GetFollowersDocument, options);
       }
@@ -3410,7 +3274,90 @@ export type GetFollowersSuspenseQueryHookResult = ReturnType<typeof useGetFollow
 export type GetFollowersQueryResult = Apollo.QueryResult<GetFollowersQuery, GetFollowersQueryVariables>;
 export const IsFollowedByMeDocument = gql`
     query IsFollowedByMe($id: Int) {
-  isFollowedByMe(id: $id)
+  isFollowedByMe(id: $id) {
+    id
+    follower {
+      id
+      name
+      username
+      email
+      type
+      gender
+      birthDate {
+        date
+        monthAndDayVisibility
+        yearVisibility
+      }
+      emailVerified
+      profile {
+        profilePicture
+        profileBanner
+        bio
+        website
+      }
+      userSettings {
+        incomingMessages
+        twoFactorAuth
+      }
+      searchSettings {
+        hideSensitiveContent
+        hideBlockedAccounts
+      }
+      createdAt
+      updatedAt
+      hiddenPosts
+      identity {
+        verified
+        verifiedSince
+      }
+      verification {
+        verified
+        verifiedSince
+      }
+    }
+    user {
+      id
+      name
+      username
+      email
+      type
+      gender
+      birthDate {
+        date
+        monthAndDayVisibility
+        yearVisibility
+      }
+      emailVerified
+      profile {
+        profilePicture
+        profileBanner
+        bio
+        website
+      }
+      userSettings {
+        incomingMessages
+        twoFactorAuth
+      }
+      searchSettings {
+        hideSensitiveContent
+        hideBlockedAccounts
+      }
+      createdAt
+      updatedAt
+      hiddenPosts
+      identity {
+        verified
+        verifiedSince
+      }
+      verification {
+        verified
+        verifiedSince
+      }
+    }
+    origin
+    createdAt
+    updatedAt
+  }
 }
     `;
 
@@ -3487,6 +3434,14 @@ export const LoginDocument = gql`
       createdAt
       updatedAt
       hiddenPosts
+      identity {
+        verified
+        verifiedSince
+      }
+      verification {
+        verified
+        verifiedSince
+      }
     }
     errors {
       field
@@ -3592,6 +3547,14 @@ export const MeDocument = gql`
     createdAt
     updatedAt
     hiddenPosts
+    identity {
+      verified
+      verifiedSince
+    }
+    verification {
+      verified
+      verifiedSince
+    }
   }
 }
     `;
@@ -3940,6 +3903,14 @@ export const VerifyOtpDocument = gql`
       createdAt
       updatedAt
       hiddenPosts
+      identity {
+        verified
+        verifiedSince
+      }
+      verification {
+        verified
+        verifiedSince
+      }
     }
     ok
   }

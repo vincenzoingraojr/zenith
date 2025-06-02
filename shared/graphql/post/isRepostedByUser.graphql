@@ -5,5 +5,12 @@ query IsRepostedByUser(
     isRepostedByUser(
         postId: $postId
         userId: $userId
-    )
+    ) {
+        id
+        repostId
+        postId
+        authorId
+        createdAt
+        updatedAt
+    }
 }

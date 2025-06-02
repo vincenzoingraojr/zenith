@@ -3,7 +3,7 @@ import { useTheme } from "../../styles/theme";
 import { DynamicSizeIcon, LinkIconProps } from "./common";
 import { COLORS } from "../../styles/colors";
 
-const Repost: FunctionComponent<LinkIconProps> = ({ type, isActive }) => {
+const RepostIcon: FunctionComponent<LinkIconProps> = ({ type, isActive }) => {
     const theme = useTheme();
     const [size, setSize] = useState(type === "nav" ? 22 : 24);
 
@@ -25,4 +25,4 @@ const Repost: FunctionComponent<LinkIconProps> = ({ type, isActive }) => {
     );
 }
 
-export default Repost;
+export default RepostIcon;

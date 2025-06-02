@@ -37,6 +37,14 @@ mutation FollowUser(
             createdAt
             updatedAt
             hiddenPosts
+            identity {
+                verified
+                verifiedSince
+            }
+            verification {
+                verified
+                verifiedSince
+            }
         }
         user {
             id
@@ -68,6 +76,14 @@ mutation FollowUser(
             createdAt
             updatedAt
             hiddenPosts
+            identity {
+                verified
+                verifiedSince
+            }
+            verification {
+                verified
+                verifiedSince
+            }
         }
         origin
         createdAt

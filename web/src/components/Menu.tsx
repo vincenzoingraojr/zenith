@@ -4,7 +4,7 @@ import { mediaQuery } from "../utils/mediaQuery";
 import { devices } from "../styles/devices";
 import { ControlContainer, CustomSpanOption, LinkOptionBaseItem, OptionBaseIcon, PageText } from "../styles/global";
 import Close from "./icons/Close";
-import { useFindVerification, useMeData } from "../utils/userQueries";
+import { useMeData } from "../utils/userQueries";
 import profilePicture from "../images/profile-picture.png";
 import { Link } from "react-router-dom";
 import Profile from "./icons/Profile";
@@ -248,8 +248,6 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
     const { me, loading } = useMeData();
     const { toggleTheme, isDarkMode } = useThemeContext();
 
-    const { userVerified, verifiedSince } = useFindVerification(me?.id as number, me?.type as string);
-
     return (
         <MenuWrapper>
             <MenuOverlay
@@ -305,10 +303,10 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                         <ProfileMenuInfoFullName>
                                             {me.name}
                                         </ProfileMenuInfoFullName>
-                                        {userVerified && (
+                                        {me.verification.verified === "VERIFIED" && (
                                             <VerificationBadge
                                                 type={me.type}
-                                                verifiedSince={verifiedSince}
+                                                verifiedSince={me.verification.verifiedSince ? new Date(parseInt(me.verification.verifiedSince)).toLocaleString("en-us", { month: "long", year: "numeric" }) : undefined}
                                                 size={22}
                                             />
                                         )}

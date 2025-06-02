@@ -2,7 +2,7 @@ import { FunctionComponent, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { devices } from "../styles/devices";
 import { mediaQuery } from "../utils/mediaQuery";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import Logo from "./icons/Logo";
 import Home from "./icons/Home";
 import Magnifier from "./icons/Magnifier";
@@ -15,6 +15,8 @@ import Menu from "./icons/Menu";
 import { useNavOptions } from "./utils/hooks";
 import { useMeData } from "../utils/userQueries";
 import Wallet from "./icons/Wallet";
+import Add from "./icons/Add";
+import { COLORS } from "../styles/colors";
 
 interface NavProps {
     noNav?: boolean;
@@ -161,6 +163,36 @@ const CustomNavContainer = styled.div.attrs(
     }
 `;
 
+const ActivityButtonContainer = styled.div`
+    display: block;
+    position: fixed;
+    top: unset;
+    left: unset;
+    right: 16px;
+    bottom: 80px;
+
+    ${mediaQuery(
+        "(min-width: 600px) and (min-height: 480px)",
+        devices.laptopM
+    )} {
+        position: unset;
+    }
+`;
+
+const ActivityButton = styled.button`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border: none;
+    background-color: ${COLORS.blue};
+    color: inherit;
+    border-radius: 9999px;
+    cursor: pointer;
+    box-shadow: 0px 0px 2px ${({ theme }) => theme.overlayGrey};
+`;
+
 const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
     const { me } = useMeData();
     const { showOptions, toggleOptions, closeOptions } = useNavOptions();
@@ -203,6 +235,11 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
             navRefVar = null;
         };
     }, []);
+
+    const isMessagesPage = window.location.pathname.includes("messages");
+
+    const navigate = useNavigate();
+    const location = useLocation();
 
     return (
         <NavWrapper hidden={noNav || false} ref={navRef}>
@@ -267,6 +304,23 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                                 )}
                             </NavLink>
                         </CustomNavItemLink>
+                        <ActivityButtonContainer>
+                            <ActivityButton
+                                title={isMessagesPage ? "Create a new chat or group" : "Create a new post"}
+                                aria-label={isMessagesPage ? "Create a new chat or group" : "Create a new post"}
+                                role="link"
+                                onClick={() => {
+                                    navigate(isMessagesPage ? "/messages/new_chat" : "/create_post/new/post/from_modal", {
+                                        state: {
+                                            backgroundLocation:
+                                                location,
+                                        },
+                                    });
+                                }}
+                            >
+                                <Add color={COLORS.white} />
+                            </ActivityButton>
+                        </ActivityButtonContainer>
                         <NavItemLink>
                             <NavLink
                                 to="/notifications"

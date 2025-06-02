@@ -1,12 +1,12 @@
 import { FunctionComponent, useEffect, useRef, useState } from "react";
-import { GetPostLikesDocument, GetPostLikesQuery, GetRepostsDocument, GetRepostsQuery, Post, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveLikeMutation } from "../../../../generated/graphql";
+import { GetPostLikesDocument, GetRepostsDocument, IsPostLikedByMeDocument, IsPostLikedByMeQuery, IsRepostedByUserDocument, IsRepostedByUserQuery, Like, Post, Repost, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveLikeMutation } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ControlContainer, OptionBaseIcon, PageBlock, PageText } from "../../../../styles/global";
 import profilePicture from "../../../../images/profile-picture.png";
 import TextContainerRender from "../../../utils/TextContainerRender";
 import { USER_TYPES } from "../../../../utils/constants";
-import Like from "../../../icons/Like";
+import LikeIcon from "../../../icons/Like";
 import { formatter } from "../../../../utils/formatter";
 import { COLORS } from "../../../../styles/colors";
 import Share from "../../../icons/Share";
@@ -18,17 +18,18 @@ import Flag from "../../../icons/Flag";
 import Comment from "../../../icons/Comment";
 import { processDate } from "../../../../utils/processDate";
 import Pen from "../../../icons/Pen";
-import { useFindVerification, useMeData } from "../../../../utils/userQueries";
+import { useMeData } from "../../../../utils/userQueries";
 import Bin from "../../../icons/Bin";
 import FollowIcon from "../../../icons/FollowIcon";
 import Chain from "../../../icons/Chain";
 import copy from "copy-to-clipboard";
 import { useToasts } from "../../../utils/ToastProvider";
-import Repost from "../../../icons/Repost";
+import RepostIcon from "../../../icons/Repost";
 import Mail from "../../../icons/Mail";
 import VerificationBadge from "../../../utils/VerificationBadge";
 import { useFindPostById } from "../../../../utils/postQueries";
 import QuotedPost from "./QuotedPost";
+import LoadingComponent from "../../../utils/LoadingComponent";
 
 interface PostComponentProps {
     post: Post;
@@ -243,9 +244,17 @@ const PostActionInfo = styled(PageText)`
     background-color: transparent;
 `;
 
+const QuotedPostNotAvailable = styled.div`
+    display: block;
+    color: ${({ theme }) => theme.inputText};
+    background-color: ${({ theme }) => theme.inputBackground};
+    padding: 12px;
+    border-radius: 12px;
+`;
+
 const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplying, origin }) => {
     const navigate = useNavigate();
-    const [like, setLike] = useState(false);
+    const [like, setLike] = useState<Like | null>(null);
     const [follow, setFollow] = useState(false);
 
     const { activeOptions, handleOptionsClick } = useOptions();
@@ -270,6 +279,8 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
     const postRef = useRef<HTMLDivElement>(null);
     const [incrementPostViews] = useIncrementPostViewsMutation();
 
+    const [views, setViews] = useState(post.views);
+
     useEffect(() => {
         let postDivRef = postRef.current;
 
@@ -288,6 +299,10 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         itemOpened: false,
                         origin,
                     },
+                }).then((response) => {
+                    if (response.data && response.data.incrementPostViews) {
+                        setViews(response.data.incrementPostViews.views);
+                    }
                 });
             }
         }, options);
@@ -315,35 +330,22 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
 
     useEffect(() => {
         if (likeData) {
-            setLike(likeData.isPostLikedByMe);
+            setLike(likeData.isPostLikedByMe as Like | null);
         }
 
         return () => {
-            setLike(false);
+            setLike(null);
         }
     }, [likeData]);
 
     const { data: postLikesData } = useGetPostLikesQuery({
         fetchPolicy: "cache-and-network",
-        variables: { itemId: post.itemId, type: post.type },
+        variables: { itemId: post.itemId, type: post.type, limit: 3 },
     });
-
-    const [postLikes, setPostLikes] = useState(
-        (postLikesData && postLikesData.getPostLikes) ? postLikesData.getPostLikes.length : 0
-    );
-    useEffect(() => {
-        if (postLikesData && postLikesData.getPostLikes) {
-            setPostLikes(postLikesData.getPostLikes.length);
-        }
-
-        return () => {
-            setPostLikes(0);
-        }
-    }, [postLikesData]);
 
     const { data: commentsData } = usePostCommentsQuery({
         fetchPolicy: "cache-and-network",
-        variables: { id: post.id, type: post.type },
+        variables: { id: post.id, type: post.type, limit: 3 },
     });
 
     const { addToast } = useToasts();
@@ -351,7 +353,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
     const [createRepost] = useCreateRepostMutation();
     const [deleteRepost] = useDeleteRepostMutation();
 
-    const [repost, setRepost] = useState(false);
+    const [repost, setRepost] = useState<Repost | null>(null);
 
     const { data: repostData } = useIsRepostedByUserQuery({
         fetchPolicy: "cache-and-network",
@@ -360,37 +362,22 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
 
     useEffect(() => {
         if (repostData) {
-            setRepost(repostData.isRepostedByUser);
+            setRepost(repostData.isRepostedByUser as Repost | null);
         }
 
         return () => {
-            setRepost(false);
+            setRepost(null);
         }
     }, [repostData]);
 
     const { data: repostsData } = useGetRepostsQuery({
         fetchPolicy: "cache-and-network",
-        variables: { postId: post.id },
+        variables: { postId: post.id, limit: 3 },
     });
 
-    const [reposts, setReposts] = useState(
-        (repostsData && repostsData.getReposts) ? repostsData.getReposts.length : 0
-    );
-    useEffect(() => {
-        if (repostsData && repostsData.getReposts) {
-            setReposts(repostsData.getReposts.length);
-        }
+    const [deletePost, { client }] = useDeletePostMutation();
 
-        return () => {
-            setReposts(0);
-        }
-    }, [repostsData]);
-
-    const { userVerified, verifiedSince } = useFindVerification(post.authorId, post.author.type);
-
-    const [deletePost] = useDeletePostMutation();
-
-    const { post: quotedPost } = useFindPostById(post.quotedPostId as number | undefined);
+    const { post: quotedPost, loading, error } = useFindPostById(post.quotedPostId as number | undefined);
 
     const [isParentHovered, setParentHovered] = useState(false);
     const [isChildHovered, setChildHovered] = useState(false);
@@ -416,6 +403,8 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                 isHovered={shouldHighlightParent}
                 onMouseEnter={() => setParentHovered(true)}
                 onMouseLeave={() => setParentHovered(false)}
+                onTouchStart={() => setParentHovered(true)}
+                onTouchEnd={() => setParentHovered(false)}
             >
                 <PostHeader>
                     <PostAuthorContainer
@@ -441,10 +430,10 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                 <AuthorFullName>
                                     {post.author.name}
                                 </AuthorFullName>
-                                {userVerified && (
+                                {post.author.verification.verified === "VERIFIED" && (
                                     <VerificationBadge
                                         type={post.author.type}
-                                        verifiedSince={verifiedSince}
+                                        verifiedSince={post.author.verification.verifiedSince ? new Date(parseInt(post.author.verification.verifiedSince)).toLocaleString("en-us", { month: "long", year: "numeric" }) : undefined}
                                         size={18}
                                     />
                                 )}
@@ -532,11 +521,36 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                         title="Delete this post"
                                                         aria-label="Delete this post"
                                                         onClick={async () => {
-                                                            await deletePost({
+                                                            const response = await deletePost({
                                                                 variables: {
                                                                     postId: post.itemId,
                                                                 },
                                                             });
+
+                                                            if (response.data && response.data.deletePost) {
+                                                                const refId = `Post:${post.id}`;
+
+                                                                client.cache.modify({
+                                                                    fields: {
+                                                                        postFeed(existing = { posts: [], hasMore: true }) {
+                                                                            const filteredPosts = existing.posts.filter((p: any) =>
+                                                                                p.__ref !== refId
+                                                                            );
+
+                                                                            return {
+                                                                                hasMore: existing.hasMore,
+                                                                                posts: filteredPosts,
+                                                                                totalCount: existing.totalCount - 1,
+                                                                            };
+                                                                        },
+                                                                    },
+                                                                });
+
+                                                                client.cache.evict({ id: refId });
+                                                                client.cache.gc();
+                                                            } else {
+                                                                addToast("An error occurred while deleting the post.");
+                                                            }
                                                         }}
                                                     >
                                                         <OptionBaseIcon>
@@ -593,14 +607,34 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             ))}
                         </PostMediaContainer>
                     )}
-                    {quotedPost && (
-                        <QuotedPost 
-                            post={quotedPost as Post}
-                            origin="feed"
-                            isHovered={isChildHovered}
-                            onMouseEnter={() => setChildHovered(true)}
-                            onMouseLeave={() => setChildHovered(false)}
-                        />
+                    {post.quotedPostId && (
+                        <>
+                            {(loading || error) ? (
+                                <>
+                                    {error ? (
+                                        <PageText>An error occurred while trying to load the quoted post.</PageText>
+                                    ) : (
+                                        <LoadingComponent />
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    {quotedPost ? (
+                                        <QuotedPost 
+                                            post={quotedPost as Post}
+                                            origin="feed"
+                                            isHovered={isChildHovered}
+                                            onMouseEnter={() => setChildHovered(true)}
+                                            onMouseLeave={() => setChildHovered(false)}
+                                        />
+                                    ) : (
+                                        <QuotedPostNotAvailable>
+                                            The quoted post is not available.
+                                        </QuotedPostNotAvailable>
+                                    )}
+                                </>
+                            )}
+                        </>
                     )}
                 </PostContentContainer>
                 <PostActionsContainer>
@@ -619,35 +653,47 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                             itemId: post.itemId,
                                             itemType: post.type,
                                         },
-                                        update: (
-                                            store,
-                                            { data: removeLikeData }
-                                        ) => {
-                                            if (
-                                                removeLikeData &&
-                                                removeLikeData.removeLike &&
-                                                postLikesData && postLikesData.getPostLikes
-                                            ) {
-                                                const postLikes =
-                                                    postLikesData.getPostLikes.filter((item) => item.id !== me.id);
+                                        update: (cache, { data: removeLikeData }) => {
+                                            if (removeLikeData && removeLikeData.removeLike) {
+                                                const existing = cache.readQuery({
+                                                    query: GetPostLikesDocument,
+                                                    variables: {
+                                                        itemId: post.itemId,
+                                                        type: post.type,
+                                                        limit: 3,
+                                                    },
+                                                });
 
-                                                store.writeQuery<GetPostLikesQuery>(
-                                                    {
-                                                        query: GetPostLikesDocument,
-                                                        data: {
-                                                            getPostLikes:
-                                                                postLikes,
+                                                const { users: oldUsers, totalCount: oldCount, hasMore } = (existing as { getPostLikes: { users: any[]; totalCount: number; hasMore: boolean } }).getPostLikes;
+                                                
+                                                cache.writeQuery({
+                                                    query: GetPostLikesDocument,
+                                                    variables: {
+                                                        itemId: post.itemId,
+                                                        type: post.type,
+                                                        limit: 3,
+                                                    },
+                                                    data: {
+                                                        getPostLikes: {
+                                                            users: oldUsers.filter(user => user.id !== me.id),
+                                                            totalCount: Math.max(oldCount - 1, 0),
+                                                            hasMore,
                                                         },
-                                                        variables: {
-                                                            itemId: post.itemId,
-                                                            type: post.type,
-                                                        },
+                                                    },
+                                                });
+
+                                                cache.writeQuery<IsPostLikedByMeQuery>({
+                                                    query: IsPostLikedByMeDocument,
+                                                    data: {
+                                                        isPostLikedByMe: null,
+                                                    },
+                                                    variables: {
+                                                        itemId: post.itemId, 
+                                                        type: post.type,
                                                     }
-                                                );
+                                                });
                                             }
-                                        },
-                                    }).then(() => {
-                                        setLike(false);
+                                        }
                                     });
                                 } else {
                                     await likePost({
@@ -657,45 +703,60 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                             itemOpened: false,
                                             itemType: post.type,
                                         },
-                                        update: (
-                                            store,
-                                            { data: likePostData }
-                                        ) => {
-                                            if (
-                                                likePostData &&
-                                                likePostData.likePost &&
-                                                postLikesData && postLikesData.getPostLikes
-                                            ) {
-                                                store.writeQuery<GetPostLikesQuery>(
-                                                    {
-                                                        query: GetPostLikesDocument,
-                                                        data: {
-                                                            getPostLikes: [
-                                                                me,
-                                                                ...postLikesData.getPostLikes,
-                                                            ],
+                                        update: (cache, { data: likePostData }) => {
+                                            if (likePostData && likePostData.likePost) {  
+                                                const existing = cache.readQuery({
+                                                    query: GetPostLikesDocument,
+                                                    variables: {
+                                                        itemId: post.itemId,
+                                                        type: post.type,
+                                                        limit: 3,
+                                                    },
+                                                });
+
+                                                const { totalCount: oldCount, hasMore } = (existing as { getPostLikes: { totalCount: number; hasMore: boolean } }).getPostLikes;
+                                                
+                                                cache.writeQuery({
+                                                    query: GetPostLikesDocument,
+                                                    variables: {
+                                                        itemId: post.itemId,
+                                                        type: post.type,
+                                                        limit: 3,
+                                                    },
+                                                    data: {
+                                                        getPostLikes: {
+                                                            users: [me],
+                                                            totalCount: oldCount + 1,
+                                                            hasMore,
                                                         },
-                                                        variables: {
-                                                            itemId: post.itemId,
-                                                            type: post.type,
-                                                        },
+                                                    },
+                                                });
+
+                                                cache.writeQuery<IsPostLikedByMeQuery>({
+                                                    query: IsPostLikedByMeDocument,
+                                                    data: {
+                                                        isPostLikedByMe: likePostData.likePost,
+                                                    },
+                                                    variables: {
+                                                        itemId: post.itemId, 
+                                                        type: post.type,
                                                     }
-                                                );
+                                                });
                                             }
-                                        },
-                                    }).then(() => {
-                                        setLike(true);
+                                        }
+                                    }).catch(() => {
+                                        addToast("An error occurred while trying to like this post.");
                                     });
                                 }
                             }
                         }}
-                        isActive={like}
+                        isActive={like ? true : false}
                     >
                         <ControlContainer size={32}>
-                            <Like isActive={like} />
+                            <LikeIcon isActive={like ? true : false} />
                         </ControlContainer>
                         <PostActionInfo>
-                            {formatter.format(postLikes)}
+                            {formatter.format(postLikesData && postLikesData.getPostLikes.totalCount ? postLikesData.getPostLikes.totalCount : 0)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
@@ -706,12 +767,12 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         onClick={(e) => {
                             e.stopPropagation();
                         }}
-                        isActive={repost}
+                        isActive={repost ? true : false}
                     >
                         <Options
                             key={`repost-options-${post.id}`}
                             title="Repost options" 
-                            icon={<Repost type="nav" isActive={repost} />}
+                            icon={<RepostIcon type="nav" isActive={repost ? true : false} />}
                             isOpen={activeOptions === -2}
                             toggleOptions={() =>
                                 handleOptionsClick(-2)
@@ -733,74 +794,103 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                         variables: {
                                                             postId: post.id,
                                                         },
-                                                        update: (
-                                                            store,
-                                                            { data: deleteRepostData }
-                                                        ) => {
-                                                            if (
-                                                                deleteRepostData &&
-                                                                deleteRepostData.deleteRepost &&
-                                                                repostsData && repostsData.getReposts
-                                                            ) {
-                                                                const reposts =
-                                                                    repostsData.getReposts.filter((item) => item.authorId !== me.id);
+                                                        update: (cache, { data: deleteRepostData }) => {
+                                                            if (deleteRepostData && deleteRepostData.deleteRepost && repost) {
+                                                                const existing = cache.readQuery({
+                                                                    query: GetRepostsDocument,
+                                                                    variables: {
+                                                                        postId: post.id,
+                                                                        userId: me.id,
+                                                                        limit: 3,
+                                                                    },
+                                                                });
 
-                                                                store.writeQuery<GetRepostsQuery>(
-                                                                    {
-                                                                        query: GetRepostsDocument,
-                                                                        data: {
-                                                                            getReposts:
-                                                                                reposts,
+                                                                const { reposts: oldReposts, totalCount: oldCount, hasMore } = (existing as { getReposts: { reposts: any[]; totalCount: number; hasMore: boolean } }).getReposts;
+
+                                                                cache.writeQuery({
+                                                                    query: GetRepostsDocument,
+                                                                    variables: {
+                                                                        postId: post.id,
+                                                                        userId: me.id,
+                                                                        limit: 3,
+                                                                    },
+                                                                    data: {
+                                                                        getReposts: {
+                                                                            reposts: oldReposts.filter(r => r.id !== repost.id),
+                                                                            totalCount: Math.max(oldCount - 1, 0),
+                                                                            hasMore,
                                                                         },
-                                                                        variables: {
-                                                                            postId: post.id,
-                                                                        },
+                                                                    },
+                                                                });
+
+                                                                cache.writeQuery<IsRepostedByUserQuery>({
+                                                                    query: IsRepostedByUserDocument,
+                                                                    data: {
+                                                                        isRepostedByUser: null,
+                                                                    },
+                                                                    variables: {
+                                                                        postId: post.id, 
+                                                                        userId: me.id,
                                                                     }
-                                                                );
+                                                                });
                                                             }
                                                         },
-                                                    }).then(() => {
-                                                        setRepost(false);
                                                     });
                                                 } else {
                                                     await createRepost({
                                                         variables: {
                                                             postId: post.itemId
                                                         },
-                                                        update: (
-                                                            store,
-                                                            { data: createRepostData }
-                                                        ) => {
-                                                            if (
-                                                                createRepostData &&
-                                                                createRepostData.createRepost &&
-                                                                repostsData && repostsData.getReposts
-                                                            ) {
-                                                                store.writeQuery<GetRepostsQuery>(
-                                                                    {
-                                                                        query: GetRepostsDocument,
-                                                                        data: {
-                                                                            getReposts: [
-                                                                                createRepostData.createRepost,
-                                                                                ...repostsData.getReposts,
-                                                                            ],
+                                                        update: (cache, { data: createRepostData }) => {
+                                                            if (createRepostData && createRepostData.createRepost && !repost) {
+                                                                const existing = cache.readQuery({
+                                                                    query: GetRepostsDocument,
+                                                                    variables: {
+                                                                        postId: post.id,
+                                                                        userId: me.id,
+                                                                        limit: 3,
+                                                                    },
+                                                                });
+
+                                                                const { totalCount: oldCount, hasMore } = (existing as { getReposts: { totalCount: number; hasMore: boolean } }).getReposts;
+
+                                                                cache.writeQuery({
+                                                                    query: GetRepostsDocument,
+                                                                    variables: {
+                                                                        postId: post.id,
+                                                                        userId: me.id,
+                                                                        limit: 3,
+                                                                    },
+                                                                    data: {
+                                                                        getReposts: {
+                                                                            reposts: [createRepostData.createRepost],
+                                                                            totalCount: oldCount + 1,
+                                                                            hasMore,
                                                                         },
-                                                                        variables: {
-                                                                            postId: post.id,
-                                                                        },
+                                                                    },
+                                                                });
+
+                                                                cache.writeQuery<IsRepostedByUserQuery>({
+                                                                    query: IsRepostedByUserDocument,
+                                                                    data: {
+                                                                        isRepostedByUser: createRepostData.createRepost,
+                                                                    },
+                                                                    variables: {
+                                                                        postId: post.id, 
+                                                                        userId: me.id,
                                                                     }
-                                                                );
+                                                                });
                                                             }
                                                         },
-                                                    }).then(() => {
-                                                        setRepost(true);
+                                                    }).catch(() => {
+                                                        addToast("An error occurred while trying to repost this post.");
                                                     });
                                                 }
                                             }
                                         }}
                                     >
                                         <OptionBaseIcon>
-                                            <Repost type="options" />
+                                            <RepostIcon type="options" />
                                         </OptionBaseIcon>
                                         <OptionItemText>
                                             {repost ? "Remove repost" : "Repost this post"}
@@ -830,7 +920,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             }
                         />
                         <PostActionInfo>
-                            {formatter.format(reposts)}
+                            {formatter.format(repostsData && repostsData.getReposts.totalCount ? repostsData.getReposts.totalCount : 0)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
@@ -852,7 +942,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             <Comment />
                         </ControlContainer>
                         <PostActionInfo>
-                            {formatter.format((commentsData && commentsData.postComments) ? commentsData.postComments.length : 0)}
+                            {formatter.format(commentsData && commentsData.postComments.totalCount ? commentsData.postComments.totalCount : 0)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
@@ -867,7 +957,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             <Views />
                         </ControlContainer>
                         <PostActionInfo>
-                            {formatter.format(post.views)}
+                            {formatter.format(views)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer

@@ -17,7 +17,5 @@ export const pubSub = createPubSub<{
     NEW_CHAT_NOTIFICATION: [MessageNotification],
     DELETED_CHAT_NOTIFICATION: [MessageNotification],
     EDITED_MESSAGE: [Message],
-    NEW_POST: [Post],
-    DELETED_POST: [Post],
     EDITED_POST: [Post],
 }>();

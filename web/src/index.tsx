@@ -42,15 +42,35 @@ const cache = new InMemoryCache({
                     }
                 },
                 getPostLikes: {
-                    merge: (_existing = [], incoming) => {
-                        return incoming;
-                    },
+                    keyArgs: ["itemId", "type"],
+                    merge: (existing, incoming) => {
+                        return {
+                            users: [...(existing?.users || []), ...incoming.users],
+                            hasMore: incoming.hasMore,
+                            totalCount: incoming.totalCount,
+                        };
+                    }
                 },
                 getReposts: {
-                    merge: (_existing = [], incoming) => {
-                        return incoming;
-                    },
+                    keyArgs: ["postId"],
+                    merge: (existing, incoming) => {
+                        return {
+                            reposts: [...(existing?.reposts || []), ...incoming.reposts],
+                            hasMore: incoming.hasMore,
+                            totalCount: incoming.totalCount,
+                        };
+                    }
                 },
+                postComments: {
+                    keyArgs: ["id", "type"],
+                    merge: (existing, incoming) => {
+                        return {
+                            posts: [...(existing?.posts || []), ...incoming.posts],
+                            hasMore: incoming.hasMore,
+                            totalCount: incoming.totalCount,
+                        };
+                    }
+                }
             },
         },
     },

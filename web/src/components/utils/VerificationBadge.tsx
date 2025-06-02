@@ -5,15 +5,15 @@ import { OptionBaseIcon, PageBlock } from "../../styles/global";
 import Badge from "../icons/Badge";
 
 interface VerificationBadgeProps {
-    verifiedSince: string;
     type: string;
     size?: number;
+    verifiedSince?: string;
 }
 
-const VerificationBadge: FunctionComponent<VerificationBadgeProps> = ({ verifiedSince, type, size }) => {
+const VerificationBadge: FunctionComponent<VerificationBadgeProps> = ({ type, size, verifiedSince }) => {
     return (
         <PageBlock>
-            <OptionBaseIcon title={"Verified since " + verifiedSince} aria-label={"Verified since " + verifiedSince}>
+            <OptionBaseIcon title={verifiedSince ? "Verified since " + verifiedSince : ""} aria-label={verifiedSince ? "Verified since " + verifiedSince : ""}>
                 <Badge size={size} color={type === USER_TYPES.ORGANIZATION ? COLORS.gold : COLORS.blue}  />
             </OptionBaseIcon>
         </PageBlock>

@@ -2,7 +2,6 @@ import { FunctionComponent } from "react";
 import { Post } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import { useFindVerification } from "../../../../utils/userQueries";
 import { PageBlock, PageText } from "../../../../styles/global";
 import { AuthorFullNameContainer, AuthorImageContainer, AuthorInfo, AuthorUsername, PostDate, PostMediaItem, PostRightContainer } from "./PostComponent";
 import VerificationBadge from "../../../utils/VerificationBadge";
@@ -15,8 +14,8 @@ interface QuotedPostProps {
     post: Post;
     origin: "create-post" | "feed";
     isHovered?: boolean;
-    onMouseEnter?: React.MouseEventHandler<HTMLDivElement>;
-    onMouseLeave?: React.MouseEventHandler<HTMLDivElement>;
+    onMouseEnter?: () => void;
+    onMouseLeave?: () => void;
 }
 
 const QuotedPostWrapper = styled.div`
@@ -92,8 +91,6 @@ const QuotedPostMediaContainer = styled.div`
 const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin, isHovered, onMouseEnter, onMouseLeave }) => {
     const navigate = useNavigate();
 
-    const { userVerified, verifiedSince } = useFindVerification(post.authorId, post.author.type);
-
     const date = processDate(post.createdAt, true, true);
     
     const createdAt = new Date(parseInt(post.createdAt)).toLocaleString(
@@ -123,6 +120,8 @@ const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin, isHovere
                 isHovered={isHovered}
                 onMouseEnter={onMouseEnter}
                 onMouseLeave={onMouseLeave}
+                onTouchStart={onMouseEnter}
+                onTouchEnd={onMouseLeave}
             >
                 <QuotedPostHeader>
                     <QuotedPostAuthorContainer>
@@ -142,10 +141,10 @@ const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin, isHovere
                                 <QuotedAuthorFullName>
                                     {post.author.name}
                                 </QuotedAuthorFullName>
-                                {userVerified && (
+                                {post.author.verification.verified === "VERIFIED" && (
                                     <VerificationBadge
                                         type={post.author.type}
-                                        verifiedSince={verifiedSince}
+                                        verifiedSince={post.author.verification.verifiedSince ? new Date(parseInt(post.author.verification.verifiedSince)).toLocaleString("en-us", { month: "long", year: "numeric" }) : undefined}
                                         size={18}
                                     />
                                 )}

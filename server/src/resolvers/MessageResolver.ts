@@ -2,13 +2,13 @@ import { AuthContext } from "../types";
 import { Chat, ChatUser, Event, Message, MessageOrEvent, MessageViewLog } from "../entities/Message";
 import { isAuth } from "../middleware/isAuth";
 import { Arg, Ctx, Field, Int, Mutation, ObjectType, Query, Resolver, Root, Subscription, UseMiddleware } from "type-graphql";
-import { FieldError } from "./common";
+import { FeedWrapper, FieldError } from "./common";
 import { v4 as uuidv4 } from "uuid";
-import { Block, User, UserDeviceToken } from "../entities/User";
+import { Block, Follow, User, UserDeviceToken } from "../entities/User";
 import { mergeAndDeduplicateArrays } from "../helpers/mergeAndDeduplicateArrays";
 import { MessageStatus } from "../helpers/enums";
 import { MessageNotification } from "../entities/Notification";
-import { In, IsNull, Repository } from "typeorm";
+import { In, IsNull, LessThan, Repository } from "typeorm";
 import appDataSource from "../dataSource";
 import { pubSub } from "../helpers/createPubSub";
 import { Notification as FirebaseNotification } from "firebase-admin/messaging";
@@ -24,6 +24,7 @@ import { MESSAGE_NOTIFICATION_TYPES } from "../helpers/notification/notification
 import { getPresignedUrlForDeleteCommand } from "../helpers/getPresignedUrls";
 import axios from "axios";
 import { findChatsById } from "../helpers/message/findChatsById";
+import { PaginatedUsers } from "./UserResolver";
 
 @ObjectType()
 export class ChatResponse {
@@ -40,11 +41,18 @@ export class ChatResponse {
     ok: boolean;
 }
 
+@ObjectType()
+export class PaginatedChatItems extends FeedWrapper {
+    @Field(() => [MessageOrEvent])
+    chatItems: typeof MessageOrEvent[];
+}
+
 @Resolver(Chat)
 export class ChatResolver {
     private readonly userService: UserService;
     private readonly chatRepository: Repository<Chat>;
     private readonly userRepository: Repository<User>;
+    private readonly followRepository: Repository<Follow>;
     private readonly messageRepository: Repository<Message>;
     private readonly eventRepository: Repository<Event>;
     private readonly chatUserRepository: Repository<ChatUser>;
@@ -55,6 +63,7 @@ export class ChatResolver {
         this.userService = new UserService();
         this.chatRepository = appDataSource.getRepository(Chat);
         this.userRepository = appDataSource.getRepository(User);
+        this.followRepository = appDataSource.getRepository(Follow);
         this.messageRepository = appDataSource.getRepository(Message);
         this.eventRepository = appDataSource.getRepository(Event);
         this.chatUserRepository = appDataSource.getRepository(ChatUser);
@@ -67,7 +76,13 @@ export class ChatResolver {
     async chats(
         @Ctx() { payload }: AuthContext
     ): Promise<Chat[] | null> {
-        const chats = await findChatsById(payload?.id);
+        if (!payload) {
+            logger.warn("User not authenticated.");
+
+            return null;
+        }
+
+        const chats = await findChatsById(payload.id);
 
         return chats;
     }
@@ -142,21 +157,31 @@ export class ChatResolver {
         }
     }
 
-    @Query(() => [User], { nullable: true })
+    @Query(() => PaginatedUsers)
     @UseMiddleware(isAuth)
     async usersToMessage(
         @Ctx() { payload }: AuthContext,
-        @Arg("offset", () => Int, { nullable: true }) offset?: number,
-        @Arg("limit", () => Int, { nullable: true }) limit?: number,
-    ): Promise<User[] | null> {
+        @Arg("limit", () => Int) limit: number,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+    ): Promise<PaginatedUsers> {
         if (!payload) {
             logger.warn("User not authenticated.");
 
-            return null;
+            return {
+                users: [],
+                hasMore: false,
+            };
         }
 
         try {
-            const followers = await this.userService.getFollowers(payload.id);
+            const followRelations = await this.followRepository.find({ 
+                where: { 
+                    user: { id: payload.id },
+                }, 
+                relations: ["follower", "user"], 
+            });
+
+            const followers = followRelations.map(follow => follow.follower);
 
             const everyoneUsers = await this.userRepository.find({ where: { deletedAt: IsNull(), userSettings: { incomingMessages: "everyone" } } });
 
@@ -178,13 +203,27 @@ export class ChatResolver {
             const blockArray = mergeAndDeduplicateArrays(blockedAccounts, blockedMeAccounts);
             userIds.filter((item) => !blockArray.includes(item));
 
-            const users = await this.userRepository.find({ where: { id: In(userIds), deletedAt: IsNull() }, order: { createdAt: "DESC" }, skip: offset, take: limit });
+            const users = await this.userRepository.find({ 
+                where: { 
+                    id: In(userIds), 
+                    deletedAt: IsNull(),
+                    ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
+                }, 
+                order: { createdAt: "DESC" },
+                take: limit + 1,
+            });
         
-            return users;
+            return {
+                users: users.slice(0, limit),
+                hasMore: users.length === limit + 1,
+            };
         } catch (error) {
             logger.error(error);
 
-            return null;
+            return {
+                users: [],
+                hasMore: false,
+            };
         }
     }
 
@@ -1410,16 +1449,21 @@ export class MessageResolver {
         }
     }
 
-    @Query(() => [MessageOrEvent], { nullable: true })
+    @Query(() => PaginatedChatItems)
     @UseMiddleware(isAuth)
     async messagesAndEvents(
         @Arg("chatId", { nullable: true }) chatId: string,
-        @Ctx() { payload }: AuthContext
-    ): Promise<typeof MessageOrEvent[] | null> {
+        @Arg("limit", () => Int) limit: number,
+        @Ctx() { payload }: AuthContext,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+    ): Promise<PaginatedChatItems> {
         if (!payload) {
             logger.warn("User not authenticated.");
 
-            return null;
+            return {
+                chatItems: [],
+                hasMore: false,
+            };
         }
 
         try {
@@ -1428,7 +1472,10 @@ export class MessageResolver {
             if (!chat) {
                 logger.warn("Chat not found.");
 
-                return null;
+                return {
+                    chatItems: [],
+                    hasMore: false,
+                };
             }
 
             const me = chat.users.find(chatUser => chatUser.userId === payload.id);
@@ -1436,35 +1483,54 @@ export class MessageResolver {
             if (!me) {
                 logger.warn("User not found in the chat.");
 
-                return null;
+                return {
+                    chatItems: [],
+                    hasMore: false,
+                };
             }
 
-            const messages = await this.messageRepository.find({ where: { chat: { chatId } }, relations: ["chat"], order: { createdAt: "ASC" } });
+            const messages = await this.messageRepository.find({ 
+                where: { 
+                    chat: { chatId },
+                    ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
+                }, 
+                relations: ["chat"], 
+                take: limit * 2,
+                order: { createdAt: "ASC" } 
+            });
             const visibleMessages = messages.filter((message) => !me.hiddenMessagesIds.includes(message.id));
-            const events = await this.eventRepository.find({ where: { chat: { chatId } }, relations: ["chat"], order: { createdAt: "ASC" } });
+            const events = await this.eventRepository.find({ 
+                where: { 
+                    chat: { chatId },
+                    ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
+                }, 
+                relations: ["chat"], 
+                take: limit * 2,
+                order: { createdAt: "ASC" } 
+            });
             const results = [...events, ...visibleMessages];
 
-            let filteredResults = [];
-
-            for (const result of results) {
+            const filteredResults = results.filter(result => {
                 if (me.inside) {
-                    if (result.createdAt >= me.joinedChat) {
-                        filteredResults.push(result);
-                    }
+                    return result.createdAt >= me.joinedChat;
                 } else {
-                    if (result.createdAt <= me.lastExit) {
-                        filteredResults.push(result);
-                    }
+                    return result.createdAt <= me.lastExit;
                 }
-            }
+            });
 
-            filteredResults.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+            const sortedResults = filteredResults.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
-            return filteredResults;
+            return {
+                chatItems: sortedResults.slice(0, limit),
+                hasMore: sortedResults.length === limit + 1,
+            };
         } catch (error) {
             logger.error(error);
 
-            return null;
+            return {
+                chatItems: [],
+                hasMore: false,
+            };
         }
     }
 

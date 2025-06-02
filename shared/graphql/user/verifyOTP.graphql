@@ -52,6 +52,14 @@ mutation VerifyOTP(
             createdAt
             updatedAt
             hiddenPosts
+            identity {
+                verified
+                verifiedSince
+            }
+            verification {
+                verified
+                verifiedSince
+            }
         }
         ok
     }

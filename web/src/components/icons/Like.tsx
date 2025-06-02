@@ -3,7 +3,7 @@ import { DynamicSizeIcon, IconProps } from "./common";
 import { COLORS } from "../../styles/colors";
 import { useTheme } from "../../styles/theme";
 
-const Like: FunctionComponent<IconProps> = ({ isActive }) => {
+const LikeIcon: FunctionComponent<IconProps> = ({ isActive }) => {
     const theme = useTheme();
 
     return (
@@ -21,4 +21,4 @@ const Like: FunctionComponent<IconProps> = ({ isActive }) => {
     );
 };
 
-export default Like;
+export default LikeIcon;

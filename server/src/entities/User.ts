@@ -83,6 +83,42 @@ export class SecretKey {
 }
 
 @ObjectType()
+export class Verification {
+    @Field(() => VerificationStatus)
+    @Column({
+        type: "enum",
+        enum: VerificationStatus,
+        default: VerificationStatus.UNDER_REVIEW,
+    })
+    verified: VerificationStatus;
+
+    @Field(() => String, { nullable: true, defaultValue: null })
+    @Column({ nullable: true, default: null })
+    verifiedSince: Date;
+
+    @Column({ type: "jsonb", default: [] })
+    documents: { type: string; url: string }[];
+
+    @Column({ default: null, nullable: true })
+    outcome: string;
+}
+
+@ObjectType()
+export class IdentityVerification extends Verification {
+    @Column({ default: "" })
+    country: string;
+
+    @Column({ default: "" })
+    fullName: string;
+
+    @Column({ default: "" })
+    entityIdentifier: string;
+
+    @Column({ default: null, nullable: true })
+    birthOrCreationDate: Date;
+}
+
+@ObjectType()
 @Entity("users")
 export class User extends BaseItem {
     @Field(() => String)
@@ -150,6 +186,14 @@ export class User extends BaseItem {
     @Field(() => SearchSettings)
     @Column(() => SearchSettings)
     searchSettings: SearchSettings;
+
+    @Field(() => IdentityVerification)
+    @Column(() => IdentityVerification)
+    identity: IdentityVerification;
+
+    @Field(() => Verification)
+    @Column(() => Verification)
+    verification: Verification;
 
     @Field(() => [GraphQLJSONObject], { nullable: true })
     @Column({ type: "jsonb", default: [] })
@@ -241,61 +285,6 @@ export class UserDeviceToken extends BaseItem {
     @Field(() => String)
     @Column({ type: "uuid", unique: true })
     sessionId: string;
-}
-
-@ObjectType()
-export class Verification extends BaseItem {
-    @Field(() => Int)
-    @Column({ unique: true })
-    userId: number;
-
-    @Field(() => VerificationStatus)
-    @Column({
-        type: "enum",
-        enum: VerificationStatus,
-        default: VerificationStatus.UNDER_REVIEW,
-    })
-    verified: VerificationStatus;
-
-    @Field(() => String)
-    @Column({ default: USER_TYPES.USER })
-    type: string;
-
-    @Field(() => String, { nullable: true, defaultValue: null })
-    @Column({ nullable: true, default: null })
-    verifiedSince: Date;
-
-    @Field(() => [GraphQLJSONObject])
-    @Column({ type: "jsonb", default: [] })
-    documents: { type: string; url: string }[];
-
-    @Field(() => String, { nullable: true, defaultValue: null })
-    @Column({ default: null, nullable: true })
-    outcome: string;
-}
-
-@ObjectType()
-@Entity("user-verifications")
-export class UserVerification extends Verification {}
-
-@ObjectType()
-@Entity("identity-verifications")
-export class IdentityVerification extends Verification {
-    @Field(() => String)
-    @Column()
-    country: string;
-
-    @Field(() => String)
-    @Column()
-    fullName: string;
-
-    @Field(() => String)
-    @Column()
-    entityIdentifier: string;
-
-    @Field(() => String)
-    @Column()
-    birthOrCreationDate: Date;
 }
 
 @ObjectType()

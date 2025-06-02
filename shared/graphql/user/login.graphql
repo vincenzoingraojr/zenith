@@ -46,6 +46,14 @@ mutation Login(
             createdAt
             updatedAt
             hiddenPosts
+            identity {
+                verified
+                verifiedSince
+            }
+            verification {
+                verified
+                verifiedSince
+            }
         }
         errors {
             field
