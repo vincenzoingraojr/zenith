@@ -848,6 +848,7 @@ export type Query = {
   unseenNotifications: Array<Notification>;
   userComments: PaginatedPosts;
   userPostFeed: PaginatedPosts;
+  usersToMention?: Maybe<Array<User>>;
   usersToMessage: PaginatedUsers;
 };
 
@@ -1096,6 +1097,12 @@ export type QueryUserPostFeedArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit: Scalars['Int']['input'];
   userId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryUsersToMentionArgs = {
+  limit: Scalars['Int']['input'];
+  query: Scalars['String']['input'];
 };
 
 
@@ -1634,6 +1641,14 @@ export type UnfollowUserMutationVariables = Exact<{
 
 
 export type UnfollowUserMutation = { __typename?: 'Mutation', unfollowUser: boolean };
+
+export type UsersToMentionQueryVariables = Exact<{
+  query: Scalars['String']['input'];
+  limit: Scalars['Int']['input'];
+}>;
+
+
+export type UsersToMentionQuery = { __typename?: 'Query', usersToMention?: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }> | null };
 
 export type VerifyEmailAddressMutationVariables = Exact<{
   token: Scalars['String']['input'];
@@ -3907,6 +3922,83 @@ export function useUnfollowUserMutation(baseOptions?: Apollo.MutationHookOptions
 export type UnfollowUserMutationHookResult = ReturnType<typeof useUnfollowUserMutation>;
 export type UnfollowUserMutationResult = Apollo.MutationResult<UnfollowUserMutation>;
 export type UnfollowUserMutationOptions = Apollo.BaseMutationOptions<UnfollowUserMutation, UnfollowUserMutationVariables>;
+export const UsersToMentionDocument = gql`
+    query UsersToMention($query: String!, $limit: Int!) {
+  usersToMention(query: $query, limit: $limit) {
+    id
+    name
+    username
+    email
+    type
+    gender
+    birthDate {
+      date
+      monthAndDayVisibility
+      yearVisibility
+    }
+    emailVerified
+    profile {
+      profilePicture
+      profileBanner
+      bio
+      website
+    }
+    userSettings {
+      incomingMessages
+      twoFactorAuth
+    }
+    searchSettings {
+      hideSensitiveContent
+      hideBlockedAccounts
+    }
+    createdAt
+    updatedAt
+    hiddenPosts
+    identity {
+      verified
+      verifiedSince
+    }
+    verification {
+      verified
+      verifiedSince
+    }
+  }
+}
+    `;
+
+/**
+ * __useUsersToMentionQuery__
+ *
+ * To run a query within a React component, call `useUsersToMentionQuery` and pass it any options that fit your needs.
+ * When your component renders, `useUsersToMentionQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useUsersToMentionQuery({
+ *   variables: {
+ *      query: // value for 'query'
+ *      limit: // value for 'limit'
+ *   },
+ * });
+ */
+export function useUsersToMentionQuery(baseOptions: Apollo.QueryHookOptions<UsersToMentionQuery, UsersToMentionQueryVariables> & ({ variables: UsersToMentionQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<UsersToMentionQuery, UsersToMentionQueryVariables>(UsersToMentionDocument, options);
+      }
+export function useUsersToMentionLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<UsersToMentionQuery, UsersToMentionQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<UsersToMentionQuery, UsersToMentionQueryVariables>(UsersToMentionDocument, options);
+        }
+export function useUsersToMentionSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<UsersToMentionQuery, UsersToMentionQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<UsersToMentionQuery, UsersToMentionQueryVariables>(UsersToMentionDocument, options);
+        }
+export type UsersToMentionQueryHookResult = ReturnType<typeof useUsersToMentionQuery>;
+export type UsersToMentionLazyQueryHookResult = ReturnType<typeof useUsersToMentionLazyQuery>;
+export type UsersToMentionSuspenseQueryHookResult = ReturnType<typeof useUsersToMentionSuspenseQuery>;
+export type UsersToMentionQueryResult = Apollo.QueryResult<UsersToMentionQuery, UsersToMentionQueryVariables>;
 export const VerifyEmailAddressDocument = gql`
     mutation VerifyEmailAddress($token: String!) {
   verifyEmailAddress(token: $token) {

@@ -10,7 +10,7 @@ import {
     Resolver,
     UseMiddleware,
 } from "type-graphql";
-import { LessThan, Not, Repository } from "typeorm";
+import { Brackets, LessThan, Not, Repository } from "typeorm";
 import argon2 from "argon2";
 import { AuthContext } from "../types";
 import { sendRefreshToken } from "../auth/sendRefreshToken";
@@ -3220,5 +3220,63 @@ export class UserResolver {
             status,
             ok,
         };
+    }
+
+    @Query(() => [User], { nullable: true })
+    @UseMiddleware(isAuth)
+    async usersToMention(
+        @Arg("query", () => String) query: string,
+        @Ctx() { payload }: AuthContext,
+        @Arg("limit", () => Int) limit: number,
+    ): Promise<User[] | null> {
+        const sanitizedQuery = query.replace(/[@#$]/g, "").trim();
+        const likeQuery = `%${sanitizedQuery}%`;
+
+        if (!payload) {
+            logger.warn("User not authenticated.");
+
+            return null;
+        }
+
+        try {
+            const users = await this.userRepository
+                .createQueryBuilder("user")
+                .leftJoin(Follow, "follow", "follow.followerId = :userId AND follow.userId = user.id", { userId: payload.id })
+                .leftJoin(Block, "block1", "block1.userId = :userId AND block1.blockedId = user.id", { userId: payload.id })
+                .leftJoin(Block, "block2", "block2.blockedId = :userId AND block2.userId = user.id", { userId: payload.id })
+                .where("block1.id IS NULL AND block2.id IS NULL")
+                .andWhere("user.id != :userId", { userId: payload.id })
+                .andWhere(new Brackets(qb => {
+                    qb.where("user.name ILIKE :query", { query: `%${sanitizedQuery}%` })
+                    .orWhere("user.username ILIKE :query", { query: `%${sanitizedQuery}%` });
+                }))
+                .addSelect(`
+                    CASE
+                        WHEN user.username ILIKE :exactQuery THEN 100
+                        WHEN user.name ILIKE :exactQuery THEN 90
+                        WHEN user.username ILIKE :query THEN 80
+                        WHEN user.name ILIKE :query THEN 70
+                        ELSE 0
+                    END +
+                    CASE
+                        WHEN follow.id IS NOT NULL THEN 10
+                        ELSE 0
+                    END +
+                    CASE
+                        WHEN user.verification.verified = 'VERIFIED' THEN 5
+                        ELSE 0
+                    END
+                `, "score")
+                .orderBy("score", "DESC")
+                .limit(limit)
+                .setParameters({ exactQuery: sanitizedQuery, query: likeQuery })
+                .getMany();
+            
+            return users;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
     }
 }

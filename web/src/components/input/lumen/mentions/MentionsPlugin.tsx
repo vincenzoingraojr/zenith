@@ -10,7 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { $createMentionNode } from "./MentionNode";
 import profilePicture from "../../../../images/profile-picture.png";
-import { User, useUsersToMessageQuery } from "../../../../generated/graphql";
+import { User, useUsersToMentionQuery } from "../../../../generated/graphql";
 import VerificationBadge from "../../../utils/VerificationBadge";
 import { USER_TYPES } from "../../../../utils/constants";
 import AffiliationIcon from "../../../utils/AffiliationIcon";
@@ -150,59 +150,6 @@ const AtSignMentionsRegexAliasRegex = new RegExp(
 
 const SUGGESTION_LIST_LENGTH_LIMIT = 5;
 
-const mentionsCache = new Map();
-
-const usersLookupService = {
-    search(
-        string: string,
-        mentionData: any,
-        callback: (results: Array<any>) => void
-    ): void {
-        setTimeout(() => {
-            const results = mentionData.filter(
-                (mention: any) => (
-                    mention.name.toLowerCase().includes(string.toLowerCase()),
-                    mention.username
-                        .toLowerCase()
-                        .includes(string.toLowerCase())
-                )
-            );
-            callback(results);
-        }, 500);
-    },
-};
-
-function useMentionLookupService(
-    mentionString: string | null,
-    mentionData: UserMention[]
-) {
-    const [results, setResults] = useState<UserMention[]>([]);
-
-    useEffect(() => {
-        const cachedResults = mentionsCache.get(mentionString);
-
-        if (mentionString === null) {
-            setResults([]);
-            return;
-        }
-
-        if (cachedResults === null) {
-            return;
-        } else if (cachedResults !== undefined) {
-            setResults(cachedResults);
-            return;
-        }
-
-        mentionsCache.set(mentionString, null);
-        usersLookupService.search(mentionString, mentionData, (newResults) => {
-            mentionsCache.set(mentionString, newResults);
-            setResults(newResults);
-        });
-    }, [mentionString, mentionData]);
-
-    return results;
-}
-
 function checkForAtSignMentions(
     text: string,
     minMatchLength: number
@@ -320,15 +267,15 @@ type UserMention = {
 export default function MentionsPlugin(): JSX.Element | null {
     const [editor] = useLexicalComposerContext();
 
-    const [queryString, setQueryString] = useState<string | null>(null);
+    const [queryString, setQueryString] = useState<string>("");
 
     const [mentionData, setMentionData] = useState<UserMention[]>([]);
     
-    const { data } = useUsersToMessageQuery({ variables: { limit: 10 }, fetchPolicy: "cache-and-network" });
+    const { data } = useUsersToMentionQuery({ variables: { query: queryString, limit: 5 }, fetchPolicy: "cache-and-network" });
 
     useEffect(() => {
-        if (data && data.usersToMessage) {
-            const rawUsers = data.usersToMessage.users;
+        if (data && data.usersToMention) {
+            const rawUsers = data.usersToMention;
             const users: UserMention[] = [];
 
             rawUsers.map((user: User) => (
@@ -346,20 +293,18 @@ export default function MentionsPlugin(): JSX.Element | null {
         }
     }, [data]);
 
-    const results = useMentionLookupService(queryString, mentionData);
-
     const checkForSlashTriggerMatch = useBasicTypeaheadTriggerMatch("/", {
         minLength: 0,
     });
 
     const options = useMemo(
         () =>
-            results
+            mentionData
                 .map(({ id, name, username, avatar, type, verified }) => {
                     return new MentionTypeaheadOption(id, name, username, avatar, type, verified);
                 })
                 .slice(0, SUGGESTION_LIST_LENGTH_LIMIT),
-        [results]
+        [mentionData]
     );
 
     const onSelectOption = useCallback(
@@ -393,7 +338,7 @@ export default function MentionsPlugin(): JSX.Element | null {
 
     return (
         <LexicalTypeaheadMenuPlugin<MentionTypeaheadOption>
-            onQueryChange={setQueryString}
+            onQueryChange={(matchingString) => setQueryString(matchingString ?? "")}
             onSelectOption={onSelectOption}
             triggerFn={checkForMentionMatch}
             options={options}
@@ -401,7 +346,7 @@ export default function MentionsPlugin(): JSX.Element | null {
                 _,
                 { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }
             ) =>
-                results.length > 0
+                mentionData.length > 0
                     ? (
                         <MentionsMenuContainer>
                             <MentionsContainer>

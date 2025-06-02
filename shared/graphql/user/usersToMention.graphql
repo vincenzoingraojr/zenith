@@ -1,0 +1,47 @@
+query UsersToMention(
+    $query: String!
+    $limit: Int!
+) {
+    usersToMention(
+        query: $query
+        limit: $limit
+    ) {
+        id
+        name
+        username
+        email
+        type
+        gender
+        birthDate {
+            date
+            monthAndDayVisibility
+            yearVisibility
+        }
+        emailVerified
+        profile {
+            profilePicture
+            profileBanner
+            bio
+            website
+        }
+        userSettings {
+            incomingMessages
+            twoFactorAuth
+        }
+        searchSettings {
+            hideSensitiveContent
+            hideBlockedAccounts
+        }
+        createdAt
+        updatedAt
+        hiddenPosts
+        identity {
+            verified
+            verifiedSince
+        }
+        verification {
+            verified
+            verifiedSince
+        }
+    }
+}
