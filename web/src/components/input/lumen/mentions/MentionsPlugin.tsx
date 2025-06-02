@@ -291,6 +291,10 @@ export default function MentionsPlugin(): JSX.Element | null {
 
             setMentionData(users);
         }
+
+        return () => {
+            setMentionData([]);
+        }
     }, [data]);
 
     const checkForSlashTriggerMatch = useBasicTypeaheadTriggerMatch("/", {
