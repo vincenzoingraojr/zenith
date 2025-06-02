@@ -329,7 +329,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
     const [removeLike] = useRemoveLikeMutation();
 
     const { data: likeData } = useIsPostLikedByMeQuery({
-        fetchPolicy: "cache-and-network",
+        fetchPolicy: "cache-first",
         variables: { itemId: post.itemId, type: post.type },
     });
 
@@ -361,7 +361,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
     const [repost, setRepost] = useState<Repost | null>(null);
 
     const { data: repostData } = useIsRepostedByUserQuery({
-        fetchPolicy: "cache-and-network",
+        fetchPolicy: "cache-first",
         variables: { postId: post.id, userId: me ? me.id : null },
     });
 
