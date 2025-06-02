@@ -13,6 +13,7 @@ import profilePicture from "../../../../images/profile-picture.png";
 import { User, useUsersToMessageQuery } from "../../../../generated/graphql";
 import VerificationBadge from "../../../utils/VerificationBadge";
 import { USER_TYPES } from "../../../../utils/constants";
+import AffiliationIcon from "../../../utils/AffiliationIcon";
 
 const MentionsMenuContainer = styled.div`
     display: block;
@@ -299,6 +300,7 @@ function MentionsTypeaheadMenuItem({
                                 size={18}
                             />
                         )}
+                        <AffiliationIcon userId={option.id} size={18} noAction={true} />
                 </MentionNameContainer>
                 <MentionUsername>@{option.username}</MentionUsername>
             </MentionUserInfo>

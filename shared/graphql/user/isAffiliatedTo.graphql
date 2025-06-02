@@ -1,0 +1,41 @@
+query IsAffiliatedTo($id: Int) {
+    isAffiliatedTo(id: $id) {
+        id
+        name
+        username
+        email
+        type
+        gender
+        birthDate {
+            date
+            monthAndDayVisibility
+            yearVisibility
+        }
+        emailVerified
+        profile {
+            profilePicture
+            profileBanner
+            bio
+            website
+        }
+        userSettings {
+            incomingMessages
+            twoFactorAuth
+        }
+        searchSettings {
+            hideSensitiveContent
+            hideBlockedAccounts
+        }
+        createdAt
+        updatedAt
+        hiddenPosts
+        identity {
+            verified
+            verifiedSince
+        }
+        verification {
+            verified
+            verifiedSince
+        }
+    }
+}

@@ -1547,6 +1547,13 @@ export type GetFollowersQueryVariables = Exact<{
 
 export type GetFollowersQuery = { __typename?: 'Query', getFollowers: { __typename?: 'PaginatedUsers', hasMore: boolean, totalCount?: number | null, users: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }> } };
 
+export type IsAffiliatedToQueryVariables = Exact<{
+  id?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type IsAffiliatedToQuery = { __typename?: 'Query', isAffiliatedTo?: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } } | null };
+
 export type IsFollowedByMeQueryVariables = Exact<{
   id?: InputMaybe<Scalars['Int']['input']>;
 }>;
@@ -3272,6 +3279,82 @@ export type GetFollowersQueryHookResult = ReturnType<typeof useGetFollowersQuery
 export type GetFollowersLazyQueryHookResult = ReturnType<typeof useGetFollowersLazyQuery>;
 export type GetFollowersSuspenseQueryHookResult = ReturnType<typeof useGetFollowersSuspenseQuery>;
 export type GetFollowersQueryResult = Apollo.QueryResult<GetFollowersQuery, GetFollowersQueryVariables>;
+export const IsAffiliatedToDocument = gql`
+    query IsAffiliatedTo($id: Int) {
+  isAffiliatedTo(id: $id) {
+    id
+    name
+    username
+    email
+    type
+    gender
+    birthDate {
+      date
+      monthAndDayVisibility
+      yearVisibility
+    }
+    emailVerified
+    profile {
+      profilePicture
+      profileBanner
+      bio
+      website
+    }
+    userSettings {
+      incomingMessages
+      twoFactorAuth
+    }
+    searchSettings {
+      hideSensitiveContent
+      hideBlockedAccounts
+    }
+    createdAt
+    updatedAt
+    hiddenPosts
+    identity {
+      verified
+      verifiedSince
+    }
+    verification {
+      verified
+      verifiedSince
+    }
+  }
+}
+    `;
+
+/**
+ * __useIsAffiliatedToQuery__
+ *
+ * To run a query within a React component, call `useIsAffiliatedToQuery` and pass it any options that fit your needs.
+ * When your component renders, `useIsAffiliatedToQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useIsAffiliatedToQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useIsAffiliatedToQuery(baseOptions?: Apollo.QueryHookOptions<IsAffiliatedToQuery, IsAffiliatedToQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<IsAffiliatedToQuery, IsAffiliatedToQueryVariables>(IsAffiliatedToDocument, options);
+      }
+export function useIsAffiliatedToLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<IsAffiliatedToQuery, IsAffiliatedToQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<IsAffiliatedToQuery, IsAffiliatedToQueryVariables>(IsAffiliatedToDocument, options);
+        }
+export function useIsAffiliatedToSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<IsAffiliatedToQuery, IsAffiliatedToQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<IsAffiliatedToQuery, IsAffiliatedToQueryVariables>(IsAffiliatedToDocument, options);
+        }
+export type IsAffiliatedToQueryHookResult = ReturnType<typeof useIsAffiliatedToQuery>;
+export type IsAffiliatedToLazyQueryHookResult = ReturnType<typeof useIsAffiliatedToLazyQuery>;
+export type IsAffiliatedToSuspenseQueryHookResult = ReturnType<typeof useIsAffiliatedToSuspenseQuery>;
+export type IsAffiliatedToQueryResult = Apollo.QueryResult<IsAffiliatedToQuery, IsAffiliatedToQueryVariables>;
 export const IsFollowedByMeDocument = gql`
     query IsFollowedByMe($id: Int) {
   isFollowedByMe(id: $id) {

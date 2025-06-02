@@ -15,6 +15,7 @@ import { USER_TYPES } from "../utils/constants";
 import { useThemeContext } from "../styles/ThemeContext";
 import ThemeIcon from "./icons/ThemeIcon";
 import VerificationBadge from "./utils/VerificationBadge";
+import AffiliationIcon from "./utils/AffiliationIcon";
 
 interface MenuProps {
     closeMenu: () => void;
@@ -310,6 +311,7 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                                 size={22}
                                             />
                                         )}
+                                        <AffiliationIcon userId={me.id} size={22} />
                                     </ProfileMenuInfoFullNameContainer>
                                     <ProfileMenuInfoUsername>
                                         @{me.username}

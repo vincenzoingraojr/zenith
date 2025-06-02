@@ -30,6 +30,7 @@ import VerificationBadge from "../../../utils/VerificationBadge";
 import { useFindPostById } from "../../../../utils/postQueries";
 import QuotedPost from "./QuotedPost";
 import LoadingComponent from "../../../utils/LoadingComponent";
+import AffiliationIcon from "../../../utils/AffiliationIcon";
 
 interface PostComponentProps {
     post: Post;
@@ -47,12 +48,16 @@ const PostWrapper = styled.div`
     }
 `;
 
-const PostContainer = styled.div.attrs((props: { isHovered: boolean }) => props)`
+const PostContainer = styled.div`
     display: flex;
     flex-direction: column;
-    background-color: ${(props) => props.isHovered ? props.theme.overlayGrey : "transparent"};
+    background-color: transparent;
     transition: 0.2s background-color ease;
     cursor: pointer;
+
+    &:hover, &:focus {
+        background-color: ${({ theme }) => theme.overlayGrey};
+    }
 `;
 
 const PostHeader = styled.div`
@@ -379,10 +384,6 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
 
     const { post: quotedPost, loading, error } = useFindPostById(post.quotedPostId as number | undefined);
 
-    const [isParentHovered, setParentHovered] = useState(false);
-    const [isChildHovered, setChildHovered] = useState(false);
-    const shouldHighlightParent = isParentHovered && !isChildHovered;
-
     return (
         <PostWrapper>
             <PostContainer
@@ -400,11 +401,6 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         );
                     }
                 }}
-                isHovered={shouldHighlightParent}
-                onMouseEnter={() => setParentHovered(true)}
-                onMouseLeave={() => setParentHovered(false)}
-                onTouchStart={() => setParentHovered(true)}
-                onTouchEnd={() => setParentHovered(false)}
             >
                 <PostHeader>
                     <PostAuthorContainer
@@ -437,6 +433,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                         size={18}
                                     />
                                 )}
+                                <AffiliationIcon userId={post.authorId} size={18} />
                             </AuthorFullNameContainer>
                             <AuthorUsername>
                                 @{post.author.username}
@@ -623,9 +620,6 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                         <QuotedPost 
                                             post={quotedPost as Post}
                                             origin="feed"
-                                            isHovered={isChildHovered}
-                                            onMouseEnter={() => setChildHovered(true)}
-                                            onMouseLeave={() => setChildHovered(false)}
                                         />
                                     ) : (
                                         <QuotedPostNotAvailable>

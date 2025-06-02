@@ -9,13 +9,11 @@ import profilePicture from "../../../../images/profile-picture.png";
 import Pen from "../../../icons/Pen";
 import { processDate } from "../../../../utils/processDate";
 import { COLORS } from "../../../../styles/colors";
+import AffiliationIcon from "../../../utils/AffiliationIcon";
 
 interface QuotedPostProps {
     post: Post;
     origin: "create-post" | "feed";
-    isHovered?: boolean;
-    onMouseEnter?: () => void;
-    onMouseLeave?: () => void;
 }
 
 const QuotedPostWrapper = styled.div`
@@ -24,13 +22,17 @@ const QuotedPostWrapper = styled.div`
     border-radius: 12px;
 `;
 
-const QuotedPostContainer = styled.div.attrs((props: { isHovered: boolean }) => props)`
+const QuotedPostContainer = styled.div`
     display: flex;
     flex-direction: column;
-    background-color: ${(props) => props.isHovered ? props.theme.overlayGrey : props.theme.background};
+    background-color: ${({ theme }) => theme.background};
     transition: 0.2s background-color ease;
     border-radius: inherit;
     cursor: pointer;
+
+    &:hover, &:focus {
+        background-color: ${({ theme }) => theme.overlayGrey};
+    }
 `;
 
 const QuotedPostHeader = styled.div`
@@ -88,7 +90,7 @@ const QuotedPostMediaContainer = styled.div`
     }
 `;
 
-const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin, isHovered, onMouseEnter, onMouseLeave }) => {
+const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin }) => {
     const navigate = useNavigate();
 
     const date = processDate(post.createdAt, true, true);
@@ -117,11 +119,6 @@ const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin, isHovere
                         );
                     }
                 }}
-                isHovered={isHovered}
-                onMouseEnter={onMouseEnter}
-                onMouseLeave={onMouseLeave}
-                onTouchStart={onMouseEnter}
-                onTouchEnd={onMouseLeave}
             >
                 <QuotedPostHeader>
                     <QuotedPostAuthorContainer>
@@ -148,6 +145,7 @@ const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin, isHovere
                                         size={18}
                                     />
                                 )}
+                                <AffiliationIcon userId={post.authorId} size={18} />
                             </AuthorFullNameContainer>
                             <AuthorUsername>
                                 @{post.author.username}
