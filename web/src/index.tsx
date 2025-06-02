@@ -61,6 +61,16 @@ const cache = new InMemoryCache({
                         };
                     }
                 },
+                postComments: {
+                    keyArgs: ["id", "type"],
+                    merge: (existing, incoming) => {
+                        return {
+                            posts: [...(existing?.posts || []), ...incoming.posts],
+                            hasMore: incoming.hasMore,
+                            totalCount: incoming.totalCount,
+                        };
+                    }
+                }
             },
         },
     },

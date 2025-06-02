@@ -2,7 +2,7 @@ import { FunctionComponent, useEffect, useRef, useState } from "react";
 import { MediaItem } from "../../../generated/graphql";
 import styled from "styled-components";
 import { useMeData } from "../../../utils/userQueries";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import profilePicture from "../../../images/profile-picture.png";
 import { Button, ControlContainer, PageBlock, PageText } from "../../../styles/global";
 import { COLORS } from "../../../styles/colors";
@@ -12,7 +12,7 @@ import { MentionNode } from "./mentions/MentionNode";
 import { $createParagraphNode, $createTextNode, $getRoot, CLEAR_EDITOR_COMMAND } from "lexical";
 import { AutoLinkPlugin } from "@lexical/react/LexicalAutoLinkPlugin";
 import { AutoLinkNode } from "@lexical/link";
-import { HashtagNode } from "@lexical/hashtag";
+import { $createHashtagNode, HashtagNode } from "@lexical/hashtag";
 import { HashtagPlugin } from "@lexical/react/LexicalHashtagPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
@@ -271,6 +271,8 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
         addToast(error);
     }
 
+    const location = useLocation();
+
     const initialConfig = {
         namespace: "Lumen",
         editorState: () => {
@@ -288,6 +290,28 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
                 root.selectEnd();
 
                 setContent(value);
+            } else if (
+                location &&
+                location.state &&
+                location.state.backgroundLocation
+            ) { 
+                const p = $createParagraphNode();
+
+                if (location.state.backgroundLocation.search && location.state.backgroundLocation.search.length > 0) {
+                    const searchParams = new URLSearchParams(
+                        location.state.backgroundLocation.search
+                    );
+
+                    if (
+                        searchParams.get("q")?.startsWith("#")
+                    ) {
+                        p.append(
+                            $createHashtagNode(`${searchParams.get("q")}`)
+                        );
+                        root.append(p);
+                        root.selectStart();
+                    }
+                }
             } else {
                 root.clear();
             }

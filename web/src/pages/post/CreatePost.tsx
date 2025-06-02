@@ -17,7 +17,7 @@ const CreatePostContentContaiener = styled(PageBlock)`
 function CreatePost() {
     const params = useParams();
 
-    const { post, loading, error } = useFindPost(params.itemId as string);
+    const { post, loading, error } = useFindPost(params.itemIdOrLocation as string);
 
     return (
         <LumenModalContainer>

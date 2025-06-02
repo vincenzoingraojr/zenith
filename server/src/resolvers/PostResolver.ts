@@ -1253,6 +1253,10 @@ export class PostResolver {
                         itemOpened,
                         origin,
                     }).save();
+
+                    return item;
+                } else {
+                    return null;
                 }
             } else {
                 const userHasViewed = await this.viewLogRepository.findOne({
@@ -1276,10 +1280,12 @@ export class PostResolver {
                         itemOpened,
                         origin,
                     }).save();
+
+                    return item;
+                } else {
+                    return null;
                 }
             }
-
-            return item;
         } catch (error) {
             logger.error(error);
 

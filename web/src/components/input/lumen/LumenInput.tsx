@@ -6,7 +6,7 @@ import { useMeData } from "../../../utils/userQueries";
 import axios from "axios";
 import { useToasts } from "../../utils/ToastProvider";
 import { FileWrapper, ProgressStatus } from "../commons";
-import { useCreatePostMutation } from "../../../generated/graphql";
+import { PostCommentsDocument, useCreatePostMutation } from "../../../generated/graphql";
 import { BAD_REQUEST_MESSAGE } from "../../../utils/constants";
 import { toErrorMap } from "../../../utils/toErrorMap";
 import { useNavigate } from "react-router-dom";
@@ -146,90 +146,119 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                         } else if (response.data.createPost.ok && response.data.createPost.post) {
                             setStatus(true);
 
-                            const newPost = response.data.createPost.post;
-                                        
-                            client.cache.modify({
-                                fields: {
-                                    postFeed(existing = { posts: [], hasMore: true }) {
-                                        const exists = existing.posts.some((p: any) => p.__ref === `Post:${newPost.id}`);
-                
-                                        if (exists) return existing;
-                                        
-                                        return {
-                                            hasMore: existing.hasMore,
-                                            posts: [client.cache.writeFragment({
-                                                data: newPost,
-                                                fragment: gql`
-                                                    fragment NewPost on Post {
-                                                        id
-                                                        itemId
-                                                        authorId
-                                                        type
-                                                        content
-                                                        isEdited
-                                                        views
-                                                        lang
-                                                        topics
-                                                        author {
+                            if (type === "post") {
+                                const newPost = response.data.createPost.post;
+                            
+                                client.cache.modify({
+                                    fields: {
+                                        postFeed(existing = { posts: [], hasMore: true }) {
+                                            const exists = existing.posts.some((p: any) => p.__ref === `Post:${newPost.id}`);
+                    
+                                            if (exists) return existing;
+                                            
+                                            return {
+                                                hasMore: existing.hasMore,
+                                                posts: [client.cache.writeFragment({
+                                                    data: newPost,
+                                                    fragment: gql`
+                                                        fragment NewPost on Post {
                                                             id
-                                                            name
-                                                            username
-                                                            email
+                                                            itemId
+                                                            authorId
                                                             type
-                                                            gender
-                                                            birthDate {
-                                                                date
-                                                                monthAndDayVisibility
-                                                                yearVisibility
+                                                            content
+                                                            isEdited
+                                                            views
+                                                            lang
+                                                            topics
+                                                            author {
+                                                                id
+                                                                name
+                                                                username
+                                                                email
+                                                                type
+                                                                gender
+                                                                birthDate {
+                                                                    date
+                                                                    monthAndDayVisibility
+                                                                    yearVisibility
+                                                                }
+                                                                emailVerified
+                                                                profile {
+                                                                    profilePicture
+                                                                    profileBanner
+                                                                    bio
+                                                                    website
+                                                                }
+                                                                userSettings {
+                                                                    incomingMessages
+                                                                    twoFactorAuth
+                                                                }
+                                                                searchSettings {
+                                                                    hideSensitiveContent
+                                                                    hideBlockedAccounts
+                                                                }
+                                                                createdAt
+                                                                updatedAt
+                                                                hiddenPosts
+                                                                identity {
+                                                                    verified
+                                                                    verifiedSince
+                                                                }
+                                                                verification {
+                                                                    verified
+                                                                    verifiedSince
+                                                                }
                                                             }
-                                                            emailVerified
-                                                            profile {
-                                                                profilePicture
-                                                                profileBanner
-                                                                bio
-                                                                website
+                                                            isReplyToId
+                                                            isReplyToType
+                                                            quotedPostId
+                                                            media {
+                                                                id
+                                                                type
+                                                                src
+                                                                alt
                                                             }
-                                                            userSettings {
-                                                                incomingMessages
-                                                                twoFactorAuth
-                                                            }
-                                                            searchSettings {
-                                                                hideSensitiveContent
-                                                                hideBlockedAccounts
-                                                            }
+                                                            mentions
+                                                            hashtags
                                                             createdAt
                                                             updatedAt
-                                                            hiddenPosts
-                                                            identity {
-                                                                verified
-                                                                verifiedSince
-                                                            }
-                                                            verification {
-                                                                verified
-                                                                verifiedSince
-                                                            }
                                                         }
-                                                        isReplyToId
-                                                        isReplyToType
-                                                        quotedPostId
-                                                        media {
-                                                            id
-                                                            type
-                                                            src
-                                                            alt
-                                                        }
-                                                        mentions
-                                                        hashtags
-                                                        createdAt
-                                                        updatedAt
-                                                    }
-                                                `
-                                            }), ...existing.posts],
-                                            totalCount: existing.totalCount + 1,
-                                        };
+                                                    `
+                                                }), ...existing.posts],
+                                                totalCount: existing.totalCount + 1,
+                                            };
+                                        }
                                     }
-                                }
-                            });
+                                });
+                            } else {
+                                const existing = client.cache.readQuery({
+                                    query: PostCommentsDocument,
+                                    variables: {
+                                        id: isReplyToId,
+                                        type: isReplyToType,
+                                        limit: 3,
+                                    },
+                                });
+
+                                const { totalCount: oldCount, hasMore } = (existing as { postComments: { totalCount: number; hasMore: boolean } }).postComments;
+
+                                client.cache.writeQuery({
+                                    query: PostCommentsDocument,
+                                    variables: {
+                                        id: isReplyToId,
+                                        type: isReplyToType,
+                                        limit: 3,
+                                    },
+                                    data: {
+                                        postComments: {
+                                            posts: [response.data.createPost.post],
+                                            totalCount: oldCount + 1,
+                                            hasMore,
+                                        },
+                                    },
+                                });
+                            }
 
                             if (closingOnSubmit) {
                                 if (window.history.length > 2) {

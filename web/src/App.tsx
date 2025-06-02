@@ -215,7 +215,7 @@ function App() {
                     }
                 />
                 <Route
-                    path="/create_post/:operation/:itemType/:itemId"
+                    path="/create_post/:operation/:itemType/:itemIdOrLocation"
                     element={
                         <IsAuthenticated
                             isAuth={isAuth}
@@ -266,7 +266,7 @@ function App() {
                         }
                     />
                     <Route
-                        path="/create_post/:operation/:itemType/:itemId"
+                        path="/create_post/:operation/:itemType/:itemIdOrLocation"
                         element={
                             <IsAuthenticated
                                 isAuth={isAuth}

@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useRef, useState } from "react";
-import { Like, Post, Repost, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, User, useRemoveLikeMutation } from "../../../../generated/graphql";
+import { GetPostLikesDocument, GetRepostsDocument, IsPostLikedByMeDocument, IsPostLikedByMeQuery, IsRepostedByUserDocument, IsRepostedByUserQuery, Like, Post, Repost, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveLikeMutation } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ControlContainer, OptionBaseIcon, PageBlock, PageText } from "../../../../styles/global";
@@ -29,7 +29,7 @@ import Mail from "../../../icons/Mail";
 import VerificationBadge from "../../../utils/VerificationBadge";
 import { useFindPostById } from "../../../../utils/postQueries";
 import QuotedPost from "./QuotedPost";
-import { gql } from "@apollo/client";
+import LoadingComponent from "../../../utils/LoadingComponent";
 
 interface PostComponentProps {
     post: Post;
@@ -244,6 +244,14 @@ const PostActionInfo = styled(PageText)`
     background-color: transparent;
 `;
 
+const QuotedPostNotAvailable = styled.div`
+    display: block;
+    color: ${({ theme }) => theme.inputText};
+    background-color: ${({ theme }) => theme.inputBackground};
+    padding: 12px;
+    border-radius: 12px;
+`;
+
 const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplying, origin }) => {
     const navigate = useNavigate();
     const [like, setLike] = useState<Like | null>(null);
@@ -271,6 +279,8 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
     const postRef = useRef<HTMLDivElement>(null);
     const [incrementPostViews] = useIncrementPostViewsMutation();
 
+    const [views, setViews] = useState(post.views);
+
     useEffect(() => {
         let postDivRef = postRef.current;
 
@@ -289,6 +299,10 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         itemOpened: false,
                         origin,
                     },
+                }).then((response) => {
+                    if (response.data && response.data.incrementPostViews) {
+                        setViews(response.data.incrementPostViews.views);
+                    }
                 });
             }
         }, options);
@@ -363,7 +377,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
 
     const [deletePost, { client }] = useDeletePostMutation();
 
-    const { post: quotedPost } = useFindPostById(post.quotedPostId as number | undefined);
+    const { post: quotedPost, loading, error } = useFindPostById(post.quotedPostId as number | undefined);
 
     const [isParentHovered, setParentHovered] = useState(false);
     const [isChildHovered, setChildHovered] = useState(false);
@@ -520,7 +534,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                                     fields: {
                                                                         postFeed(existing = { posts: [], hasMore: true }) {
                                                                             const filteredPosts = existing.posts.filter((p: any) =>
-                                                                                p.__ref ? p.__ref !== refId : p.id !== post.id
+                                                                                p.__ref !== refId
                                                                             );
 
                                                                             return {
@@ -593,14 +607,34 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             ))}
                         </PostMediaContainer>
                     )}
-                    {quotedPost && (
-                        <QuotedPost 
-                            post={quotedPost as Post}
-                            origin="feed"
-                            isHovered={isChildHovered}
-                            onMouseEnter={() => setChildHovered(true)}
-                            onMouseLeave={() => setChildHovered(false)}
-                        />
+                    {post.quotedPostId && (
+                        <>
+                            {(loading || error) ? (
+                                <>
+                                    {error ? (
+                                        <PageText>An error occurred while trying to load the quoted post.</PageText>
+                                    ) : (
+                                        <LoadingComponent />
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    {quotedPost ? (
+                                        <QuotedPost 
+                                            post={quotedPost as Post}
+                                            origin="feed"
+                                            isHovered={isChildHovered}
+                                            onMouseEnter={() => setChildHovered(true)}
+                                            onMouseLeave={() => setChildHovered(false)}
+                                        />
+                                    ) : (
+                                        <QuotedPostNotAvailable>
+                                            The quoted post is not available.
+                                        </QuotedPostNotAvailable>
+                                    )}
+                                </>
+                            )}
+                        </>
                     )}
                 </PostContentContainer>
                 <PostActionsContainer>
@@ -621,24 +655,45 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                         },
                                         update: (cache, { data: removeLikeData }) => {
                                             if (removeLikeData && removeLikeData.removeLike) {
-                                                const postId = cache.identify({ __typename: post.__typename, id: post.itemId });
+                                                const existing = cache.readQuery({
+                                                    query: GetPostLikesDocument,
+                                                    variables: {
+                                                        itemId: post.itemId,
+                                                        type: post.type,
+                                                        limit: 3,
+                                                    },
+                                                });
 
-                                                cache.modify({
-                                                    id: postId,
-                                                    fields: {
-                                                        getPostLikes(existing = { users: [], hasMore: true }) {
-                                                            return {
-                                                                hasMore: existing.hasMore,
-                                                                users: existing.users.filter((user: User) => user.id !== me.id),
-                                                                totalCount: existing.totalCount - 1,
-                                                            };
+                                                const { users: oldUsers, totalCount: oldCount, hasMore } = (existing as { getPostLikes: { users: any[]; totalCount: number; hasMore: boolean } }).getPostLikes;
+                                                
+                                                cache.writeQuery({
+                                                    query: GetPostLikesDocument,
+                                                    variables: {
+                                                        itemId: post.itemId,
+                                                        type: post.type,
+                                                        limit: 3,
+                                                    },
+                                                    data: {
+                                                        getPostLikes: {
+                                                            users: oldUsers.filter(user => user.id !== me.id),
+                                                            totalCount: Math.max(oldCount - 1, 0),
+                                                            hasMore,
                                                         },
                                                     },
                                                 });
+
+                                                cache.writeQuery<IsPostLikedByMeQuery>({
+                                                    query: IsPostLikedByMeDocument,
+                                                    data: {
+                                                        isPostLikedByMe: null,
+                                                    },
+                                                    variables: {
+                                                        itemId: post.itemId, 
+                                                        type: post.type,
+                                                    }
+                                                });
                                             }
                                         }
-                                    }).then(() => {
-                                        setLike(null);
                                     });
                                 } else {
                                     await likePost({
@@ -649,78 +704,48 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                             itemType: post.type,
                                         },
                                         update: (cache, { data: likePostData }) => {
-                                            if (likePostData && likePostData.likePost) {
-                                                const postId = cache.identify({ __typename: post.__typename, id: post.itemId });
+                                            if (likePostData && likePostData.likePost) {  
+                                                const existing = cache.readQuery({
+                                                    query: GetPostLikesDocument,
+                                                    variables: {
+                                                        itemId: post.itemId,
+                                                        type: post.type,
+                                                        limit: 3,
+                                                    },
+                                                });
+
+                                                const { totalCount: oldCount, hasMore } = (existing as { getPostLikes: { totalCount: number; hasMore: boolean } }).getPostLikes;
                                                 
-                                                cache.modify({
-                                                    id: postId,
-                                                    fields: {
-                                                        getPostLikes(existing = { users: [], hasMore: true }) {
-                                                            const exists = existing.users.some((user: User) => user.id === me.id);
+                                                cache.writeQuery({
+                                                    query: GetPostLikesDocument,
+                                                    variables: {
+                                                        itemId: post.itemId,
+                                                        type: post.type,
+                                                        limit: 3,
+                                                    },
+                                                    data: {
+                                                        getPostLikes: {
+                                                            users: [me],
+                                                            totalCount: oldCount + 1,
+                                                            hasMore,
+                                                        },
+                                                    },
+                                                });
 
-                                                            if (!exists) return existing;
-
-                                                            return {
-                                                                hasMore: existing.hasMore,
-                                                                users: [cache.writeFragment({
-                                                                    data: me,
-                                                                    fragment: gql`
-                                                                        fragment NewUser on User {
-                                                                            id
-                                                                            name
-                                                                            username
-                                                                            email
-                                                                            type
-                                                                            gender
-                                                                            birthDate {
-                                                                                date
-                                                                                monthAndDayVisibility
-                                                                                yearVisibility
-                                                                            }
-                                                                            emailVerified
-                                                                            profile {
-                                                                                profilePicture
-                                                                                profileBanner
-                                                                                bio
-                                                                                website
-                                                                            }
-                                                                            userSettings {
-                                                                                incomingMessages
-                                                                                twoFactorAuth
-                                                                            }
-                                                                            searchSettings {
-                                                                                hideSensitiveContent
-                                                                                hideBlockedAccounts
-                                                                            }
-                                                                            createdAt
-                                                                            updatedAt
-                                                                            hiddenPosts
-                                                                            identity {
-                                                                                verified
-                                                                                verifiedSince
-                                                                            }
-                                                                            verification {
-                                                                                verified
-                                                                                verifiedSince
-                                                                            }
-                                                                        }
-                                                                    `
-                                                                }), ...existing.users],
-                                                                totalCount: existing.totalCount + 1,
-                                                            }
-                                                        }
+                                                cache.writeQuery<IsPostLikedByMeQuery>({
+                                                    query: IsPostLikedByMeDocument,
+                                                    data: {
+                                                        isPostLikedByMe: likePostData.likePost,
+                                                    },
+                                                    variables: {
+                                                        itemId: post.itemId, 
+                                                        type: post.type,
                                                     }
-                                                })
+                                                });
                                             }
                                         }
-                                    }).then((response) => {
-                                        if (response.data && response.data.likePost) {
-                                            setLike(response.data.likePost as Like);
-                                        } else {
-                                            addToast("An error occurred while trying to like this post.");
-
-                                            setLike(null);
-                                        }
+                                    }).catch(() => {
+                                        addToast("An error occurred while trying to like this post.");
                                     });
                                 }
                             }
@@ -771,24 +796,45 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                         },
                                                         update: (cache, { data: deleteRepostData }) => {
                                                             if (deleteRepostData && deleteRepostData.deleteRepost && repost) {
-                                                                const postId = cache.identify({ __typename: post.__typename, id: post.itemId });
+                                                                const existing = cache.readQuery({
+                                                                    query: GetRepostsDocument,
+                                                                    variables: {
+                                                                        postId: post.id,
+                                                                        userId: me.id,
+                                                                        limit: 3,
+                                                                    },
+                                                                });
 
-                                                                cache.modify({
-                                                                    id: postId,
-                                                                    fields: {
-                                                                        getReposts(existing = { reposts: [], hasMore: true }) {
-                                                                            return {
-                                                                                hasMore: existing.hasMore,
-                                                                                reposts: existing.reposts.filter((r: Repost) => r.id !== repost.id),
-                                                                                totalCount: existing.totalCount - 1,
-                                                                            };
-                                                                        }
+                                                                const { reposts: oldReposts, totalCount: oldCount, hasMore } = (existing as { getReposts: { reposts: any[]; totalCount: number; hasMore: boolean } }).getReposts;
+
+                                                                cache.writeQuery({
+                                                                    query: GetRepostsDocument,
+                                                                    variables: {
+                                                                        postId: post.id,
+                                                                        userId: me.id,
+                                                                        limit: 3,
+                                                                    },
+                                                                    data: {
+                                                                        getReposts: {
+                                                                            reposts: oldReposts.filter(r => r.id !== repost.id),
+                                                                            totalCount: Math.max(oldCount - 1, 0),
+                                                                            hasMore,
+                                                                        },
+                                                                    },
+                                                                });
+
+                                                                cache.writeQuery<IsRepostedByUserQuery>({
+                                                                    query: IsRepostedByUserDocument,
+                                                                    data: {
+                                                                        isRepostedByUser: null,
+                                                                    },
+                                                                    variables: {
+                                                                        postId: post.id, 
+                                                                        userId: me.id,
                                                                     }
                                                                 });
                                                             }
                                                         },
-                                                    }).then(() => {
-                                                        setRepost(null);
                                                     });
                                                 } else {
                                                     await createRepost({
@@ -797,42 +843,47 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                         },
                                                         update: (cache, { data: createRepostData }) => {
                                                             if (createRepostData && createRepostData.createRepost && !repost) {
-                                                                const postId = cache.identify({ __typename: post.__typename, id: post.itemId });
+                                                                const existing = cache.readQuery({
+                                                                    query: GetRepostsDocument,
+                                                                    variables: {
+                                                                        postId: post.id,
+                                                                        userId: me.id,
+                                                                        limit: 3,
+                                                                    },
+                                                                });
 
-                                                                cache.modify({
-                                                                    id: postId,
-                                                                    fields: {
-                                                                        getReposts(existing = { reposts: [], hasMore: true }, {  }) {
-                                                                            return {
-                                                                                hasMore: existing.hasMore,
-                                                                                reposts: [cache.writeFragment({
-                                                                                    data: createRepostData.createRepost,
-                                                                                    fragment: gql`
-                                                                                        fragment NewRepost on Repost {
-                                                                                            id
-                                                                                            repostId
-                                                                                            postId
-                                                                                            authorId
-                                                                                            createdAt
-                                                                                            updatedAt
-                                                                                        }
-                                                                                    `
-                                                                                }), ...existing.reposts],
-                                                                                totalCount: existing.totalCount + 1,
-                                                                            }
-                                                                        }
+                                                                const { totalCount: oldCount, hasMore } = (existing as { getReposts: { totalCount: number; hasMore: boolean } }).getReposts;
+
+                                                                cache.writeQuery({
+                                                                    query: GetRepostsDocument,
+                                                                    variables: {
+                                                                        postId: post.id,
+                                                                        userId: me.id,
+                                                                        limit: 3,
+                                                                    },
+                                                                    data: {
+                                                                        getReposts: {
+                                                                            reposts: [createRepostData.createRepost],
+                                                                            totalCount: oldCount + 1,
+                                                                            hasMore,
+                                                                        },
+                                                                    },
+                                                                });
+
+                                                                cache.writeQuery<IsRepostedByUserQuery>({
+                                                                    query: IsRepostedByUserDocument,
+                                                                    data: {
+                                                                        isRepostedByUser: createRepostData.createRepost,
+                                                                    },
+                                                                    variables: {
+                                                                        postId: post.id, 
+                                                                        userId: me.id,
                                                                     }
                                                                 });
                                                             }
                                                         },
-                                                    }).then((response) => {
-                                                        if (response.data && response.data.createRepost) {
-                                                            setRepost(response.data.createRepost as Repost);
-                                                        } else {
-                                                            addToast("An error occurred while trying to repost this post.");
-
-                                                            setRepost(null);
-                                                        }
+                                                    }).catch(() => {
+                                                        addToast("An error occurred while trying to repost this post.");
                                                     });
                                                 }
                                             }
@@ -906,7 +957,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             <Views />
                         </ControlContainer>
                         <PostActionInfo>
-                            {formatter.format(post.views)}
+                            {formatter.format(views)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
