@@ -594,15 +594,12 @@ export class PostResolver {
         @Arg("type") type: string,
         @Arg("content") content: string,
         @Arg("media") media: string,
-        @Arg("deletedMedia") deletedMedia: string,
-        @Arg("existingAltTexts") existingAltTexts: string,
         @Ctx() { payload }: AuthContext,
     ): Promise<PostResponse> {
         let errors = [];
         let post: Post | null = null;
-        let mediaArray = JSON.parse(media);
-        let deletedMediaIdsArray = JSON.parse(deletedMedia);
-        let existingAltTextsArray = JSON.parse(existingAltTexts);
+        const mediaArray = JSON.parse(media);
+        console.log(mediaArray);
         let ok = false;
         let status = "";
 
@@ -663,10 +660,12 @@ export class PostResolver {
                             relations: ["author", "media"],
                         });
 
-                        if (mediaArray && mediaArray.length > 0 && post) {
+                        const mediaToUpload = mediaArray.filter((item: any) => item.status === "uploading");
+
+                        if (mediaToUpload && mediaToUpload.length > 0 && post) {
                             const mediaItems = [];
                             
-                            for (const mediaItem of mediaArray) {
+                            for (const mediaItem of mediaToUpload) {
                                 const newMediaItem = await this.mediaItemRepository.create({
                                     post,
                                     type: mediaItem.type,
@@ -681,9 +680,12 @@ export class PostResolver {
                             await post.save();
                         }
 
-                        if (deletedMediaIdsArray && deletedMediaIdsArray.length > 0) {
+                        const toBeDeletedMedia = mediaArray.filter((item: any) => item.status === "to_be_deleted");
+
+                        if (toBeDeletedMedia.length > 0) {
+                            const deletedMediaIdsArray = toBeDeletedMedia.map((item: any) => item.id);
                             const mediaItems = await this.mediaItemRepository.find({ where: { id: In(deletedMediaIdsArray) } });
-                            
+
                             await Promise.all(
                                 mediaItems.map(async (item) => {
                                     const existingKey =
@@ -694,7 +696,7 @@ export class PostResolver {
                                     const url = await getPresignedUrlForDeleteCommand(existingKey, item.type);
                 
                                     await axios.delete(url).then(() => {
-                                        logger.error("Media item successfully deleted.");
+                                        logger.warn(`Media item with id ${item.id} successfully deleted.`);
                                     })
                                     .catch((error) => {
                                         logger.error(`An error occurred while deleting the media item. Error code: ${error.code}.`);
@@ -705,17 +707,27 @@ export class PostResolver {
                             );
                         }
 
-                        if (existingAltTextsArray && existingAltTextsArray.length > 0) {
-                            for (const item of existingAltTextsArray) {
+                        const existingMedia = mediaArray.filter((item: any) => item.status === "uploaded");
+
+                        if (existingMedia && existingMedia.length > 0) {
+                            for (const item of existingMedia) {
                                 await this.mediaItemRepository.update({
-                                    id: item[0],
+                                    id: item.id,
                                 }, {
-                                    alt: item[1],
+                                    alt: item.alt,
                                 });
                             }
                         }
 
                         if (post) {
+                            const postMedia = await this.postMedia(post.itemId);
+
+                            if (postMedia) {
+                                post.media = postMedia;
+
+                                await post.save();
+                            }
+
                             const mentionedUsers = await this.userService.findUsersByUsername(mentions);
                             const postMentions: string[] = [];
 

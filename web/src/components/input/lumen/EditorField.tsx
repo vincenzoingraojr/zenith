@@ -1,19 +1,21 @@
 import { FunctionComponent } from "react";
-import { MediaItem } from "../../../generated/graphql";
 import styled from "styled-components";
 import { CustomFieldError } from "../../../styles/global";
 import { Field } from "formik";
 import EditorComponent from "./EditorComponent";
-import { ProgressStatus } from "../commons";
+import { FileWrapper, ProgressStatus } from "../commons";
 
 interface EditorFieldProps {
     field: string;
     placeholder: string;
     errors: any;
     status?: boolean;
-    value?: string;
+    values: {
+        type: string;
+        content: string;
+        media: FileWrapper[];
+    };
     buttonText: string;
-    media?: MediaItem[];
     progress: ProgressStatus[];
 }
 
@@ -24,7 +26,7 @@ const EditorFieldContainer = styled.div`
     width: 100%;
 `;
 
-const EditorField: FunctionComponent<EditorFieldProps> = ({ field, placeholder, errors, status, value, buttonText, media, progress }) => {
+const EditorField: FunctionComponent<EditorFieldProps> = ({ field, placeholder, errors, status, buttonText, values, progress }) => {
     return (
         <EditorFieldContainer>
             {errors[field] && (
@@ -35,9 +37,8 @@ const EditorField: FunctionComponent<EditorFieldProps> = ({ field, placeholder, 
                 component={EditorComponent}
                 placeholder={placeholder}
                 status={status}
-                value={value}
                 buttonText={buttonText}
-                mediaArray={media}
+                values={values}
                 progress={progress}
             />
         </EditorFieldContainer>

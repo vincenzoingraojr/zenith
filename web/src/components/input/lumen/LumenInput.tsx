@@ -1,5 +1,4 @@
 import { FunctionComponent, useState } from "react";
-import styled from "styled-components";
 import { Form, Formik } from "formik";
 import EditorField from "./EditorField";
 import { useMeData } from "../../../utils/userQueries";
@@ -7,10 +6,11 @@ import axios from "axios";
 import { useToasts } from "../../utils/ToastProvider";
 import { FileWrapper, ProgressStatus } from "../commons";
 import { PostCommentsDocument, useCreatePostMutation } from "../../../generated/graphql";
-import { BAD_REQUEST_MESSAGE } from "../../../utils/constants";
+import { BAD_REQUEST_MESSAGE, POST_TYPES } from "../../../utils/constants";
 import { toErrorMap } from "../../../utils/toErrorMap";
 import { useNavigate } from "react-router-dom";
 import { gql } from "@apollo/client";
+import { LumenInputContainer } from "../../../styles/global";
 
 interface LumenInputProps {
     type: "post" | "comment";
@@ -22,17 +22,7 @@ interface LumenInputProps {
     closingOnSubmit?: boolean;
 }
 
-const LumenInputContainer = styled.div`
-    display: block;
-    padding-top: 12px;
-    padding-left: 16px;
-    padding-right: 16px;
-    padding-bottom: 12px;
-`;
-
 const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isReplyToId, isReplyToType, quotedPostId, buttonText, closingOnSubmit }) => {
-    const [mediaUploadStatusArray, setMediaUploadStatusArray] = useState<ProgressStatus[]>([]);
-
     const folder = process.env.NODE_ENV === "development" ? "local-media" : "media";
 
     const { me } = useMeData();
@@ -43,18 +33,20 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
 
     const navigate = useNavigate();
 
+    const [mediaUploadStatusArray, setMediaUploadStatusArray] = useState<ProgressStatus[]>([]);
+
     return (
         <LumenInputContainer>
             <Formik
                 initialValues={{
                     type,
                     content: "",
-                    media: [],
+                    media: [] as FileWrapper[],
                 }}
                 onSubmit={async (values, { setErrors, setStatus }) => {
                     let postMediaDirectory = "";
                     let mediaArray: { src: string; alt: string; type: string }[] = [];
-                    const media: FileWrapper[] = values.media;
+                    const media: FileWrapper[] = [...values.media];
 
                     if (media.length > 0 && me) {
                         postMediaDirectory = `${folder}/${new Date().getTime()}-${me.id}`;
@@ -89,7 +81,7 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                                         (progressEvent.loaded * 100) /
                                             progressEvent.total
                                     );
-                                    
+
                                     setMediaUploadStatusArray((mediaUploadStatusArray) =>
                                         mediaUploadStatusArray.some(status => status.id === item.id)
                                             ? mediaUploadStatusArray.map(status =>
@@ -118,7 +110,7 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
 
                                     setMediaUploadStatusArray((mediaUploadStatusArray) =>
                                         mediaUploadStatusArray.map(status =>
-                                            status.id === item.id ? { ...status, progress: -1 } : status
+                                            status.id === item.id ? { ...status, progress: 0 } : status
                                         )
                                     );
                                 });
@@ -260,6 +252,8 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                                 });
                             }
 
+                            addToast(`Your ${(values.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST} has been created successfully.`);
+
                             if (closingOnSubmit) {
                                 if (window.history.length > 2) {
                                     navigate(-1);
@@ -269,21 +263,25 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                             }
                         } else {
                             addToast(response.data.createPost.status as string);
+
+                            setStatus(false);
                         }
                     } else {
                         addToast(BAD_REQUEST_MESSAGE);
+                        setStatus(false);
                     }
 
                     setMediaUploadStatusArray([]);
                 }}
             >
-                {({ errors, status }) => (
+                {({ errors, status, values }) => (
                     <Form>
                         <EditorField
                             field="content"
                             placeholder={placeholder}
                             errors={errors}
                             status={status}
+                            values={values}
                             buttonText={buttonText}
                             progress={mediaUploadStatusArray}
                         />

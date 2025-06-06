@@ -511,8 +511,6 @@ export type MutationEditMessageArgs = {
 
 export type MutationEditPostArgs = {
   content: Scalars['String']['input'];
-  deletedMedia: Scalars['String']['input'];
-  existingAltTexts: Scalars['String']['input'];
   media: Scalars['String']['input'];
   postId: Scalars['String']['input'];
   type: Scalars['String']['input'];
@@ -1402,8 +1400,6 @@ export type EditPostMutationVariables = Exact<{
   type: Scalars['String']['input'];
   content: Scalars['String']['input'];
   media: Scalars['String']['input'];
-  deletedMedia: Scalars['String']['input'];
-  existingAltTexts: Scalars['String']['input'];
 }>;
 
 
@@ -1967,15 +1963,8 @@ export type DeleteRepostMutationHookResult = ReturnType<typeof useDeleteRepostMu
 export type DeleteRepostMutationResult = Apollo.MutationResult<DeleteRepostMutation>;
 export type DeleteRepostMutationOptions = Apollo.BaseMutationOptions<DeleteRepostMutation, DeleteRepostMutationVariables>;
 export const EditPostDocument = gql`
-    mutation EditPost($postId: String!, $type: String!, $content: String!, $media: String!, $deletedMedia: String!, $existingAltTexts: String!) {
-  editPost(
-    postId: $postId
-    type: $type
-    content: $content
-    media: $media
-    deletedMedia: $deletedMedia
-    existingAltTexts: $existingAltTexts
-  ) {
+    mutation EditPost($postId: String!, $type: String!, $content: String!, $media: String!) {
+  editPost(postId: $postId, type: $type, content: $content, media: $media) {
     post {
       id
       itemId
@@ -2067,8 +2056,6 @@ export type EditPostMutationFn = Apollo.MutationFunction<EditPostMutation, EditP
  *      type: // value for 'type'
  *      content: // value for 'content'
  *      media: // value for 'media'
- *      deletedMedia: // value for 'deletedMedia'
- *      existingAltTexts: // value for 'existingAltTexts'
  *   },
  * });
  */

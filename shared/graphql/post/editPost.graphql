@@ -3,16 +3,12 @@ mutation EditPost(
     $type: String!
     $content: String!
     $media: String!
-    $deletedMedia: String!
-    $existingAltTexts: String!
 ) {
     editPost(
         postId: $postId
         type: $type
         content: $content
         media: $media
-        deletedMedia: $deletedMedia
-        existingAltTexts: $existingAltTexts
     ) {
         post {
             id

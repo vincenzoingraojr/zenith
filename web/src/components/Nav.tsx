@@ -183,8 +183,8 @@ const ActivityButton = styled.button`
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
+    width: 54px;
+    height: 54px;
     border: none;
     background-color: ${COLORS.blue};
     color: inherit;

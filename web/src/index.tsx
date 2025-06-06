@@ -73,6 +73,15 @@ const cache = new InMemoryCache({
                 }
             },
         },
+        Post: {
+            fields: {
+                media: {
+                    merge: (_existing = [], incoming) => {
+                        return incoming;
+                    },
+                },
+            },
+        },
     },
 });
 

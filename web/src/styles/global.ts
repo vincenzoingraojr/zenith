@@ -1287,6 +1287,14 @@ export const EndContainer = styled(PageText)`
     padding: 4px 16px;
 `;
 
+export const LumenInputContainer = styled.div`
+    display: block;
+    padding-top: 12px;
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-bottom: 12px;
+`;
+
 export const LumenModalContainer = styled.div`
     display: flex;
     flex-direction: column;
