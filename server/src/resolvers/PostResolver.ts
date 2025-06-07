@@ -567,6 +567,29 @@ export class PostResolver {
                             }
                         }
 
+                        if (quotedPostId) {
+                            const quotedPost = await this.findPostById(quotedPostId);
+
+                            if (quotedPost) {
+                                const notification = await this.notificationService.createNotification(payload.id, quotedPost.authorId, post.id, type, NOTIFICATION_TYPES.QUOTE, `${post.author.name} (@${post.author.username}) quoted your post.`);
+        
+                                const author = await this.userService.findUserById(quotedPost.authorId);
+
+                                if (notification && author) {
+                                    pubSub.publish("NEW_NOTIFICATION", notification);
+        
+                                    const tokens = await this.userDeviceTokenRepository.find({ where: { userId: quotedPost.authorId } });
+                                    const pushNotification: FirebaseNotification = {
+                                        title: `@${post.author.username} quoted your post (for @${author.username})`,
+                                        body: notification.content,
+                                        imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
+                                    };
+                                    const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.itemId}?n_id=${notification.notificationId}`;
+                                    await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: author.username, type: notification.notificationType });
+                                }
+                            }
+                        }
+
                         ok = true;
                     } else {
                         status = "Can't find the user.";
@@ -774,7 +797,7 @@ export class PostResolver {
                             );
 
                             for (const deletedNotification of uselessNotifications) {
-                                await this.notificationRepository.delete({ id: deletedNotification.id, notificationType: NOTIFICATION_TYPES.COMMENT });
+                                await this.notificationService.deleteNotification(deletedNotification.notificationId);
                                 
                                 pubSub.publish("DELETED_NOTIFICATION", deletedNotification);
                             }
@@ -851,7 +874,7 @@ export class PostResolver {
     
             await this.notificationRepository.delete({
                 resourceId: post.id,
-                notificationType: In([NOTIFICATION_TYPES.MENTION, NOTIFICATION_TYPES.LIKE, NOTIFICATION_TYPES.COMMENT]),
+                notificationType: In([NOTIFICATION_TYPES.MENTION, NOTIFICATION_TYPES.LIKE, NOTIFICATION_TYPES.COMMENT, NOTIFICATION_TYPES.QUOTE, NOTIFICATION_TYPES.REPOST]),
             });
     
             await this.postRepository.delete({ itemId: postId, authorId: payload.id }).catch((error) => {
@@ -1515,6 +1538,14 @@ export class PostResolver {
                 return null;
             }
 
+            const me = await this.userService.findUserById(payload.id);
+
+            if (!me) {
+                logger.warn("User not found.");
+
+                return null;
+            }
+
             const repost = await this.repostRepository.create({
                 repostId: uuidv4(),
                 postId: item.id,
@@ -1525,6 +1556,21 @@ export class PostResolver {
                 logger.warn("An error has occurred while reposting the post.");
 
                 return null;
+            }
+
+            const notification = await this.notificationService.createNotification(payload.id, item.authorId, item.id, item.type, NOTIFICATION_TYPES.REPOST, `${me.name} (@${me.username}) reposted your ${(item.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST}.`);
+
+            if (notification) {
+                pubSub.publish("NEW_NOTIFICATION", notification);
+
+                const tokens = await this.userDeviceTokenRepository.find({ where: { userId: item.authorId } });
+                const pushNotification: FirebaseNotification = {
+                    title: `@${me.username} reposted your ${(item.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST} (for @${item.author.username})`,
+                    body: notification.content,
+                    imageUrl: me.profile.profilePicture.length > 0 ? me.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
+                };
+                const link = `${process.env.CLIENT_ORIGIN}/${item.author.username}/post/${item.itemId}?n_id=${notification.notificationId}`;
+                await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: item.author.username, type: notification.notificationType });
             }
 
             return repost;
@@ -1548,9 +1594,7 @@ export class PostResolver {
         }
 
         try {
-            let item: Repost | null = null;
-
-            item = await this.repostRepository.findOne({ where: { postId, authorId: payload.id } });
+            const item = await this.findPostById(postId);
 
             if (!item) {
                 logger.warn("Item not found.");
@@ -1563,6 +1607,14 @@ export class PostResolver {
 
                 return false;
             });
+
+            const notification = await this.notificationService.findNotification(payload.id, item.authorId, item.id, item.type, NOTIFICATION_TYPES.REPOST);
+    
+            if (payload.id !== item.authorId && notification) {
+                await this.notificationService.deleteNotification(notification.notificationId);
+
+                pubSub.publish("DELETED_NOTIFICATION", notification);
+            }
     
             return true;
         } catch (error) {

@@ -23,6 +23,7 @@ import SettingsPage from "./pages/settings/Index";
 import Payments from "./pages/payments/Payments";
 import CreatePost from "./pages/post/CreatePost";
 import EditPost from "./pages/post/EditPost";
+import PostPage from "./pages/post/PostPage";
 
 function App() {
     const location = useLocation();
@@ -242,6 +243,12 @@ function App() {
                                 />
                             }
                         />
+                    }
+                />
+                <Route
+                    path="/:username/post/:itemId"
+                    element={
+                        <PostPage />
                     }
                 />
             </Routes>
