@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useRef, useState } from "react";
-import { GetPostLikesDocument, GetRepostsDocument, IsPostLikedByMeDocument, IsPostLikedByMeQuery, IsRepostedByUserDocument, IsRepostedByUserQuery, Like, Post, Repost, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveLikeMutation } from "../../../../generated/graphql";
+import { Follow, GetPostLikesDocument, GetRepostsDocument, IsFollowedByMeDocument, IsFollowedByMeQuery, IsPostLikedByMeDocument, IsPostLikedByMeQuery, IsRepostedByUserDocument, IsRepostedByUserQuery, Like, Post, Repost, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useFollowUserMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsFollowedByMeQuery, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveLikeMutation, useUnfollowUserMutation } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ControlContainer, OptionBaseIcon, PageBlock, PageText } from "../../../../styles/global";
@@ -35,6 +35,7 @@ import AffiliationIcon from "../../../utils/AffiliationIcon";
 interface PostComponentProps {
     post: Post;
     showReplying?: boolean;
+    showIsReposted?: boolean;
     origin: string;
 }
 
@@ -257,10 +258,9 @@ const QuotedPostNotAvailable = styled.div`
     border-radius: 12px;
 `;
 
-const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplying, origin }) => {
+const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplying, showIsReposted, origin }) => {
     const navigate = useNavigate();
     const [like, setLike] = useState<Like | null>(null);
-    const [follow, setFollow] = useState(false);
 
     const { activeOptions, handleOptionsClick } = useOptions();
 
@@ -383,6 +383,28 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
     const [deletePost, { client }] = useDeletePostMutation();
 
     const { post: quotedPost, loading, error } = useFindPostById(post.quotedPostId as number | undefined);
+
+    const [follow, setFollow] = useState<Follow | null>(null);
+
+    const { data: followData } = useIsFollowedByMeQuery({
+        variables: {
+            id: post.authorId,
+        },
+        fetchPolicy: "cache-first",
+    });
+
+    useEffect(() => {
+        if (followData) {
+            setFollow(followData.isFollowedByMe as Follow | null);
+        }
+
+        return () => {
+            setFollow(null);
+        }
+    }, [followData]);
+
+    const [followUser] = useFollowUserMutation();
+    const [unfollowUser] = useUnfollowUserMutation();
 
     return (
         <PostWrapper>
@@ -562,15 +584,59 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                 <>
                                                     <OptionItem
                                                         role="menuitem"
-                                                        title="Follow this user"
-                                                        aria-label="Follow this user"
-                                                        onClick={(e) => {
+                                                        title={`${follow ? "Unfollow" : "Follow"} @${post.author.username}`}
+                                                        aria-label={`${follow ? "Unfollow" : "Follow"} @${post.author.username}`}
+                                                        onClick={async (e) => {
                                                             e.stopPropagation();
-                                                            setFollow(!follow);
+
+                                                            if (follow) {
+                                                                await unfollowUser({
+                                                                    variables: {
+                                                                        userId: post.authorId,
+                                                                    },
+                                                                    update: (cache, { data: unfollowUserData }) => {
+                                                                        if (unfollowUserData && unfollowUserData.unfollowUser) {
+                                                                            cache.writeQuery<IsFollowedByMeQuery>({
+                                                                                query: IsFollowedByMeDocument,
+                                                                                data: {
+                                                                                    isFollowedByMe: null,
+                                                                                },
+                                                                                variables: {
+                                                                                    id: post.authorId,
+                                                                                }
+                                                                            });
+                                                                        }
+                                                                    }
+                                                                }).catch(() => {
+                                                                    addToast("An error occurred while trying to unfollow this user.");
+                                                                });
+                                                            } else {
+                                                                await followUser({
+                                                                    variables: {
+                                                                        userId: post.authorId,
+                                                                        origin,
+                                                                    },
+                                                                    update: (cache, { data: followUserData }) => {
+                                                                        if (followUserData && followUserData.followUser) {
+                                                                            cache.writeQuery<IsFollowedByMeQuery>({
+                                                                                query: IsFollowedByMeDocument,
+                                                                                data: {
+                                                                                    isFollowedByMe: followUserData.followUser,
+                                                                                },
+                                                                                variables: {
+                                                                                    id: post.authorId,
+                                                                                }
+                                                                            });
+                                                                        }
+                                                                    }
+                                                                }).catch(() => {
+                                                                    addToast("An error occurred while trying to follow this user.");
+                                                                });
+                                                            }
                                                         }}
                                                     >
                                                         <OptionBaseIcon>
-                                                            <FollowIcon isActive={follow} />
+                                                            <FollowIcon isActive={follow ? true : false} />
                                                         </OptionBaseIcon>
                                                         <OptionItemText>
                                                             {follow ? "Unfollow" : "Follow"} @{post.author.username}

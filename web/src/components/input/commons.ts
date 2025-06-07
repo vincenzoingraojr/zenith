@@ -6,6 +6,7 @@ export interface InputProps {
 export type ProgressStatus = {
     id: number;
     progress: number;
+    status: "ok" | "error";
 }
 
 export type FileWrapper = {

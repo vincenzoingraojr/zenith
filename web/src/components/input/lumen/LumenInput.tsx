@@ -45,7 +45,7 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                 }}
                 onSubmit={async (values, { setErrors, setStatus }) => {
                     let postMediaDirectory = "";
-                    let mediaArray: { src: string; alt: string; type: string }[] = [];
+                    const mediaArray: { src: string; alt: string; type: string }[] = [];
                     const media: FileWrapper[] = [...values.media];
 
                     if (media.length > 0 && me) {
@@ -85,9 +85,9 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                                     setMediaUploadStatusArray((mediaUploadStatusArray) =>
                                         mediaUploadStatusArray.some(status => status.id === item.id)
                                             ? mediaUploadStatusArray.map(status =>
-                                                  status.id === item.id ? { ...status, progress } : status
-                                              )
-                                            : [...mediaUploadStatusArray, { id: item.id, progress } as ProgressStatus]
+                                                status.id === item.id ? { ...status, progress } : status
+                                            )
+                                            : [...mediaUploadStatusArray, { id: item.id, progress, status: "ok" } as ProgressStatus]
                                     );
                                 },
                                 headers: {
@@ -110,7 +110,7 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
 
                                     setMediaUploadStatusArray((mediaUploadStatusArray) =>
                                         mediaUploadStatusArray.map(status =>
-                                            status.id === item.id ? { ...status, progress: 0 } : status
+                                            status.id === item.id ? { ...status, progress: 0, status: "error" } : status
                                         )
                                     );
                                 });

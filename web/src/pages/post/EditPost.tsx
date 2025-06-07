@@ -4,7 +4,7 @@ import { useFindPost } from "../../utils/postQueries";
 import ModalLoading from "../../components/layouts/modal/ModalLoading";
 import ErrorOrItemNotFound from "../../components/utils/ErrorOrItemNotFound";
 import { BAD_REQUEST_MESSAGE, ERROR_SOMETHING_WENT_WRONG, POST_TYPES } from "../../utils/constants";
-import { useEditPostMutation } from "../../generated/graphql";
+import { FindPostDocument, FindPostQuery, useEditPostMutation } from "../../generated/graphql";
 import { Form, Formik } from "formik";
 import { FileWrapper, ProgressStatus } from "../../components/input/commons";
 import { useMeData } from "../../utils/userQueries";
@@ -19,7 +19,7 @@ function EditPost() {
 
     const { post, loading, error } = useFindPost(params.itemId as string);
 
-    const [editPost] = useEditPostMutation();
+    const [editPost, { client }] = useEditPostMutation();
 
     const { me } = useMeData();
 
@@ -59,7 +59,7 @@ function EditPost() {
                                 }}
                                 onSubmit={async (values, { setErrors, setStatus }) => {
                                     let postMediaDirectory = "";
-                                    let media = values.media;
+                                    let media = [...values.media];
                                     const filteredMedia: FileWrapper[] = [...media.filter((item) => item.status === "uploading")];
 
                                     if (filteredMedia.length > 0 && me && post) {
@@ -100,7 +100,7 @@ function EditPost() {
                                                             ? mediaUploadStatusArray.map(status =>
                                                                 status.id === item.id ? { ...status, progress } : status
                                                             )
-                                                            : [...mediaUploadStatusArray, { id: item.id, progress } as ProgressStatus]
+                                                            : [...mediaUploadStatusArray, { id: item.id, progress, status: "ok" } as ProgressStatus]
                                                     );
                                                 },
                                                 headers: {
@@ -112,18 +112,18 @@ function EditPost() {
                                             await axios
                                                 .put(postMediaUrl, file, postMediaConfig)
                                                 .then(() => {
-                                                    media = filteredMedia.map(mediaItem =>
-                                                        mediaItem.id === item.id && mediaItem.status === "uploading"
-                                                        ? { ...mediaItem, file: undefined, src: `https://${file.type.includes("image") ? "img" : "vid"}.zncdn.net/${postMediaKey}` }
-                                                        : mediaItem
-                                                    );
+                                                    let mediaItem = item;
+                                                    mediaItem.file = undefined;
+                                                    mediaItem.src = `https://${file.type.includes("image") ? "img" : "vid"}.zncdn.net/${postMediaKey}`;
+
+                                                    media.push(mediaItem);
                                                 })
                                                 .catch((error) => {
                                                     addToast(`An error occurred while uploading the media item (${item.id}). Error code: ${error.code}.`);
 
                                                     setMediaUploadStatusArray((mediaUploadStatusArray) =>
                                                         mediaUploadStatusArray.map(status =>
-                                                            status.id === item.id ? { ...status, progress: 0 } : status
+                                                            status.id === item.id ? { ...status, progress: 0, status: "error" } : status
                                                         )
                                                     );
                                                 });
@@ -150,6 +150,16 @@ function EditPost() {
                                                 setStatus(false);
                                             } else if (response.data.editPost.ok && response.data.editPost.post) {
                                                 setStatus(true);
+
+                                                client.cache.writeQuery<FindPostQuery>({
+                                                    query: FindPostDocument,
+                                                    data: {
+                                                        findPost: response.data.editPost.post,
+                                                    },
+                                                    variables: {
+                                                        postId: post.itemId,
+                                                    },
+                                                });
 
                                                 addToast(`Your ${(post.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST} has been edited successfully.`);
 

@@ -599,7 +599,6 @@ export class PostResolver {
         let errors = [];
         let post: Post | null = null;
         const mediaArray = JSON.parse(media);
-        console.log(mediaArray);
         let ok = false;
         let status = "";
 
