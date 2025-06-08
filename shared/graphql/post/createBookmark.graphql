@@ -1,0 +1,19 @@
+mutation CreateBookmark(
+    $itemId: String!
+    $type: String!
+    $origin: String!
+) {
+    createBookmark(
+        itemId: $itemId
+        type: $type
+        origin: $origin
+    ) {
+        id
+        itemId
+        itemType
+        origin
+        authorId
+        createdAt
+        updatedAt
+    }
+}

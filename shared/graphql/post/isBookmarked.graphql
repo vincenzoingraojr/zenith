@@ -1,0 +1,17 @@
+query IsBookmarked(
+    $itemId: Int!
+    $type: String!
+) {
+    isBookmarked(
+        itemId: $itemId
+        type: $type
+    ) {
+        id
+        itemId
+        itemType
+        origin
+        authorId
+        createdAt
+        updatedAt
+    }
+}

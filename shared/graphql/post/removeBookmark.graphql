@@ -1,0 +1,9 @@
+mutation RemoveBookmark(
+    $itemId: String!
+    $type: String!
+) {
+    removeBookmark(
+        itemId: $itemId
+        type: $type
+    )
+}

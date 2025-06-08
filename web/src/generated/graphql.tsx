@@ -1362,6 +1362,15 @@ export type UsersToMessageQueryVariables = Exact<{
 
 export type UsersToMessageQuery = { __typename?: 'Query', usersToMessage: { __typename?: 'PaginatedUsers', hasMore: boolean, users: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }> } };
 
+export type CreateBookmarkMutationVariables = Exact<{
+  itemId: Scalars['String']['input'];
+  type: Scalars['String']['input'];
+  origin: Scalars['String']['input'];
+}>;
+
+
+export type CreateBookmarkMutation = { __typename?: 'Mutation', createBookmark?: { __typename?: 'Bookmark', id: number, itemId: number, itemType: string, origin: string, authorId: number, createdAt: string, updatedAt: string } | null };
+
 export type CreatePostMutationVariables = Exact<{
   type: Scalars['String']['input'];
   content: Scalars['String']['input'];
@@ -1448,6 +1457,14 @@ export type IncrementPostViewsMutationVariables = Exact<{
 
 export type IncrementPostViewsMutation = { __typename?: 'Mutation', incrementPostViews?: { __typename?: 'FeedItem', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, createdAt: string, updatedAt: string } | null };
 
+export type IsBookmarkedQueryVariables = Exact<{
+  itemId: Scalars['Int']['input'];
+  type: Scalars['String']['input'];
+}>;
+
+
+export type IsBookmarkedQuery = { __typename?: 'Query', isBookmarked?: { __typename?: 'Bookmark', id: number, itemId: number, itemType: string, origin: string, authorId: number, createdAt: string, updatedAt: string } | null };
+
 export type IsPostLikedByMeQueryVariables = Exact<{
   itemId: Scalars['String']['input'];
   type: Scalars['String']['input'];
@@ -1491,6 +1508,14 @@ export type PostFeedQueryVariables = Exact<{
 
 
 export type PostFeedQuery = { __typename?: 'Query', postFeed: { __typename?: 'PaginatedPosts', hasMore: boolean, totalCount?: number | null, posts: Array<{ __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, mentions: Array<string>, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null }> } };
+
+export type RemoveBookmarkMutationVariables = Exact<{
+  itemId: Scalars['String']['input'];
+  type: Scalars['String']['input'];
+}>;
+
+
+export type RemoveBookmarkMutation = { __typename?: 'Mutation', removeBookmark: boolean };
 
 export type RemoveLikeMutationVariables = Exact<{
   itemId: Scalars['String']['input'];
@@ -1749,6 +1774,47 @@ export type UsersToMessageQueryHookResult = ReturnType<typeof useUsersToMessageQ
 export type UsersToMessageLazyQueryHookResult = ReturnType<typeof useUsersToMessageLazyQuery>;
 export type UsersToMessageSuspenseQueryHookResult = ReturnType<typeof useUsersToMessageSuspenseQuery>;
 export type UsersToMessageQueryResult = Apollo.QueryResult<UsersToMessageQuery, UsersToMessageQueryVariables>;
+export const CreateBookmarkDocument = gql`
+    mutation CreateBookmark($itemId: String!, $type: String!, $origin: String!) {
+  createBookmark(itemId: $itemId, type: $type, origin: $origin) {
+    id
+    itemId
+    itemType
+    origin
+    authorId
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type CreateBookmarkMutationFn = Apollo.MutationFunction<CreateBookmarkMutation, CreateBookmarkMutationVariables>;
+
+/**
+ * __useCreateBookmarkMutation__
+ *
+ * To run a mutation, you first call `useCreateBookmarkMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateBookmarkMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createBookmarkMutation, { data, loading, error }] = useCreateBookmarkMutation({
+ *   variables: {
+ *      itemId: // value for 'itemId'
+ *      type: // value for 'type'
+ *      origin: // value for 'origin'
+ *   },
+ * });
+ */
+export function useCreateBookmarkMutation(baseOptions?: Apollo.MutationHookOptions<CreateBookmarkMutation, CreateBookmarkMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateBookmarkMutation, CreateBookmarkMutationVariables>(CreateBookmarkDocument, options);
+      }
+export type CreateBookmarkMutationHookResult = ReturnType<typeof useCreateBookmarkMutation>;
+export type CreateBookmarkMutationResult = Apollo.MutationResult<CreateBookmarkMutation>;
+export type CreateBookmarkMutationOptions = Apollo.BaseMutationOptions<CreateBookmarkMutation, CreateBookmarkMutationVariables>;
 export const CreatePostDocument = gql`
     mutation CreatePost($type: String!, $content: String!, $media: String!, $isReplyToId: Int, $isReplyToType: String, $quotedPostId: Int) {
   createPost(
@@ -2451,6 +2517,53 @@ export function useIncrementPostViewsMutation(baseOptions?: Apollo.MutationHookO
 export type IncrementPostViewsMutationHookResult = ReturnType<typeof useIncrementPostViewsMutation>;
 export type IncrementPostViewsMutationResult = Apollo.MutationResult<IncrementPostViewsMutation>;
 export type IncrementPostViewsMutationOptions = Apollo.BaseMutationOptions<IncrementPostViewsMutation, IncrementPostViewsMutationVariables>;
+export const IsBookmarkedDocument = gql`
+    query IsBookmarked($itemId: Int!, $type: String!) {
+  isBookmarked(itemId: $itemId, type: $type) {
+    id
+    itemId
+    itemType
+    origin
+    authorId
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useIsBookmarkedQuery__
+ *
+ * To run a query within a React component, call `useIsBookmarkedQuery` and pass it any options that fit your needs.
+ * When your component renders, `useIsBookmarkedQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useIsBookmarkedQuery({
+ *   variables: {
+ *      itemId: // value for 'itemId'
+ *      type: // value for 'type'
+ *   },
+ * });
+ */
+export function useIsBookmarkedQuery(baseOptions: Apollo.QueryHookOptions<IsBookmarkedQuery, IsBookmarkedQueryVariables> & ({ variables: IsBookmarkedQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<IsBookmarkedQuery, IsBookmarkedQueryVariables>(IsBookmarkedDocument, options);
+      }
+export function useIsBookmarkedLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<IsBookmarkedQuery, IsBookmarkedQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<IsBookmarkedQuery, IsBookmarkedQueryVariables>(IsBookmarkedDocument, options);
+        }
+export function useIsBookmarkedSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<IsBookmarkedQuery, IsBookmarkedQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<IsBookmarkedQuery, IsBookmarkedQueryVariables>(IsBookmarkedDocument, options);
+        }
+export type IsBookmarkedQueryHookResult = ReturnType<typeof useIsBookmarkedQuery>;
+export type IsBookmarkedLazyQueryHookResult = ReturnType<typeof useIsBookmarkedLazyQuery>;
+export type IsBookmarkedSuspenseQueryHookResult = ReturnType<typeof useIsBookmarkedSuspenseQuery>;
+export type IsBookmarkedQueryResult = Apollo.QueryResult<IsBookmarkedQuery, IsBookmarkedQueryVariables>;
 export const IsPostLikedByMeDocument = gql`
     query IsPostLikedByMe($itemId: String!, $type: String!) {
   isPostLikedByMe(itemId: $itemId, type: $type) {
@@ -2805,6 +2918,38 @@ export type PostFeedQueryHookResult = ReturnType<typeof usePostFeedQuery>;
 export type PostFeedLazyQueryHookResult = ReturnType<typeof usePostFeedLazyQuery>;
 export type PostFeedSuspenseQueryHookResult = ReturnType<typeof usePostFeedSuspenseQuery>;
 export type PostFeedQueryResult = Apollo.QueryResult<PostFeedQuery, PostFeedQueryVariables>;
+export const RemoveBookmarkDocument = gql`
+    mutation RemoveBookmark($itemId: String!, $type: String!) {
+  removeBookmark(itemId: $itemId, type: $type)
+}
+    `;
+export type RemoveBookmarkMutationFn = Apollo.MutationFunction<RemoveBookmarkMutation, RemoveBookmarkMutationVariables>;
+
+/**
+ * __useRemoveBookmarkMutation__
+ *
+ * To run a mutation, you first call `useRemoveBookmarkMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRemoveBookmarkMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [removeBookmarkMutation, { data, loading, error }] = useRemoveBookmarkMutation({
+ *   variables: {
+ *      itemId: // value for 'itemId'
+ *      type: // value for 'type'
+ *   },
+ * });
+ */
+export function useRemoveBookmarkMutation(baseOptions?: Apollo.MutationHookOptions<RemoveBookmarkMutation, RemoveBookmarkMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RemoveBookmarkMutation, RemoveBookmarkMutationVariables>(RemoveBookmarkDocument, options);
+      }
+export type RemoveBookmarkMutationHookResult = ReturnType<typeof useRemoveBookmarkMutation>;
+export type RemoveBookmarkMutationResult = Apollo.MutationResult<RemoveBookmarkMutation>;
+export type RemoveBookmarkMutationOptions = Apollo.BaseMutationOptions<RemoveBookmarkMutation, RemoveBookmarkMutationVariables>;
 export const RemoveLikeDocument = gql`
     mutation RemoveLike($itemId: String!, $itemType: String!) {
   removeLike(itemId: $itemId, itemType: $itemType)

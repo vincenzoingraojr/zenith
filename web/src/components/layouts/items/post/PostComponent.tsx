@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useRef, useState } from "react";
-import { Follow, GetPostLikesDocument, GetRepostsDocument, IsFollowedByMeDocument, IsFollowedByMeQuery, IsPostLikedByMeDocument, IsPostLikedByMeQuery, IsRepostedByUserDocument, IsRepostedByUserQuery, Like, Post, Repost, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useFollowUserMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsFollowedByMeQuery, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveLikeMutation, useUnfollowUserMutation } from "../../../../generated/graphql";
+import { Bookmark, Follow, GetPostLikesDocument, GetRepostsDocument, IsBookmarkedDocument, IsBookmarkedQuery, IsFollowedByMeDocument, IsFollowedByMeQuery, IsPostLikedByMeDocument, IsPostLikedByMeQuery, IsRepostedByUserDocument, IsRepostedByUserQuery, Like, Post, Repost, useCreateBookmarkMutation, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useFollowUserMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsBookmarkedQuery, useIsFollowedByMeQuery, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveBookmarkMutation, useRemoveLikeMutation, useUnfollowUserMutation } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ControlContainer, OptionBaseIcon, PageBlock, PageText } from "../../../../styles/global";
@@ -31,6 +31,7 @@ import { useFindPostById } from "../../../../utils/postQueries";
 import QuotedPost from "./QuotedPost";
 import LoadingComponent from "../../../utils/LoadingComponent";
 import AffiliationIcon from "../../../utils/AffiliationIcon";
+import BookmarkIcon from "../../../icons/Bookmark";
 
 interface PostComponentProps {
     post: Post;
@@ -217,11 +218,19 @@ const PostActionsContainer = styled.div`
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: 12px;
     padding-top: 10px;
     padding-left: 16px;
     padding-right: 16px;
     padding-bottom: 10px;
+`;
+
+const PostActionsGroup = styled.div`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
 `;
 
 const PostActionContainer = styled.div.attrs((props: { color?: string, isActive: boolean }) => props)`
@@ -405,6 +414,29 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
 
     const [followUser] = useFollowUserMutation();
     const [unfollowUser] = useUnfollowUserMutation();
+
+    const [bookmark, setBookmark] = useState<Bookmark | null>(null);
+
+    const { data: bookmarkData } = useIsBookmarkedQuery({
+        variables: {
+            itemId: post.id,
+            type: post.type,
+        },
+        fetchPolicy: "cache-first",
+    });
+
+    useEffect(() => {
+        if (bookmarkData) {
+            setBookmark(bookmarkData.isBookmarked as Bookmark | null);
+        }
+
+        return () => {
+            setBookmark(null);
+        }
+    }, [bookmarkData]);
+
+    const [createBookmark] = useCreateBookmarkMutation();
+    const [removeBookmark] = useRemoveBookmarkMutation();
 
     return (
         <PostWrapper>
@@ -1020,64 +1052,127 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             {formatter.format(views)}
                         </PostActionInfo>
                     </PostActionContainer>
-                    <PostActionContainer
-                        role="button"
-                        aria-label={"Share options"}
-                        title={"Share options"}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                        }}
-                    >
-                        <Options
-                            key={`share-options-${post.id}`}
-                            title="Share options" 
-                            icon={<Share />}
-                            isOpen={activeOptions === -1}
-                            toggleOptions={() =>
-                                handleOptionsClick(-1)
-                            }
-                            size={32}
-                            children={
-                                <>
-                                    <OptionItem
-                                        role="menuitem"
-                                        title="Copy link to this post"
-                                        aria-label="Copy link to this post"
-                                        onClick={() => {
-                                            const currentUrl = `${window.location.origin}/${post.author.username}/post/${post.itemId}`;
+                    <PostActionsGroup>
+                        <PostActionContainer
+                            role="button"
+                            aria-label={bookmark ? "Remove the bookmark from this post" : "Bookmark this post"}
+                            title={bookmark ? "Remove the bookmark from this post" : "Bookmark this post"}
+                            onClick={async (e) => {
+                                e.stopPropagation();
 
-                                            const response = copy(currentUrl);
-
-                                            if (response) {
-                                                addToast("Link copied to clipboard.");
-                                            } else {
-                                                addToast("Failed to copy link.");
+                                if (bookmark) {
+                                    await removeBookmark({
+                                        variables: {
+                                            itemId: post.itemId,
+                                            type: post.type,
+                                        },
+                                        update: (cache, { data: removeBookmarkData }) => {
+                                            if (removeBookmarkData && removeBookmarkData.removeBookmark) {
+                                                cache.writeQuery<IsBookmarkedQuery>({
+                                                    query: IsBookmarkedDocument,
+                                                    data: {
+                                                        isBookmarked: null,
+                                                    },
+                                                    variables: {
+                                                        itemId: post.id,
+                                                        type: post.type,
+                                                    }
+                                                });
                                             }
-                                        }}
-                                    >
-                                        <OptionBaseIcon>
-                                            <Chain />
-                                        </OptionBaseIcon>
-                                        <OptionItemText>
-                                            Copy link to this post
-                                        </OptionItemText>
-                                    </OptionItem>
-                                    <OptionItem
-                                        role="menuitem"
-                                        title="Send this post"
-                                        aria-label="Send this post"
-                                    >
-                                        <OptionBaseIcon>
-                                            <Mail type="options" />
-                                        </OptionBaseIcon>
-                                        <OptionItemText>
-                                            Send this post
-                                        </OptionItemText>
-                                    </OptionItem>
-                                </>
-                            }
-                        />
-                    </PostActionContainer>
+                                        }
+                                    }).catch(() => {
+                                        addToast("An error occurred while trying to remove the bookmark from this post.");
+                                    });
+                                } else {
+                                    await createBookmark({
+                                        variables: {
+                                            itemId: post.itemId,
+                                            type: post.type,
+                                            origin,
+                                        },
+                                        update: (cache, { data: createBookmarkData }) => {
+                                            if (createBookmarkData && createBookmarkData.createBookmark) {
+                                                cache.writeQuery<IsBookmarkedQuery>({
+                                                    query: IsBookmarkedDocument,
+                                                    data: {
+                                                        isBookmarked: createBookmarkData.createBookmark,
+                                                    },
+                                                    variables: {
+                                                        itemId: post.id,
+                                                        type: post.type,
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    }).catch(() => {
+                                        addToast("An error occurred while trying to bookmark this post.");
+                                    });
+                                }
+                            }}
+                        >
+                            <ControlContainer size={32}>
+                                <BookmarkIcon isActive={bookmark ? true : false} />
+                            </ControlContainer>
+                        </PostActionContainer>
+                        <PostActionContainer
+                            role="button"
+                            aria-label={"Share options"}
+                            title={"Share options"}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                            }}
+                        >
+                            <Options
+                                key={`share-options-${post.id}`}
+                                title="Share options" 
+                                icon={<Share />}
+                                isOpen={activeOptions === -1}
+                                toggleOptions={() =>
+                                    handleOptionsClick(-1)
+                                }
+                                size={32}
+                                children={
+                                    <>
+                                        <OptionItem
+                                            role="menuitem"
+                                            title="Copy link to this post"
+                                            aria-label="Copy link to this post"
+                                            onClick={() => {
+                                                const currentUrl = `${window.location.origin}/${post.author.username}/post/${post.itemId}`;
+
+                                                const response = copy(currentUrl);
+
+                                                if (response) {
+                                                    addToast("Link copied to clipboard.");
+                                                } else {
+                                                    addToast("Failed to copy link.");
+                                                }
+                                            }}
+                                        >
+                                            <OptionBaseIcon>
+                                                <Chain />
+                                            </OptionBaseIcon>
+                                            <OptionItemText>
+                                                Copy link to this post
+                                            </OptionItemText>
+                                        </OptionItem>
+                                        <OptionItem
+                                            role="menuitem"
+                                            title="Send this post"
+                                            aria-label="Send this post"
+                                        >
+                                            <OptionBaseIcon>
+                                                <Mail type="options" />
+                                            </OptionBaseIcon>
+                                            <OptionItemText>
+                                                Send this post
+                                            </OptionItemText>
+                                        </OptionItem>
+                                    </>
+                                }
+                            />
+                        </PostActionContainer>
+                    </PostActionsGroup>
                 </PostActionsContainer>
             </PostContainer>
         </PostWrapper>

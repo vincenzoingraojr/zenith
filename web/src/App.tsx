@@ -24,6 +24,7 @@ import Payments from "./pages/payments/Payments";
 import CreatePost from "./pages/post/CreatePost";
 import EditPost from "./pages/post/EditPost";
 import PostPage from "./pages/post/PostPage";
+import ScrollToTop from "./utils/ScrollToTop";
 
 function App() {
     const location = useLocation();
@@ -65,6 +66,7 @@ function App() {
 
     return (
         <>
+            <ScrollToTop />
             <Routes location={state ? state.backgroundLocation : location}>
                 <Route
                     path="/"
