@@ -191,6 +191,13 @@ const ActivityButton = styled.button`
     border-radius: 9999px;
     cursor: pointer;
     box-shadow: 0px 0px 2px ${({ theme }) => theme.overlayGrey};
+
+    ${mediaQuery(
+        "(min-width: 600px) and (min-height: 480px)",
+        devices.laptopM
+    )} {
+        box-shadow: none;
+    }
 `;
 
 const Nav: FunctionComponent<NavProps> = ({ noNav }) => {

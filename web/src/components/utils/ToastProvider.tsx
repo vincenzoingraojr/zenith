@@ -17,6 +17,7 @@ const ToastWrapper = styled.div`
     background-color: ${COLORS.blue};
     color: ${COLORS.white};
     animation: fadeIn 0.2s;
+    box-shadow: 0px 0px 2px ${({ theme }) => theme.overlayGrey};
 
     @keyframes fadeIn {
         from {
