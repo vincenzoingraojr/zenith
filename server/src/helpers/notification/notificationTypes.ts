@@ -6,6 +6,7 @@ export const NOTIFICATION_TYPES = Object.freeze({
     QUOTE: "quote",
     AFFILIATION: "affiliation",
     REPOST: "repost",
+    PAYMENT: "payment",
 });
 
 export const MESSAGE_NOTIFICATION_TYPES = Object.freeze({
