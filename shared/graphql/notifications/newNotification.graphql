@@ -1,0 +1,19 @@
+subscription NewNotification(
+    $userId: Int
+) {
+    newNotification(
+        userId: $userId
+    ) {
+        id
+        notificationId
+        creatorId
+        recipientId
+        resourceId
+        resourceType
+        notificationType
+        content
+        viewed
+        createdAt
+        updatedAt
+    }
+}

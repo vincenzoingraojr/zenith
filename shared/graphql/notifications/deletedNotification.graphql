@@ -1,0 +1,19 @@
+subscription DeletedNotification(
+    $userId: Int
+) {
+    deletedNotification(
+        userId: $userId
+    ) {
+        id
+        notificationId
+        creatorId
+        recipientId
+        resourceId
+        resourceType
+        notificationType
+        content
+        viewed
+        createdAt
+        updatedAt
+    }
+}

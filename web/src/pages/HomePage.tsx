@@ -5,7 +5,7 @@ import PageLayout from "../components/layouts/PageLayout";
 import PageContentLayout from "../components/layouts/sublayouts/PageContentLayout";
 import { Post, usePostFeedQuery } from "../generated/graphql";
 import LoadingComponent from "../components/utils/LoadingComponent";
-import { EndContainer, FeedLoading, NoElementsAlert, PageBlock } from "../styles/global";
+import { EndContainer, FeedLoading, FullWidthFeedContainer, NoElementsAlert, PageBlock } from "../styles/global";
 import ErrorOrItemNotFound from "../components/utils/ErrorOrItemNotFound";
 import PostComponent from "../components/layouts/items/post/PostComponent";
 import { ERROR_SOMETHING_WENT_WRONG } from "../utils/constants";
@@ -16,12 +16,6 @@ const HomePageContainer = styled.div`
     flex-direction: column;
     width: 100%;
     gap: 24px;
-`;
-
-const PostFeedContainer = styled.div`
-    display: flex;
-    flex-direction: column;
-    width: 100%;
 `;
 
 function HomePage() {
@@ -113,14 +107,14 @@ function HomePage() {
                                     placeholder="What's happening right now?"
                                     buttonText="Create"
                                 />
-                                <PostFeedContainer>
+                                <FullWidthFeedContainer>
                                     {(loading && !data) ? (
                                         <FeedLoading>
                                             <LoadingComponent />
                                         </FeedLoading>
                                     ) : (
                                         <>
-                                            {data && data.postFeed && !error ? (
+                                            {data && !error ? (
                                                 <>
                                                     {data.postFeed.totalCount ===
                                                     0 ? (
@@ -161,7 +155,7 @@ function HomePage() {
                                             )}
                                         </>
                                     )}
-                                </PostFeedContainer>
+                                </FullWidthFeedContainer>
                             </HomePageContainer>
                         }
                     />

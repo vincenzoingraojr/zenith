@@ -25,6 +25,7 @@ import CreatePost from "./pages/post/CreatePost";
 import EditPost from "./pages/post/EditPost";
 import PostPage from "./pages/post/PostPage";
 import ScrollToTop from "./utils/ScrollToTop";
+import NotificationSettings from "./pages/settings/notifications/NotificationSettings";
 
 function App() {
     const location = useLocation();
@@ -253,6 +254,15 @@ function App() {
                         <PostPage />
                     }
                 />
+                <Route
+                    path="/settings/notifications"
+                    element={
+                        <IsAuthenticated
+                            isAuth={isAuth}
+                            children={<NotificationSettings />}
+                        />
+                    }
+                />    
             </Routes>
             {(state && state.backgroundLocation) && (
                 <Routes>

@@ -41,6 +41,15 @@ const cache = new InMemoryCache({
                         };
                     }
                 },
+                notificationFeed: {
+                    keyArgs: false,
+                    merge: (existing, incoming) => {
+                        return {
+                            notifications: [...(existing?.notifications || []), ...incoming.notifications],
+                            nextCursor: incoming.nextCursor,
+                        };
+                    }
+                },
                 getPostLikes: {
                     keyArgs: ["itemId", "type"],
                     merge: (existing, incoming) => {

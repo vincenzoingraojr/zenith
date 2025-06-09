@@ -1,0 +1,24 @@
+query NotificationFeed(
+    $cursor: String
+    $limit: Int!
+) {
+    notificationFeed(
+        cursor: $cursor
+        limit: $limit
+    ) {
+        notifications {
+            id
+            notificationId
+            creatorId
+            recipientId
+            resourceId
+            resourceType
+            notificationType
+            content
+            viewed
+            createdAt
+            updatedAt
+        }
+        nextCursor
+    }
+}

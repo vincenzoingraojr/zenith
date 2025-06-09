@@ -1303,3 +1303,9 @@ export const LumenModalContainer = styled.div`
     padding-right: 8px;
     padding-bottom: 36px;
 `;
+
+export const FullWidthFeedContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+`;

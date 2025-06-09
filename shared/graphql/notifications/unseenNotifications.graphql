@@ -1,0 +1,15 @@
+query UnseenNotifications {
+    unseenNotifications {
+        id
+        notificationId
+        creatorId
+        recipientId
+        resourceId
+        resourceType
+        notificationType
+        content
+        viewed
+        createdAt
+        updatedAt
+    }
+}

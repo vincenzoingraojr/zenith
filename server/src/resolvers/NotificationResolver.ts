@@ -11,7 +11,7 @@ import { findChatsById } from "../helpers/message/findChatsById";
 
 @ObjectType()
 export class PaginatedNotifications {
-    @Field(() => [Notification], { nullable: false })
+    @Field(() => [Notification])
     notifications: Notification[];
 
     @Field(() => String, { nullable: true })
@@ -32,7 +32,7 @@ export class NotificationResolver {
     @UseMiddleware(isAuth)
     async notificationFeed(
         @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
-        @Arg("limit", () => Int, { nullable: true }) limit: number,
+        @Arg("limit", () => Int) limit: number,
         @Ctx() { payload }: AuthContext
     ): Promise<PaginatedNotifications> {
         if (!payload) {
@@ -176,7 +176,7 @@ export class NotificationResolver {
             return payload.recipientId === args.userId;
         },
     })
-    newNotification(@Arg("userId", () => Int) _userId: number, @Root() notification: Notification): Notification {
+    newNotification(@Arg("userId", () => Int, { nullable: true }) _userId: number, @Root() notification: Notification): Notification {
         return notification;
     }
 
@@ -186,7 +186,7 @@ export class NotificationResolver {
             return payload.recipientId === args.userId;
         },
     })
-    deletedNotification(@Arg("userId", () => Int) _userId: number, @Root() notification: Notification): Notification {
+    deletedNotification(@Arg("userId", () => Int, { nullable: true }) _userId: number, @Root() notification: Notification): Notification {
         return notification;
     }
 }

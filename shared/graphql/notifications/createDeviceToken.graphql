@@ -1,0 +1,5 @@
+mutation CreateDeviceToken(
+    $token: String!
+) {
+    createDeviceToken(token: $token)
+}
