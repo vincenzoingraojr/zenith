@@ -1926,10 +1926,10 @@
   dependencies:
     tslib "^2.6.3"
 
-"@zenith-to/lumen-js@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@zenith-to/lumen-js/-/lumen-js-1.0.0.tgz#73616bb098ce3311d38ac2f5cf48b6a7a0e49531"
-  integrity sha512-EqtUojKCSGooDD3J//WxVd0lalTDqy9oRuNDBABIK2qS9yk90V7KrHI0z3YK4dshtSfFmihJBFT2oaiWb8wb6A==
+"@zenith-to/lumen-js@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@zenith-to/lumen-js/-/lumen-js-1.1.0.tgz#b5074d7501f4bd6e22aea3c9a3ce1d0342933177"
+  integrity sha512-lLFYU+yee6qc8u8/v95OmGDqbaSpfpahQtx9lienUssK8NYCymBa5FPBeZcCWKDYKPpMxvsXOzopSxiYhFoxvQ==
   dependencies:
     "@babel/runtime" "^7.3.1"
     core-js "^2.5.0"

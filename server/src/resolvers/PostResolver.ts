@@ -523,7 +523,7 @@ export class PostResolver {
     
                                         const tokens = await this.userDeviceTokenRepository.find({ where: { userId: mentionedUser.id } });
                                         const pushNotification: FirebaseNotification = {
-                                            title: `@${post.author.username} mentioned you ${(type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST} (for @${mentionedUser.username})`,
+                                            title: `@${post.author.username} mentioned you in a ${(type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST} (for @${mentionedUser.username})`,
                                             body: notification.content,
                                             imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
                                         };
@@ -548,7 +548,7 @@ export class PostResolver {
                             }
     
                             if (isReplyToItem && (type === POST_TYPES.COMMENT) && (isReplyToItem.authorId !== payload.id)) {
-                                const notification = await this.notificationService.createNotification(payload.id, isReplyToItem.authorId, post.id, type, NOTIFICATION_TYPES.COMMENT, `${post.author.name} (@${post.author.username}) commented your post.`);
+                                const notification = await this.notificationService.createNotification(payload.id, isReplyToItem.authorId, post.id, type, NOTIFICATION_TYPES.COMMENT, `${post.author.name} (@${post.author.username}) commented your ${isReplyToType === POST_TYPES.ARTICLE ? POST_TYPES.ARTICLE : POST_TYPES.POST}.`);
         
                                 const author = await this.userService.findUserById(isReplyToItem.authorId);
 
@@ -557,7 +557,7 @@ export class PostResolver {
         
                                     const tokens = await this.userDeviceTokenRepository.find({ where: { userId: isReplyToItem.authorId } });
                                     const pushNotification: FirebaseNotification = {
-                                        title: `@${post.author.username} commented your post (for @${author.username})`,
+                                        title: `@${post.author.username} commented your ${isReplyToType === POST_TYPES.ARTICLE ? POST_TYPES.ARTICLE : POST_TYPES.POST} (for @${author.username})`,
                                         body: notification.content,
                                         imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
                                     };
@@ -766,7 +766,7 @@ export class PostResolver {
 
                                             const tokens = await this.userDeviceTokenRepository.find({ where: { userId: mentionedUser.id } });
                                             const pushNotification: FirebaseNotification = {
-                                                title: `@${post.author.username} mentioned you ${(post.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST} (for @${mentionedUser.username})`,
+                                                title: `@${post.author.username} mentioned you in a ${(post.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST} (for @${mentionedUser.username})`,
                                                 body: newNotification.content,
                                                 imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
                                             };
@@ -874,6 +874,7 @@ export class PostResolver {
     
             await this.notificationRepository.delete({
                 resourceId: post.id,
+                resourceType: In([POST_TYPES.POST, POST_TYPES.COMMENT]),
                 notificationType: In([NOTIFICATION_TYPES.MENTION, NOTIFICATION_TYPES.LIKE, NOTIFICATION_TYPES.COMMENT, NOTIFICATION_TYPES.QUOTE, NOTIFICATION_TYPES.REPOST]),
             });
     

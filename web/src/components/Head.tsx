@@ -1,6 +1,7 @@
 import { FunctionComponent } from "react";
 import { Helmet } from "react-helmet";
 import { useTheme } from "../styles/theme";
+import { useNotificationsContext } from "../utils/NotificationsProvider";
 
 interface HeadProps {
     title: string;
@@ -13,9 +14,11 @@ const Head: FunctionComponent<HeadProps> = ({ title, description, image }) => {
     const defaultImage = "https://img.zncdn.net/brand/logo.png";
     const theme = useTheme();
 
+    const { notificationsCount } = useNotificationsContext();
+
     return (
         <Helmet>
-            <title>{title}</title>
+            <title>{notificationsCount > 0 && window.location.pathname !== "/notifications" ? `(${notificationsCount}) `: ""}{title}</title>
             <meta property="og:title" content={title} />
             <meta name="description" content={description ? description : defaultDescription} />
             <meta property="og:description" content={description ? description : defaultDescription} />

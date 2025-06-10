@@ -1225,6 +1225,14 @@ export const FeedLoading = styled.div`
     height: 64px;
 `;
 
+export const ItemLoading = styled.div`
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    height: 42px;
+`;
+
 export const NoElementsAlert = styled.div`
     display: flex;
     flex-direction: column;
@@ -1308,4 +1316,43 @@ export const FullWidthFeedContainer = styled.div`
     display: flex;
     flex-direction: column;
     width: 100%;
+`;
+
+export const NotificationsCount = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    border-radius: 9999px;
+    background-color: ${COLORS.blue};
+    font-size: 10px;
+    font-weight: 700;
+    color: ${COLORS.white};
+    width: 16px;
+    height: 16px;
+    top: 0;
+    left: unset;
+    right: 0;
+    bottom: unset;
+    box-shadow: 0px 0px 2px ${({ theme }) => theme.overlayGrey};
+`;
+
+export const SettingsPageContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+`;
+
+export const SettingsPageContentContainer = styled(SettingsPageContainer)`
+    padding-left: 16px;
+    padding-right: 16px;
+`;
+
+export const SettingsPageDescription = styled(PageText)`
+    font-size: 14px;
+    color: ${({ theme }) => theme.inputText};
+    padding-top: 6px;
+    padding-left: 16px;
+    padding-right: 16px;
+    margin-bottom: 24px;
 `;

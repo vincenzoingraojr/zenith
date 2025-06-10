@@ -1,0 +1,181 @@
+import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
+import { useMeData } from "./userQueries";
+import { PaginatedNotifications, useDeletedNotificationSubscription, useNewNotificationSubscription, useNotificationFeedQuery, useUnseenNotificationsQuery } from "../generated/graphql";
+import { ApolloError, gql } from "@apollo/client";
+
+interface NotificationsContextType {
+    notificationFeed: PaginatedNotifications | undefined;
+    loading: boolean;
+    notificationsCount: number;
+    moreLoading: boolean;
+    error: ApolloError | undefined;
+    loadMore: () => void;
+}
+
+const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
+
+const NewNotificationFragment = gql`
+    fragment NewNotification on Notification {
+        id
+        notificationId
+        creatorId
+        recipientId
+        resourceId
+        resourceType
+        notificationType
+        content
+        viewed
+        createdAt
+        updatedAt
+    }
+`;
+
+export const NotificationsProvider = ({ children }: { children: ReactNode }) => {
+    const { me } = useMeData();
+
+    const limit = 5;
+        
+    const { data, loading, error, fetchMore, client } = useNotificationFeedQuery({
+        variables: {
+            limit,
+            cursor: null,
+        },
+        fetchPolicy: "cache-first",
+        notifyOnNetworkStatusChange: true,
+    });
+
+    const [moreLoading, setMoreloading] = useState(false);
+
+    const loadMore = useCallback(() => {
+        if (!data || (data && !data.notificationFeed.nextCursor)) return;
+
+        setMoreloading(true);
+
+        fetchMore({
+            variables: { limit, cursor: data.notificationFeed.nextCursor },
+            updateQuery: (prev, { fetchMoreResult }) => {
+                if (!fetchMoreResult || fetchMoreResult.notificationFeed.notifications.length === 0) return prev;
+
+                return {
+                    notificationFeed: {
+                        __typename: prev.notificationFeed.__typename,
+                        notifications: [...fetchMoreResult.notificationFeed.notifications],
+                        nextCursor: fetchMoreResult.notificationFeed.nextCursor,
+                    }
+                };
+            },
+        }).then(() => {            
+            setMoreloading(false);
+        }).catch((error) => {
+            console.error(error);
+        });
+    }, [data, fetchMore, limit]);
+    
+    const { data: newNotificationData } = useNewNotificationSubscription({
+        variables: { userId: me?.id },
+        skip: !me,
+    });
+
+    const { data: deletedNotificationData } = useDeletedNotificationSubscription({
+        variables: { userId: me?.id },
+        skip: !me,
+    });
+
+    const handleNewNotification = useCallback((newNotification: any) => {
+        client.cache.modify({
+            fields: {
+                notificationFeed(existing = { notifications: [], nextCursor: null }) {
+                    const exists = existing.notifications.some((n: any) => n.__ref === `Notification:${newNotification.id}`);
+
+                    if (exists) return existing;
+
+                    return {
+                        ...existing,
+                        notifications: [client.cache.writeFragment({
+                            data: newNotification,
+                            fragment: NewNotificationFragment,
+                        }), ...existing.notifications],
+                    };
+                },
+                unseenNotifications(existing = []) {
+                    const exists = existing.some((n: any) => n.__ref === `Notification:${newNotification.id}`);
+
+                    if (exists) return existing;
+
+                    return [client.cache.writeFragment({
+                        data: newNotification,
+                        fragment: NewNotificationFragment,
+                    }), ...existing];
+                }
+            }
+        });
+    }, [client]);
+
+    useEffect(() => {
+        if (newNotificationData) {
+            const newNotification = newNotificationData.newNotification;
+
+            handleNewNotification(newNotification);
+        }
+    }, [newNotificationData, handleNewNotification]);
+
+    const handleDeletedNotification = useCallback((deletedNotification: any) => {
+        const refId = `Notification:${deletedNotification.id}`;
+
+        client.cache.modify({
+            fields: {
+                notificationFeed(existing = { notifications: [], nextCursor: null }) {
+                    const filteredNotifications = existing.notifications.filter((n: any) =>
+                        n.__ref !== refId
+                    );
+
+                    return {
+                        ...existing,
+                        notifications: filteredNotifications,
+                    };
+                },
+                unseenNotifications(existing = []) {
+                    return existing.filter((n: any) => 
+                        n.__ref !== refId
+                    );
+                }
+            }
+        });
+    }, [client]);
+
+    useEffect(() => {
+        if (deletedNotificationData) {
+            const deletedNotification = deletedNotificationData.deletedNotification;
+
+            handleDeletedNotification(deletedNotification);
+        }
+    }, [deletedNotificationData, handleDeletedNotification]);
+
+    const { data: unseenData } = useUnseenNotificationsQuery({
+        fetchPolicy: "cache-and-network",
+        skip: !me,
+    });
+
+    const [notificationsCount, setNotificationsCount] = useState(unseenData ? unseenData.unseenNotifications.length : 0);
+
+    useEffect(() => {
+        if (unseenData) {
+            setNotificationsCount(unseenData.unseenNotifications.length);
+        }
+    }, [unseenData]);
+
+    return (
+        <NotificationsContext.Provider value={{ notificationFeed: data?.notificationFeed, loading, moreLoading, error, loadMore, notificationsCount }}>
+            {children}
+        </NotificationsContext.Provider>
+    );
+}
+
+export const useNotificationsContext = (): NotificationsContextType => {
+    const context = useContext(NotificationsContext);
+
+    if (!context)
+        throw new Error("useNotificationsContext must be used inside NotificationsProvider");
+
+    return context;
+}

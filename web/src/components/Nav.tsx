@@ -10,13 +10,14 @@ import Bell from "./icons/Bell";
 import Profile from "./icons/Profile";
 import Mail from "./icons/Mail";
 import NavOptions from "./utils/NavOptions";
-import { ControlContainer } from "../styles/global";
+import { ControlContainer, NotificationsCount, OptionBaseIcon } from "../styles/global";
 import Menu from "./icons/Menu";
 import { useNavOptions } from "./utils/hooks";
 import { useMeData } from "../utils/userQueries";
 import Wallet from "./icons/Wallet";
 import Add from "./icons/Add";
 import { COLORS } from "../styles/colors";
+import { useNotificationsContext } from "../utils/NotificationsProvider";
 
 interface NavProps {
     noNav?: boolean;
@@ -200,6 +201,10 @@ const ActivityButton = styled.button`
     }
 `;
 
+const NavIconWithBadge = styled(OptionBaseIcon)`
+    position: relative;
+`;
+
 const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
     const { me } = useMeData();
     const { showOptions, toggleOptions, closeOptions } = useNavOptions();
@@ -247,6 +252,8 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
 
     const navigate = useNavigate();
     const location = useLocation();
+
+    const { notificationsCount } = useNotificationsContext();
 
     return (
         <NavWrapper hidden={noNav || false} ref={navRef}>
@@ -335,7 +342,14 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                                 aria-label="Notifications"
                             >
                                 {({ isActive }) => (
-                                    <Bell isActive={isActive} />
+                                    <NavIconWithBadge>
+                                        <Bell isActive={isActive} />
+                                        {(notificationsCount > 0 && window.location.pathname !== "/notifications") && (
+                                            <NotificationsCount>
+                                                {notificationsCount}
+                                            </NotificationsCount>
+                                        )}
+                                    </NavIconWithBadge>
                                 )}
                             </NavLink>
                         </NavItemLink>

@@ -79,7 +79,12 @@ const cache = new InMemoryCache({
                             totalCount: incoming.totalCount,
                         };
                     }
-                }
+                },
+                unseenNotifications: {
+                    merge: (_existing = [], incoming) => {
+                        return incoming;
+                    },
+                },
             },
         },
         Post: {
@@ -205,7 +210,7 @@ const client = new ApolloClient({
 const ThemedApp = () => {
     const { isDarkMode } = useThemeContext();
     const theme = isDarkMode ? darkTheme : lightTheme;
-  
+
     return (
         <ThemeProvider theme={theme}>
             <ToastProvider>

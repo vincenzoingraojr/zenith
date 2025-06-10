@@ -26,6 +26,7 @@ import EditPost from "./pages/post/EditPost";
 import PostPage from "./pages/post/PostPage";
 import ScrollToTop from "./utils/ScrollToTop";
 import NotificationSettings from "./pages/settings/notifications/NotificationSettings";
+import { NotificationsProvider } from "./utils/NotificationsProvider";
 
 function App() {
     const location = useLocation();
@@ -66,7 +67,7 @@ function App() {
     let state = location.state as { backgroundLocation: Location };
 
     return (
-        <>
+        <NotificationsProvider>
             <ScrollToTop />
             <Routes location={state ? state.backgroundLocation : location}>
                 <Route
@@ -316,7 +317,7 @@ function App() {
                     />
                 </Routes>
             )}
-        </>
+        </NotificationsProvider>
     );
 }
 

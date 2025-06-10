@@ -1,11 +1,11 @@
 import { FunctionComponent, useEffect, useRef, useState } from "react";
-import { Notification, User, useViewNotificationMutation } from "../../../../generated/graphql";
+import { Notification, UnseenNotificationsDocument, UnseenNotificationsQuery, User, useViewNotificationMutation } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useNavigate } from "react-router-dom";
 import { NOTIFICATION_TYPES, POST_TYPES, USER_TYPES } from "../../../../utils/constants";
 import { useFindUserById } from "../../../../utils/userQueries";
 import { processDate } from "../../../../utils/processDate";
-import { OptionBaseIcon, PageText } from "../../../../styles/global";
+import { ItemLoading, OptionBaseIcon, PageText } from "../../../../styles/global";
 import { useFindPostById } from "../../../../utils/postQueries";
 import Bell from "../../../icons/Bell";
 import Profile from "../../../icons/Profile";
@@ -15,6 +15,7 @@ import { COLORS } from "../../../../styles/colors";
 import Pen from "../../../icons/Pen";
 import RepostIcon from "../../../icons/Repost";
 import profilePicture from "../../../../images/profile-picture.png";
+import LoadingComponent from "../../../utils/LoadingComponent";
 
 interface NotificationComponentProps {
     notification: Notification;
@@ -127,13 +128,15 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({ 
     const navigate = useNavigate();
     const size = 32;
     const [title, setTitle] = useState<string>("");
-    const { user } = useFindUserById(notification.creatorId);
+    const { user, loading: userLoading } = useFindUserById(notification.creatorId);
     const content = transformSentence(notification.content, user as User | null);
     const date = processDate(notification.createdAt, true, false);
     const [url, setUrl] = useState<string>("");
-    const { post } = useFindPostById(notification.resourceId);
+    const { post, loading: postLoading } = useFindPostById(notification.resourceId);
     const [icon, setIcon] = useState<JSX.Element>(<Bell isActive={true} size={size} />);
     const notificationRef = useRef<HTMLDivElement>(null);
+
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         switch (notification.notificationType) {
@@ -219,6 +222,22 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({ 
                     variables: {
                         notificationId: notification.notificationId,
                     },
+                    update: (cache, { data: viewNotificationData }) => {
+                        if (viewNotificationData && viewNotificationData.viewNotification) {  
+                            const existing = cache.readQuery<UnseenNotificationsQuery>({
+                                query: UnseenNotificationsDocument,
+                            });
+
+                            const existingUnseenNotifications = existing?.unseenNotifications ?? [];
+                            
+                            cache.writeQuery({
+                                query: UnseenNotificationsDocument,
+                                data: {
+                                    unseenNotifications: existingUnseenNotifications.filter((n: any) => n.notificationId !== notification.notificationId),
+                                },
+                            });
+                        }
+                    }
                 });
             }
         }, options);
@@ -236,62 +255,72 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({ 
         };
     }, [viewNotification, notification]);
 
+    useEffect(() => {
+        setLoading(userLoading || postLoading);
+    }, [userLoading, postLoading]);
+
     return (
         <NotificationWrapper>
-            <NotificationInnerWrapper
-                role="link"
-                title={title}
-                aria-label={title}
-                ref={notificationRef}
-                onClick={() => navigate(url)}
-            >
-                <NotificationTypeIcon>
-                    {icon}
-                </NotificationTypeIcon>
-                <NotificationContainer>
-                    <NotificationImageContainer
-                        key={notification.id}
-                        onClick={(e) => {
-                            e.stopPropagation();
+            {loading ? (
+                <ItemLoading>
+                    <LoadingComponent />
+                </ItemLoading>
+            ) : (
+                <NotificationInnerWrapper
+                    role="link"
+                    title={title}
+                    aria-label={title}
+                    ref={notificationRef}
+                    onClick={() => navigate(url)}
+                >
+                    <NotificationTypeIcon>
+                        {icon}
+                    </NotificationTypeIcon>
+                    <NotificationContainer>
+                        <NotificationImageContainer
+                            key={notification.id}
+                            onClick={(e) => {
+                                e.stopPropagation();
 
-                            navigate(
-                                user ? `/${user.username}` : "/"
-                            );
-                        }}
-                        type={user ? user.type : USER_TYPES.USER}
-                    >
-                        <img
-                            src={
-                                (user && user.profile.profilePicture.length > 0)
-                                    ? user.profile.profilePicture
-                                    : profilePicture
-                            }
-                            title={user ? `${user.name}'s profile picture` : ""}
-                            alt={user ? `${user.name}'s profile picture` : ""}
-                        />
-                    </NotificationImageContainer>
-                    <NotificationContent>
-                        {content}
-                    </NotificationContent>
-                    {post && (notification.resourceType === POST_TYPES.POST || notification.resourceType === POST_TYPES.COMMENT) && (
-                        <PostContent>
-                            {post.content}
-                        </PostContent>
-                    )}
-                    <NotificationDate
-                        title={createdAt}
-                        aria-label={createdAt}
-                    >
-                        <time
-                            dateTime={new Date(
-                                parseInt(notification.createdAt)
-                            ).toISOString()}
+                                navigate(
+                                    user ? `/${user.username}` : "/"
+                                );
+                            }}
+                            type={user ? user.type : USER_TYPES.USER}
                         >
-                            {date}
-                        </time>
-                    </NotificationDate>
-                </NotificationContainer>
-            </NotificationInnerWrapper>
+                            <img
+                                src={
+                                    (user && user.profile.profilePicture.length > 0)
+                                        ? user.profile.profilePicture
+                                        : profilePicture
+                                }
+                                title={user ? `${user.name}'s profile picture` : ""}
+                                alt={user ? `${user.name}'s profile picture` : ""}
+                            />
+                        </NotificationImageContainer>
+                        <NotificationContent>
+                            {content}
+                        </NotificationContent>
+                        {post && (notification.resourceType === POST_TYPES.POST || notification.resourceType === POST_TYPES.COMMENT) && (
+                            <PostContent>
+                                {post.content}
+                            </PostContent>
+                        )}
+                        <NotificationDate
+                            title={createdAt}
+                            aria-label={createdAt}
+                        >
+                            <time
+                                dateTime={new Date(
+                                    parseInt(notification.createdAt)
+                                ).toISOString()}
+                            >
+                                {date}
+                            </time>
+                        </NotificationDate>
+                    </NotificationContainer>
+                </NotificationInnerWrapper>
+            )}
         </NotificationWrapper>
     );
 }

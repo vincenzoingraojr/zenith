@@ -2,7 +2,7 @@ import { useState } from "react";
 import Head from "../../../components/Head";
 import PageLayout from "../../../components/layouts/PageLayout";
 import PageContentLayout from "../../../components/layouts/sublayouts/PageContentLayout";
-import { PageText, StandardButton } from "../../../styles/global";
+import { PageBlock, PageText, SettingsPageContainer, SettingsPageContentContainer, SettingsPageDescription, StandardButton } from "../../../styles/global";
 import { useCreateDeviceTokenMutation } from "../../../generated/graphql";
 import { getToken } from "firebase/messaging";
 import { messaging } from "../../../utils/firebase";
@@ -52,25 +52,34 @@ function NotificationSettings() {
                         type="default"
                         children={
                             <>
-                                {permissionStatus === "granted" ? (
-                                    <PageText>You can disable push notifications in the browser settings.</PageText>
-                                ) : (
-                                    <>
-                                        {permissionStatus === "denied" ? (
-                                            <PageText>You denied the permission to send push notifications. Change this option in the browser settings.</PageText>
+                                <SettingsPageDescription>
+                                    Manage your push notifications.
+                                </SettingsPageDescription>
+                                <SettingsPageContainer>
+                                    <SettingsPageContentContainer>
+                                        {permissionStatus === "granted" ? (
+                                            <PageText>You can disable push notifications in the browser settings.</PageText>
                                         ) : (
-                                            <StandardButton
-                                                type="button"
-                                                title="Enable push notifications"
-                                                role="button"
-                                                aria-label="Enable push notifications"
-                                                onClick={handlePermissionRequest}
-                                            >
-                                                Enable push notifications
-                                            </StandardButton>
+                                            <>
+                                                {permissionStatus === "denied" ? (
+                                                    <PageText>You denied the permission to send push notifications. Change this option in the browser settings.</PageText>
+                                                ) : (
+                                                    <PageBlock>
+                                                        <StandardButton
+                                                            type="button"
+                                                            title="Enable push notifications"
+                                                            role="button"
+                                                            aria-label="Enable push notifications"
+                                                            onClick={handlePermissionRequest}
+                                                        >
+                                                            Enable push notifications
+                                                        </StandardButton>
+                                                    </PageBlock>
+                                                )}
+                                            </>
                                         )}
-                                    </>
-                                )}
+                                    </SettingsPageContentContainer>
+                                </SettingsPageContainer>
                             </>
                         }
                     />
