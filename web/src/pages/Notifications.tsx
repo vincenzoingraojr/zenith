@@ -11,6 +11,7 @@ import LoadingComponent from "../components/utils/LoadingComponent";
 import ErrorOrItemNotFound from "../components/utils/ErrorOrItemNotFound";
 import { ERROR_SOMETHING_WENT_WRONG } from "../utils/constants";
 import { gql } from "@apollo/client";
+import NotificationComponent from "../components/layouts/items/notifications/NotificationComponent";
 
 function Notifications() {
     const navigate = useNavigate();
@@ -181,7 +182,10 @@ function Notifications() {
                                                     <>
                                                         {data.notificationFeed.notifications.map(
                                                             (notification) => (
-                                                                <div key={notification.notificationId}>{notification.content}</div>
+                                                                <NotificationComponent
+                                                                    key={notification.notificationId}
+                                                                    notification={notification}
+                                                                />
                                                             )
                                                         )}
                                                         {isLoading ? (

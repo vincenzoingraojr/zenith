@@ -1,13 +1,13 @@
 import { FunctionComponent } from "react";
-import { DynamicSizeIcon, IconProps } from "./common";
+import { DynamicSizeIcon, IconSizeProps } from "./common";
 import { COLORS } from "../../styles/colors";
 import { useTheme } from "../../styles/theme";
 
-const Profile: FunctionComponent<IconProps> = ({ isActive }) => {
+const Profile: FunctionComponent<IconSizeProps> = ({ isActive, size }) => {
     const theme = useTheme();
 
     return (
-        <DynamicSizeIcon size={26} isFilled={isActive ? COLORS.blue : theme.color}>
+        <DynamicSizeIcon size={size ? size : 26} isFilled={isActive ? COLORS.blue : theme.color}>
             {isActive ? (
                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path fillRule="evenodd" clipRule="evenodd" d="M18 7.5C18 10.8137 15.3137 13.5 12 13.5C8.68628 13.5 5.99999 10.8137 5.99999 7.5C5.99999 4.18629 8.68628 1.5 12 1.5C15.3137 1.5 18 4.18629 18 7.5Z" />

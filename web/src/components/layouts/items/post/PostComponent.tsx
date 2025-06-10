@@ -864,7 +864,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         <Options
                             key={`repost-options-${post.id}`}
                             title="Repost options" 
-                            icon={<RepostIcon type="nav" isActive={repost ? true : false} />}
+                            icon={<RepostIcon size={22} isActive={repost ? true : false} />}
                             isOpen={activeOptions === -2}
                             toggleOptions={() =>
                                 handleOptionsClick(-2)
@@ -982,7 +982,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                         }}
                                     >
                                         <OptionBaseIcon>
-                                            <RepostIcon type="options" />
+                                            <RepostIcon size={24} />
                                         </OptionBaseIcon>
                                         <OptionItemText>
                                             {repost ? "Remove repost" : "Repost this post"}

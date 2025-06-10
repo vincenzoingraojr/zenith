@@ -3069,12 +3069,12 @@ export class UserResolver {
                     } else {
                         const affiliatedOrganization = await this.isAffiliatedTo(user.id);
 
-                        if (identityVerified || (user.type === USER_TYPES.ORGANIZATION && affiliatedOrganization)) {                   
-                            if (user.verification.verified === VerificationStatus.VERIFIED) {
+                        if (identityVerified || affiliatedOrganization) {                   
+                            if (identityVerified && user.verification.verified === VerificationStatus.VERIFIED) {
                                 status = "You're already verified.";
-                            } else if (user.verification.verified === VerificationStatus.UNDER_REVIEW) {
+                            } else if (identityVerified && user.verification.verified === VerificationStatus.UNDER_REVIEW) {
                                 status = "You've already submitted a verification request for your account.";
-                            } else if (documentsArray && documentsArray.length > 0) {
+                            } else if (identityVerified && documentsArray && documentsArray.length > 0) {
                                 user.verification.outcome = "";
                                 user.verification.documents = documentsArray;
                                 user.verification.verified = VerificationStatus.UNDER_REVIEW;
@@ -3082,7 +3082,7 @@ export class UserResolver {
                                 await user.save();
                                 
                                 status = "Verification request submitted.";
-                            } else if (user.type === USER_TYPES.ORGANIZATION && affiliatedOrganization) {
+                            } else if ((identityVerified || user.type === USER_TYPES.ORGANIZATION) && affiliatedOrganization) {
                                 const isOrganizationVerified = affiliatedOrganization.verification.verified === VerificationStatus.VERIFIED;
 
                                 if (isOrganizationVerified) {

@@ -8,6 +8,7 @@ export const COLORS = {
     red: "red",
     green: "green",
     gold: "#FFD700",
+    purple: "purple",
     overlayDarkGrey: "rgba(58, 48, 48, 0.6)",
     overlayLightGrey: "rgba(163, 155, 155, 0.6)",
 };

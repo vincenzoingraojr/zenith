@@ -1,19 +1,10 @@
-import { FunctionComponent, useEffect, useState } from "react";
+import { FunctionComponent } from "react";
 import { useTheme } from "../../styles/theme";
-import { DynamicSizeIcon, LinkIconProps } from "./common";
+import { DynamicSizeIcon, IconSizeProps } from "./common";
 import { COLORS } from "../../styles/colors";
 
-const RepostIcon: FunctionComponent<LinkIconProps> = ({ type, isActive }) => {
+const RepostIcon: FunctionComponent<IconSizeProps> = ({ size, isActive }) => {
     const theme = useTheme();
-    const [size, setSize] = useState(type === "nav" ? 22 : 24);
-
-    useEffect(() => {
-        if (type === "nav") {
-            setSize(22);
-        } else {
-            setSize(24);
-        }
-    }, [type]);
 
     return (
         <DynamicSizeIcon size={size} isFilled={isActive ? COLORS.green : theme.color}>
