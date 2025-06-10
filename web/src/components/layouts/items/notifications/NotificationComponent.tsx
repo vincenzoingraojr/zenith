@@ -21,13 +21,17 @@ interface NotificationComponentProps {
 }
 
 const NotificationWrapper = styled.div`
+    display: block;
+    border-bottom: 1px solid ${({ theme }) => theme.inputText};
+`;
+
+const NotificationInnerWrapper = styled.div`
     display: flex;
+    gap: 16px;
+    cursor: pointer;
+    padding: 16px;
     background-color: transparent;
     transition: 0.2s background-color ease;
-    cursor: pointer;
-    gap: 16px;
-    padding: 16px;
-    border-bottom: 1px solid ${({ theme }) => theme.inputText};
 
     &:hover, &:focus {
         background-color: ${({ theme }) => theme.overlayGrey};
@@ -43,8 +47,8 @@ const NotificationContainer = styled.div`
     display: flex;
     flex-direction: column;
     gap: 16px;
-    flex: 1;
-    width: auto;
+    width: 100%;
+    overflow: hidden;
 `;
 
 const NotificationImageContainer = styled.div.attrs((props: { type: string }) => props)`
@@ -81,7 +85,6 @@ const NotificationContent = styled(PageText)`
 const NotificationDate = styled(PageText)`
     font-size: 16px;
     color: ${({ theme }) => theme.inputText};
-    white-space: nowrap;
     text-decoration: none;
     cursor: pointer;
 
@@ -234,59 +237,61 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({ 
     }, [viewNotification, notification]);
 
     return (
-        <NotificationWrapper
-            role="link"
-            title={title}
-            aria-label={title}
-            ref={notificationRef}
-            onClick={() => navigate(url)}
-        >
-            <NotificationTypeIcon>
-                {icon}
-            </NotificationTypeIcon>
-            <NotificationContainer>
-                <NotificationImageContainer
-                    key={notification.id}
-                    onClick={(e) => {
-                        e.stopPropagation();
+        <NotificationWrapper>
+            <NotificationInnerWrapper
+                role="link"
+                title={title}
+                aria-label={title}
+                ref={notificationRef}
+                onClick={() => navigate(url)}
+            >
+                <NotificationTypeIcon>
+                    {icon}
+                </NotificationTypeIcon>
+                <NotificationContainer>
+                    <NotificationImageContainer
+                        key={notification.id}
+                        onClick={(e) => {
+                            e.stopPropagation();
 
-                        navigate(
-                            user ? `/${user.username}` : "/"
-                        );
-                    }}
-                    type={user ? user.type : USER_TYPES.USER}
-                >
-                    <img
-                        src={
-                            (user && user.profile.profilePicture.length > 0)
-                                ? user.profile.profilePicture
-                                : profilePicture
-                        }
-                        title={user ? `${user.name}'s profile picture` : ""}
-                        alt={user ? `${user.name}'s profile picture` : ""}
-                    />
-                </NotificationImageContainer>
-                <NotificationContent>
-                    {content}
-                </NotificationContent>
-                {post && (notification.resourceType === POST_TYPES.POST || notification.resourceType === POST_TYPES.COMMENT) && (
-                    <PostContent>
-                        {post.content}
-                    </PostContent>
-                )}
-                <NotificationDate
-                    title={createdAt}
-                    aria-label={createdAt}
-                >
-                    <time
-                        dateTime={new Date(
-                            parseInt(notification.createdAt)
-                        ).toISOString()}
+                            navigate(
+                                user ? `/${user.username}` : "/"
+                            );
+                        }}
+                        type={user ? user.type : USER_TYPES.USER}
                     >
-                        {date}
-                    </time>
-                </NotificationDate>
-            </NotificationContainer>
+                        <img
+                            src={
+                                (user && user.profile.profilePicture.length > 0)
+                                    ? user.profile.profilePicture
+                                    : profilePicture
+                            }
+                            title={user ? `${user.name}'s profile picture` : ""}
+                            alt={user ? `${user.name}'s profile picture` : ""}
+                        />
+                    </NotificationImageContainer>
+                    <NotificationContent>
+                        {content}
+                    </NotificationContent>
+                    {post && (notification.resourceType === POST_TYPES.POST || notification.resourceType === POST_TYPES.COMMENT) && (
+                        <PostContent>
+                            {post.content}
+                        </PostContent>
+                    )}
+                    <NotificationDate
+                        title={createdAt}
+                        aria-label={createdAt}
+                    >
+                        <time
+                            dateTime={new Date(
+                                parseInt(notification.createdAt)
+                            ).toISOString()}
+                        >
+                            {date}
+                        </time>
+                    </NotificationDate>
+                </NotificationContainer>
+            </NotificationInnerWrapper>
         </NotificationWrapper>
     );
 }
