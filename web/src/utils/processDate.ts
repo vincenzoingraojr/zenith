@@ -61,3 +61,16 @@ export const processDate = (
         }
     }
 };
+
+export const getDateToLocaleString = (timestamp: string) => {
+    return new Date(parseInt(timestamp)).toLocaleString(
+        "en-us",
+        {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        }
+    );
+}

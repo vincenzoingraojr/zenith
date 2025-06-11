@@ -4,7 +4,7 @@ import styled from "styled-components";
 import { Link, useNavigate } from "react-router-dom";
 import { NOTIFICATION_TYPES, POST_TYPES, USER_TYPES } from "../../../../utils/constants";
 import { useFindUserById } from "../../../../utils/userQueries";
-import { processDate } from "../../../../utils/processDate";
+import { getDateToLocaleString, processDate } from "../../../../utils/processDate";
 import { ItemLoading, OptionBaseIcon, PageText } from "../../../../styles/global";
 import { useFindPostById } from "../../../../utils/postQueries";
 import Bell from "../../../icons/Bell";
@@ -153,16 +153,7 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({ 
 
     const content = useMemo(() => transformSentence(notification.content, user || null), [notification.content, user]);
     const date = useMemo(() => processDate(notification.createdAt, true, false), [notification.createdAt]);
-    const createdAt = new Date(parseInt(notification.createdAt)).toLocaleString(
-        "en-us",
-        {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        }
-    );
+    const createdAt = useMemo(() => getDateToLocaleString(notification.createdAt), [notification.createdAt]);
 
     const url = useMemo(() => {
         switch (notification.notificationType) {

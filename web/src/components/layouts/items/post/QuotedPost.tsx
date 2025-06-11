@@ -1,4 +1,4 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useMemo } from "react";
 import { Post } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
@@ -7,7 +7,7 @@ import { AuthorFullNameContainer, AuthorImageContainer, AuthorInfo, AuthorUserna
 import VerificationBadge from "../../../utils/VerificationBadge";
 import profilePicture from "../../../../images/profile-picture.png";
 import Pen from "../../../icons/Pen";
-import { processDate } from "../../../../utils/processDate";
+import { getDateToLocaleString, processDate } from "../../../../utils/processDate";
 import { COLORS } from "../../../../styles/colors";
 import AffiliationIcon from "../../../utils/AffiliationIcon";
 
@@ -93,18 +93,9 @@ const QuotedPostMediaContainer = styled.div`
 const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin }) => {
     const navigate = useNavigate();
 
-    const date = processDate(post.createdAt, true, true);
+    const date = useMemo(() => processDate(post.createdAt, true, true), [post.createdAt]);
     
-    const createdAt = new Date(parseInt(post.createdAt)).toLocaleString(
-        "en-us",
-        {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        }
-    );
+    const createdAt = useMemo(() => getDateToLocaleString(post.createdAt), [post.createdAt]);
 
     return (
         <QuotedPostWrapper>

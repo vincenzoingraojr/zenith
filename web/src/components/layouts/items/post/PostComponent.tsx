@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
-import { GetPostLikesDocument, GetRepostsDocument, IsBookmarkedDocument, IsBookmarkedQuery, IsFollowedByMeDocument, IsFollowedByMeQuery, IsPostLikedByMeDocument, IsPostLikedByMeQuery, IsRepostedByUserDocument, IsRepostedByUserQuery, Post, useCreateBookmarkMutation, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useFollowUserMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsBookmarkedQuery, useIsFollowedByMeQuery, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveBookmarkMutation, useRemoveLikeMutation, useUnfollowUserMutation } from "../../../../generated/graphql";
+import { GetPostLikesDocument, GetRepostsDocument, IsBookmarkedDocument, IsBookmarkedQuery, IsFollowedByMeDocument, IsFollowedByMeQuery, IsPostLikedByMeDocument, IsPostLikedByMeQuery, IsRepostedByUserDocument, IsRepostedByUserQuery, Post, useCreateBookmarkMutation, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useFollowUserMutation, useIncrementPostViewsMutation, useLikePostMutation, useRemoveBookmarkMutation, useRemoveLikeMutation, useUnfollowUserMutation } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ControlContainer, OptionBaseIcon, PageBlock, PageText } from "../../../../styles/global";
@@ -16,9 +16,9 @@ import More from "../../../icons/More";
 import { useOptions } from "../../../utils/hooks";
 import Flag from "../../../icons/Flag";
 import Comment from "../../../icons/Comment";
-import { processDate } from "../../../../utils/processDate";
+import { getDateToLocaleString, processDate } from "../../../../utils/processDate";
 import Pen from "../../../icons/Pen";
-import { useMeData } from "../../../../utils/userQueries";
+import { useFollowData, useMeData } from "../../../../utils/userQueries";
 import Bin from "../../../icons/Bin";
 import FollowIcon from "../../../icons/FollowIcon";
 import Chain from "../../../icons/Chain";
@@ -27,7 +27,7 @@ import { useToasts } from "../../../utils/ToastProvider";
 import RepostIcon from "../../../icons/Repost";
 import Mail from "../../../icons/Mail";
 import VerificationBadge from "../../../utils/VerificationBadge";
-import { useFindPostById } from "../../../../utils/postQueries";
+import { useBookmarkData, useComments, useFindPostById, useLikeData, usePostLikes, useRepostData, useReposts } from "../../../../utils/postQueries";
 import QuotedPost from "./QuotedPost";
 import LoadingComponent from "../../../utils/LoadingComponent";
 import AffiliationIcon from "../../../utils/AffiliationIcon";
@@ -274,16 +274,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
 
     const date = useMemo(() => processDate(post.createdAt, true, true), [post.createdAt]);
 
-    const createdAt = new Date(parseInt(post.createdAt)).toLocaleString(
-        "en-us",
-        {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        }
-    );
+    const createdAt = useMemo(() => getDateToLocaleString(post.createdAt), [post.createdAt]);
 
     const { me } = useMeData();
 
@@ -336,113 +327,81 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
     const [likePost] = useLikePostMutation();
     const [removeLike] = useRemoveLikeMutation();
 
-    const { data: likeData } = useIsPostLikedByMeQuery({
-        fetchPolicy: "cache-first",
-        variables: { itemId: post.itemId, type: post.type },
-    });
+    const isPostLikedByMe = useLikeData(post.itemId, post.type);
 
-    const like = useMemo(() => {
-        if (likeData) {
-            return likeData.isPostLikedByMe;
-        } else {
-            return null;
-        }
-    }, [likeData]);
+    const like = useMemo(() => isPostLikedByMe, [isPostLikedByMe]);
 
-    const { data: postLikesData } = useGetPostLikesQuery({
-        fetchPolicy: "cache-and-network",
-        variables: { itemId: post.itemId, type: post.type, limit: 3 },
-    });
+    const { postLikes } = usePostLikes(post.itemId, post.type);
 
-    const postLikes = useMemo(() => {
-        if (postLikesData && postLikesData.getPostLikes.totalCount) {
-            return postLikesData.getPostLikes.totalCount;
+    const likes = useMemo(() => {
+        if (postLikes && postLikes.totalCount) {
+            return postLikes.totalCount;
         } else {
             return 0;
         }
-    }, [postLikesData]);
+    }, [postLikes]);
 
-    const { data: commentsData } = usePostCommentsQuery({
-        fetchPolicy: "cache-and-network",
-        variables: { id: post.id, type: post.type, limit: 3 },
-    });
+    const { postComments } = useComments(post.id, post.type);
 
     const comments = useMemo(() => {
-        if (commentsData && commentsData.postComments.totalCount) {
-            return commentsData.postComments.totalCount;
+        if (postComments && postComments.totalCount) {
+            return postComments.totalCount;
         } else {
             return 0;
         }
-    }, [commentsData]);
+    }, [postComments]);
 
     const { addToast } = useToasts();
 
     const [createRepost] = useCreateRepostMutation();
     const [deleteRepost] = useDeleteRepostMutation();
 
-    const { data: repostData } = useIsRepostedByUserQuery({
-        fetchPolicy: "cache-first",
-        variables: { postId: post.id, userId: me ? me.id : null },
-    });
+    const isRepostedByUser = useRepostData(post.id, me ? me.id : null);
 
     const repost = useMemo(() => {
-        if (repostData) {
-            return repostData.isRepostedByUser;
+        if (isRepostedByUser) {
+            return isRepostedByUser;
         } else {
             return null;
         }
-    }, [repostData]);
+    }, [isRepostedByUser]);
 
-    const { data: repostsData } = useGetRepostsQuery({
-        fetchPolicy: "cache-and-network",
-        variables: { postId: post.id, limit: 3 },
-    });
+    const { userReposts } = useReposts(post.id);
 
     const reposts = useMemo(() => {
-        if (repostsData && repostsData.getReposts.totalCount) {
-            return repostsData.getReposts.totalCount;
+        if (userReposts && userReposts.totalCount) {
+            return userReposts.totalCount;
         } else {
             return 0;
         }
-    }, [repostsData]);
+    }, [userReposts]);
 
     const [deletePost, { client }] = useDeletePostMutation();
 
     const { post: quotedPost, loading, error } = useFindPostById(post.quotedPostId as number | undefined);
 
-    const { data: followData } = useIsFollowedByMeQuery({
-        variables: {
-            id: post.authorId,
-        },
-        fetchPolicy: "cache-first",
-    });
+    const isFollowedByMe = useFollowData(post.authorId);
 
     const follow = useMemo(() => {
-        if (followData) {
-            return followData.isFollowedByMe;
+        if (isFollowedByMe) {
+            return isFollowedByMe;
         } else {
             return null;
         }
-    }, [followData]);
+    }, [isFollowedByMe]);
 
     const [followUser] = useFollowUserMutation();
     const [unfollowUser] = useUnfollowUserMutation();
 
-    const { data: bookmarkData } = useIsBookmarkedQuery({
-        variables: {
-            itemId: post.id,
-            type: post.type,
-        },
-        fetchPolicy: "cache-first",
-    });
+    const isBookmarked = useBookmarkData(post.id, post.type);
 
     const bookmark = useMemo(() => {
-        if (bookmarkData) {
-            return bookmarkData.isBookmarked;
+        if (isBookmarked) {
+            return isBookmarked;
         } else {
             return null;
         }
-    }, [bookmarkData]);
+    }, [isBookmarked]);
 
     const [createBookmark] = useCreateBookmarkMutation();
     const [removeBookmark] = useRemoveBookmarkMutation();
@@ -859,7 +818,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             <LikeIcon isActive={like ? true : false} />
                         </ControlContainer>
                         <PostActionInfo>
-                            {formatter.format(postLikes)}
+                            {formatter.format(likes)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
