@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useMeData } from "./userQueries";
 import { PaginatedNotifications, useDeletedNotificationSubscription, useNewNotificationSubscription, useNotificationFeedQuery, useUnseenNotificationsQuery } from "../generated/graphql";
 import { ApolloError, gql } from "@apollo/client";
@@ -42,6 +42,7 @@ export const NotificationsProvider = ({ children }: { children: ReactNode }) => 
         },
         fetchPolicy: "cache-first",
         notifyOnNetworkStatusChange: true,
+        skip: !me,
     });
 
     const [moreLoading, setMoreloading] = useState(false);
@@ -156,11 +157,11 @@ export const NotificationsProvider = ({ children }: { children: ReactNode }) => 
         skip: !me,
     });
 
-    const [notificationsCount, setNotificationsCount] = useState(unseenData ? unseenData.unseenNotifications.length : 0);
-
-    useEffect(() => {
+    const notificationsCount = useMemo(() => {
         if (unseenData) {
-            setNotificationsCount(unseenData.unseenNotifications.length);
+            return unseenData.unseenNotifications.length;
+        } else {
+            return 0;
         }
     }, [unseenData]);
 

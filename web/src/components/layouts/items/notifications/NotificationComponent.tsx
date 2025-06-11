@@ -1,4 +1,4 @@
-import { FunctionComponent, useEffect, useRef, useState } from "react";
+import { FunctionComponent, useEffect, useMemo, useRef } from "react";
 import { Notification, UnseenNotificationsDocument, UnseenNotificationsQuery, User, useViewNotificationMutation } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useNavigate } from "react-router-dom";
@@ -124,76 +124,35 @@ function transformSentence(sentence: string, user: User | null) {
     );
 }
 
+function getIcon(type: string, size: number) {
+    switch (type) {
+        case NOTIFICATION_TYPES.LIKE:
+            return <LikeIcon isActive size={size} />;
+        case NOTIFICATION_TYPES.MENTION:
+            return <Profile isActive size={size} />;
+        case NOTIFICATION_TYPES.COMMENT:
+            return <Comment color={COLORS.purple} size={size} />;
+        case NOTIFICATION_TYPES.QUOTE:
+            return <Pen size={size} />;
+        case NOTIFICATION_TYPES.REPOST:
+            return <RepostIcon isActive size={size} />;
+        case NOTIFICATION_TYPES.FOLLOW:
+            return <Profile isActive size={size} />;
+        default:
+            return <Bell isActive size={size} />;
+    }
+}
+
 const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({ notification }) => {
     const navigate = useNavigate();
     const size = 32;
-    const [title, setTitle] = useState<string>("");
-    const { user, loading: userLoading } = useFindUserById(notification.creatorId);
-    const content = transformSentence(notification.content, user as User | null);
-    const date = processDate(notification.createdAt, true, false);
-    const [url, setUrl] = useState<string>("");
-    const { post, loading: postLoading } = useFindPostById(notification.resourceId);
-    const [icon, setIcon] = useState<JSX.Element>(<Bell isActive={true} size={size} />);
     const notificationRef = useRef<HTMLDivElement>(null);
 
-    const [loading, setLoading] = useState(false);
+    const { user, loading: userLoading } = useFindUserById(notification.creatorId);
+    const { post, loading: postLoading } = useFindPostById(notification.resourceId);
 
-    useEffect(() => {
-        switch (notification.notificationType) {
-            case NOTIFICATION_TYPES.LIKE:
-                setTitle("Go to the post page on Zenith.");
-                setUrl(post ? `/${post.author.username}/post/${post.itemId}` : "");
-                setIcon(<LikeIcon isActive={true} size={size} />);
-
-                break;
-            case NOTIFICATION_TYPES.MENTION:
-                setTitle("Go to the post page on Zenith.");
-                setUrl(post ? `/${post.author.username}/post/${post.itemId}` : "");
-                setIcon(<Profile isActive={true} size={size} />);
-
-                break;
-            case NOTIFICATION_TYPES.COMMENT:
-                setTitle("Go to the post page on Zenith.");
-                setUrl(post ? `/${post.author.username}/post/${post.itemId}` : "");
-                setIcon(<Comment color={COLORS.purple} size={size} />);
-
-                break;
-            case NOTIFICATION_TYPES.QUOTE:
-                setTitle("Go to the post page on Zenith.");
-                setUrl(post ? `/${post.author.username}/post/${post.itemId}` : "");
-                setIcon(<Pen size={size} />);
-
-                break;
-            case NOTIFICATION_TYPES.REPOST:
-                setTitle("Go to the post page on Zenith.");
-                setUrl(post ? `/${post.author.username}/post/${post.itemId}` : "");
-                setIcon(<RepostIcon isActive={true} size={size} />);
-
-                break;
-            case NOTIFICATION_TYPES.FOLLOW:
-                setTitle("Go to the user's profile on Zenith.");
-                setUrl(user ? `/${user.username}` : "");
-                setIcon(<Profile isActive={true} size={size} />);
-
-                break;
-            case NOTIFICATION_TYPES.AFFILIATION:
-                setTitle("Manage this affiliation on Zenith.");
-                setUrl("/affiliations");
-
-                break;
-            case NOTIFICATION_TYPES.PAYMENT:
-                setTitle("View the details of this payment on Zenith.");
-                setUrl("/payments");
-                
-                break;
-            default:
-                setTitle("Go to the notification page on Zenith.");
-                setUrl("/notifications");
-
-                break;
-        }
-    }, [notification, post, user]);
-
+    const content = useMemo(() => transformSentence(notification.content, user || null), [notification.content, user]);
+    const date = useMemo(() => processDate(notification.createdAt, true, false), [notification.createdAt]);
     const createdAt = new Date(parseInt(notification.createdAt)).toLocaleString(
         "en-us",
         {
@@ -205,6 +164,27 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({ 
         }
     );
 
+    const url = useMemo(() => {
+        switch (notification.notificationType) {
+            case NOTIFICATION_TYPES.LIKE:
+            case NOTIFICATION_TYPES.MENTION:
+            case NOTIFICATION_TYPES.COMMENT:
+            case NOTIFICATION_TYPES.QUOTE:
+            case NOTIFICATION_TYPES.REPOST:
+                return post ? `/${post.author.username}/post/${post.itemId}` : "/notifications";
+            case NOTIFICATION_TYPES.FOLLOW:
+                return user ? `/${user.username}` : "/notifications";
+            case NOTIFICATION_TYPES.AFFILIATION:
+                return "/affiliations";
+            case NOTIFICATION_TYPES.PAYMENT:
+                return "/payments";
+            default:
+                return "/notifications";
+        }
+    }, [notification.notificationType, post, user]);
+
+    const icon = useMemo(() => getIcon(notification.notificationType, size), [notification.notificationType]);
+
     const [viewNotification] = useViewNotificationMutation();
 
     useEffect(() => {
@@ -213,7 +193,7 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({ 
         const options = {
             root: null,
             rootMargin: "0px",
-            threshold: 1.0,
+            threshold: 0.5,
         };
 
         const observer = new IntersectionObserver(([entry]) => {
@@ -255,9 +235,7 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({ 
         };
     }, [viewNotification, notification]);
 
-    useEffect(() => {
-        setLoading(userLoading || postLoading);
-    }, [userLoading, postLoading]);
+    const loading = userLoading || postLoading;
 
     return (
         <NotificationWrapper>
@@ -268,10 +246,12 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({ 
             ) : (
                 <NotificationInnerWrapper
                     role="link"
-                    title={title}
-                    aria-label={title}
+                    tabIndex={0}
+                    title="Open notification"
+                    aria-label="Open notification"
                     ref={notificationRef}
                     onClick={() => navigate(url)}
+                    onKeyDown={(e) => e.key === "Enter" && navigate(url)}
                 >
                     <NotificationTypeIcon>
                         {icon}
@@ -282,9 +262,9 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({ 
                             onClick={(e) => {
                                 e.stopPropagation();
 
-                                navigate(
-                                    user ? `/${user.username}` : "/"
-                                );
+                                if (user) {
+                                    navigate(`/${user.username}`);
+                                }
                             }}
                             type={user ? user.type : USER_TYPES.USER}
                         >

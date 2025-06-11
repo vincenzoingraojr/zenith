@@ -570,7 +570,7 @@ export class PostResolver {
                         if (quotedPostId) {
                             const quotedPost = await this.findPostById(quotedPostId);
 
-                            if (quotedPost) {
+                            if (quotedPost && quotedPost.authorId !== payload.id) {
                                 const notification = await this.notificationService.createNotification(payload.id, quotedPost.authorId, post.id, type, NOTIFICATION_TYPES.QUOTE, `${post.author.name} (@${post.author.username}) quoted your post.`);
         
                                 const author = await this.userService.findUserById(quotedPost.authorId);
@@ -1559,19 +1559,21 @@ export class PostResolver {
                 return null;
             }
 
-            const notification = await this.notificationService.createNotification(payload.id, item.authorId, item.id, item.type, NOTIFICATION_TYPES.REPOST, `${me.name} (@${me.username}) reposted your ${(item.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST}.`);
+            if (item.authorId !== payload.id) {
+                const notification = await this.notificationService.createNotification(payload.id, item.authorId, item.id, item.type, NOTIFICATION_TYPES.REPOST, `${me.name} (@${me.username}) reposted your ${(item.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST}.`);
 
-            if (notification) {
-                pubSub.publish("NEW_NOTIFICATION", notification);
+                if (notification) {
+                    pubSub.publish("NEW_NOTIFICATION", notification);
 
-                const tokens = await this.userDeviceTokenRepository.find({ where: { userId: item.authorId } });
-                const pushNotification: FirebaseNotification = {
-                    title: `@${me.username} reposted your ${(item.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST} (for @${item.author.username})`,
-                    body: notification.content,
-                    imageUrl: me.profile.profilePicture.length > 0 ? me.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
-                };
-                const link = `${process.env.CLIENT_ORIGIN}/${item.author.username}/post/${item.itemId}?n_id=${notification.notificationId}`;
-                await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: item.author.username, type: notification.notificationType });
+                    const tokens = await this.userDeviceTokenRepository.find({ where: { userId: item.authorId } });
+                    const pushNotification: FirebaseNotification = {
+                        title: `@${me.username} reposted your ${(item.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST} (for @${item.author.username})`,
+                        body: notification.content,
+                        imageUrl: me.profile.profilePicture.length > 0 ? me.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
+                    };
+                    const link = `${process.env.CLIENT_ORIGIN}/${item.author.username}/post/${item.itemId}?n_id=${notification.notificationId}`;
+                    await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: item.author.username, type: notification.notificationType });
+                }
             }
 
             return repost;
