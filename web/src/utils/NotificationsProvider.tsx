@@ -42,7 +42,6 @@ export const NotificationsProvider = ({ children }: { children: ReactNode }) => 
         },
         fetchPolicy: "cache-first",
         notifyOnNetworkStatusChange: true,
-        skip: !me,
     });
 
     const [moreLoading, setMoreloading] = useState(false);
@@ -65,7 +64,7 @@ export const NotificationsProvider = ({ children }: { children: ReactNode }) => 
                     }
                 };
             },
-        }).then(() => {            
+        }).then(() => {
             setMoreloading(false);
         }).catch((error) => {
             console.error(error);

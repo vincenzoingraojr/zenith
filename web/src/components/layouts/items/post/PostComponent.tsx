@@ -1,5 +1,5 @@
-import { FunctionComponent, useEffect, useRef, useState } from "react";
-import { Bookmark, Follow, GetPostLikesDocument, GetRepostsDocument, IsBookmarkedDocument, IsBookmarkedQuery, IsFollowedByMeDocument, IsFollowedByMeQuery, IsPostLikedByMeDocument, IsPostLikedByMeQuery, IsRepostedByUserDocument, IsRepostedByUserQuery, Like, Post, Repost, useCreateBookmarkMutation, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useFollowUserMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsBookmarkedQuery, useIsFollowedByMeQuery, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveBookmarkMutation, useRemoveLikeMutation, useUnfollowUserMutation } from "../../../../generated/graphql";
+import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
+import { GetPostLikesDocument, GetRepostsDocument, IsBookmarkedDocument, IsBookmarkedQuery, IsFollowedByMeDocument, IsFollowedByMeQuery, IsPostLikedByMeDocument, IsPostLikedByMeQuery, IsRepostedByUserDocument, IsRepostedByUserQuery, Post, useCreateBookmarkMutation, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useFollowUserMutation, useGetPostLikesQuery, useGetRepostsQuery, useIncrementPostViewsMutation, useIsBookmarkedQuery, useIsFollowedByMeQuery, useIsPostLikedByMeQuery, useIsRepostedByUserQuery, useLikePostMutation, usePostCommentsQuery, useRemoveBookmarkMutation, useRemoveLikeMutation, useUnfollowUserMutation } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ControlContainer, OptionBaseIcon, PageBlock, PageText } from "../../../../styles/global";
@@ -269,11 +269,10 @@ const QuotedPostNotAvailable = styled.div`
 
 const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplying, showIsReposted, origin }) => {
     const navigate = useNavigate();
-    const [like, setLike] = useState<Like | null>(null);
 
     const { activeOptions, handleOptionsClick } = useOptions();
 
-    const date = processDate(post.createdAt, true, true);
+    const date = useMemo(() => processDate(post.createdAt, true, true), [post.createdAt]);
 
     const createdAt = new Date(parseInt(post.createdAt)).toLocaleString(
         "en-us",
@@ -301,7 +300,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
         const options = {
             root: null,
             rootMargin: "0px",
-            threshold: 1.0,
+            threshold: 0.5,
         };
 
         const observer = new IntersectionObserver(([entry]) => {
@@ -342,13 +341,11 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
         variables: { itemId: post.itemId, type: post.type },
     });
 
-    useEffect(() => {
+    const like = useMemo(() => {
         if (likeData) {
-            setLike(likeData.isPostLikedByMe as Like | null);
-        }
-
-        return () => {
-            setLike(null);
+            return likeData.isPostLikedByMe;
+        } else {
+            return null;
         }
     }, [likeData]);
 
@@ -357,30 +354,42 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
         variables: { itemId: post.itemId, type: post.type, limit: 3 },
     });
 
+    const postLikes = useMemo(() => {
+        if (postLikesData && postLikesData.getPostLikes.totalCount) {
+            return postLikesData.getPostLikes.totalCount;
+        } else {
+            return 0;
+        }
+    }, [postLikesData]);
+
     const { data: commentsData } = usePostCommentsQuery({
         fetchPolicy: "cache-and-network",
         variables: { id: post.id, type: post.type, limit: 3 },
     });
+
+    const comments = useMemo(() => {
+        if (commentsData && commentsData.postComments.totalCount) {
+            return commentsData.postComments.totalCount;
+        } else {
+            return 0;
+        }
+    }, [commentsData]);
 
     const { addToast } = useToasts();
 
     const [createRepost] = useCreateRepostMutation();
     const [deleteRepost] = useDeleteRepostMutation();
 
-    const [repost, setRepost] = useState<Repost | null>(null);
-
     const { data: repostData } = useIsRepostedByUserQuery({
         fetchPolicy: "cache-first",
         variables: { postId: post.id, userId: me ? me.id : null },
     });
 
-    useEffect(() => {
+    const repost = useMemo(() => {
         if (repostData) {
-            setRepost(repostData.isRepostedByUser as Repost | null);
-        }
-
-        return () => {
-            setRepost(null);
+            return repostData.isRepostedByUser;
+        } else {
+            return null;
         }
     }, [repostData]);
 
@@ -389,11 +398,17 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
         variables: { postId: post.id, limit: 3 },
     });
 
+    const reposts = useMemo(() => {
+        if (repostsData && repostsData.getReposts.totalCount) {
+            return repostsData.getReposts.totalCount;
+        } else {
+            return 0;
+        }
+    }, [repostsData]);
+
     const [deletePost, { client }] = useDeletePostMutation();
 
     const { post: quotedPost, loading, error } = useFindPostById(post.quotedPostId as number | undefined);
-
-    const [follow, setFollow] = useState<Follow | null>(null);
 
     const { data: followData } = useIsFollowedByMeQuery({
         variables: {
@@ -402,20 +417,16 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
         fetchPolicy: "cache-first",
     });
 
-    useEffect(() => {
+    const follow = useMemo(() => {
         if (followData) {
-            setFollow(followData.isFollowedByMe as Follow | null);
-        }
-
-        return () => {
-            setFollow(null);
+            return followData.isFollowedByMe;
+        } else {
+            return null;
         }
     }, [followData]);
 
     const [followUser] = useFollowUserMutation();
     const [unfollowUser] = useUnfollowUserMutation();
-
-    const [bookmark, setBookmark] = useState<Bookmark | null>(null);
 
     const { data: bookmarkData } = useIsBookmarkedQuery({
         variables: {
@@ -425,13 +436,11 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
         fetchPolicy: "cache-first",
     });
 
-    useEffect(() => {
+    const bookmark = useMemo(() => {
         if (bookmarkData) {
-            setBookmark(bookmarkData.isBookmarked as Bookmark | null);
-        }
-
-        return () => {
-            setBookmark(null);
+            return bookmarkData.isBookmarked;
+        } else {
+            return null;
         }
     }, [bookmarkData]);
 
@@ -442,6 +451,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
         <PostWrapper>
             <PostContainer
                 role="link"
+                tabIndex={0}
                 ref={postRef}
                 onClick={(e: any) => {
                     if (
@@ -455,6 +465,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         );
                     }
                 }}
+                onKeyDown={(e) => e.key === "Enter" && navigate(`/${post.author.username}/post/${post.itemId}`)}
             >
                 <PostHeader>
                     <PostAuthorContainer
@@ -848,7 +859,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             <LikeIcon isActive={like ? true : false} />
                         </ControlContainer>
                         <PostActionInfo>
-                            {formatter.format(postLikesData && postLikesData.getPostLikes.totalCount ? postLikesData.getPostLikes.totalCount : 0)}
+                            {formatter.format(postLikes)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
@@ -1012,7 +1023,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             }
                         />
                         <PostActionInfo>
-                            {formatter.format(repostsData && repostsData.getReposts.totalCount ? repostsData.getReposts.totalCount : 0)}
+                            {formatter.format(reposts)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
@@ -1034,7 +1045,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             <Comment />
                         </ControlContainer>
                         <PostActionInfo>
-                            {formatter.format(commentsData && commentsData.postComments.totalCount ? commentsData.postComments.totalCount : 0)}
+                            {formatter.format(comments)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer

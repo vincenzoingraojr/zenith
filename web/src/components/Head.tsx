@@ -18,7 +18,7 @@ const Head: FunctionComponent<HeadProps> = ({ title, description, image }) => {
 
     return (
         <Helmet>
-            <title>{notificationsCount > 0 && window.location.pathname !== "/notifications" ? `(${notificationsCount}) `: ""}{title}</title>
+            <title>{notificationsCount > 0 && window.location.pathname !== "/notifications" ? `(${notificationsCount > 9 ? "9+" : notificationsCount}) `: ""}{title}</title>
             <meta property="og:title" content={title} />
             <meta name="description" content={description ? description : defaultDescription} />
             <meta property="og:description" content={description ? description : defaultDescription} />

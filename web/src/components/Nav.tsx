@@ -346,7 +346,7 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                                         <Bell isActive={isActive} />
                                         {(notificationsCount > 0 && window.location.pathname !== "/notifications") && (
                                             <NotificationsCount>
-                                                {notificationsCount}
+                                                {notificationsCount > 9 ? "9+" : notificationsCount}
                                             </NotificationsCount>
                                         )}
                                     </NavIconWithBadge>
