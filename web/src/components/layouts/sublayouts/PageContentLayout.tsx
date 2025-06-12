@@ -2,7 +2,7 @@ import { FunctionComponent } from "react";
 import { LayoutProps } from "../common";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import { ControlContainer } from "../../../styles/global";
+import { ControlContainer, OptionBaseIcon } from "../../../styles/global";
 import Back from "../../icons/Back";
 import { devices } from "../../../styles/devices";
 import { mediaQuery } from "../../../utils/mediaQuery";
@@ -13,6 +13,7 @@ import { useMenu } from "../../utils/hooks";
 import Menu from "../../Menu";
 import Logo from "../../icons/Logo";
 import { useToasts } from "../../utils/ToastProvider";
+import { scrollToTop } from "../../../utils/scrollToTop";
 
 interface PageContentLayoutProps extends LayoutProps {
     title: string;
@@ -161,6 +162,10 @@ const HomeLogo = styled.div`
     }
 `;
 
+const HomeLogoContainer = styled(OptionBaseIcon)`
+    cursor: pointer;
+`;
+
 const HomeHeaderTitle = styled(MainHeaderTitle)`
     display: none;
 
@@ -258,23 +263,27 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({
                                             </MainHeaderTitle>
                                         ) : (
                                             <>
-                                                <HomeLogo
-                                                    onClick={() => {
-                                                        addToast(
-                                                            "This is Zenith!"
-                                                        );
-                                                    }}
-                                                >
-                                                    <Logo type="inline" />
+                                                <HomeLogo>
+                                                    <HomeLogoContainer
+                                                        onClick={() => {
+                                                            addToast(
+                                                                "This is Zenith!"
+                                                            );
+
+                                                            scrollToTop();
+                                                        }}
+                                                    >
+                                                        <Logo type="inline" />
+                                                    </HomeLogoContainer>
                                                 </HomeLogo>
-                                                <HomeHeaderTitle>
+                                                <HomeHeaderTitle onClick={() => scrollToTop()}>
                                                     {title}
                                                 </HomeHeaderTitle>
                                             </>
                                         )}
                                     </HomeContainer>
                                 ) : (
-                                    <MainHeaderTitle>{title}</MainHeaderTitle>
+                                    <MainHeaderTitle onClick={() => scrollToTop()}>{title}</MainHeaderTitle>
                                 )}
                             </>
                         )}

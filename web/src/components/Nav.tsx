@@ -22,6 +22,7 @@ import Wallet from "./icons/Wallet";
 import Add from "./icons/Add";
 import { COLORS } from "../styles/colors";
 import { useNotificationsContext } from "../utils/NotificationsProvider";
+import { scrollToTop } from "../utils/scrollToTop";
 
 interface NavProps {
     noNav?: boolean;
@@ -296,12 +297,12 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                     </CustomNavContainer>
                 )}
                 <NavItemLink role="menuitem">
-                    <NavLink to="/home" title="Home" aria-label="Home">
+                    <NavLink to="/home" title="Home" aria-label="Home" onClick={() => scrollToTop("/home")}>
                         {({ isActive }) => <Home isActive={isActive} />}
                     </NavLink>
                 </NavItemLink>
                 <NavItemLink role="menuitem">
-                    <NavLink to="/search" title="Search" aria-label="Search">
+                    <NavLink to="/search" title="Search" aria-label="Search" onClick={() => scrollToTop("/search")}>
                         {({ isActive }) => (
                             <Magnifier type="normal" isActive={isActive} />
                         )}
@@ -315,6 +316,7 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                                 title={me.name}
                                 aria-label={me.name}
                                 end
+                                onClick={() => scrollToTop(`/${me.username}`)}
                             >
                                 {({ isActive }) => (
                                     <Profile isActive={isActive} />
@@ -355,6 +357,7 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                                 to="/notifications"
                                 title="Notifications"
                                 aria-label="Notifications"
+                                onClick={() => scrollToTop("/notifications")}
                             >
                                 {({ isActive }) => (
                                     <NavIconWithBadge>
@@ -377,6 +380,7 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                                 to="/messages"
                                 title="Messages"
                                 aria-label="Messages"
+                                onClick={() => scrollToTop("/messages")}
                             >
                                 {({ isActive }) => (
                                     <Mail type="nav" isActive={isActive} />
@@ -388,6 +392,7 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                                 to="/payments"
                                 title="Payments"
                                 aria-label="Payments"
+                                onClick={() => scrollToTop("/payments")}
                             >
                                 {({ isActive }) => (
                                     <Wallet isActive={isActive} />
