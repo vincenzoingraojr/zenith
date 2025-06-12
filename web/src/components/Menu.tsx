@@ -319,8 +319,10 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                 </ProfileMenuInfo>
                             </Link>
                         </ProfileMenuContainer>
-                        <MenuNav>
-                            <MenuNavEntry>
+                        <MenuNav
+                            role="menu"
+                        >
+                            <MenuNavEntry role="menuitem">
                                 <CustomSpanOption
                                     role="button"
                                     title={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
@@ -333,7 +335,7 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                     <MenuNavEntryText>Switch to {isDarkMode ? "light" : "dark"}</MenuNavEntryText>
                                 </CustomSpanOption>
                             </MenuNavEntry>
-                            <MenuNavEntry>
+                            <MenuNavEntry role="menuitem">
                                 <Link
                                     to={`/${me.username}`}
                                     title={me.name}
@@ -345,7 +347,7 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                     <MenuNavEntryText>Profile</MenuNavEntryText>
                                 </Link>
                             </MenuNavEntry>
-                            <MenuNavEntry>
+                            <MenuNavEntry role="menuitem">
                                 <Link
                                     to="/settings"
                                     title={"Settings page"}
@@ -357,7 +359,7 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                     <MenuNavEntryText>Settings</MenuNavEntryText>
                                 </Link>
                             </MenuNavEntry>
-                            <MenuNavEntry>
+                            <MenuNavEntry role="menuitem">
                                 <Link
                                     to="/logout"
                                     title={`Log out from @${me.username}`}

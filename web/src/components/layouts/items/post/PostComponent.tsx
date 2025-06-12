@@ -54,12 +54,7 @@ const PostContainer = styled.div`
     display: flex;
     flex-direction: column;
     background-color: transparent;
-    transition: 0.2s background-color ease;
     cursor: pointer;
-
-    &:hover, &:focus {
-        background-color: ${({ theme }) => theme.overlayGrey};
-    }
 `;
 
 const PostHeader = styled.div`

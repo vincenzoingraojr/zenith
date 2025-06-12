@@ -115,7 +115,7 @@ export const OptionItemText = styled(PageText).attrs(
 `;
 
 const Options: FunctionComponent<OptionsProps> = ({ icon, title, isOpen, toggleOptions, children, size, mirrored }) => {
-    const buttonRef = useRef<HTMLDivElement | null>(null);
+    const buttonRef = useRef<HTMLDivElement>(null);
 
     const [position, setPosition] = useState<{ top: number; left: number }>({
         top: 0,

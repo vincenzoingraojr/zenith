@@ -212,9 +212,9 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
 
     const [position, setPosition] = useState<DOMRect | null>(null);
     const [bottomNavPosition, setBottomNavPosition] = useState<DOMRect | null>(null);
-    const divRef = useRef<HTMLDivElement | null>(null);
-    const buttonRef = useRef<HTMLDivElement | null>(null);
-    const navRef = useRef<HTMLDivElement | null>(null);
+    const divRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLDivElement>(null);
+    const navRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         let navRefVar = navRef.current;
@@ -262,9 +262,9 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                     <Logo type="inline" />
                 </Link>
             </BrandLink>
-            <NavContainer>
+            <NavContainer role="menu">
                 {!me && (
-                    <CustomNavContainer type="header">
+                    <CustomNavContainer type="header" role="menuitem">
                         <ControlContainer
                             ref={buttonRef}
                             size={48}
@@ -282,18 +282,21 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                         )}
                     </CustomNavContainer>
                 )}
-                <NavItemLink>
+                <NavItemLink role="menuitem">
                     <NavLink
                         to="/home"
                         title="Home"
                         aria-label="Home"
+                        state={{
+                            feed: "home"
+                        }}
                     >
                         {({ isActive }) => (
                             <Home isActive={isActive} />
                         )}
                     </NavLink>
                 </NavItemLink>
-                <NavItemLink>
+                <NavItemLink role="menuitem">
                     <NavLink
                         to="/search"
                         title="Search"
@@ -306,7 +309,7 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                 </NavItemLink>
                 {me && (
                     <>
-                        <CustomNavItemLink type="nav">
+                        <CustomNavItemLink type="nav" role="menuitem">
                             <NavLink
                                 to={`/${me.username}`}
                                 title={me.name}
@@ -318,7 +321,7 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                                 )}
                             </NavLink>
                         </CustomNavItemLink>
-                        <ActivityButtonContainer>
+                        <ActivityButtonContainer role="menuitem">
                             <ActivityButton
                                 title={isMessagesPage ? "Create a new chat or group" : "Create a new post"}
                                 aria-label={isMessagesPage ? "Create a new chat or group" : "Create a new post"}
@@ -335,11 +338,14 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                                 <Add color={COLORS.white} />
                             </ActivityButton>
                         </ActivityButtonContainer>
-                        <NavItemLink>
+                        <NavItemLink role="menuitem">
                             <NavLink
                                 to="/notifications"
                                 title="Notifications"
                                 aria-label="Notifications"
+                                state={{
+                                    feed: "notifications"
+                                }}
                             >
                                 {({ isActive }) => (
                                     <NavIconWithBadge>
@@ -353,7 +359,7 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                                 )}
                             </NavLink>
                         </NavItemLink>
-                        <NavItemLink>
+                        <NavItemLink role="menuitem">
                             <NavLink
                                 to="/messages"
                                 title="Messages"
@@ -364,7 +370,7 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                                 )}
                             </NavLink>
                         </NavItemLink>
-                        <NavItemLink>
+                        <NavItemLink role="menuitem">
                             <NavLink
                                 to="/payments"
                                 title="Payments"
