@@ -77,8 +77,7 @@ const OptionsContainer = styled.div.attrs(
         transform: ${(props) =>
                 props.isInUpperHalf
                     ? "translateY(0)"
-                    : `translateY(calc(-100% + ${props.size}px))`}
-            ${(props) =>
+                    : `translateY(calc(-100% + ${props.size}px))`} ${(props) =>
                 !props.mirrored && `translateX(calc(-100% + ${props.size}px))`};
         padding-top: 0px;
         box-shadow: 0px 0px 2px ${({ theme }) => theme.overlayGrey};
