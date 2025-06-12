@@ -1,0 +1,14 @@
+query HasUserBlockedMe(
+    $id: Int
+) {
+    hasUserBlockedMe(
+        id: $id
+    ) {
+        id
+        blockedId
+        userId
+        origin
+        createdAt
+        updatedAt
+    }
+}

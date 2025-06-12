@@ -36,6 +36,13 @@ const GlobalStyle = createGlobalStyle`
         text-decoration: underline;
     }
 
+    button {
+        border: none;
+        background-color: transparent;
+        cursor: pointer;
+        padding: 0;
+    }
+
     input[type="text"],
     input[type="email"],
     input[type="password"],
@@ -996,13 +1003,11 @@ export default GlobalStyle;
 
 export const Button = styled.button`
     display: block;
-    border: none;
     background-color: inherit;
     color: inherit;
     padding: 12px 24px;
     font-weight: 700;
     border-radius: 9999px;
-    cursor: pointer;
 `;
 
 export const SmallButton = styled(Button)`

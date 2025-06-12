@@ -205,7 +205,6 @@ export const NotificationsProvider = ({
 
     const { data: unseenData } = useUnseenNotificationsQuery({
         fetchPolicy: "cache-and-network",
-        skip: !me,
     });
 
     const notificationsCount = useMemo(() => {

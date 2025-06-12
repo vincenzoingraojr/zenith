@@ -2205,7 +2205,7 @@ export class UserResolver {
     @Mutation(() => Block, { nullable: true })
     @UseMiddleware(isAuth)
     async blockUser(
-        @Arg("userId", () => Int) userId: number,
+        @Arg("userId", () => Int, { nullable: true }) userId: number,
         @Arg("origin") origin: string,
         @Ctx() { payload }: AuthContext
     ): Promise<Block | null> {
@@ -2257,7 +2257,7 @@ export class UserResolver {
     @Mutation(() => Boolean)
     @UseMiddleware(isAuth)
     async unblockUser(
-        @Arg("blockedId", () => Int) blockedId: number,
+        @Arg("blockedId", () => Int, { nullable: true }) blockedId: number,
         @Ctx() { payload }: AuthContext
     ) {
         if (!payload || !blockedId) {

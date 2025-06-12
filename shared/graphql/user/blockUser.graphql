@@ -1,0 +1,16 @@
+mutation BlockUser(
+    $userId: Int
+    $origin: String!
+) {
+    blockUser(
+        userId: $userId
+        origin: $origin
+    ) {
+        id
+        blockedId
+        userId
+        origin
+        createdAt
+        updatedAt
+    }
+}

@@ -1,7 +1,9 @@
 import {
     useFindUserByIdQuery,
     useFindUserQuery,
+    useHasUserBlockedMeQuery,
     useIsFollowedByMeQuery,
+    useIsUserBlockedByMeQuery,
     useMeQuery,
 } from "../generated/graphql";
 
@@ -50,4 +52,26 @@ export const useFollowData = (id: number) => {
     });
 
     return data && data.isFollowedByMe ? data.isFollowedByMe : null;
+};
+
+export const useIsUserBlockedData = (id: number) => {
+    const { data } = useIsUserBlockedByMeQuery({
+        variables: {
+            id,
+        },
+        fetchPolicy: "cache-first",
+    });
+
+    return data && data.isUserBlockedByMe ? data.isUserBlockedByMe : null;
+};
+
+export const useHasBlockedMeData = (id: number) => {
+    const { data } = useHasUserBlockedMeQuery({
+        variables: {
+            id,
+        },
+        fetchPolicy: "cache-first",
+    });
+
+    return data && data.hasUserBlockedMe ? data.hasUserBlockedMe : null;
 };

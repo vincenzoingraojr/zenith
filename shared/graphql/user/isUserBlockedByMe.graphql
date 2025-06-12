@@ -1,0 +1,14 @@
+query IsUserBlockedByMe(
+    $id: Int
+) {
+    isUserBlockedByMe(
+        id: $id
+    ) {
+        id
+        blockedId
+        userId
+        origin
+        createdAt
+        updatedAt
+    }
+}

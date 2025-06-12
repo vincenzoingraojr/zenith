@@ -10,7 +10,10 @@ import {
     IsPostLikedByMeQuery,
     IsRepostedByUserDocument,
     IsRepostedByUserQuery,
+    IsUserBlockedByMeDocument,
+    IsUserBlockedByMeQuery,
     Post,
+    useBlockUserMutation,
     useCreateBookmarkMutation,
     useCreateRepostMutation,
     useDeletePostMutation,
@@ -20,6 +23,7 @@ import {
     useLikePostMutation,
     useRemoveBookmarkMutation,
     useRemoveLikeMutation,
+    useUnblockUserMutation,
     useUnfollowUserMutation,
 } from "../../../../generated/graphql";
 import styled from "styled-components";
@@ -48,7 +52,7 @@ import {
     processDate,
 } from "../../../../utils/processDate";
 import Pen from "../../../icons/Pen";
-import { useFollowData, useMeData } from "../../../../utils/userQueries";
+import { useFollowData, useHasBlockedMeData, useIsUserBlockedData, useMeData } from "../../../../utils/userQueries";
 import Bin from "../../../icons/Bin";
 import FollowIcon from "../../../icons/FollowIcon";
 import Chain from "../../../icons/Chain";
@@ -70,6 +74,7 @@ import QuotedPost from "./QuotedPost";
 import LoadingComponent from "../../../utils/LoadingComponent";
 import AffiliationIcon from "../../../utils/AffiliationIcon";
 import BookmarkIcon from "../../../icons/Bookmark";
+import Block from "../../../icons/Block";
 
 interface PostComponentProps {
     post: Post;
@@ -271,7 +276,7 @@ const PostActionsGroup = styled.div`
     gap: 8px;
 `;
 
-const PostActionContainer = styled.div.attrs(
+const PostActionContainer = styled.button.attrs(
     (props: { color?: string; isActive: boolean }) => props
 )`
     display: flex;
@@ -295,6 +300,10 @@ const PostActionContainer = styled.div.attrs(
 
     &:hover ${ControlContainer}, &:focus ${ControlContainer} {
         background-color: ${({ theme }) => theme.overlayGrey};
+    }
+
+    &:disabled {
+        opacity: 0.6;
     }
 `;
 
@@ -465,6 +474,29 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
 
     const [createBookmark] = useCreateBookmarkMutation();
     const [removeBookmark] = useRemoveBookmarkMutation();
+
+    const isBlockedByMe = useIsUserBlockedData(post.authorId);
+
+    const blockedByMe = useMemo(() => {
+        if (isBlockedByMe) {
+            return isBlockedByMe;
+        } else {
+            return null;
+        }
+    }, [isBlockedByMe]);
+
+    const hasBlockedMe = useHasBlockedMeData(post.authorId);
+
+    const blockedMe = useMemo(() => {
+        if (hasBlockedMe) {
+            return hasBlockedMe;
+        } else {
+            return null;
+        }
+    }, [hasBlockedMe]);
+
+    const [blockUser] = useBlockUserMutation();
+    const [unblockUser] = useUnblockUserMutation();
 
     return (
         <PostWrapper>
@@ -703,123 +735,227 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                 </>
                                             ) : (
                                                 <>
+                                                    {(!blockedByMe && !hasBlockedMe) && (
+                                                        <OptionItem
+                                                            role="menuitem"
+                                                            title={`${
+                                                                follow
+                                                                    ? "Unfollow"
+                                                                    : "Follow"
+                                                            } @${
+                                                                post.author.username
+                                                            }`}
+                                                            aria-label={`${
+                                                                follow
+                                                                    ? "Unfollow"
+                                                                    : "Follow"
+                                                            } @${
+                                                                post.author.username
+                                                            }`}
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+
+                                                                if (follow) {
+                                                                    await unfollowUser(
+                                                                        {
+                                                                            variables:
+                                                                                {
+                                                                                    userId: post.authorId,
+                                                                                },
+                                                                            update: (
+                                                                                cache,
+                                                                                {
+                                                                                    data: unfollowUserData,
+                                                                                }
+                                                                            ) => {
+                                                                                if (
+                                                                                    unfollowUserData &&
+                                                                                    unfollowUserData.unfollowUser
+                                                                                ) {
+                                                                                    cache.writeQuery<IsFollowedByMeQuery>(
+                                                                                        {
+                                                                                            query: IsFollowedByMeDocument,
+                                                                                            data: {
+                                                                                                isFollowedByMe:
+                                                                                                    null,
+                                                                                            },
+                                                                                            variables:
+                                                                                                {
+                                                                                                    id: post.authorId,
+                                                                                                },
+                                                                                        }
+                                                                                    );
+                                                                                }
+                                                                            },
+                                                                        }
+                                                                    ).catch(() => {
+                                                                        addToast(
+                                                                            "An error occurred while trying to unfollow this user."
+                                                                        );
+                                                                    });
+                                                                } else {
+                                                                    await followUser(
+                                                                        {
+                                                                            variables:
+                                                                                {
+                                                                                    userId: post.authorId,
+                                                                                    origin,
+                                                                                },
+                                                                            update: (
+                                                                                cache,
+                                                                                {
+                                                                                    data: followUserData,
+                                                                                }
+                                                                            ) => {
+                                                                                if (
+                                                                                    followUserData &&
+                                                                                    followUserData.followUser
+                                                                                ) {
+                                                                                    cache.writeQuery<IsFollowedByMeQuery>(
+                                                                                        {
+                                                                                            query: IsFollowedByMeDocument,
+                                                                                            data: {
+                                                                                                isFollowedByMe:
+                                                                                                    followUserData.followUser,
+                                                                                            },
+                                                                                            variables:
+                                                                                                {
+                                                                                                    id: post.authorId,
+                                                                                                },
+                                                                                        }
+                                                                                    );
+                                                                                }
+                                                                            },
+                                                                        }
+                                                                    ).catch(() => {
+                                                                        addToast(
+                                                                            "An error occurred while trying to follow this user."
+                                                                        );
+                                                                    });
+                                                                }
+                                                            }}
+                                                        >
+                                                            <OptionBaseIcon>
+                                                                <FollowIcon
+                                                                    isActive={
+                                                                        follow
+                                                                            ? true
+                                                                            : false
+                                                                    }
+                                                                />
+                                                            </OptionBaseIcon>
+                                                            <OptionItemText>
+                                                                {follow
+                                                                    ? "Unfollow"
+                                                                    : "Follow"}{" "}
+                                                                @
+                                                                {
+                                                                    post.author
+                                                                        .username
+                                                                }
+                                                            </OptionItemText>
+                                                        </OptionItem>
+                                                    )}
                                                     <OptionItem
                                                         role="menuitem"
-                                                        title={`${
-                                                            follow
-                                                                ? "Unfollow"
-                                                                : "Follow"
-                                                        } @${
-                                                            post.author.username
-                                                        }`}
-                                                        aria-label={`${
-                                                            follow
-                                                                ? "Unfollow"
-                                                                : "Follow"
-                                                        } @${
-                                                            post.author.username
-                                                        }`}
+                                                        title={`${blockedByMe ? "Unblock" : "Block"} ${post.author.username}`}
+                                                        aria-label={`${blockedByMe ? "Unblock" : "Block"} ${post.author.username}`}
                                                         onClick={async (e) => {
                                                             e.stopPropagation();
 
-                                                            if (follow) {
-                                                                await unfollowUser(
-                                                                    {
-                                                                        variables:
-                                                                            {
-                                                                                userId: post.authorId,
-                                                                            },
-                                                                        update: (
-                                                                            cache,
-                                                                            {
-                                                                                data: unfollowUserData,
-                                                                            }
-                                                                        ) => {
-                                                                            if (
-                                                                                unfollowUserData &&
-                                                                                unfollowUserData.unfollowUser
-                                                                            ) {
-                                                                                cache.writeQuery<IsFollowedByMeQuery>(
+                                                            if (blockedByMe) {
+                                                                await unblockUser({
+                                                                    variables: {
+                                                                        blockedId: post.authorId,
+                                                                    },
+                                                                    update: (
+                                                                        cache,
+                                                                        {
+                                                                            data: unblockUserData,
+                                                                        }
+                                                                    ) => {
+                                                                        if (
+                                                                            unblockUserData &&
+                                                                            unblockUserData.unblockUser
+                                                                        ) {
+                                                                            cache.writeQuery<IsUserBlockedByMeQuery>(
+                                                                                {
+                                                                                    query: IsUserBlockedByMeDocument,
+                                                                                    data: {
+                                                                                        isUserBlockedByMe:
+                                                                                            null,
+                                                                                    },
+                                                                                    variables:
                                                                                     {
-                                                                                        query: IsFollowedByMeDocument,
-                                                                                        data: {
-                                                                                            isFollowedByMe:
-                                                                                                null,
-                                                                                        },
-                                                                                        variables:
-                                                                                            {
-                                                                                                id: post.authorId,
-                                                                                            },
-                                                                                    }
-                                                                                );
-                                                                            }
-                                                                        },
-                                                                    }
-                                                                ).catch(() => {
+                                                                                        id: post.authorId,
+                                                                                    },
+                                                                                }
+                                                                            );
+                                                                        }
+                                                                    },
+                                                                }).catch(() => {
                                                                     addToast(
-                                                                        "An error occurred while trying to unfollow this user."
+                                                                        "An error occurred while trying to unblock this user."
                                                                     );
                                                                 });
                                                             } else {
-                                                                await followUser(
-                                                                    {
-                                                                        variables:
-                                                                            {
-                                                                                userId: post.authorId,
-                                                                                origin,
-                                                                            },
-                                                                        update: (
-                                                                            cache,
-                                                                            {
-                                                                                data: followUserData,
-                                                                            }
-                                                                        ) => {
-                                                                            if (
-                                                                                followUserData &&
-                                                                                followUserData.followUser
-                                                                            ) {
-                                                                                cache.writeQuery<IsFollowedByMeQuery>(
+                                                                await blockUser({
+                                                                    variables: {
+                                                                        userId: post.authorId,
+                                                                        origin,
+                                                                    },
+                                                                    update: (
+                                                                        cache,
+                                                                        {
+                                                                            data: blockUserData,
+                                                                        }
+                                                                    ) => {
+                                                                        if (
+                                                                            blockUserData &&
+                                                                            blockUserData.blockUser
+                                                                        ) {
+                                                                            cache.writeQuery<IsUserBlockedByMeQuery>(
+                                                                                {
+                                                                                    query: IsUserBlockedByMeDocument,
+                                                                                    data: {
+                                                                                        isUserBlockedByMe:
+                                                                                            blockUserData.blockUser,
+                                                                                    },
+                                                                                    variables:
                                                                                     {
-                                                                                        query: IsFollowedByMeDocument,
-                                                                                        data: {
-                                                                                            isFollowedByMe:
-                                                                                                followUserData.followUser,
+                                                                                        id: post.authorId,
+                                                                                    },
+                                                                                }
+                                                                            );
+
+                                                                            cache.writeQuery<IsFollowedByMeQuery>(
+                                                                                {
+                                                                                    query: IsFollowedByMeDocument,
+                                                                                    data: {
+                                                                                        isFollowedByMe:
+                                                                                            null,
+                                                                                    },
+                                                                                    variables:
+                                                                                        {
+                                                                                            id: post.authorId,
                                                                                         },
-                                                                                        variables:
-                                                                                            {
-                                                                                                id: post.authorId,
-                                                                                            },
-                                                                                    }
-                                                                                );
-                                                                            }
-                                                                        },
-                                                                    }
-                                                                ).catch(() => {
+                                                                                }
+                                                                            );
+                                                                        }
+                                                                    },
+                                                                }).catch(() => {
                                                                     addToast(
-                                                                        "An error occurred while trying to follow this user."
+                                                                        "An error occurred while trying to block this user."
                                                                     );
                                                                 });
                                                             }
                                                         }}
                                                     >
                                                         <OptionBaseIcon>
-                                                            <FollowIcon
-                                                                isActive={
-                                                                    follow
-                                                                        ? true
-                                                                        : false
-                                                                }
-                                                            />
+                                                            <Block />
                                                         </OptionBaseIcon>
                                                         <OptionItemText>
-                                                            {follow
-                                                                ? "Unfollow"
-                                                                : "Follow"}{" "}
-                                                            @
-                                                            {
-                                                                post.author
-                                                                    .username
-                                                            }
+                                                            {blockedByMe ? "Unblock" : "Block"}{" "}@{post.author.username}
                                                         </OptionItemText>
                                                     </OptionItem>
                                                 </>
@@ -888,7 +1024,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                 </PostContentContainer>
                 <PostActionsContainer>
                     <PostActionContainer
-                        role="button"
+                        type="button"
                         title={`${like ? "Remove like from" : "Like"} @${
                             post.author.username
                         }'s post`}
@@ -896,6 +1032,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                             post.author.username
                         }'s post`}
                         color={COLORS.red}
+                        disabled={(blockedMe && !like) ? true : false}
                         onClick={async (e) => {
                             e.stopPropagation();
 
@@ -1067,7 +1204,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
-                        role="button"
+                        type="button"
                         aria-label={"Repost options"}
                         title={"Repost options"}
                         color={COLORS.green}
@@ -1075,6 +1212,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                             e.stopPropagation();
                         }}
                         isActive={repost ? true : false}
+                        disabled={(blockedMe && !repost) ? true : false}
                     >
                         <Options
                             key={`repost-options-${post.id}`}
@@ -1104,7 +1242,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                 : "Repost this post"
                                         }
                                         onClick={async (e) => {
-                                            e.stopPropagation();
+                                            if (!blockedMe) {
+                                                e.stopPropagation();
+                                            }
 
                                             if (me) {
                                                 if (repost) {
@@ -1302,29 +1442,31 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                 : "Repost this post"}
                                         </OptionItemText>
                                     </OptionItem>
-                                    <OptionItem
-                                        role="menuitem"
-                                        title="Quote this post"
-                                        aria-label="Quote this post"
-                                        onClick={() => {
-                                            navigate(
-                                                `/create_post/quote/post/${post.itemId}`,
-                                                {
-                                                    state: {
-                                                        backgroundLocation:
-                                                            location,
-                                                    },
-                                                }
-                                            );
-                                        }}
-                                    >
-                                        <OptionBaseIcon>
-                                            <Pen />
-                                        </OptionBaseIcon>
-                                        <OptionItemText>
-                                            Quote this post
-                                        </OptionItemText>
-                                    </OptionItem>
+                                    {!blockedMe && (
+                                        <OptionItem
+                                            role="menuitem"
+                                            title="Quote this post"
+                                            aria-label="Quote this post"
+                                            onClick={() => {
+                                                navigate(
+                                                    `/create_post/quote/post/${post.itemId}`,
+                                                    {
+                                                        state: {
+                                                            backgroundLocation:
+                                                                location,
+                                                        },
+                                                    }
+                                                );
+                                            }}
+                                        >
+                                            <OptionBaseIcon>
+                                                <Pen />
+                                            </OptionBaseIcon>
+                                            <OptionItemText>
+                                                Quote this post
+                                            </OptionItemText>
+                                        </OptionItem>
+                                    )}
                                 </>
                             }
                         />
@@ -1333,9 +1475,10 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
-                        role="button"
+                        type="button"
                         aria-label={"Comment this post"}
                         title={"Comment this post"}
+                        disabled={blockedMe ? true : false}
                         onClick={(e) => {
                             e.stopPropagation();
 
@@ -1354,9 +1497,10 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionContainer
-                        role="button"
+                        type="button"
                         aria-label={"Post views"}
                         title={"Post views"}
+                        disabled={blockedMe ? true : false}
                         onClick={(e) => {
                             e.stopPropagation();
                         }}
@@ -1370,7 +1514,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                     </PostActionContainer>
                     <PostActionsGroup>
                         <PostActionContainer
-                            role="button"
+                            type="button"
                             aria-label={
                                 bookmark
                                     ? "Remove the bookmark from this post"
@@ -1381,6 +1525,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                     ? "Remove the bookmark from this post"
                                     : "Bookmark this post"
                             }
+                            disabled={(blockedMe && !bookmark) ? true : false}
                             onClick={async (e) => {
                                 e.stopPropagation();
 
@@ -1462,9 +1607,10 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                             </ControlContainer>
                         </PostActionContainer>
                         <PostActionContainer
-                            role="button"
+                            type="button"
                             aria-label={"Share options"}
                             title={"Share options"}
+                            disabled={blockedMe ? true : false}
                             onClick={(e) => {
                                 e.stopPropagation();
                             }}
