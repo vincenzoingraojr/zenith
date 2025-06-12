@@ -10,7 +10,7 @@ export function useNavOptions() {
     const closeOptions = () => {
         setShowOptions(false);
     };
-  
+
     return { showOptions, toggleOptions, closeOptions };
 }
 
@@ -19,19 +19,17 @@ export function useMenu() {
 
     const openMenu = () => {
         setShowMenu(true);
-    }
+    };
 
     const closeMenu = () => {
         setShowMenu(false);
-    }
+    };
 
     return { showMenu, openMenu, closeMenu };
 }
 
 export function useOptions() {
-    const [activeOptions, setActiveOptions] = useState<number | null>(
-        null
-    );
+    const [activeOptions, setActiveOptions] = useState<number | null>(null);
 
     const handleOptionsClick = (index: number) => {
         setActiveOptions(activeOptions === index ? null : index);

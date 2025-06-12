@@ -3,7 +3,7 @@ import { DynamicSizeIcon } from "./common";
 
 function Share() {
     const theme = useTheme();
-    
+
     return (
         <DynamicSizeIcon size={22} isFilled={theme.color}>
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

@@ -1,4 +1,11 @@
-import { createContext, FunctionComponent, ReactNode, useContext, useEffect, useState } from "react";
+import {
+    createContext,
+    FunctionComponent,
+    ReactNode,
+    useContext,
+    useEffect,
+    useState,
+} from "react";
 import styled from "styled-components";
 import { PageBlock } from "../../styles/global";
 import { devices } from "../../styles/devices";
@@ -42,7 +49,7 @@ const ToastOuterContainer = styled.div`
     right: 24px;
     transform: unset;
     z-index: 9999;
-    
+
     @media ${devices.mobileL} {
         left: 50%;
         right: unset;
@@ -55,20 +62,16 @@ const Toast: FunctionComponent<ToastProps> = ({ message, onClose }) => {
         const timeoutId = setTimeout(() => {
             onClose();
         }, 4000);
-    
+
         return () => clearTimeout(timeoutId);
     }, [onClose]);
 
     return (
-        <ToastWrapper
-            onClick={onClose}
-        >
-            <PageBlock>
-                {message}
-            </PageBlock>
+        <ToastWrapper onClick={onClose}>
+            <PageBlock>{message}</PageBlock>
         </ToastWrapper>
     );
-}
+};
 
 interface ToastContextType {
     addToast: (message: string) => void;
@@ -85,7 +88,9 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const removeToast = (id: number) => {
-        setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
+        setToasts((prevToasts) =>
+            prevToasts.filter((toast) => toast.id !== id)
+        );
     };
 
     return (
@@ -93,18 +98,22 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
             {children}
             <ToastOuterContainer>
                 {toasts.map((toast) => (
-                    <Toast key={toast.id} message={toast.message} onClose={() => removeToast(toast.id)} />
+                    <Toast
+                        key={toast.id}
+                        message={toast.message}
+                        onClose={() => removeToast(toast.id)}
+                    />
                 ))}
             </ToastOuterContainer>
         </ToastContext.Provider>
     );
-}
+};
 
 export const useToasts = (): ToastContextType => {
     const context = useContext(ToastContext);
-        
-    if (!context) 
+
+    if (!context)
         throw new Error("useToasts must be used inside ToastProvider");
-    
+
     return context;
 };

@@ -32,7 +32,7 @@ function nodeEnvProductionCheck(config?: Config) {
     }
     return process.env.NODE_ENV === "production";
 }
-  
+
 function getServiceWorkerUrl() {
     if (process.env.NODE_ENV === "production") {
         return `${process.env.PUBLIC_URL}/service-worker.js`;

@@ -15,7 +15,7 @@ const PageLayoutWrapper = styled.div`
     justify-content: center;
     min-height: unset;
     align-items: unset;
-    
+
     ${mediaQuery(
         "(min-width: 600px) and (min-height: 480px)",
         devices.laptopM
@@ -66,7 +66,7 @@ const PageContentLayoutContainer = styled.div.attrs(
 )`
     display: block;
     width: 100%;
-    margin-bottom: ${props => props.navHidden ? "0" : "60px"}; 
+    margin-bottom: ${(props) => (props.navHidden ? "0" : "60px")};
     border-left: unset;
     border-right: unset;
     min-height: 100vh;
@@ -85,7 +85,10 @@ const PageContentLayoutContainer = styled.div.attrs(
     }
 `;
 
-const PageLayout: FunctionComponent<PageLayoutProps> = ({ children, noNav }) => {
+const PageLayout: FunctionComponent<PageLayoutProps> = ({
+    children,
+    noNav,
+}) => {
     return (
         <PageLayoutWrapper>
             <PageLayoutContainer>
@@ -96,6 +99,6 @@ const PageLayout: FunctionComponent<PageLayoutProps> = ({ children, noNav }) => 
             </PageLayoutContainer>
         </PageLayoutWrapper>
     );
-}
+};
 
 export default PageLayout;

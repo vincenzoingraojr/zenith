@@ -35,50 +35,65 @@ const cache = new InMemoryCache({
                     keyArgs: false,
                     merge: (existing, incoming) => {
                         return {
-                            posts: [...(existing?.posts || []), ...incoming.posts],
+                            posts: [
+                                ...(existing?.posts || []),
+                                ...incoming.posts,
+                            ],
                             hasMore: incoming.hasMore,
                             totalCount: incoming.totalCount,
                         };
-                    }
+                    },
                 },
                 notificationFeed: {
                     keyArgs: false,
                     merge: (existing, incoming) => {
                         return {
-                            notifications: [...(existing?.notifications || []), ...incoming.notifications],
+                            notifications: [
+                                ...(existing?.notifications || []),
+                                ...incoming.notifications,
+                            ],
                             nextCursor: incoming.nextCursor,
                         };
-                    }
+                    },
                 },
                 getPostLikes: {
                     keyArgs: ["itemId", "type"],
                     merge: (existing, incoming) => {
                         return {
-                            users: [...(existing?.users || []), ...incoming.users],
+                            users: [
+                                ...(existing?.users || []),
+                                ...incoming.users,
+                            ],
                             hasMore: incoming.hasMore,
                             totalCount: incoming.totalCount,
                         };
-                    }
+                    },
                 },
                 getReposts: {
                     keyArgs: ["postId"],
                     merge: (existing, incoming) => {
                         return {
-                            reposts: [...(existing?.reposts || []), ...incoming.reposts],
+                            reposts: [
+                                ...(existing?.reposts || []),
+                                ...incoming.reposts,
+                            ],
                             hasMore: incoming.hasMore,
                             totalCount: incoming.totalCount,
                         };
-                    }
+                    },
                 },
                 postComments: {
                     keyArgs: ["id", "type"],
                     merge: (existing, incoming) => {
                         return {
-                            posts: [...(existing?.posts || []), ...incoming.posts],
+                            posts: [
+                                ...(existing?.posts || []),
+                                ...incoming.posts,
+                            ],
                             hasMore: incoming.hasMore,
                             totalCount: incoming.totalCount,
                         };
-                    }
+                    },
                 },
                 unseenNotifications: {
                     merge: (_existing = [], incoming) => {
@@ -235,7 +250,8 @@ ReactDOM.render(
 );
 
 serviceWorkerRegistration.register({
-    bypassNodeEnvProduction: process.env.REACT_APP_ENV === "development" ? true : false,
+    bypassNodeEnvProduction:
+        process.env.REACT_APP_ENV === "development" ? true : false,
 });
 
 reportWebVitals();

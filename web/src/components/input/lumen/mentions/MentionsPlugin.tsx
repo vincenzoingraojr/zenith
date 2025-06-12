@@ -43,11 +43,14 @@ const MentionItem = styled.div`
     }
 `;
 
-const MentionImageContainer = styled.div.attrs((props: { type: string }) => props)`
+const MentionImageContainer = styled.div.attrs(
+    (props: { type: string }) => props
+)`
     display: block;
     width: 32px;
     height: 32px;
-    border-radius: ${(props) => (props.type === USER_TYPES.ORGANIZATION ? "4px" : "16px")};
+    border-radius: ${(props) =>
+        props.type === USER_TYPES.ORGANIZATION ? "4px" : "16px"};
 
     img {
         display: block;
@@ -187,7 +190,14 @@ class MentionTypeaheadOption extends TypeaheadOption {
     type: string;
     verified: boolean;
 
-    constructor(id: number, name: string, username: string, avatar: string, type: string, verified: boolean) {
+    constructor(
+        id: number,
+        name: string,
+        username: string,
+        avatar: string,
+        type: string,
+        verified: boolean
+    ) {
         super(username);
         this.id = id;
         this.name = name;
@@ -241,13 +251,14 @@ function MentionsTypeaheadMenuItem({
             <MentionUserInfo>
                 <MentionNameContainer>
                     <MentionName>{option.name}</MentionName>
-                        {option.verified && (
-                            <VerificationBadge
-                                type={option.type}
-                                size={18}
-                            />
-                        )}
-                        <AffiliationIcon userId={option.id} size={18} noAction={true} />
+                    {option.verified && (
+                        <VerificationBadge type={option.type} size={18} />
+                    )}
+                    <AffiliationIcon
+                        userId={option.id}
+                        size={18}
+                        noAction={true}
+                    />
                 </MentionNameContainer>
                 <MentionUsername>@{option.username}</MentionUsername>
             </MentionUserInfo>
@@ -262,7 +273,7 @@ type UserMention = {
     avatar: string;
     type: string;
     verified: boolean;
-}
+};
 
 export default function MentionsPlugin(): JSX.Element | null {
     const [editor] = useLexicalComposerContext();
@@ -270,15 +281,18 @@ export default function MentionsPlugin(): JSX.Element | null {
     const [queryString, setQueryString] = useState<string>("");
 
     const [mentionData, setMentionData] = useState<UserMention[]>([]);
-    
-    const { data } = useUsersToMentionQuery({ variables: { query: queryString, limit: 5 }, fetchPolicy: "cache-and-network" });
+
+    const { data } = useUsersToMentionQuery({
+        variables: { query: queryString, limit: 5 },
+        fetchPolicy: "cache-and-network",
+    });
 
     useEffect(() => {
         if (data && data.usersToMention) {
             const rawUsers = data.usersToMention;
             const users: UserMention[] = [];
 
-            rawUsers.map((user: User) => (
+            rawUsers.map((user: User) =>
                 users.push({
                     id: user.id,
                     name: user.name,
@@ -287,14 +301,14 @@ export default function MentionsPlugin(): JSX.Element | null {
                     type: user.type,
                     verified: user.verification.verified === "VERIFIED",
                 })
-            ));
+            );
 
             setMentionData(users);
         }
 
         return () => {
             setMentionData([]);
-        }
+        };
     }, [data]);
 
     const checkForSlashTriggerMatch = useBasicTypeaheadTriggerMatch("/", {
@@ -305,7 +319,14 @@ export default function MentionsPlugin(): JSX.Element | null {
         () =>
             mentionData
                 .map(({ id, name, username, avatar, type, verified }) => {
-                    return new MentionTypeaheadOption(id, name, username, avatar, type, verified);
+                    return new MentionTypeaheadOption(
+                        id,
+                        name,
+                        username,
+                        avatar,
+                        type,
+                        verified
+                    );
                 })
                 .slice(0, SUGGESTION_LIST_LENGTH_LIMIT),
         [mentionData]
@@ -342,7 +363,9 @@ export default function MentionsPlugin(): JSX.Element | null {
 
     return (
         <LexicalTypeaheadMenuPlugin<MentionTypeaheadOption>
-            onQueryChange={(matchingString) => setQueryString(matchingString ?? "")}
+            onQueryChange={(matchingString) =>
+                setQueryString(matchingString ?? "")
+            }
             onSelectOption={onSelectOption}
             triggerFn={checkForMentionMatch}
             options={options}
@@ -350,29 +373,27 @@ export default function MentionsPlugin(): JSX.Element | null {
                 _,
                 { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }
             ) =>
-                mentionData.length > 0
-                    ? (
-                        <MentionsMenuContainer>
-                            <MentionsContainer>
-                                {options.map((option, i: number) => (
-                                    <MentionsTypeaheadMenuItem
-                                        index={i}
-                                        isSelected={selectedIndex === i}
-                                        onClick={() => {
-                                            setHighlightedIndex(i);
-                                            selectOptionAndCleanUp(option);
-                                        }}
-                                        onMouseEnter={() => {
-                                            setHighlightedIndex(i);
-                                        }}
-                                        key={option.key}
-                                        option={option}
-                                    />
-                                ))}
-                            </MentionsContainer>
-                        </MentionsMenuContainer>
-                    )
-                    : null
+                mentionData.length > 0 ? (
+                    <MentionsMenuContainer>
+                        <MentionsContainer>
+                            {options.map((option, i: number) => (
+                                <MentionsTypeaheadMenuItem
+                                    index={i}
+                                    isSelected={selectedIndex === i}
+                                    onClick={() => {
+                                        setHighlightedIndex(i);
+                                        selectOptionAndCleanUp(option);
+                                    }}
+                                    onMouseEnter={() => {
+                                        setHighlightedIndex(i);
+                                    }}
+                                    key={option.key}
+                                    option={option}
+                                />
+                            ))}
+                        </MentionsContainer>
+                    </MentionsMenuContainer>
+                ) : null
             }
         />
     );

@@ -2,7 +2,15 @@ import { Form, Formik } from "formik";
 import Head from "../../components/Head";
 import AuthLayout from "../../components/layouts/AuthLayout";
 import { useSignupMutation } from "../../generated/graphql";
-import { AuthForm, AuthFormContent, AuthFormTitle, AuthHalfInput, PageBlock, StandardButton, Status } from "../../styles/global";
+import {
+    AuthForm,
+    AuthFormContent,
+    AuthFormTitle,
+    AuthHalfInput,
+    PageBlock,
+    StandardButton,
+    Status,
+} from "../../styles/global";
 import InputField from "../../components/input/InputField";
 import { BAD_REQUEST_MESSAGE, genderOptions } from "../../utils/constants";
 import { toErrorMap } from "../../utils/toErrorMap";
@@ -14,10 +22,7 @@ function SignUp() {
 
     return (
         <>
-            <Head
-                title="Sign up | Zenith"
-                description="Sign up to Zenith."
-            />
+            <Head title="Sign up | Zenith" description="Sign up to Zenith." />
             <AuthLayout
                 children={
                     <AuthForm>
@@ -40,8 +45,15 @@ function SignUp() {
                                 });
 
                                 if (response.data) {
-                                    if (response.data.signup.errors && response.data.signup.errors.length > 0) {
-                                        setErrors(toErrorMap(response.data.signup.errors));
+                                    if (
+                                        response.data.signup.errors &&
+                                        response.data.signup.errors.length > 0
+                                    ) {
+                                        setErrors(
+                                            toErrorMap(
+                                                response.data.signup.errors
+                                            )
+                                        );
                                     } else {
                                         setStatus(response.data.signup.status);
                                     }

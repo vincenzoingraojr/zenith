@@ -2,13 +2,22 @@ import { useState } from "react";
 import Head from "../../../components/Head";
 import PageLayout from "../../../components/layouts/PageLayout";
 import PageContentLayout from "../../../components/layouts/sublayouts/PageContentLayout";
-import { PageBlock, PageText, SettingsPageContainer, SettingsPageContentContainer, SettingsPageDescription, StandardButton } from "../../../styles/global";
+import {
+    PageBlock,
+    PageText,
+    SettingsPageContainer,
+    SettingsPageContentContainer,
+    SettingsPageDescription,
+    StandardButton,
+} from "../../../styles/global";
 import { useCreateDeviceTokenMutation } from "../../../generated/graphql";
 import { getToken } from "firebase/messaging";
 import { messaging } from "../../../utils/firebase";
 
 function NotificationSettings() {
-    const [permissionStatus, setPermissionStatus] = useState(Notification.permission);
+    const [permissionStatus, setPermissionStatus] = useState(
+        Notification.permission
+    );
 
     const [createToken] = useCreateDeviceTokenMutation();
 
@@ -18,20 +27,29 @@ function NotificationSettings() {
             setPermissionStatus(permission);
 
             if (permission === "granted") {
-                const sw = await navigator.serviceWorker.register(process.env.NODE_ENV === "production" ? "/service-worker.js" : "/service-worker-dev.js");
-                getToken(messaging, { vapidKey: process.env.REACT_APP_MESSAGING_PUBLIC_KEY, serviceWorkerRegistration: sw }).then(async (currentToken) => {
-                    if (currentToken) {
-                        await createToken({
-                            variables: {
-                                token: currentToken,
-                            }
-                        });
-                    } else {
-                        console.log("No registration token available.");
-                    }
-                }).catch((error) => {
-                    console.error(error);
-                });
+                const sw = await navigator.serviceWorker.register(
+                    process.env.NODE_ENV === "production"
+                        ? "/service-worker.js"
+                        : "/service-worker-dev.js"
+                );
+                getToken(messaging, {
+                    vapidKey: process.env.REACT_APP_MESSAGING_PUBLIC_KEY,
+                    serviceWorkerRegistration: sw,
+                })
+                    .then(async (currentToken) => {
+                        if (currentToken) {
+                            await createToken({
+                                variables: {
+                                    token: currentToken,
+                                },
+                            });
+                        } else {
+                            console.log("No registration token available.");
+                        }
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                    });
             }
         } catch (error) {
             console.error("Error requesting permission: ", error);
@@ -58,11 +76,22 @@ function NotificationSettings() {
                                 <SettingsPageContainer>
                                     <SettingsPageContentContainer>
                                         {permissionStatus === "granted" ? (
-                                            <PageText>You can disable push notifications in the browser settings.</PageText>
+                                            <PageText>
+                                                You can disable push
+                                                notifications in the browser
+                                                settings.
+                                            </PageText>
                                         ) : (
                                             <>
-                                                {permissionStatus === "denied" ? (
-                                                    <PageText>You denied the permission to send push notifications. Change this option in the browser settings.</PageText>
+                                                {permissionStatus ===
+                                                "denied" ? (
+                                                    <PageText>
+                                                        You denied the
+                                                        permission to send push
+                                                        notifications. Change
+                                                        this option in the
+                                                        browser settings.
+                                                    </PageText>
                                                 ) : (
                                                     <PageBlock>
                                                         <StandardButton
@@ -70,9 +99,12 @@ function NotificationSettings() {
                                                             title="Enable push notifications"
                                                             role="button"
                                                             aria-label="Enable push notifications"
-                                                            onClick={handlePermissionRequest}
+                                                            onClick={
+                                                                handlePermissionRequest
+                                                            }
                                                         >
-                                                            Enable push notifications
+                                                            Enable push
+                                                            notifications
                                                         </StandardButton>
                                                     </PageBlock>
                                                 )}

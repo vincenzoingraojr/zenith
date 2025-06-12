@@ -24,7 +24,7 @@ const SelectField: FunctionComponent<SelectFieldProps> = ({
 }) => {
     return (
         <CustomFieldWrapper>
-            {(errors && errors[field]) && (
+            {errors && errors[field] && (
                 <CustomFieldError>{errors[field]}</CustomFieldError>
             )}
             <CustomFieldContainer>

@@ -110,22 +110,29 @@ self.addEventListener("notificationclick", async (event: NotificationEvent) => {
     event.notification.close(); // Close the notification
 
     event.waitUntil(
-        self.clients.matchAll({
-            type: "window", // Filter to only include windows
-            includeUncontrolled: true // Include clients not controlled by this service worker
-        }).then(function(clientList) {
-            for (var i = 0; i < clientList.length; i++) {
-                var client = clientList[i];
-                if (client.url === event.notification.data.link && "focus" in client) {
-                    return client.focus();
+        self.clients
+            .matchAll({
+                type: "window", // Filter to only include windows
+                includeUncontrolled: true, // Include clients not controlled by this service worker
+            })
+            .then(function (clientList) {
+                for (var i = 0; i < clientList.length; i++) {
+                    var client = clientList[i];
+                    if (
+                        client.url === event.notification.data.link &&
+                        "focus" in client
+                    ) {
+                        return client.focus();
+                    }
                 }
-            }
 
-            if (self.clients.openWindow) {
-                return self.clients.openWindow(event.notification.data.link);
-            }
+                if (self.clients.openWindow) {
+                    return self.clients.openWindow(
+                        event.notification.data.link
+                    );
+                }
 
-            return;
-        })
+                return;
+            })
     );
 });

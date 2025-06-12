@@ -6,18 +6,20 @@ import { PageText } from "../../styles/global";
 function Messages() {
     return (
         <>
-            <Head 
+            <Head
                 title="Messages | Zenith"
                 description="In this page you can view and manage your chats."
             />
-            <PageLayout 
+            <PageLayout
                 children={
                     <PageContentLayout
                         title="Messages"
                         type="main"
                         children={
                             <>
-                                <PageText>View your messages on Zenith.</PageText>
+                                <PageText>
+                                    View your messages on Zenith.
+                                </PageText>
                             </>
                         }
                     />

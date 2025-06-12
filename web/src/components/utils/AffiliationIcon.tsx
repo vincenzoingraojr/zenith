@@ -11,13 +11,15 @@ interface AffiliationIconProps {
     noAction?: boolean;
 }
 
-const AffiliationIconContainer = styled.div.attrs((props: { size: number }) => props)`
+const AffiliationIconContainer = styled.div.attrs(
+    (props: { size: number }) => props
+)`
     display: flex;
     align-items: center;
     justify-content: center;
-    width: ${(props) => (`${props.size}px`)};
-    height: ${(props) => (`${props.size}px`)};
-    border-radius: ${(props) => (`${props.size / 8}px`)};
+    width: ${(props) => `${props.size}px`};
+    height: ${(props) => `${props.size}px`};
+    border-radius: ${(props) => `${props.size / 8}px`};
     cursor: pointer;
 
     img {
@@ -27,8 +29,15 @@ const AffiliationIconContainer = styled.div.attrs((props: { size: number }) => p
     }
 `;
 
-const AffiliationIcon: FunctionComponent<AffiliationIconProps> = ({ userId, size, noAction }) => {
-    const { data, loading, error } = useIsAffiliatedToQuery({ variables: { id: userId }, fetchPolicy: "cache-first" });
+const AffiliationIcon: FunctionComponent<AffiliationIconProps> = ({
+    userId,
+    size,
+    noAction,
+}) => {
+    const { data, loading, error } = useIsAffiliatedToQuery({
+        variables: { id: userId },
+        fetchPolicy: "cache-first",
+    });
 
     const navigate = useNavigate();
 
@@ -36,7 +45,7 @@ const AffiliationIcon: FunctionComponent<AffiliationIconProps> = ({ userId, size
 
     return (
         <PageBlock>
-            <AffiliationIconContainer 
+            <AffiliationIconContainer
                 role="link"
                 title={data.isAffiliatedTo?.name}
                 aria-label={data.isAffiliatedTo?.name}
@@ -44,7 +53,7 @@ const AffiliationIcon: FunctionComponent<AffiliationIconProps> = ({ userId, size
                     if (!noAction) {
                         e.stopPropagation();
                         e.preventDefault();
-                        
+
                         navigate(`/${data.isAffiliatedTo?.username}`);
                     }
                 }}
@@ -52,7 +61,8 @@ const AffiliationIcon: FunctionComponent<AffiliationIconProps> = ({ userId, size
             >
                 <img
                     src={
-                        (loading || data.isAffiliatedTo?.profile.profilePicture.length === 0) 
+                        loading ||
+                        data.isAffiliatedTo?.profile.profilePicture.length === 0
                             ? profilePicture
                             : data.isAffiliatedTo?.profile.profilePicture
                     }
@@ -62,6 +72,6 @@ const AffiliationIcon: FunctionComponent<AffiliationIconProps> = ({ userId, size
             </AffiliationIconContainer>
         </PageBlock>
     );
-}
+};
 
 export default AffiliationIcon;

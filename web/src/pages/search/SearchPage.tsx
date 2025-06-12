@@ -16,21 +16,24 @@ function SearchPage() {
 
     return (
         <>
-            <Head 
+            <Head
                 title="Search | Zenith"
                 description="Discover new things on Zenith."
             />
-            <PageLayout 
+            <PageLayout
                 children={
                     <PageContentLayout
                         title="Search"
                         type="main"
                         customHeaderComponent={
-                            <SearchBar placeholder="Search" onkeyDown={(e: any) => {
-                                if (e.key === "Enter") {
-                                    setSearchParams({ q: e.target.value });
-                                }
-                            }} />
+                            <SearchBar
+                                placeholder="Search"
+                                onkeyDown={(e: any) => {
+                                    if (e.key === "Enter") {
+                                        setSearchParams({ q: e.target.value });
+                                    }
+                                }}
+                            />
                         }
                         children={
                             <>
@@ -40,17 +43,18 @@ function SearchPage() {
                         headerIconsComponent={
                             <Options
                                 key={0}
-                                title="Search options" 
+                                title="Search options"
                                 icon={<More />}
                                 isOpen={activeOptions === 0}
-                                toggleOptions={() =>
-                                    handleOptionsClick(0)
-                                }
+                                toggleOptions={() => handleOptionsClick(0)}
                                 children={
                                     <>
                                         <OptionItem>
                                             <OptionBaseIcon>
-                                                <Magnifier type="options" isActive={false} />
+                                                <Magnifier
+                                                    type="options"
+                                                    isActive={false}
+                                                />
                                             </OptionBaseIcon>
                                             <OptionItemText>
                                                 Advanced search
@@ -58,7 +62,10 @@ function SearchPage() {
                                         </OptionItem>
                                         <OptionItem>
                                             <OptionBaseIcon>
-                                                <Settings type="options" isActive={false} />
+                                                <Settings
+                                                    type="options"
+                                                    isActive={false}
+                                                />
                                             </OptionBaseIcon>
                                             <OptionItemText>
                                                 Search settings

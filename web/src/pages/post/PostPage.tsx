@@ -12,13 +12,32 @@ function PostPage() {
     const params = useParams();
 
     const { post, loading, error } = useFindPost(params.itemId as string);
-    
+
     return (
         <>
             <Head
-                title={loading ? "Loading... | Zenith" : (post ? `@${post.author.username} on Zenith: ${truncateString(post.content, 60)} | Zenith` : "Post not found | Zenith")}
-                description={loading ? "Content not ready. Loading..." : (post ? `${post.author.name} on Zenith: ${post.content} | Zenith` : "Post not found.")}
-                image={(post && post.author.profile.profilePicture.length > 0) ? post.author.profile.profilePicture : undefined}
+                title={
+                    loading
+                        ? "Loading... | Zenith"
+                        : post
+                        ? `@${post.author.username} on Zenith: ${truncateString(
+                              post.content,
+                              60
+                          )} | Zenith`
+                        : "Post not found | Zenith"
+                }
+                description={
+                    loading
+                        ? "Content not ready. Loading..."
+                        : post
+                        ? `${post.author.name} on Zenith: ${post.content} | Zenith`
+                        : "Post not found."
+                }
+                image={
+                    post && post.author.profile.profilePicture.length > 0
+                        ? post.author.profile.profilePicture
+                        : undefined
+                }
             />
             <PageLayout
                 children={
@@ -34,11 +53,18 @@ function PostPage() {
                                         {error ? (
                                             <ErrorOrItemNotFound
                                                 isError={true}
-                                                title={ERROR_SOMETHING_WENT_WRONG.title}
-                                                content={ERROR_SOMETHING_WENT_WRONG.message}
+                                                title={
+                                                    ERROR_SOMETHING_WENT_WRONG.title
+                                                }
+                                                content={
+                                                    ERROR_SOMETHING_WENT_WRONG.message
+                                                }
                                             />
                                         ) : (
-                                            <>/{post?.author.username}/post/{post?.itemId}</>
+                                            <>
+                                                /{post?.author.username}/post/
+                                                {post?.itemId}
+                                            </>
                                         )}
                                     </>
                                 )}

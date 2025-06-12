@@ -3,8 +3,16 @@ import { LumenInputContainer, LumenModalContainer } from "../../styles/global";
 import { useFindPost } from "../../utils/postQueries";
 import ModalLoading from "../../components/layouts/modal/ModalLoading";
 import ErrorOrItemNotFound from "../../components/utils/ErrorOrItemNotFound";
-import { BAD_REQUEST_MESSAGE, ERROR_SOMETHING_WENT_WRONG, POST_TYPES } from "../../utils/constants";
-import { FindPostDocument, FindPostQuery, useEditPostMutation } from "../../generated/graphql";
+import {
+    BAD_REQUEST_MESSAGE,
+    ERROR_SOMETHING_WENT_WRONG,
+    POST_TYPES,
+} from "../../utils/constants";
+import {
+    FindPostDocument,
+    FindPostQuery,
+    useEditPostMutation,
+} from "../../generated/graphql";
 import { Form, Formik } from "formik";
 import { FileWrapper, ProgressStatus } from "../../components/input/commons";
 import { useMeData } from "../../utils/userQueries";
@@ -24,13 +32,16 @@ function EditPost() {
 
     const { me } = useMeData();
 
-    const folder = process.env.NODE_ENV === "development" ? "local-media" : "media";
+    const folder =
+        process.env.NODE_ENV === "development" ? "local-media" : "media";
 
     const { addToast } = useToasts();
 
     const navigate = useNavigate();
 
-    const [mediaUploadStatusArray, setMediaUploadStatusArray] = useState<ProgressStatus[]>([]);
+    const [mediaUploadStatusArray, setMediaUploadStatusArray] = useState<
+        ProgressStatus[]
+    >([]);
 
     return (
         <>
@@ -55,82 +66,159 @@ function EditPost() {
                                     initialValues={{
                                         type: post ? post.type : "",
                                         content: post ? post.content : "",
-                                        media: (post && post.media) ? post.media.map((item) => ({
-                                            id: item.id,
-                                            type: item.type,
-                                            alt: item.alt,
-                                            src: item.src,
-                                            status: "uploaded",
-                                        })) as FileWrapper[] : [],
+                                        media:
+                                            post && post.media
+                                                ? (post.media.map((item) => ({
+                                                      id: item.id,
+                                                      type: item.type,
+                                                      alt: item.alt,
+                                                      src: item.src,
+                                                      status: "uploaded",
+                                                  })) as FileWrapper[])
+                                                : [],
                                     }}
-                                    onSubmit={async (values, { setErrors, setStatus }) => {
+                                    onSubmit={async (
+                                        values,
+                                        { setErrors, setStatus }
+                                    ) => {
                                         let postMediaDirectory = "";
                                         let media = [...values.media];
-                                        const filteredMedia: FileWrapper[] = [...media.filter((item) => item.status === "uploading")];
+                                        const filteredMedia: FileWrapper[] = [
+                                            ...media.filter(
+                                                (item) =>
+                                                    item.status === "uploading"
+                                            ),
+                                        ];
 
-                                        if (filteredMedia.length > 0 && me && post) {
-                                            postMediaDirectory = `${folder}/${new Date().getTime()}-${me.id}`;
+                                        if (
+                                            filteredMedia.length > 0 &&
+                                            me &&
+                                            post
+                                        ) {
+                                            postMediaDirectory = `${folder}/${new Date().getTime()}-${
+                                                me.id
+                                            }`;
 
                                             for (const item of filteredMedia) {
                                                 const file = item.file as File;
 
-                                                const postMediaKey = `${postMediaDirectory}/item-${item.id}.${file.name.split(".").pop()}`;
+                                                const postMediaKey = `${postMediaDirectory}/item-${
+                                                    item.id
+                                                }.${file.name
+                                                    .split(".")
+                                                    .pop()}`;
 
-                                                const { url: postMediaUrl } = await fetch(
-                                                    `${process.env.REACT_APP_SERVER_ORIGIN}/presigned-url`,
-                                                    {
-                                                        method: "POST",
-                                                        headers: {
-                                                            Accept: "application/json",
-                                                            "Content-Type": "application/json",
-                                                        },
-                                                        body: JSON.stringify({
-                                                            type: "put",
-                                                            key: postMediaKey,
-                                                            itemType: file.type,
-                                                        }),
-                                                    }
-                                                ).then((res) => res.json());
+                                                const { url: postMediaUrl } =
+                                                    await fetch(
+                                                        `${process.env.REACT_APP_SERVER_ORIGIN}/presigned-url`,
+                                                        {
+                                                            method: "POST",
+                                                            headers: {
+                                                                Accept: "application/json",
+                                                                "Content-Type":
+                                                                    "application/json",
+                                                            },
+                                                            body: JSON.stringify(
+                                                                {
+                                                                    type: "put",
+                                                                    key: postMediaKey,
+                                                                    itemType:
+                                                                        file.type,
+                                                                }
+                                                            ),
+                                                        }
+                                                    ).then((res) => res.json());
 
                                                 const postMediaConfig = {
                                                     onUploadProgress: function (
                                                         progressEvent: any
                                                     ) {
-                                                        const progress = Math.round(
-                                                            (progressEvent.loaded * 100) /
-                                                                progressEvent.total
-                                                        );
-                                                        
-                                                        setMediaUploadStatusArray((mediaUploadStatusArray) =>
-                                                            mediaUploadStatusArray.some(status => status.id === item.id)
-                                                                ? mediaUploadStatusArray.map(status =>
-                                                                    status.id === item.id ? { ...status, progress } : status
+                                                        const progress =
+                                                            Math.round(
+                                                                (progressEvent.loaded *
+                                                                    100) /
+                                                                    progressEvent.total
+                                                            );
+
+                                                        setMediaUploadStatusArray(
+                                                            (
+                                                                mediaUploadStatusArray
+                                                            ) =>
+                                                                mediaUploadStatusArray.some(
+                                                                    (status) =>
+                                                                        status.id ===
+                                                                        item.id
                                                                 )
-                                                                : [...mediaUploadStatusArray, { id: item.id, progress, status: "ok" } as ProgressStatus]
+                                                                    ? mediaUploadStatusArray.map(
+                                                                          (
+                                                                              status
+                                                                          ) =>
+                                                                              status.id ===
+                                                                              item.id
+                                                                                  ? {
+                                                                                        ...status,
+                                                                                        progress,
+                                                                                    }
+                                                                                  : status
+                                                                      )
+                                                                    : [
+                                                                          ...mediaUploadStatusArray,
+                                                                          {
+                                                                              id: item.id,
+                                                                              progress,
+                                                                              status: "ok",
+                                                                          } as ProgressStatus,
+                                                                      ]
                                                         );
                                                     },
                                                     headers: {
-                                                        "Content-Type": file.type,
-                                                        "Access-Control-Allow-Origin": "*",
+                                                        "Content-Type":
+                                                            file.type,
+                                                        "Access-Control-Allow-Origin":
+                                                            "*",
                                                     },
                                                 };
 
                                                 await axios
-                                                    .put(postMediaUrl, file, postMediaConfig)
+                                                    .put(
+                                                        postMediaUrl,
+                                                        file,
+                                                        postMediaConfig
+                                                    )
                                                     .then(() => {
                                                         let mediaItem = item;
-                                                        mediaItem.file = undefined;
-                                                        mediaItem.src = `https://${file.type.includes("image") ? "img" : "vid"}.zncdn.net/${postMediaKey}`;
+                                                        mediaItem.file =
+                                                            undefined;
+                                                        mediaItem.src = `https://${
+                                                            file.type.includes(
+                                                                "image"
+                                                            )
+                                                                ? "img"
+                                                                : "vid"
+                                                        }.zncdn.net/${postMediaKey}`;
 
                                                         media.push(mediaItem);
                                                     })
                                                     .catch((error) => {
-                                                        addToast(`An error occurred while uploading the media item (${item.id}). Error code: ${error.code}.`);
+                                                        addToast(
+                                                            `An error occurred while uploading the media item (${item.id}). Error code: ${error.code}.`
+                                                        );
 
-                                                        setMediaUploadStatusArray((mediaUploadStatusArray) =>
-                                                            mediaUploadStatusArray.map(status =>
-                                                                status.id === item.id ? { ...status, progress: 0, status: "error" } : status
-                                                            )
+                                                        setMediaUploadStatusArray(
+                                                            (
+                                                                mediaUploadStatusArray
+                                                            ) =>
+                                                                mediaUploadStatusArray.map(
+                                                                    (status) =>
+                                                                        status.id ===
+                                                                        item.id
+                                                                            ? {
+                                                                                  ...status,
+                                                                                  progress: 0,
+                                                                                  status: "error",
+                                                                              }
+                                                                            : status
+                                                                )
                                                         );
                                                     });
                                             }
@@ -142,40 +230,71 @@ function EditPost() {
                                                     postId: post.itemId,
                                                     type: post.type,
                                                     content: values.content,
-                                                    media: JSON.stringify(media),
+                                                    media: JSON.stringify(
+                                                        media
+                                                    ),
                                                 },
                                             });
 
                                             if (response.data) {
                                                 if (
-                                                    response.data.editPost.errors &&
-                                                    response.data.editPost.errors.length > 0
+                                                    response.data.editPost
+                                                        .errors &&
+                                                    response.data.editPost
+                                                        .errors.length > 0
                                                 ) {
-                                                    setErrors(toErrorMap(response.data.editPost.errors));
+                                                    setErrors(
+                                                        toErrorMap(
+                                                            response.data
+                                                                .editPost.errors
+                                                        )
+                                                    );
 
                                                     setStatus(false);
-                                                } else if (response.data.editPost.ok && response.data.editPost.post) {
+                                                } else if (
+                                                    response.data.editPost.ok &&
+                                                    response.data.editPost.post
+                                                ) {
                                                     setStatus(true);
 
-                                                    client.cache.writeQuery<FindPostQuery>({
-                                                        query: FindPostDocument,
-                                                        data: {
-                                                            findPost: response.data.editPost.post,
-                                                        },
-                                                        variables: {
-                                                            postId: post.itemId,
-                                                        },
-                                                    });
+                                                    client.cache.writeQuery<FindPostQuery>(
+                                                        {
+                                                            query: FindPostDocument,
+                                                            data: {
+                                                                findPost:
+                                                                    response
+                                                                        .data
+                                                                        .editPost
+                                                                        .post,
+                                                            },
+                                                            variables: {
+                                                                postId: post.itemId,
+                                                            },
+                                                        }
+                                                    );
 
-                                                    addToast(`Your ${(post.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST} has been edited successfully.`);
+                                                    addToast(
+                                                        `Your ${
+                                                            post.type ===
+                                                            POST_TYPES.COMMENT
+                                                                ? POST_TYPES.COMMENT
+                                                                : POST_TYPES.POST
+                                                        } has been edited successfully.`
+                                                    );
 
-                                                    if (window.history.length > 2) {
+                                                    if (
+                                                        window.history.length >
+                                                        2
+                                                    ) {
                                                         navigate(-1);
                                                     } else {
                                                         navigate("/");
                                                     }
                                                 } else {
-                                                    addToast(response.data.editPost.status as string);
+                                                    addToast(
+                                                        response.data.editPost
+                                                            .status as string
+                                                    );
                                                 }
                                             } else {
                                                 addToast(BAD_REQUEST_MESSAGE);
@@ -199,7 +318,9 @@ function EditPost() {
                                                 status={status}
                                                 values={values}
                                                 buttonText={"Edit post"}
-                                                progress={mediaUploadStatusArray}
+                                                progress={
+                                                    mediaUploadStatusArray
+                                                }
                                             />
                                         </Form>
                                     )}

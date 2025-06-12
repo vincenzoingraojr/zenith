@@ -15,10 +15,10 @@ export interface IconSizeProps extends IconProps {
 }
 
 export const StandardIcon = styled(SvgIcon).attrs(
-    (props: { isFilled?: string, hasStroke?: string }) => props
+    (props: { isFilled?: string; hasStroke?: string }) => props
 )`
-    fill:  ${(props) => (props.isFilled ? props.isFilled : `none`)};
-    stroke:  ${(props) => (props.hasStroke ? props.hasStroke : `none`)};
+    fill: ${(props) => (props.isFilled ? props.isFilled : `none`)};
+    stroke: ${(props) => (props.hasStroke ? props.hasStroke : `none`)};
 `;
 
 export const DynamicSizeIcon = styled(StandardIcon).attrs(

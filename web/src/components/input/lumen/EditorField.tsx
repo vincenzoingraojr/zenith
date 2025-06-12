@@ -26,7 +26,15 @@ const EditorFieldContainer = styled.div`
     width: 100%;
 `;
 
-const EditorField: FunctionComponent<EditorFieldProps> = ({ field, placeholder, errors, status, buttonText, values, progress }) => {
+const EditorField: FunctionComponent<EditorFieldProps> = ({
+    field,
+    placeholder,
+    errors,
+    status,
+    buttonText,
+    values,
+    progress,
+}) => {
     return (
         <EditorFieldContainer>
             {errors[field] && (
@@ -43,6 +51,6 @@ const EditorField: FunctionComponent<EditorFieldProps> = ({ field, placeholder, 
             />
         </EditorFieldContainer>
     );
-}
+};
 
 export default EditorField;

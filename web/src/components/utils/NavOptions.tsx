@@ -3,7 +3,12 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 import Settings from "../icons/Settings";
 import Exit from "../icons/Exit";
-import { CustomSpanOption, LinkOptionBaseItem, OptionBaseIcon, PageText } from "../../styles/global";
+import {
+    CustomSpanOption,
+    LinkOptionBaseItem,
+    OptionBaseIcon,
+    PageText,
+} from "../../styles/global";
 import { COLORS } from "../../styles/colors";
 import { useMeData } from "../../utils/userQueries";
 import { useThemeContext } from "../../styles/ThemeContext";
@@ -16,34 +21,38 @@ interface NavOptionsProps {
 }
 
 const NavOptionsContainer = styled.div.attrs(
-    (props: { position: { top: number; left: number }, ready: boolean }) => props
+    (props: { position: { top: number; left: number }; ready: boolean }) =>
+        props
 )`
-    display: ${props => props.ready ? "flex" : "none"};
+    display: ${(props) => (props.ready ? "flex" : "none")};
     position: fixed;
     flex-direction: column;
     background-color: ${({ theme }) => theme.background};
     box-shadow: 0px 0px 2px ${({ theme }) => theme.overlayGrey};
     z-index: 999;
     border-radius: 16px;
-    top: ${props => `${props.position.top}px`};
-    left: ${props => `${props.position.left}px`};
+    top: ${(props) => `${props.position.top}px`};
+    left: ${(props) => `${props.position.left}px`};
     transform: translateY(-100%);
     transform-origin: top;
 `;
 
 const NavOption = styled(LinkOptionBaseItem)`
-    a, span {
+    a,
+    span {
         gap: 12px;
         font-weight: 500;
         padding: 12px 24px;
         justify-content: flex-start;
     }
-    
-    &:first-child a, &:first-child span {
+
+    &:first-child a,
+    &:first-child span {
         border-radius: 16px 16px 0px 0px;
     }
 
-    &:last-child a, &:last-child span {
+    &:last-child a,
+    &:last-child span {
         border-radius: 0px 0px 16px 16px;
     }
 `;
@@ -51,16 +60,26 @@ const NavOption = styled(LinkOptionBaseItem)`
 const NavOptionText = styled(PageText).attrs(
     (props: { color?: string }) => props
 )`
-    color: ${props => props.color ? props.color : "inherit"};
+    color: ${(props) => (props.color ? props.color : "inherit")};
 `;
 
-const NavOptions: FunctionComponent<NavOptionsProps> = ({ position, closeOptions, buttonRef }) => {
+const NavOptions: FunctionComponent<NavOptionsProps> = ({
+    position,
+    closeOptions,
+    buttonRef,
+}) => {
     const ref = useRef<HTMLDivElement | null>(null);
     const { me } = useMeData();
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
-            if (ref.current && buttonRef.current && !ref.current.contains(e.target as Node) && !buttonRef.current.contains(e.target as Node) && e.target instanceof HTMLElement) {
+            if (
+                ref.current &&
+                buttonRef.current &&
+                !ref.current.contains(e.target as Node) &&
+                !buttonRef.current.contains(e.target as Node) &&
+                e.target instanceof HTMLElement
+            ) {
                 closeOptions();
 
                 setReady(false);
@@ -69,10 +88,14 @@ const NavOptions: FunctionComponent<NavOptionsProps> = ({ position, closeOptions
 
         window.addEventListener("mousedown", handleClickOutside);
 
-        return () => window.removeEventListener("mousedown", handleClickOutside);
+        return () =>
+            window.removeEventListener("mousedown", handleClickOutside);
     }, [closeOptions, ref, buttonRef]);
 
-    const [buttonPosition, setButtonPosition] = useState<{ top: number; left: number }>({
+    const [buttonPosition, setButtonPosition] = useState<{
+        top: number;
+        left: number;
+    }>({
         top: 0,
         left: 0,
     });
@@ -100,7 +123,9 @@ const NavOptions: FunctionComponent<NavOptionsProps> = ({ position, closeOptions
                 <CustomSpanOption
                     role="button"
                     title={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
-                    aria-label={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
+                    aria-label={`Switch to ${
+                        isDarkMode ? "light" : "dark"
+                    } mode`}
                     onClick={() => toggleTheme()}
                 >
                     <OptionBaseIcon>
@@ -122,17 +147,11 @@ const NavOptions: FunctionComponent<NavOptionsProps> = ({ position, closeOptions
                             <OptionBaseIcon>
                                 <Settings type="options" />
                             </OptionBaseIcon>
-                            <NavOptionText>
-                                Settings
-                            </NavOptionText>
+                            <NavOptionText>Settings</NavOptionText>
                         </Link>
                     </NavOption>
                     <NavOption>
-                        <Link
-                            to="/logout"
-                            title="Log out"
-                            aria-label="Log out"
-                        >
+                        <Link to="/logout" title="Log out" aria-label="Log out">
                             <OptionBaseIcon>
                                 <Exit type="options" color={COLORS.red} />
                             </OptionBaseIcon>
@@ -140,7 +159,7 @@ const NavOptions: FunctionComponent<NavOptionsProps> = ({ position, closeOptions
                                 Log out
                             </NavOptionText>
                         </Link>
-                    </NavOption> 
+                    </NavOption>
                 </>
             ) : (
                 <>
@@ -150,9 +169,7 @@ const NavOptions: FunctionComponent<NavOptionsProps> = ({ position, closeOptions
                             title="Log in to Zenith"
                             aria-label="Log in to Zenith"
                         >
-                            <NavOptionText>
-                                Log in
-                            </NavOptionText>
+                            <NavOptionText>Log in</NavOptionText>
                         </Link>
                     </NavOption>
                     <NavOption>
@@ -170,6 +187,6 @@ const NavOptions: FunctionComponent<NavOptionsProps> = ({ position, closeOptions
             )}
         </NavOptionsContainer>
     );
-}
+};
 
 export default NavOptions;

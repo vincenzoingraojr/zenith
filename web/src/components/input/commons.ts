@@ -7,7 +7,7 @@ export type ProgressStatus = {
     id: number;
     progress: number;
     status: "ok" | "error";
-}
+};
 
 export type FileWrapper = {
     id: number;
@@ -16,4 +16,4 @@ export type FileWrapper = {
     alt: string;
     src?: string;
     status: "uploading" | "uploaded" | "to_be_deleted";
-}
+};

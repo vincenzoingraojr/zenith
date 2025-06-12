@@ -88,7 +88,7 @@ interface TextFieldProps extends InputFieldProps {
     form: any;
 }
 
-const TextField: FunctionComponent<TextFieldProps> = ({ 
+const TextField: FunctionComponent<TextFieldProps> = ({
     field,
     type,
     placeholder,
@@ -123,9 +123,11 @@ const TextField: FunctionComponent<TextFieldProps> = ({
                 spellCheck="false"
                 autoComplete="off"
                 autoCorrect="off"
-                maxLength={type === "textarea" ? 1000 : (type === "otp" ? 6 : 100)}
+                maxLength={
+                    type === "textarea" ? 1000 : type === "otp" ? 6 : 100
+                }
                 name={field}
-                type={isPassword ? showType : (type === "otp" ? "tel" : type)}
+                type={isPassword ? showType : type === "otp" ? "tel" : type}
                 pattern={type === "otp" ? "[0-9]*" : undefined}
                 onFocus={() => {
                     setIsFocused(true);
@@ -164,8 +166,8 @@ const TextField: FunctionComponent<TextFieldProps> = ({
                 </ShowPassword>
             )}
         </InputContainerField>
-    )
-}
+    );
+};
 
 const InputField: FunctionComponent<InputFieldProps> = ({
     field,
@@ -179,14 +181,18 @@ const InputField: FunctionComponent<InputFieldProps> = ({
     const inputField = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (inputField && inputField.current && inputField.current.value.length > 0) {
+        if (
+            inputField &&
+            inputField.current &&
+            inputField.current.value.length > 0
+        ) {
             setIsFocused(true);
         }
     }, []);
 
     return (
         <InputFieldWrapper>
-            {(errors && errors[field]) && (
+            {errors && errors[field] && (
                 <InputFieldError>{errors[field]}</InputFieldError>
             )}
             <InputFieldContainer
@@ -204,7 +210,7 @@ const InputField: FunctionComponent<InputFieldProps> = ({
                     </LabelInputInfo>
                 </InputInfoContainer>
                 <InputContainer>
-                    <Field 
+                    <Field
                         field={field}
                         component={TextField}
                         placeholder={placeholder}

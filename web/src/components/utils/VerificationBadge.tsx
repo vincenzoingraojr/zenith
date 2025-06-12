@@ -10,14 +10,30 @@ interface VerificationBadgeProps {
     verifiedSince?: string;
 }
 
-const VerificationBadge: FunctionComponent<VerificationBadgeProps> = ({ type, size, verifiedSince }) => {
+const VerificationBadge: FunctionComponent<VerificationBadgeProps> = ({
+    type,
+    size,
+    verifiedSince,
+}) => {
     return (
         <PageBlock>
-            <OptionBaseIcon title={verifiedSince ? "Verified since " + verifiedSince : ""} aria-label={verifiedSince ? "Verified since " + verifiedSince : ""}>
-                <Badge size={size} color={type === USER_TYPES.ORGANIZATION ? COLORS.gold : COLORS.blue}  />
+            <OptionBaseIcon
+                title={verifiedSince ? "Verified since " + verifiedSince : ""}
+                aria-label={
+                    verifiedSince ? "Verified since " + verifiedSince : ""
+                }
+            >
+                <Badge
+                    size={size}
+                    color={
+                        type === USER_TYPES.ORGANIZATION
+                            ? COLORS.gold
+                            : COLORS.blue
+                    }
+                />
             </OptionBaseIcon>
         </PageBlock>
     );
-}
+};
 
 export default VerificationBadge;

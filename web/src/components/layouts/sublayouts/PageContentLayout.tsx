@@ -50,7 +50,9 @@ const MainHeaderContainer = styled.div`
     overflow: hidden;
 `;
 
-const MainHeaderLeftContainer = styled.div.attrs((props: { type: string }) => props)`
+const MainHeaderLeftContainer = styled.div.attrs(
+    (props: { type: string }) => props
+)`
     display: flex;
     align-items: center;
     justify-content: flex-start;
@@ -115,13 +117,16 @@ const MainHeaderProfileContainer = styled.div`
     }
 `;
 
-const MainHeaderProfileImageContainer = styled.div.attrs((props: { type: string }) => props)`
+const MainHeaderProfileImageContainer = styled.div.attrs(
+    (props: { type: string }) => props
+)`
     display: flex;
     align-items: center;
     justify-content: center;
     width: 32px;
     height: 32px;
-    border-radius: ${(props) => (props.type === USER_TYPES.ORGANIZATION ? "4px" : "16px")};
+    border-radius: ${(props) =>
+        props.type === USER_TYPES.ORGANIZATION ? "4px" : "16px"};
     cursor: pointer;
 
     img {
@@ -167,7 +172,13 @@ const HomeHeaderTitle = styled(MainHeaderTitle)`
     }
 `;
 
-const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({ title, type, customHeaderComponent, children, headerIconsComponent }) => {
+const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({
+    title,
+    type,
+    customHeaderComponent,
+    children,
+    headerIconsComponent,
+}) => {
     const navigate = useNavigate();
     const { me, loading, error } = useMeData();
 
@@ -197,10 +208,10 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({ title, t
                             </ControlContainer>
                         ) : (
                             <>
-                                {(me && !error) && (
+                                {me && !error && (
                                     <>
                                         <MainHeaderProfileContainer>
-                                            <MainHeaderProfileImageContainer 
+                                            <MainHeaderProfileImageContainer
                                                 type={me.type}
                                                 role="button"
                                                 title={me.name}
@@ -211,9 +222,13 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({ title, t
                                             >
                                                 <img
                                                     src={
-                                                        (loading || me.profile.profilePicture.length === 0) 
+                                                        loading ||
+                                                        me.profile
+                                                            .profilePicture
+                                                            .length === 0
                                                             ? profilePicture
-                                                            : me.profile.profilePicture
+                                                            : me.profile
+                                                                  .profilePicture
                                                     }
                                                     title={me.name}
                                                     alt={me.name}
@@ -235,18 +250,26 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({ title, t
                             <>
                                 {type === "home" ? (
                                     <HomeContainer>
-                                        {(error || loading) ? (
-                                            <MainHeaderTitle>{error ? "An error occurred. Refresh the page." :  "Loading..."}</MainHeaderTitle>
+                                        {error || loading ? (
+                                            <MainHeaderTitle>
+                                                {error
+                                                    ? "An error occurred. Refresh the page."
+                                                    : "Loading..."}
+                                            </MainHeaderTitle>
                                         ) : (
                                             <>
                                                 <HomeLogo
                                                     onClick={() => {
-                                                        addToast("This is Zenith!");
+                                                        addToast(
+                                                            "This is Zenith!"
+                                                        );
                                                     }}
                                                 >
                                                     <Logo type="inline" />
                                                 </HomeLogo>
-                                                <HomeHeaderTitle>{title}</HomeHeaderTitle>
+                                                <HomeHeaderTitle>
+                                                    {title}
+                                                </HomeHeaderTitle>
                                             </>
                                         )}
                                     </HomeContainer>
@@ -263,11 +286,9 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({ title, t
                     )}
                 </MainHeaderContainer>
             </MainHeader>
-            <MainContentContainer>
-                {children}
-            </MainContentContainer>
+            <MainContentContainer>{children}</MainContentContainer>
         </MainContainer>
     );
-}
+};
 
 export default PageContentLayout;

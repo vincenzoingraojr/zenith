@@ -4,7 +4,7 @@ import { DynamicSizeIcon, IconProps } from "./common";
 
 const Add: FunctionComponent<IconProps> = ({ color }) => {
     const theme = useTheme();
-    
+
     return (
         <DynamicSizeIcon isFilled={color ? color : theme.color} size={16}>
             <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
@@ -12,6 +12,6 @@ const Add: FunctionComponent<IconProps> = ({ color }) => {
             </svg>
         </DynamicSizeIcon>
     );
-}
+};
 
 export default Add;

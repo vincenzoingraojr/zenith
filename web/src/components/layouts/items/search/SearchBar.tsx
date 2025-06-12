@@ -47,7 +47,10 @@ const CloseButtonContainer = styled.div`
     cursor: pointer;
 `;
 
-const SearchBar: FunctionComponent<SearchBarProps> = ({ placeholder, onkeyDown }) => {
+const SearchBar: FunctionComponent<SearchBarProps> = ({
+    placeholder,
+    onkeyDown,
+}) => {
     const [searchParams] = useSearchParams();
     const [value, setValue] = useState(searchParams.get("q") || "");
 
@@ -90,6 +93,6 @@ const SearchBar: FunctionComponent<SearchBarProps> = ({ placeholder, onkeyDown }
             </SearchBoxHeader>
         </SearchBox>
     );
-}
+};
 
 export default SearchBar;

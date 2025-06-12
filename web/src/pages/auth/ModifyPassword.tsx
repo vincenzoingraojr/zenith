@@ -1,7 +1,15 @@
 import { Form, Formik } from "formik";
 import Head from "../../components/Head";
 import AuthLayout from "../../components/layouts/AuthLayout";
-import { AuthForm, AuthFormContent, AuthFormTitle, PageBlock, PageTextMB24, StandardButton, Status } from "../../styles/global";
+import {
+    AuthForm,
+    AuthFormContent,
+    AuthFormTitle,
+    PageBlock,
+    PageTextMB24,
+    StandardButton,
+    Status,
+} from "../../styles/global";
 import { useNotAuthModifyPasswordMutation } from "../../generated/graphql";
 import InputField from "../../components/input/InputField";
 import { BAD_REQUEST_MESSAGE } from "../../utils/constants";
@@ -26,7 +34,7 @@ function ModifyPassword() {
                             In this page you can modify your account password.
                         </PageTextMB24>
                         <Formik
-                            initialValues={{ 
+                            initialValues={{
                                 token: params.token!,
                                 password: "",
                                 confirmPassword: "",
@@ -42,10 +50,24 @@ function ModifyPassword() {
                                 setStatus(null);
 
                                 if (response.data) {
-                                    if (response.data.notAuthModifyPassword.errors && response.data.notAuthModifyPassword.errors.length > 0) {
-                                        setErrors(toErrorMap(response.data.notAuthModifyPassword.errors));
+                                    if (
+                                        response.data.notAuthModifyPassword
+                                            .errors &&
+                                        response.data.notAuthModifyPassword
+                                            .errors.length > 0
+                                    ) {
+                                        setErrors(
+                                            toErrorMap(
+                                                response.data
+                                                    .notAuthModifyPassword
+                                                    .errors
+                                            )
+                                        );
                                     } else {
-                                        setStatus(response.data.notAuthModifyPassword.status);
+                                        setStatus(
+                                            response.data.notAuthModifyPassword
+                                                .status
+                                        );
                                     }
                                 } else {
                                     setStatus(BAD_REQUEST_MESSAGE);
@@ -54,9 +76,7 @@ function ModifyPassword() {
                         >
                             {({ errors, status }) => (
                                 <Form>
-                                    {status && (
-                                        <Status>{status}</Status>
-                                    )}
+                                    {status && <Status>{status}</Status>}
                                     <AuthFormContent>
                                         <InputField
                                             field="password"

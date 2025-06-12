@@ -5,7 +5,10 @@ import { useMeData } from "../../../utils/userQueries";
 import axios from "axios";
 import { useToasts } from "../../utils/ToastProvider";
 import { FileWrapper, ProgressStatus } from "../commons";
-import { PostCommentsDocument, useCreatePostMutation } from "../../../generated/graphql";
+import {
+    PostCommentsDocument,
+    useCreatePostMutation,
+} from "../../../generated/graphql";
 import { BAD_REQUEST_MESSAGE, POST_TYPES } from "../../../utils/constants";
 import { toErrorMap } from "../../../utils/toErrorMap";
 import { useNavigate } from "react-router-dom";
@@ -22,8 +25,17 @@ interface LumenInputProps {
     closingOnSubmit?: boolean;
 }
 
-const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isReplyToId, isReplyToType, quotedPostId, buttonText, closingOnSubmit }) => {
-    const folder = process.env.NODE_ENV === "development" ? "local-media" : "media";
+const LumenInput: FunctionComponent<LumenInputProps> = ({
+    type,
+    placeholder,
+    isReplyToId,
+    isReplyToType,
+    quotedPostId,
+    buttonText,
+    closingOnSubmit,
+}) => {
+    const folder =
+        process.env.NODE_ENV === "development" ? "local-media" : "media";
 
     const { me } = useMeData();
 
@@ -33,7 +45,9 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
 
     const navigate = useNavigate();
 
-    const [mediaUploadStatusArray, setMediaUploadStatusArray] = useState<ProgressStatus[]>([]);
+    const [mediaUploadStatusArray, setMediaUploadStatusArray] = useState<
+        ProgressStatus[]
+    >([]);
 
     return (
         <LumenInputContainer>
@@ -45,17 +59,25 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                 }}
                 onSubmit={async (values, { setErrors, setStatus }) => {
                     let postMediaDirectory = "";
-                    const mediaArray: { src: string; alt: string; type: string }[] = [];
+                    const mediaArray: {
+                        src: string;
+                        alt: string;
+                        type: string;
+                    }[] = [];
                     const media: FileWrapper[] = [...values.media];
 
                     if (media.length > 0 && me) {
-                        postMediaDirectory = `${folder}/${new Date().getTime()}-${me.id}`;
+                        postMediaDirectory = `${folder}/${new Date().getTime()}-${
+                            me.id
+                        }`;
 
                         for (const item of media) {
                             const file = item.file as File;
                             const alt = item.alt as string;
 
-                            const postMediaKey = `${postMediaDirectory}/item-${item.id}.${file.name.split(".").pop()}`;
+                            const postMediaKey = `${postMediaDirectory}/item-${
+                                item.id
+                            }.${file.name.split(".").pop()}`;
 
                             const { url: postMediaUrl } = await fetch(
                                 `${process.env.REACT_APP_SERVER_ORIGIN}/presigned-url`,
@@ -82,12 +104,29 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                                             progressEvent.total
                                     );
 
-                                    setMediaUploadStatusArray((mediaUploadStatusArray) =>
-                                        mediaUploadStatusArray.some(status => status.id === item.id)
-                                            ? mediaUploadStatusArray.map(status =>
-                                                status.id === item.id ? { ...status, progress } : status
+                                    setMediaUploadStatusArray(
+                                        (mediaUploadStatusArray) =>
+                                            mediaUploadStatusArray.some(
+                                                (status) =>
+                                                    status.id === item.id
                                             )
-                                            : [...mediaUploadStatusArray, { id: item.id, progress, status: "ok" } as ProgressStatus]
+                                                ? mediaUploadStatusArray.map(
+                                                      (status) =>
+                                                          status.id === item.id
+                                                              ? {
+                                                                    ...status,
+                                                                    progress,
+                                                                }
+                                                              : status
+                                                  )
+                                                : [
+                                                      ...mediaUploadStatusArray,
+                                                      {
+                                                          id: item.id,
+                                                          progress,
+                                                          status: "ok",
+                                                      } as ProgressStatus,
+                                                  ]
                                     );
                                 },
                                 headers: {
@@ -100,18 +139,32 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                                 .put(postMediaUrl, file, postMediaConfig)
                                 .then(() => {
                                     mediaArray.push({
-                                        src: `https://${file.type.includes("image") ? "img" : "vid"}.zncdn.net/${postMediaKey}`,
+                                        src: `https://${
+                                            file.type.includes("image")
+                                                ? "img"
+                                                : "vid"
+                                        }.zncdn.net/${postMediaKey}`,
                                         alt: alt as string,
                                         type: file.type,
                                     });
                                 })
                                 .catch((error) => {
-                                    addToast(`An error occurred while uploading the media item (${item.id}). Error code: ${error.code}.`);
+                                    addToast(
+                                        `An error occurred while uploading the media item (${item.id}). Error code: ${error.code}.`
+                                    );
 
-                                    setMediaUploadStatusArray((mediaUploadStatusArray) =>
-                                        mediaUploadStatusArray.map(status =>
-                                            status.id === item.id ? { ...status, progress: 0, status: "error" } : status
-                                        )
+                                    setMediaUploadStatusArray(
+                                        (mediaUploadStatusArray) =>
+                                            mediaUploadStatusArray.map(
+                                                (status) =>
+                                                    status.id === item.id
+                                                        ? {
+                                                              ...status,
+                                                              progress: 0,
+                                                              status: "error",
+                                                          }
+                                                        : status
+                                            )
                                     );
                                 });
                         }
@@ -133,95 +186,113 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                             response.data.createPost.errors &&
                             response.data.createPost.errors.length > 0
                         ) {
-                            setErrors(toErrorMap(response.data.createPost.errors));
+                            setErrors(
+                                toErrorMap(response.data.createPost.errors)
+                            );
                             setStatus(false);
-                        } else if (response.data.createPost.ok && response.data.createPost.post) {
+                        } else if (
+                            response.data.createPost.ok &&
+                            response.data.createPost.post
+                        ) {
                             setStatus(true);
 
                             if (type === "post") {
                                 const newPost = response.data.createPost.post;
-                            
+
                                 client.cache.modify({
                                     fields: {
-                                        postFeed(existing = { posts: [], hasMore: true }) {
-                                            const exists = existing.posts.some((p: any) => p.__ref === `Post:${newPost.id}`);
-                    
+                                        postFeed(
+                                            existing = {
+                                                posts: [],
+                                                hasMore: true,
+                                            }
+                                        ) {
+                                            const exists = existing.posts.some(
+                                                (p: any) =>
+                                                    p.__ref ===
+                                                    `Post:${newPost.id}`
+                                            );
+
                                             if (exists) return existing;
-                                            
+
                                             return {
                                                 hasMore: existing.hasMore,
-                                                posts: [client.cache.writeFragment({
-                                                    data: newPost,
-                                                    fragment: gql`
-                                                        fragment NewPost on Post {
-                                                            id
-                                                            itemId
-                                                            authorId
-                                                            type
-                                                            content
-                                                            isEdited
-                                                            views
-                                                            lang
-                                                            topics
-                                                            author {
+                                                posts: [
+                                                    client.cache.writeFragment({
+                                                        data: newPost,
+                                                        fragment: gql`
+                                                            fragment NewPost on Post {
                                                                 id
-                                                                name
-                                                                username
-                                                                email
+                                                                itemId
+                                                                authorId
                                                                 type
-                                                                gender
-                                                                birthDate {
-                                                                    date
-                                                                    monthAndDayVisibility
-                                                                    yearVisibility
+                                                                content
+                                                                isEdited
+                                                                views
+                                                                lang
+                                                                topics
+                                                                author {
+                                                                    id
+                                                                    name
+                                                                    username
+                                                                    email
+                                                                    type
+                                                                    gender
+                                                                    birthDate {
+                                                                        date
+                                                                        monthAndDayVisibility
+                                                                        yearVisibility
+                                                                    }
+                                                                    emailVerified
+                                                                    profile {
+                                                                        profilePicture
+                                                                        profileBanner
+                                                                        bio
+                                                                        website
+                                                                    }
+                                                                    userSettings {
+                                                                        incomingMessages
+                                                                        twoFactorAuth
+                                                                    }
+                                                                    searchSettings {
+                                                                        hideSensitiveContent
+                                                                        hideBlockedAccounts
+                                                                    }
+                                                                    createdAt
+                                                                    updatedAt
+                                                                    hiddenPosts
+                                                                    identity {
+                                                                        verified
+                                                                        verifiedSince
+                                                                    }
+                                                                    verification {
+                                                                        verified
+                                                                        verifiedSince
+                                                                    }
                                                                 }
-                                                                emailVerified
-                                                                profile {
-                                                                    profilePicture
-                                                                    profileBanner
-                                                                    bio
-                                                                    website
+                                                                isReplyToId
+                                                                isReplyToType
+                                                                quotedPostId
+                                                                media {
+                                                                    id
+                                                                    type
+                                                                    src
+                                                                    alt
                                                                 }
-                                                                userSettings {
-                                                                    incomingMessages
-                                                                    twoFactorAuth
-                                                                }
-                                                                searchSettings {
-                                                                    hideSensitiveContent
-                                                                    hideBlockedAccounts
-                                                                }
+                                                                mentions
+                                                                hashtags
                                                                 createdAt
                                                                 updatedAt
-                                                                hiddenPosts
-                                                                identity {
-                                                                    verified
-                                                                    verifiedSince
-                                                                }
-                                                                verification {
-                                                                    verified
-                                                                    verifiedSince
-                                                                }
                                                             }
-                                                            isReplyToId
-                                                            isReplyToType
-                                                            quotedPostId
-                                                            media {
-                                                                id
-                                                                type
-                                                                src
-                                                                alt
-                                                            }
-                                                            mentions
-                                                            hashtags
-                                                            createdAt
-                                                            updatedAt
-                                                        }
-                                                    `
-                                                }), ...existing.posts],
-                                                totalCount: existing.totalCount + 1,
+                                                        `,
+                                                    }),
+                                                    ...existing.posts,
+                                                ],
+                                                totalCount:
+                                                    existing.totalCount + 1,
                                             };
-                                        }
-                                    }
+                                        },
+                                    },
                                 });
                             } else {
                                 const existing = client.cache.readQuery({
@@ -233,7 +304,14 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                                     },
                                 });
 
-                                const { totalCount: oldCount, hasMore } = (existing as { postComments: { totalCount: number; hasMore: boolean } }).postComments;
+                                const { totalCount: oldCount, hasMore } = (
+                                    existing as {
+                                        postComments: {
+                                            totalCount: number;
+                                            hasMore: boolean;
+                                        };
+                                    }
+                                ).postComments;
 
                                 client.cache.writeQuery({
                                     query: PostCommentsDocument,
@@ -244,7 +322,9 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                                     },
                                     data: {
                                         postComments: {
-                                            posts: [response.data.createPost.post],
+                                            posts: [
+                                                response.data.createPost.post,
+                                            ],
                                             totalCount: oldCount + 1,
                                             hasMore,
                                         },
@@ -252,7 +332,13 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
                                 });
                             }
 
-                            addToast(`Your ${(values.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST} has been created successfully.`);
+                            addToast(
+                                `Your ${
+                                    values.type === POST_TYPES.COMMENT
+                                        ? POST_TYPES.COMMENT
+                                        : POST_TYPES.POST
+                                } has been created successfully.`
+                            );
 
                             if (closingOnSubmit) {
                                 if (window.history.length > 2) {
@@ -290,6 +376,6 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({ type, placeholder, isR
             </Formik>
         </LumenInputContainer>
     );
-}
+};
 
 export default LumenInput;

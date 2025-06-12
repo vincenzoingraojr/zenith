@@ -130,9 +130,7 @@ const LogInButton = styled(Button)`
     color: ${COLORS.white};
 `;
 
-const SignUpButton = styled(Button).attrs(
-    (props: { dark: boolean }) => props
-)`
+const SignUpButton = styled(Button).attrs((props: { dark: boolean }) => props)`
     background-color: ${({ theme }) => theme.color};
     color: ${(props) => (props.dark ? COLORS.black : COLORS.white)};
 `;
@@ -153,12 +151,14 @@ function Authentication() {
                         </IndexBrandGroup>
                         <BrandTitle>The everything app.</BrandTitle>
                         <PageText>
-                            Find out what's happening in the world in real time, chat and make video calls with whoever you want. Send and receive money.
+                            Find out what's happening in the world in real time,
+                            chat and make video calls with whoever you want.
+                            Send and receive money.
                         </PageText>
                         <PageFlex>
                             <LogInButton
-                                role="link" 
-                                title="Log in to Zenith" 
+                                role="link"
+                                title="Log in to Zenith"
                                 aria-label="Log in to Zenith"
                                 onClick={() => {
                                     navigate("/login");
@@ -166,10 +166,10 @@ function Authentication() {
                             >
                                 Log in
                             </LogInButton>
-                            <SignUpButton 
-                                dark={isDarkMode} 
-                                role="link" 
-                                title="Sign up to Zenith" 
+                            <SignUpButton
+                                dark={isDarkMode}
+                                role="link"
+                                title="Sign up to Zenith"
                                 aria-label="Sign up to Zenith"
                                 onClick={() => {
                                     navigate("/signup");

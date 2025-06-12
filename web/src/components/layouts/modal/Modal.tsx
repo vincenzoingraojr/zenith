@@ -136,7 +136,12 @@ const ModalContent = styled.div`
     width: 100%;
 `;
 
-const Modal: FunctionComponent<ModalProps> = ({ children, headerText, isBack = false, hasLogo = false }) => {
+const Modal: FunctionComponent<ModalProps> = ({
+    children,
+    headerText,
+    isBack = false,
+    hasLogo = false,
+}) => {
     const navigate = useNavigate();
 
     document.body.classList.add("not-scrolling");
@@ -169,11 +174,7 @@ const Modal: FunctionComponent<ModalProps> = ({ children, headerText, isBack = f
                                 }
                             }}
                         >
-                            {isBack ? (
-                                <Back />
-                            ) : (
-                                <Close type="normal" />
-                            )}
+                            {isBack ? <Back /> : <Close type="normal" />}
                         </ControlContainer>
                         {hasLogo ? (
                             <ModalLogo>

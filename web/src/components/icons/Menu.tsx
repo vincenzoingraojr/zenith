@@ -13,6 +13,6 @@ function Menu() {
             </svg>
         </DynamicSizeIcon>
     );
-};
+}
 
 export default Menu;

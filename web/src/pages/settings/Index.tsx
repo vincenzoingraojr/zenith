@@ -2,7 +2,11 @@ import styled from "styled-components";
 import Head from "../../components/Head";
 import PageLayout from "../../components/layouts/PageLayout";
 import PageContentLayout from "../../components/layouts/sublayouts/PageContentLayout";
-import { LinkOptionBaseItem, OptionBaseIcon, PageText } from "../../styles/global";
+import {
+    LinkOptionBaseItem,
+    OptionBaseIcon,
+    PageText,
+} from "../../styles/global";
 import { Link } from "react-router-dom";
 import Chevron from "../../components/icons/Chevron";
 
@@ -41,9 +45,7 @@ function SettingsPage() {
                                         title="Your account"
                                         aria-label="Your account"
                                     >
-                                        <PageText>
-                                            Your account
-                                        </PageText>
+                                        <PageText>Your account</PageText>
                                         <OptionBaseIcon>
                                             <Chevron direction="right" />
                                         </OptionBaseIcon>
@@ -69,9 +71,7 @@ function SettingsPage() {
                                         title="Privacy"
                                         aria-label="Privacy"
                                     >
-                                        <PageText>
-                                            Privacy
-                                        </PageText>
+                                        <PageText>Privacy</PageText>
                                         <OptionBaseIcon>
                                             <Chevron direction="right" />
                                         </OptionBaseIcon>
@@ -83,9 +83,7 @@ function SettingsPage() {
                                         title="Notifications"
                                         aria-label="Notifications"
                                     >
-                                        <PageText>
-                                            Notifications
-                                        </PageText>
+                                        <PageText>Notifications</PageText>
                                         <OptionBaseIcon>
                                             <Chevron direction="right" />
                                         </OptionBaseIcon>
@@ -97,9 +95,7 @@ function SettingsPage() {
                                         title="Payments"
                                         aria-label="Payments"
                                     >
-                                        <PageText>
-                                            Payments
-                                        </PageText>
+                                        <PageText>Payments</PageText>
                                         <OptionBaseIcon>
                                             <Chevron direction="right" />
                                         </OptionBaseIcon>

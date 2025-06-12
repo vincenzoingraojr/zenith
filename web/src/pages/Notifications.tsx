@@ -3,7 +3,14 @@ import Head from "../components/Head";
 import Settings from "../components/icons/Settings";
 import PageLayout from "../components/layouts/PageLayout";
 import PageContentLayout from "../components/layouts/sublayouts/PageContentLayout";
-import { ControlContainer, EndContainer, FeedLoading, FullWidthFeedContainer, NoElementsAlert, PageBlock } from "../styles/global";
+import {
+    ControlContainer,
+    EndContainer,
+    FeedLoading,
+    FullWidthFeedContainer,
+    NoElementsAlert,
+    PageBlock,
+} from "../styles/global";
 import { useEffect, useRef } from "react";
 import LoadingComponent from "../components/utils/LoadingComponent";
 import ErrorOrItemNotFound from "../components/utils/ErrorOrItemNotFound";
@@ -14,7 +21,8 @@ import { useNotificationsContext } from "../utils/NotificationsProvider";
 function Notifications() {
     const navigate = useNavigate();
 
-    const { notificationFeed, loading, moreLoading, loadMore, error } = useNotificationsContext();
+    const { notificationFeed, loading, moreLoading, loadMore, error } =
+        useNotificationsContext();
 
     const endContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -33,11 +41,11 @@ function Notifications() {
         }, options);
 
         const current = endContainerRef.current;
-    
+
         if (current) {
             observer.observe(current);
         }
-    
+
         return () => {
             if (current) {
                 observer.unobserve(current);
@@ -47,18 +55,18 @@ function Notifications() {
 
     return (
         <>
-            <Head 
+            <Head
                 title="Notifications | Zenith"
                 description="Here you can look at your notifications."
             />
-            <PageLayout 
+            <PageLayout
                 children={
                     <PageContentLayout
                         title="Notifications"
                         type="main"
                         children={
                             <FullWidthFeedContainer>
-                                {(loading && !notificationFeed) ? (
+                                {loading && !notificationFeed ? (
                                     <FeedLoading>
                                         <LoadingComponent />
                                     </FeedLoading>
@@ -66,7 +74,9 @@ function Notifications() {
                                     <>
                                         {notificationFeed && !error ? (
                                             <>
-                                                {notificationFeed.notifications.length === 0 && !notificationFeed.nextCursor ? (
+                                                {notificationFeed.notifications
+                                                    .length === 0 &&
+                                                !notificationFeed.nextCursor ? (
                                                     <NoElementsAlert>
                                                         No activity yet.
                                                     </NoElementsAlert>
@@ -75,8 +85,12 @@ function Notifications() {
                                                         {notificationFeed.notifications.map(
                                                             (notification) => (
                                                                 <NotificationComponent
-                                                                    key={notification.notificationId}
-                                                                    notification={notification}
+                                                                    key={
+                                                                        notification.notificationId
+                                                                    }
+                                                                    notification={
+                                                                        notification
+                                                                    }
                                                                 />
                                                             )
                                                         )}
@@ -85,7 +99,11 @@ function Notifications() {
                                                                 <LoadingComponent />
                                                             </FeedLoading>
                                                         ) : (
-                                                            <PageBlock ref={endContainerRef}>
+                                                            <PageBlock
+                                                                ref={
+                                                                    endContainerRef
+                                                                }
+                                                            >
                                                                 <EndContainer>
                                                                     ⋅
                                                                 </EndContainer>
@@ -93,13 +111,17 @@ function Notifications() {
                                                         )}
                                                     </>
                                                 )}
-                                            </>   
+                                            </>
                                         ) : (
                                             <ErrorOrItemNotFound
                                                 isError={true}
-                                                title={ERROR_SOMETHING_WENT_WRONG.title}
-                                                content={ERROR_SOMETHING_WENT_WRONG.message}
-                                            /> 
+                                                title={
+                                                    ERROR_SOMETHING_WENT_WRONG.title
+                                                }
+                                                content={
+                                                    ERROR_SOMETHING_WENT_WRONG.message
+                                                }
+                                            />
                                         )}
                                     </>
                                 )}

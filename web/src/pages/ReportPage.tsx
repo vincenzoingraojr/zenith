@@ -1,14 +1,28 @@
 import { useParams } from "react-router-dom";
 import ModalLoading from "../components/layouts/modal/ModalLoading";
 import styled from "styled-components";
-import { NoElementsAlert, OptionBaseIcon, OptionBaseItem, PageBlock, PageText, StandardButton, Status } from "../styles/global";
-import { useCreateReportMutation, useReportOptionsQuery } from "../generated/graphql";
+import {
+    NoElementsAlert,
+    OptionBaseIcon,
+    OptionBaseItem,
+    PageBlock,
+    PageText,
+    StandardButton,
+    Status,
+} from "../styles/global";
+import {
+    useCreateReportMutation,
+    useReportOptionsQuery,
+} from "../generated/graphql";
 import ErrorOrItemNotFound from "../components/utils/ErrorOrItemNotFound";
 import { useState } from "react";
 import Checkmark from "../components/icons/Checkmark";
 import { Form, Formik } from "formik";
 import { COLORS } from "../styles/colors";
-import { BAD_REQUEST_MESSAGE, ERROR_SOMETHING_WENT_WRONG } from "../utils/constants";
+import {
+    BAD_REQUEST_MESSAGE,
+    ERROR_SOMETHING_WENT_WRONG,
+} from "../utils/constants";
 
 const ReportOptionsContainer = styled.div`
     display: flex;
@@ -86,7 +100,10 @@ const CreateReportStatus = styled(Status)`
 function ReportPage() {
     const params = useParams();
 
-    const { data, loading, error } = useReportOptionsQuery({ variables: { type: params.type as string }, fetchPolicy: "cache-and-network" });
+    const { data, loading, error } = useReportOptionsQuery({
+        variables: { type: params.type as string },
+        fetchPolicy: "cache-and-network",
+    });
 
     const [selectedCategoryId, setSelectedCategoryId] = useState<number>(0);
 
@@ -99,7 +116,8 @@ function ReportPage() {
         }
     };
 
-    const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<number>(0);
+    const [selectedSubCategoryId, setSelectedSubCategoryId] =
+        useState<number>(0);
 
     const handleSubCategoryClick = (id: number) => {
         if (selectedSubCategoryId === id) {
@@ -113,15 +131,13 @@ function ReportPage() {
 
     return (
         <PageBlock>
-            <ReportFormTitle>
-                Report this {params.type}
-            </ReportFormTitle>
+            <ReportFormTitle>Report this {params.type}</ReportFormTitle>
             <ReportOptionsContainer>
                 {loading ? (
                     <ModalLoading />
                 ) : (
                     <PageBlock>
-                        {data && data.reportOptions && !error  ? (
+                        {data && data.reportOptions && !error ? (
                             <>
                                 {data.reportOptions.length === 0 ? (
                                     <NoElementsAlert>
@@ -133,29 +149,31 @@ function ReportPage() {
                                             contentId: params.contentId,
                                             categoryId: selectedCategoryId,
                                             contentType: params.type,
-                                            subCategoryId: selectedSubCategoryId,
+                                            subCategoryId:
+                                                selectedSubCategoryId,
                                         }}
-                                        onSubmit={async (
-                                            _,
-                                            { setStatus }
-                                        ) => {
-                                            const response =
-                                                await createReport({
+                                        onSubmit={async (_, { setStatus }) => {
+                                            const response = await createReport(
+                                                {
                                                     variables: {
-                                                        contentId: params.contentId as string,
-                                                        categoryId: selectedCategoryId,
-                                                        contentType: params.type as string,
-                                                        subCategoryId: selectedCategoryId,
+                                                        contentId:
+                                                            params.contentId as string,
+                                                        categoryId:
+                                                            selectedCategoryId,
+                                                        contentType:
+                                                            params.type as string,
+                                                        subCategoryId:
+                                                            selectedCategoryId,
                                                     },
-                                                });
-        
+                                                }
+                                            );
+
                                             if (response.data) {
                                                 setStatus(
-                                                    response.data
-                                                        .createReport
+                                                    response.data.createReport
                                                         .status
                                                 );
-        
+
                                                 setSelectedCategoryId(0);
                                                 setSelectedSubCategoryId(0);
                                             } else {
@@ -172,52 +190,104 @@ function ReportPage() {
                                                 ) : (
                                                     <>
                                                         <OptionFeedContainer>
-                                                            {data.reportOptions?.map((option) => (
-                                                                <PageBlock key={`option-group-${option.id}`}>
-                                                                    <OptionItem
-                                                                        key={`option-${option.id}`}
-                                                                        onClick={() =>
-                                                                            handleCategoryClick(
-                                                                                option.id
-                                                                            )
-                                                                        }
+                                                            {data.reportOptions?.map(
+                                                                (option) => (
+                                                                    <PageBlock
+                                                                        key={`option-group-${option.id}`}
                                                                     >
-                                                                        <OptionInfoContainer>
-                                                                            <OptionItemText>{option.title}</OptionItemText>
-                                                                            {(option.description && option.description.length > 0) && (<OptionItemDescription>{option.description}</OptionItemDescription>)}
-                                                                        </OptionInfoContainer>
-                                                                        {(selectedCategoryId === option.id) && (
-                                                                            <OptionBaseIcon>
-                                                                                <Checkmark color={COLORS.blue} />
-                                                                            </OptionBaseIcon>
-                                                                        )}
-                                                                    </OptionItem>
-                                                                    {selectedCategoryId === option.id && option.subcategories && option.subcategories.length > 0 && (
-                                                                        <SubCategoriesFeed>
-                                                                            {option.subcategories.map((subOption) => (
-                                                                                <OptionItem
-                                                                                    key={`option-${subOption.categoryId}_suboption-${subOption.id}`}
-                                                                                    onClick={() =>
-                                                                                        handleSubCategoryClick(
-                                                                                            subOption.id
-                                                                                        )
+                                                                        <OptionItem
+                                                                            key={`option-${option.id}`}
+                                                                            onClick={() =>
+                                                                                handleCategoryClick(
+                                                                                    option.id
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            <OptionInfoContainer>
+                                                                                <OptionItemText>
+                                                                                    {
+                                                                                        option.title
                                                                                     }
-                                                                                >
-                                                                                    <OptionInfoContainer>
-                                                                                        <OptionItemText>{subOption.title}</OptionItemText>
-                                                                                        {(subOption.description && subOption.description.length > 0) && (<OptionItemDescription>{subOption.description}</OptionItemDescription>)}
-                                                                                    </OptionInfoContainer>
-                                                                                    {(selectedSubCategoryId === subOption.id) && (
-                                                                                        <OptionBaseIcon>
-                                                                                            <Checkmark color={COLORS.blue} />
-                                                                                        </OptionBaseIcon>
+                                                                                </OptionItemText>
+                                                                                {option.description &&
+                                                                                    option
+                                                                                        .description
+                                                                                        .length >
+                                                                                        0 && (
+                                                                                        <OptionItemDescription>
+                                                                                            {
+                                                                                                option.description
+                                                                                            }
+                                                                                        </OptionItemDescription>
                                                                                     )}
-                                                                                </OptionItem>
-                                                                            ))}
-                                                                        </SubCategoriesFeed>
-                                                                    )}
-                                                                </PageBlock>
-                                                            ))}
+                                                                            </OptionInfoContainer>
+                                                                            {selectedCategoryId ===
+                                                                                option.id && (
+                                                                                <OptionBaseIcon>
+                                                                                    <Checkmark
+                                                                                        color={
+                                                                                            COLORS.blue
+                                                                                        }
+                                                                                    />
+                                                                                </OptionBaseIcon>
+                                                                            )}
+                                                                        </OptionItem>
+                                                                        {selectedCategoryId ===
+                                                                            option.id &&
+                                                                            option.subcategories &&
+                                                                            option
+                                                                                .subcategories
+                                                                                .length >
+                                                                                0 && (
+                                                                                <SubCategoriesFeed>
+                                                                                    {option.subcategories.map(
+                                                                                        (
+                                                                                            subOption
+                                                                                        ) => (
+                                                                                            <OptionItem
+                                                                                                key={`option-${subOption.categoryId}_suboption-${subOption.id}`}
+                                                                                                onClick={() =>
+                                                                                                    handleSubCategoryClick(
+                                                                                                        subOption.id
+                                                                                                    )
+                                                                                                }
+                                                                                            >
+                                                                                                <OptionInfoContainer>
+                                                                                                    <OptionItemText>
+                                                                                                        {
+                                                                                                            subOption.title
+                                                                                                        }
+                                                                                                    </OptionItemText>
+                                                                                                    {subOption.description &&
+                                                                                                        subOption
+                                                                                                            .description
+                                                                                                            .length >
+                                                                                                            0 && (
+                                                                                                            <OptionItemDescription>
+                                                                                                                {
+                                                                                                                    subOption.description
+                                                                                                                }
+                                                                                                            </OptionItemDescription>
+                                                                                                        )}
+                                                                                                </OptionInfoContainer>
+                                                                                                {selectedSubCategoryId ===
+                                                                                                    subOption.id && (
+                                                                                                    <OptionBaseIcon>
+                                                                                                        <Checkmark
+                                                                                                            color={
+                                                                                                                COLORS.blue
+                                                                                                            }
+                                                                                                        />
+                                                                                                    </OptionBaseIcon>
+                                                                                                )}
+                                                                                            </OptionItem>
+                                                                                        )
+                                                                                    )}
+                                                                                </SubCategoriesFeed>
+                                                                            )}
+                                                                    </PageBlock>
+                                                                )
+                                                            )}
                                                         </OptionFeedContainer>
                                                         <ReportButtonContainer>
                                                             <ReportButton
@@ -225,7 +295,31 @@ function ReportPage() {
                                                                 title="Create report"
                                                                 role="button"
                                                                 aria-label="Create report"
-                                                                disabled={((selectedCategoryId !== 0 && selectedSubCategoryId !== 0) || (selectedCategoryId !== 0 && data.reportOptions?.find((option) => option.id === selectedCategoryId) && !data.reportOptions.find((option) => option.id === selectedCategoryId)?.subcategories)) ? false : true}
+                                                                disabled={
+                                                                    (selectedCategoryId !==
+                                                                        0 &&
+                                                                        selectedSubCategoryId !==
+                                                                            0) ||
+                                                                    (selectedCategoryId !==
+                                                                        0 &&
+                                                                        data.reportOptions?.find(
+                                                                            (
+                                                                                option
+                                                                            ) =>
+                                                                                option.id ===
+                                                                                selectedCategoryId
+                                                                        ) &&
+                                                                        !data.reportOptions.find(
+                                                                            (
+                                                                                option
+                                                                            ) =>
+                                                                                option.id ===
+                                                                                selectedCategoryId
+                                                                        )
+                                                                            ?.subcategories)
+                                                                        ? false
+                                                                        : true
+                                                                }
                                                             >
                                                                 Create report
                                                             </ReportButton>

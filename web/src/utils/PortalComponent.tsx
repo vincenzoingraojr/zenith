@@ -10,7 +10,7 @@ const PortalComponent: FunctionComponent<PortalProps> = ({ children }) => {
 
     if (!portalRoot) {
         console.error("Portal root element not found.");
-        
+
         return null;
     }
 

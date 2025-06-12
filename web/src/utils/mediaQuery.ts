@@ -1,1 +1,2 @@
-export const mediaQuery = (...queries: string[]) => `@media ${queries.join(', ')}`;
+export const mediaQuery = (...queries: string[]) =>
+    `@media ${queries.join(", ")}`;

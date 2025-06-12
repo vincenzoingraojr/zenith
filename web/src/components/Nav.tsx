@@ -10,7 +10,11 @@ import Bell from "./icons/Bell";
 import Profile from "./icons/Profile";
 import Mail from "./icons/Mail";
 import NavOptions from "./utils/NavOptions";
-import { ControlContainer, NotificationsCount, OptionBaseIcon } from "../styles/global";
+import {
+    ControlContainer,
+    NotificationsCount,
+    OptionBaseIcon,
+} from "../styles/global";
 import Menu from "./icons/Menu";
 import { useNavOptions } from "./utils/hooks";
 import { useMeData } from "../utils/userQueries";
@@ -23,10 +27,8 @@ interface NavProps {
     noNav?: boolean;
 }
 
-const NavWrapper = styled.nav.attrs(
-    (props: { hidden: boolean }) => props
-)`
-    display: ${props => props.hidden ? "none" : "block"};
+const NavWrapper = styled.nav.attrs((props: { hidden: boolean }) => props)`
+    display: ${(props) => (props.hidden ? "none" : "block")};
     position: relative;
     top: unset;
     height: auto;
@@ -130,13 +132,13 @@ const NavContainer = styled.div`
 const CustomNavItemLink = styled(NavItemLink).attrs(
     (props: { type: "nav" | "header" }) => props
 )`
-    display: ${props => props.type === "nav" ? "none" : "flex"};
+    display: ${(props) => (props.type === "nav" ? "none" : "flex")};
 
     ${mediaQuery(
         "(min-width: 600px) and (min-height: 480px)",
         devices.laptopM
     )} {
-        display: ${props => props.type === "nav" ? "flex" : "none"};
+        display: ${(props) => (props.type === "nav" ? "flex" : "none")};
     }
 `;
 
@@ -154,13 +156,13 @@ const NavOptionsContainer = styled.div`
 const CustomNavContainer = styled.div.attrs(
     (props: { type: "nav" | "header" }) => props
 )`
-    display: ${props => props.type === "nav" ? "none" : "flex"};
+    display: ${(props) => (props.type === "nav" ? "none" : "flex")};
 
     ${mediaQuery(
         "(min-width: 600px) and (min-height: 480px)",
         devices.laptopM
     )} {
-        display: ${props => props.type === "nav" ? "flex" : "none"};
+        display: ${(props) => (props.type === "nav" ? "flex" : "none")};
     }
 `;
 
@@ -208,10 +210,16 @@ const NavIconWithBadge = styled(OptionBaseIcon)`
 const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
     const { me } = useMeData();
     const { showOptions, toggleOptions, closeOptions } = useNavOptions();
-    const { showOptions: showBottomNavOptions, toggleOptions: toggleBottomNavOptions, closeOptions: closeBottomNavOptions } = useNavOptions();
+    const {
+        showOptions: showBottomNavOptions,
+        toggleOptions: toggleBottomNavOptions,
+        closeOptions: closeBottomNavOptions,
+    } = useNavOptions();
 
     const [position, setPosition] = useState<DOMRect | null>(null);
-    const [bottomNavPosition, setBottomNavPosition] = useState<DOMRect | null>(null);
+    const [bottomNavPosition, setBottomNavPosition] = useState<DOMRect | null>(
+        null
+    );
     const divRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLDivElement>(null);
     const navRef = useRef<HTMLDivElement>(null);
@@ -234,7 +242,7 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
         };
 
         handleOptions();
-        
+
         navRefVar?.addEventListener("scroll", handleOptions);
         window.addEventListener("scroll", handleOptions);
         window.addEventListener("resize", handleOptions);
@@ -278,30 +286,22 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                             <Menu />
                         </ControlContainer>
                         {showBottomNavOptions && (
-                            <NavOptions key={"bottom-nav"} position={bottomNavPosition} closeOptions={closeBottomNavOptions} buttonRef={buttonRef} />
+                            <NavOptions
+                                key={"bottom-nav"}
+                                position={bottomNavPosition}
+                                closeOptions={closeBottomNavOptions}
+                                buttonRef={buttonRef}
+                            />
                         )}
                     </CustomNavContainer>
                 )}
                 <NavItemLink role="menuitem">
-                    <NavLink
-                        to="/home"
-                        title="Home"
-                        aria-label="Home"
-                        state={{
-                            feed: "home"
-                        }}
-                    >
-                        {({ isActive }) => (
-                            <Home isActive={isActive} />
-                        )}
+                    <NavLink to="/home" title="Home" aria-label="Home">
+                        {({ isActive }) => <Home isActive={isActive} />}
                     </NavLink>
                 </NavItemLink>
                 <NavItemLink role="menuitem">
-                    <NavLink
-                        to="/search"
-                        title="Search"
-                        aria-label="Search"
-                    >
+                    <NavLink to="/search" title="Search" aria-label="Search">
                         {({ isActive }) => (
                             <Magnifier type="normal" isActive={isActive} />
                         )}
@@ -323,16 +323,28 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                         </CustomNavItemLink>
                         <ActivityButtonContainer role="menuitem">
                             <ActivityButton
-                                title={isMessagesPage ? "Create a new chat or group" : "Create a new post"}
-                                aria-label={isMessagesPage ? "Create a new chat or group" : "Create a new post"}
+                                title={
+                                    isMessagesPage
+                                        ? "Create a new chat or group"
+                                        : "Create a new post"
+                                }
+                                aria-label={
+                                    isMessagesPage
+                                        ? "Create a new chat or group"
+                                        : "Create a new post"
+                                }
                                 role="link"
                                 onClick={() => {
-                                    navigate(isMessagesPage ? "/messages/new_chat" : "/create_post/new/post/from_modal", {
-                                        state: {
-                                            backgroundLocation:
-                                                location,
-                                        },
-                                    });
+                                    navigate(
+                                        isMessagesPage
+                                            ? "/messages/new_chat"
+                                            : "/create_post/new/post/from_modal",
+                                        {
+                                            state: {
+                                                backgroundLocation: location,
+                                            },
+                                        }
+                                    );
                                 }}
                             >
                                 <Add color={COLORS.white} />
@@ -343,18 +355,19 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                                 to="/notifications"
                                 title="Notifications"
                                 aria-label="Notifications"
-                                state={{
-                                    feed: "notifications"
-                                }}
                             >
                                 {({ isActive }) => (
                                     <NavIconWithBadge>
                                         <Bell isActive={isActive} />
-                                        {(notificationsCount > 0 && window.location.pathname !== "/notifications") && (
-                                            <NotificationsCount>
-                                                {notificationsCount > 9 ? "9+" : notificationsCount}
-                                            </NotificationsCount>
-                                        )}
+                                        {notificationsCount > 0 &&
+                                            window.location.pathname !==
+                                                "/notifications" && (
+                                                <NotificationsCount>
+                                                    {notificationsCount > 9
+                                                        ? "9+"
+                                                        : notificationsCount}
+                                                </NotificationsCount>
+                                            )}
                                     </NavIconWithBadge>
                                 )}
                             </NavLink>
@@ -398,11 +411,16 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                     <Menu />
                 </ControlContainer>
                 {showOptions && (
-                    <NavOptions key={"nav"} position={position} closeOptions={closeOptions} buttonRef={divRef} />
+                    <NavOptions
+                        key={"nav"}
+                        position={position}
+                        closeOptions={closeOptions}
+                        buttonRef={divRef}
+                    />
                 )}
             </NavOptionsContainer>
         </NavWrapper>
     );
-}
+};
 
 export default Nav;

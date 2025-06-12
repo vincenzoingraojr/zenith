@@ -1,8 +1,35 @@
 import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
-import { GetPostLikesDocument, GetRepostsDocument, IsBookmarkedDocument, IsBookmarkedQuery, IsFollowedByMeDocument, IsFollowedByMeQuery, IsPostLikedByMeDocument, IsPostLikedByMeQuery, IsRepostedByUserDocument, IsRepostedByUserQuery, Post, useCreateBookmarkMutation, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useFollowUserMutation, useIncrementPostViewsMutation, useLikePostMutation, useRemoveBookmarkMutation, useRemoveLikeMutation, useUnfollowUserMutation } from "../../../../generated/graphql";
+import {
+    GetPostLikesDocument,
+    GetRepostsDocument,
+    IsBookmarkedDocument,
+    IsBookmarkedQuery,
+    IsFollowedByMeDocument,
+    IsFollowedByMeQuery,
+    IsPostLikedByMeDocument,
+    IsPostLikedByMeQuery,
+    IsRepostedByUserDocument,
+    IsRepostedByUserQuery,
+    Post,
+    useCreateBookmarkMutation,
+    useCreateRepostMutation,
+    useDeletePostMutation,
+    useDeleteRepostMutation,
+    useFollowUserMutation,
+    useIncrementPostViewsMutation,
+    useLikePostMutation,
+    useRemoveBookmarkMutation,
+    useRemoveLikeMutation,
+    useUnfollowUserMutation,
+} from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ControlContainer, OptionBaseIcon, PageBlock, PageText } from "../../../../styles/global";
+import {
+    ControlContainer,
+    OptionBaseIcon,
+    PageBlock,
+    PageText,
+} from "../../../../styles/global";
 import profilePicture from "../../../../images/profile-picture.png";
 import TextContainerRender from "../../../utils/TextContainerRender";
 import { USER_TYPES } from "../../../../utils/constants";
@@ -16,7 +43,10 @@ import More from "../../../icons/More";
 import { useOptions } from "../../../utils/hooks";
 import Flag from "../../../icons/Flag";
 import Comment from "../../../icons/Comment";
-import { getDateToLocaleString, processDate } from "../../../../utils/processDate";
+import {
+    getDateToLocaleString,
+    processDate,
+} from "../../../../utils/processDate";
 import Pen from "../../../icons/Pen";
 import { useFollowData, useMeData } from "../../../../utils/userQueries";
 import Bin from "../../../icons/Bin";
@@ -27,7 +57,15 @@ import { useToasts } from "../../../utils/ToastProvider";
 import RepostIcon from "../../../icons/Repost";
 import Mail from "../../../icons/Mail";
 import VerificationBadge from "../../../utils/VerificationBadge";
-import { useBookmarkData, useComments, useFindPostById, useLikeData, usePostLikes, useRepostData, useReposts } from "../../../../utils/postQueries";
+import {
+    useBookmarkData,
+    useComments,
+    useFindPostById,
+    useLikeData,
+    usePostLikes,
+    useRepostData,
+    useReposts,
+} from "../../../../utils/postQueries";
 import QuotedPost from "./QuotedPost";
 import LoadingComponent from "../../../utils/LoadingComponent";
 import AffiliationIcon from "../../../utils/AffiliationIcon";
@@ -86,13 +124,16 @@ const PostAuthorContainer = styled(Link)`
     }
 `;
 
-export const AuthorImageContainer = styled.div.attrs((props: { type: string }) => props)`
+export const AuthorImageContainer = styled.div.attrs(
+    (props: { type: string }) => props
+)`
     display: flex;
     align-items: center;
     justify-content: center;
     width: 40px;
     height: 40px;
-    border-radius: ${(props) => (props.type === USER_TYPES.ORGANIZATION ? "5px" : "20px")};
+    border-radius: ${(props) =>
+        props.type === USER_TYPES.ORGANIZATION ? "5px" : "20px"};
 
     img {
         width: inherit;
@@ -187,7 +228,8 @@ const PostMediaContainer = styled.div`
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
 
-    &:has(div:nth-child(3):last-child) div:nth-child(3), &:has(div:nth-child(1):only-child) div:nth-child(1) {
+    &:has(div:nth-child(3):last-child) div:nth-child(3),
+    &:has(div:nth-child(1):only-child) div:nth-child(1) {
         grid-column: span 2;
     }
 `;
@@ -198,7 +240,8 @@ export const PostMediaItem = styled.div`
     height: auto;
     border-radius: 12px;
 
-    img, video {
+    img,
+    video {
         display: block;
         width: 100%;
         height: auto;
@@ -228,19 +271,26 @@ const PostActionsGroup = styled.div`
     gap: 8px;
 `;
 
-const PostActionContainer = styled.div.attrs((props: { color?: string, isActive: boolean }) => props)`
+const PostActionContainer = styled.div.attrs(
+    (props: { color?: string; isActive: boolean }) => props
+)`
     display: flex;
     align-items: center;
     justify-content: flex-start;
     gap: 4px;
-    color: ${props => props.isActive ? props.color || COLORS.blue : "inherit"};
+    color: ${(props) =>
+        props.isActive ? props.color || COLORS.blue : "inherit"};
 
-    &:hover, &:focus {
-        color: ${props => props.color || COLORS.blue};
+    &:hover,
+    &:focus {
+        color: ${(props) => props.color || COLORS.blue};
     }
 
-    &:hover div div svg, &:focus div div svg, &:hover div div div svg, &:focus div div div svg {
-        fill: ${props => props.color || COLORS.blue};
+    &:hover div div svg,
+    &:focus div div svg,
+    &:hover div div div svg,
+    &:focus div div div svg {
+        fill: ${(props) => props.color || COLORS.blue};
     }
 
     &:hover ${ControlContainer}, &:focus ${ControlContainer} {
@@ -262,14 +312,25 @@ const QuotedPostNotAvailable = styled.div`
     border-radius: 12px;
 `;
 
-const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplying, showIsReposted, origin }) => {
+const PostComponent: FunctionComponent<PostComponentProps> = ({
+    post,
+    showReplying,
+    showIsReposted,
+    origin,
+}) => {
     const navigate = useNavigate();
 
     const { activeOptions, handleOptionsClick } = useOptions();
 
-    const date = useMemo(() => processDate(post.createdAt, true, true), [post.createdAt]);
+    const date = useMemo(
+        () => processDate(post.createdAt, true, true),
+        [post.createdAt]
+    );
 
-    const createdAt = useMemo(() => getDateToLocaleString(post.createdAt), [post.createdAt]);
+    const createdAt = useMemo(
+        () => getDateToLocaleString(post.createdAt),
+        [post.createdAt]
+    );
 
     const { me } = useMeData();
 
@@ -373,7 +434,11 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
 
     const [deletePost, { client }] = useDeletePostMutation();
 
-    const { post: quotedPost, loading, error } = useFindPostById(post.quotedPostId as number | undefined);
+    const {
+        post: quotedPost,
+        loading,
+        error,
+    } = useFindPostById(post.quotedPostId as number | undefined);
 
     const isFollowedByMe = useFollowData(post.authorId);
 
@@ -419,7 +484,10 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         );
                     }
                 }}
-                onKeyDown={(e) => e.key === "Enter" && navigate(`/${post.author.username}/post/${post.itemId}`)}
+                onKeyDown={(e) =>
+                    e.key === "Enter" &&
+                    navigate(`/${post.author.username}/post/${post.itemId}`)
+                }
             >
                 <PostHeader>
                     <PostAuthorContainer
@@ -432,7 +500,8 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         <AuthorImageContainer type={post.author.type}>
                             <img
                                 src={
-                                    post.author.profile.profilePicture.length > 0
+                                    post.author.profile.profilePicture.length >
+                                    0
                                         ? post.author.profile.profilePicture
                                         : profilePicture
                                 }
@@ -445,14 +514,32 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                 <AuthorFullName>
                                     {post.author.name}
                                 </AuthorFullName>
-                                {post.author.verification.verified === "VERIFIED" && (
+                                {post.author.verification.verified ===
+                                    "VERIFIED" && (
                                     <VerificationBadge
                                         type={post.author.type}
-                                        verifiedSince={post.author.verification.verifiedSince ? new Date(parseInt(post.author.verification.verifiedSince)).toLocaleString("en-us", { month: "long", year: "numeric" }) : undefined}
+                                        verifiedSince={
+                                            post.author.verification
+                                                .verifiedSince
+                                                ? new Date(
+                                                      parseInt(
+                                                          post.author
+                                                              .verification
+                                                              .verifiedSince
+                                                      )
+                                                  ).toLocaleString("en-us", {
+                                                      month: "long",
+                                                      year: "numeric",
+                                                  })
+                                                : undefined
+                                        }
                                         size={18}
                                     />
                                 )}
-                                <AffiliationIcon userId={post.authorId} size={18} />
+                                <AffiliationIcon
+                                    userId={post.authorId}
+                                    size={18}
+                                />
                             </AuthorFullNameContainer>
                             <AuthorUsername>
                                 @{post.author.username}
@@ -461,11 +548,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                     </PostAuthorContainer>
                     <PostRightContainer>
                         <PostDate title={createdAt} aria-label={createdAt}>
-                            <time
-                                dateTime={createdAt}
-                            >
-                                {date}
-                            </time>
+                            <time dateTime={createdAt}>{date}</time>
                         </PostDate>
                         {post.isEdited && (
                             <PageBlock
@@ -478,26 +561,28 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         )}
                         <Options
                             key={post.id}
-                            title="Post options" 
+                            title="Post options"
                             icon={<More />}
                             isOpen={activeOptions === post.id}
-                            toggleOptions={() =>
-                                handleOptionsClick(post.id)
-                            }
+                            toggleOptions={() => handleOptionsClick(post.id)}
                             children={
                                 <>
-                                    {((me && post.authorId !== me.id) || !me) && (
+                                    {((me && post.authorId !== me.id) ||
+                                        !me) && (
                                         <OptionItem
                                             role="menuitem"
                                             title="Report this post"
                                             aria-label="Report this post"
                                             onClick={() => {
-                                                navigate(`/report/post/${post.itemId}`, {
-                                                    state: {
-                                                        backgroundLocation:
-                                                            location,
-                                                    },
-                                                });
+                                                navigate(
+                                                    `/report/post/${post.itemId}`,
+                                                    {
+                                                        state: {
+                                                            backgroundLocation:
+                                                                location,
+                                                        },
+                                                    }
+                                                );
                                             }}
                                         >
                                             <OptionBaseIcon>
@@ -517,12 +602,15 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                         title="Edit this post"
                                                         aria-label="Edit this post"
                                                         onClick={() => {
-                                                            navigate(`/edit_post/${post.itemId}`, {
-                                                                state: {
-                                                                    backgroundLocation:
-                                                                        location,
-                                                                },
-                                                            });
+                                                            navigate(
+                                                                `/edit_post/${post.itemId}`,
+                                                                {
+                                                                    state: {
+                                                                        backgroundLocation:
+                                                                            location,
+                                                                    },
+                                                                }
+                                                            );
                                                         }}
                                                     >
                                                         <OptionBaseIcon>
@@ -537,42 +625,78 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                         title="Delete this post"
                                                         aria-label="Delete this post"
                                                         onClick={async () => {
-                                                            const response = await deletePost({
-                                                                variables: {
-                                                                    postId: post.itemId,
-                                                                },
-                                                            });
+                                                            const response =
+                                                                await deletePost(
+                                                                    {
+                                                                        variables:
+                                                                            {
+                                                                                postId: post.itemId,
+                                                                            },
+                                                                    }
+                                                                );
 
-                                                            if (response.data && response.data.deletePost) {
+                                                            if (
+                                                                response.data &&
+                                                                response.data
+                                                                    .deletePost
+                                                            ) {
                                                                 const refId = `Post:${post.id}`;
 
-                                                                client.cache.modify({
-                                                                    fields: {
-                                                                        postFeed(existing = { posts: [], hasMore: true }) {
-                                                                            const filteredPosts = existing.posts.filter((p: any) =>
-                                                                                p.__ref !== refId
-                                                                            );
+                                                                client.cache.modify(
+                                                                    {
+                                                                        fields: {
+                                                                            postFeed(
+                                                                                existing = {
+                                                                                    posts: [],
+                                                                                    hasMore:
+                                                                                        true,
+                                                                                }
+                                                                            ) {
+                                                                                const filteredPosts =
+                                                                                    existing.posts.filter(
+                                                                                        (
+                                                                                            p: any
+                                                                                        ) =>
+                                                                                            p.__ref !==
+                                                                                            refId
+                                                                                    );
 
-                                                                            return {
-                                                                                hasMore: existing.hasMore,
-                                                                                posts: filteredPosts,
-                                                                                totalCount: existing.totalCount - 1,
-                                                                            };
+                                                                                return {
+                                                                                    hasMore:
+                                                                                        existing.hasMore,
+                                                                                    posts: filteredPosts,
+                                                                                    totalCount:
+                                                                                        existing.totalCount -
+                                                                                        1,
+                                                                                };
+                                                                            },
                                                                         },
-                                                                    },
-                                                                });
+                                                                    }
+                                                                );
 
-                                                                client.cache.evict({ id: refId });
+                                                                client.cache.evict(
+                                                                    {
+                                                                        id: refId,
+                                                                    }
+                                                                );
                                                                 client.cache.gc();
                                                             } else {
-                                                                addToast("An error occurred while deleting the post.");
+                                                                addToast(
+                                                                    "An error occurred while deleting the post."
+                                                                );
                                                             }
                                                         }}
                                                     >
                                                         <OptionBaseIcon>
-                                                            <Bin color={COLORS.red} />
+                                                            <Bin
+                                                                color={
+                                                                    COLORS.red
+                                                                }
+                                                            />
                                                         </OptionBaseIcon>
-                                                        <OptionItemText isRed={true}>
+                                                        <OptionItemText
+                                                            isRed={true}
+                                                        >
                                                             Delete this post
                                                         </OptionItemText>
                                                     </OptionItem>
@@ -581,62 +705,121 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                 <>
                                                     <OptionItem
                                                         role="menuitem"
-                                                        title={`${follow ? "Unfollow" : "Follow"} @${post.author.username}`}
-                                                        aria-label={`${follow ? "Unfollow" : "Follow"} @${post.author.username}`}
+                                                        title={`${
+                                                            follow
+                                                                ? "Unfollow"
+                                                                : "Follow"
+                                                        } @${
+                                                            post.author.username
+                                                        }`}
+                                                        aria-label={`${
+                                                            follow
+                                                                ? "Unfollow"
+                                                                : "Follow"
+                                                        } @${
+                                                            post.author.username
+                                                        }`}
                                                         onClick={async (e) => {
                                                             e.stopPropagation();
 
                                                             if (follow) {
-                                                                await unfollowUser({
-                                                                    variables: {
-                                                                        userId: post.authorId,
-                                                                    },
-                                                                    update: (cache, { data: unfollowUserData }) => {
-                                                                        if (unfollowUserData && unfollowUserData.unfollowUser) {
-                                                                            cache.writeQuery<IsFollowedByMeQuery>({
-                                                                                query: IsFollowedByMeDocument,
-                                                                                data: {
-                                                                                    isFollowedByMe: null,
-                                                                                },
-                                                                                variables: {
-                                                                                    id: post.authorId,
-                                                                                }
-                                                                            });
-                                                                        }
+                                                                await unfollowUser(
+                                                                    {
+                                                                        variables:
+                                                                            {
+                                                                                userId: post.authorId,
+                                                                            },
+                                                                        update: (
+                                                                            cache,
+                                                                            {
+                                                                                data: unfollowUserData,
+                                                                            }
+                                                                        ) => {
+                                                                            if (
+                                                                                unfollowUserData &&
+                                                                                unfollowUserData.unfollowUser
+                                                                            ) {
+                                                                                cache.writeQuery<IsFollowedByMeQuery>(
+                                                                                    {
+                                                                                        query: IsFollowedByMeDocument,
+                                                                                        data: {
+                                                                                            isFollowedByMe:
+                                                                                                null,
+                                                                                        },
+                                                                                        variables:
+                                                                                            {
+                                                                                                id: post.authorId,
+                                                                                            },
+                                                                                    }
+                                                                                );
+                                                                            }
+                                                                        },
                                                                     }
-                                                                }).catch(() => {
-                                                                    addToast("An error occurred while trying to unfollow this user.");
+                                                                ).catch(() => {
+                                                                    addToast(
+                                                                        "An error occurred while trying to unfollow this user."
+                                                                    );
                                                                 });
                                                             } else {
-                                                                await followUser({
-                                                                    variables: {
-                                                                        userId: post.authorId,
-                                                                        origin,
-                                                                    },
-                                                                    update: (cache, { data: followUserData }) => {
-                                                                        if (followUserData && followUserData.followUser) {
-                                                                            cache.writeQuery<IsFollowedByMeQuery>({
-                                                                                query: IsFollowedByMeDocument,
-                                                                                data: {
-                                                                                    isFollowedByMe: followUserData.followUser,
-                                                                                },
-                                                                                variables: {
-                                                                                    id: post.authorId,
-                                                                                }
-                                                                            });
-                                                                        }
+                                                                await followUser(
+                                                                    {
+                                                                        variables:
+                                                                            {
+                                                                                userId: post.authorId,
+                                                                                origin,
+                                                                            },
+                                                                        update: (
+                                                                            cache,
+                                                                            {
+                                                                                data: followUserData,
+                                                                            }
+                                                                        ) => {
+                                                                            if (
+                                                                                followUserData &&
+                                                                                followUserData.followUser
+                                                                            ) {
+                                                                                cache.writeQuery<IsFollowedByMeQuery>(
+                                                                                    {
+                                                                                        query: IsFollowedByMeDocument,
+                                                                                        data: {
+                                                                                            isFollowedByMe:
+                                                                                                followUserData.followUser,
+                                                                                        },
+                                                                                        variables:
+                                                                                            {
+                                                                                                id: post.authorId,
+                                                                                            },
+                                                                                    }
+                                                                                );
+                                                                            }
+                                                                        },
                                                                     }
-                                                                }).catch(() => {
-                                                                    addToast("An error occurred while trying to follow this user.");
+                                                                ).catch(() => {
+                                                                    addToast(
+                                                                        "An error occurred while trying to follow this user."
+                                                                    );
                                                                 });
                                                             }
                                                         }}
                                                     >
                                                         <OptionBaseIcon>
-                                                            <FollowIcon isActive={follow ? true : false} />
+                                                            <FollowIcon
+                                                                isActive={
+                                                                    follow
+                                                                        ? true
+                                                                        : false
+                                                                }
+                                                            />
                                                         </OptionBaseIcon>
                                                         <OptionItemText>
-                                                            {follow ? "Unfollow" : "Follow"} @{post.author.username}
+                                                            {follow
+                                                                ? "Unfollow"
+                                                                : "Follow"}{" "}
+                                                            @
+                                                            {
+                                                                post.author
+                                                                    .username
+                                                            }
                                                         </OptionItemText>
                                                     </OptionItem>
                                                 </>
@@ -650,7 +833,10 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                 </PostHeader>
                 <PostContentContainer>
                     <PostTextContainer>
-                        <TextContainerRender content={post.content} mentions={post.mentions} />
+                        <TextContainerRender
+                            content={post.content}
+                            mentions={post.mentions}
+                        />
                     </PostTextContainer>
                     {post.media && post.media.length > 0 && (
                         <PostMediaContainer>
@@ -660,7 +846,10 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                         <img src={media.src} alt={media.alt} />
                                     ) : (
                                         <video controls>
-                                            <source src={media.src} type={media.type} />
+                                            <source
+                                                src={media.src}
+                                                type={media.type}
+                                            />
                                         </video>
                                     )}
                                 </PostMediaItem>
@@ -669,10 +858,13 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                     )}
                     {post.quotedPostId && (
                         <>
-                            {(loading || error) ? (
+                            {loading || error ? (
                                 <>
                                     {error ? (
-                                        <PageText>An error occurred while trying to load the quoted post.</PageText>
+                                        <PageText>
+                                            An error occurred while trying to
+                                            load the quoted post.
+                                        </PageText>
                                     ) : (
                                         <LoadingComponent />
                                     )}
@@ -680,7 +872,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                             ) : (
                                 <>
                                     {quotedPost ? (
-                                        <QuotedPost 
+                                        <QuotedPost
                                             post={quotedPost as Post}
                                             origin="feed"
                                         />
@@ -697,12 +889,16 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                 <PostActionsContainer>
                     <PostActionContainer
                         role="button"
-                        title={`${like ? "Remove like from" : "Like"} @${post.author.username}'s post`}
-                        aria-label={`${like ? "Remove like from" : "Like"} @${post.author.username}'s post`}
+                        title={`${like ? "Remove like from" : "Like"} @${
+                            post.author.username
+                        }'s post`}
+                        aria-label={`${like ? "Remove like from" : "Like"} @${
+                            post.author.username
+                        }'s post`}
                         color={COLORS.red}
                         onClick={async (e) => {
                             e.stopPropagation();
-                            
+
                             if (me) {
                                 if (like) {
                                     await removeLike({
@@ -710,19 +906,38 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                             itemId: post.itemId,
                                             itemType: post.type,
                                         },
-                                        update: (cache, { data: removeLikeData }) => {
-                                            if (removeLikeData && removeLikeData.removeLike) {
-                                                const existing = cache.readQuery({
-                                                    query: GetPostLikesDocument,
-                                                    variables: {
-                                                        itemId: post.itemId,
-                                                        type: post.type,
-                                                        limit: 3,
-                                                    },
-                                                });
+                                        update: (
+                                            cache,
+                                            { data: removeLikeData }
+                                        ) => {
+                                            if (
+                                                removeLikeData &&
+                                                removeLikeData.removeLike
+                                            ) {
+                                                const existing =
+                                                    cache.readQuery({
+                                                        query: GetPostLikesDocument,
+                                                        variables: {
+                                                            itemId: post.itemId,
+                                                            type: post.type,
+                                                            limit: 3,
+                                                        },
+                                                    });
 
-                                                const { users: oldUsers, totalCount: oldCount, hasMore } = (existing as { getPostLikes: { users: any[]; totalCount: number; hasMore: boolean } }).getPostLikes;
-                                                
+                                                const {
+                                                    users: oldUsers,
+                                                    totalCount: oldCount,
+                                                    hasMore,
+                                                } = (
+                                                    existing as {
+                                                        getPostLikes: {
+                                                            users: any[];
+                                                            totalCount: number;
+                                                            hasMore: boolean;
+                                                        };
+                                                    }
+                                                ).getPostLikes;
+
                                                 cache.writeQuery({
                                                     query: GetPostLikesDocument,
                                                     variables: {
@@ -732,25 +947,37 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                     },
                                                     data: {
                                                         getPostLikes: {
-                                                            users: oldUsers.filter(user => user.id !== me.id),
-                                                            totalCount: Math.max(oldCount - 1, 0),
+                                                            users: oldUsers.filter(
+                                                                (user) =>
+                                                                    user.id !==
+                                                                    me.id
+                                                            ),
+                                                            totalCount:
+                                                                Math.max(
+                                                                    oldCount -
+                                                                        1,
+                                                                    0
+                                                                ),
                                                             hasMore,
                                                         },
                                                     },
                                                 });
 
-                                                cache.writeQuery<IsPostLikedByMeQuery>({
-                                                    query: IsPostLikedByMeDocument,
-                                                    data: {
-                                                        isPostLikedByMe: null,
-                                                    },
-                                                    variables: {
-                                                        itemId: post.itemId, 
-                                                        type: post.type,
+                                                cache.writeQuery<IsPostLikedByMeQuery>(
+                                                    {
+                                                        query: IsPostLikedByMeDocument,
+                                                        data: {
+                                                            isPostLikedByMe:
+                                                                null,
+                                                        },
+                                                        variables: {
+                                                            itemId: post.itemId,
+                                                            type: post.type,
+                                                        },
                                                     }
-                                                });
+                                                );
                                             }
-                                        }
+                                        },
                                     });
                                 } else {
                                     await likePost({
@@ -760,19 +987,36 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                             itemOpened: false,
                                             itemType: post.type,
                                         },
-                                        update: (cache, { data: likePostData }) => {
-                                            if (likePostData && likePostData.likePost) {  
-                                                const existing = cache.readQuery({
-                                                    query: GetPostLikesDocument,
-                                                    variables: {
-                                                        itemId: post.itemId,
-                                                        type: post.type,
-                                                        limit: 3,
-                                                    },
-                                                });
+                                        update: (
+                                            cache,
+                                            { data: likePostData }
+                                        ) => {
+                                            if (
+                                                likePostData &&
+                                                likePostData.likePost
+                                            ) {
+                                                const existing =
+                                                    cache.readQuery({
+                                                        query: GetPostLikesDocument,
+                                                        variables: {
+                                                            itemId: post.itemId,
+                                                            type: post.type,
+                                                            limit: 3,
+                                                        },
+                                                    });
 
-                                                const { totalCount: oldCount, hasMore } = (existing as { getPostLikes: { totalCount: number; hasMore: boolean } }).getPostLikes;
-                                                
+                                                const {
+                                                    totalCount: oldCount,
+                                                    hasMore,
+                                                } = (
+                                                    existing as {
+                                                        getPostLikes: {
+                                                            totalCount: number;
+                                                            hasMore: boolean;
+                                                        };
+                                                    }
+                                                ).getPostLikes;
+
                                                 cache.writeQuery({
                                                     query: GetPostLikesDocument,
                                                     variables: {
@@ -783,26 +1027,32 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                                     data: {
                                                         getPostLikes: {
                                                             users: [me],
-                                                            totalCount: oldCount + 1,
+                                                            totalCount:
+                                                                oldCount + 1,
                                                             hasMore,
                                                         },
                                                     },
                                                 });
 
-                                                cache.writeQuery<IsPostLikedByMeQuery>({
-                                                    query: IsPostLikedByMeDocument,
-                                                    data: {
-                                                        isPostLikedByMe: likePostData.likePost,
-                                                    },
-                                                    variables: {
-                                                        itemId: post.itemId, 
-                                                        type: post.type,
+                                                cache.writeQuery<IsPostLikedByMeQuery>(
+                                                    {
+                                                        query: IsPostLikedByMeDocument,
+                                                        data: {
+                                                            isPostLikedByMe:
+                                                                likePostData.likePost,
+                                                        },
+                                                        variables: {
+                                                            itemId: post.itemId,
+                                                            type: post.type,
+                                                        },
                                                     }
-                                                });
+                                                );
                                             }
-                                        }
+                                        },
                                     }).catch(() => {
-                                        addToast("An error occurred while trying to like this post.");
+                                        addToast(
+                                            "An error occurred while trying to like this post."
+                                        );
                                     });
                                 }
                             }
@@ -828,119 +1078,216 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                     >
                         <Options
                             key={`repost-options-${post.id}`}
-                            title="Repost options" 
-                            icon={<RepostIcon size={22} isActive={repost ? true : false} />}
-                            isOpen={activeOptions === -2}
-                            toggleOptions={() =>
-                                handleOptionsClick(-2)
+                            title="Repost options"
+                            icon={
+                                <RepostIcon
+                                    size={22}
+                                    isActive={repost ? true : false}
+                                />
                             }
+                            isOpen={activeOptions === -2}
+                            toggleOptions={() => handleOptionsClick(-2)}
                             size={32}
                             mirrored={true}
                             children={
                                 <>
                                     <OptionItem
                                         role="menuitem"
-                                        title={repost ? "Remove repost" : "Repost this post"}
-                                        aria-label={repost ? "Remove repost" : "Repost this post"}
+                                        title={
+                                            repost
+                                                ? "Remove repost"
+                                                : "Repost this post"
+                                        }
+                                        aria-label={
+                                            repost
+                                                ? "Remove repost"
+                                                : "Repost this post"
+                                        }
                                         onClick={async (e) => {
                                             e.stopPropagation();
-                            
+
                                             if (me) {
                                                 if (repost) {
                                                     await deleteRepost({
                                                         variables: {
                                                             postId: post.id,
                                                         },
-                                                        update: (cache, { data: deleteRepostData }) => {
-                                                            if (deleteRepostData && deleteRepostData.deleteRepost && repost) {
-                                                                const existing = cache.readQuery({
-                                                                    query: GetRepostsDocument,
-                                                                    variables: {
-                                                                        postId: post.id,
-                                                                        userId: me.id,
-                                                                        limit: 3,
-                                                                    },
-                                                                });
+                                                        update: (
+                                                            cache,
+                                                            {
+                                                                data: deleteRepostData,
+                                                            }
+                                                        ) => {
+                                                            if (
+                                                                deleteRepostData &&
+                                                                deleteRepostData.deleteRepost &&
+                                                                repost
+                                                            ) {
+                                                                const existing =
+                                                                    cache.readQuery(
+                                                                        {
+                                                                            query: GetRepostsDocument,
+                                                                            variables:
+                                                                                {
+                                                                                    postId: post.id,
+                                                                                    userId: me.id,
+                                                                                    limit: 3,
+                                                                                },
+                                                                        }
+                                                                    );
 
-                                                                const { reposts: oldReposts, totalCount: oldCount, hasMore } = (existing as { getReposts: { reposts: any[]; totalCount: number; hasMore: boolean } }).getReposts;
-
-                                                                cache.writeQuery({
-                                                                    query: GetRepostsDocument,
-                                                                    variables: {
-                                                                        postId: post.id,
-                                                                        userId: me.id,
-                                                                        limit: 3,
-                                                                    },
-                                                                    data: {
+                                                                const {
+                                                                    reposts:
+                                                                        oldReposts,
+                                                                    totalCount:
+                                                                        oldCount,
+                                                                    hasMore,
+                                                                } = (
+                                                                    existing as {
                                                                         getReposts: {
-                                                                            reposts: oldReposts.filter(r => r.id !== repost.id),
-                                                                            totalCount: Math.max(oldCount - 1, 0),
-                                                                            hasMore,
-                                                                        },
-                                                                    },
-                                                                });
-
-                                                                cache.writeQuery<IsRepostedByUserQuery>({
-                                                                    query: IsRepostedByUserDocument,
-                                                                    data: {
-                                                                        isRepostedByUser: null,
-                                                                    },
-                                                                    variables: {
-                                                                        postId: post.id, 
-                                                                        userId: me.id,
+                                                                            reposts: any[];
+                                                                            totalCount: number;
+                                                                            hasMore: boolean;
+                                                                        };
                                                                     }
-                                                                });
+                                                                ).getReposts;
+
+                                                                cache.writeQuery(
+                                                                    {
+                                                                        query: GetRepostsDocument,
+                                                                        variables:
+                                                                            {
+                                                                                postId: post.id,
+                                                                                userId: me.id,
+                                                                                limit: 3,
+                                                                            },
+                                                                        data: {
+                                                                            getReposts:
+                                                                                {
+                                                                                    reposts:
+                                                                                        oldReposts.filter(
+                                                                                            (
+                                                                                                r
+                                                                                            ) =>
+                                                                                                r.id !==
+                                                                                                repost.id
+                                                                                        ),
+                                                                                    totalCount:
+                                                                                        Math.max(
+                                                                                            oldCount -
+                                                                                                1,
+                                                                                            0
+                                                                                        ),
+                                                                                    hasMore,
+                                                                                },
+                                                                        },
+                                                                    }
+                                                                );
+
+                                                                cache.writeQuery<IsRepostedByUserQuery>(
+                                                                    {
+                                                                        query: IsRepostedByUserDocument,
+                                                                        data: {
+                                                                            isRepostedByUser:
+                                                                                null,
+                                                                        },
+                                                                        variables:
+                                                                            {
+                                                                                postId: post.id,
+                                                                                userId: me.id,
+                                                                            },
+                                                                    }
+                                                                );
                                                             }
                                                         },
                                                     });
                                                 } else {
                                                     await createRepost({
                                                         variables: {
-                                                            postId: post.itemId
+                                                            postId: post.itemId,
                                                         },
-                                                        update: (cache, { data: createRepostData }) => {
-                                                            if (createRepostData && createRepostData.createRepost && !repost) {
-                                                                const existing = cache.readQuery({
-                                                                    query: GetRepostsDocument,
-                                                                    variables: {
-                                                                        postId: post.id,
-                                                                        userId: me.id,
-                                                                        limit: 3,
-                                                                    },
-                                                                });
+                                                        update: (
+                                                            cache,
+                                                            {
+                                                                data: createRepostData,
+                                                            }
+                                                        ) => {
+                                                            if (
+                                                                createRepostData &&
+                                                                createRepostData.createRepost &&
+                                                                !repost
+                                                            ) {
+                                                                const existing =
+                                                                    cache.readQuery(
+                                                                        {
+                                                                            query: GetRepostsDocument,
+                                                                            variables:
+                                                                                {
+                                                                                    postId: post.id,
+                                                                                    userId: me.id,
+                                                                                    limit: 3,
+                                                                                },
+                                                                        }
+                                                                    );
 
-                                                                const { totalCount: oldCount, hasMore } = (existing as { getReposts: { totalCount: number; hasMore: boolean } }).getReposts;
-
-                                                                cache.writeQuery({
-                                                                    query: GetRepostsDocument,
-                                                                    variables: {
-                                                                        postId: post.id,
-                                                                        userId: me.id,
-                                                                        limit: 3,
-                                                                    },
-                                                                    data: {
+                                                                const {
+                                                                    totalCount:
+                                                                        oldCount,
+                                                                    hasMore,
+                                                                } = (
+                                                                    existing as {
                                                                         getReposts: {
-                                                                            reposts: [createRepostData.createRepost],
-                                                                            totalCount: oldCount + 1,
-                                                                            hasMore,
-                                                                        },
-                                                                    },
-                                                                });
-
-                                                                cache.writeQuery<IsRepostedByUserQuery>({
-                                                                    query: IsRepostedByUserDocument,
-                                                                    data: {
-                                                                        isRepostedByUser: createRepostData.createRepost,
-                                                                    },
-                                                                    variables: {
-                                                                        postId: post.id, 
-                                                                        userId: me.id,
+                                                                            totalCount: number;
+                                                                            hasMore: boolean;
+                                                                        };
                                                                     }
-                                                                });
+                                                                ).getReposts;
+
+                                                                cache.writeQuery(
+                                                                    {
+                                                                        query: GetRepostsDocument,
+                                                                        variables:
+                                                                            {
+                                                                                postId: post.id,
+                                                                                userId: me.id,
+                                                                                limit: 3,
+                                                                            },
+                                                                        data: {
+                                                                            getReposts:
+                                                                                {
+                                                                                    reposts:
+                                                                                        [
+                                                                                            createRepostData.createRepost,
+                                                                                        ],
+                                                                                    totalCount:
+                                                                                        oldCount +
+                                                                                        1,
+                                                                                    hasMore,
+                                                                                },
+                                                                        },
+                                                                    }
+                                                                );
+
+                                                                cache.writeQuery<IsRepostedByUserQuery>(
+                                                                    {
+                                                                        query: IsRepostedByUserDocument,
+                                                                        data: {
+                                                                            isRepostedByUser:
+                                                                                createRepostData.createRepost,
+                                                                        },
+                                                                        variables:
+                                                                            {
+                                                                                postId: post.id,
+                                                                                userId: me.id,
+                                                                            },
+                                                                    }
+                                                                );
                                                             }
                                                         },
                                                     }).catch(() => {
-                                                        addToast("An error occurred while trying to repost this post.");
+                                                        addToast(
+                                                            "An error occurred while trying to repost this post."
+                                                        );
                                                     });
                                                 }
                                             }
@@ -950,7 +1297,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                             <RepostIcon size={24} />
                                         </OptionBaseIcon>
                                         <OptionItemText>
-                                            {repost ? "Remove repost" : "Repost this post"}
+                                            {repost
+                                                ? "Remove repost"
+                                                : "Repost this post"}
                                         </OptionItemText>
                                     </OptionItem>
                                     <OptionItem
@@ -958,12 +1307,15 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                         title="Quote this post"
                                         aria-label="Quote this post"
                                         onClick={() => {
-                                            navigate(`/create_post/quote/post/${post.itemId}`, {
-                                                state: {
-                                                    backgroundLocation:
-                                                        location,
-                                                },
-                                            });
+                                            navigate(
+                                                `/create_post/quote/post/${post.itemId}`,
+                                                {
+                                                    state: {
+                                                        backgroundLocation:
+                                                            location,
+                                                    },
+                                                }
+                                            );
                                         }}
                                     >
                                         <OptionBaseIcon>
@@ -989,8 +1341,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
 
                             navigate(`/create_post/reply/post/${post.itemId}`, {
                                 state: {
-                                    backgroundLocation:
-                                        location,
+                                    backgroundLocation: location,
                                 },
                             });
                         }}
@@ -1020,8 +1371,16 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                     <PostActionsGroup>
                         <PostActionContainer
                             role="button"
-                            aria-label={bookmark ? "Remove the bookmark from this post" : "Bookmark this post"}
-                            title={bookmark ? "Remove the bookmark from this post" : "Bookmark this post"}
+                            aria-label={
+                                bookmark
+                                    ? "Remove the bookmark from this post"
+                                    : "Bookmark this post"
+                            }
+                            title={
+                                bookmark
+                                    ? "Remove the bookmark from this post"
+                                    : "Bookmark this post"
+                            }
                             onClick={async (e) => {
                                 e.stopPropagation();
 
@@ -1031,22 +1390,32 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                             itemId: post.itemId,
                                             type: post.type,
                                         },
-                                        update: (cache, { data: removeBookmarkData }) => {
-                                            if (removeBookmarkData && removeBookmarkData.removeBookmark) {
-                                                cache.writeQuery<IsBookmarkedQuery>({
-                                                    query: IsBookmarkedDocument,
-                                                    data: {
-                                                        isBookmarked: null,
-                                                    },
-                                                    variables: {
-                                                        itemId: post.id,
-                                                        type: post.type,
+                                        update: (
+                                            cache,
+                                            { data: removeBookmarkData }
+                                        ) => {
+                                            if (
+                                                removeBookmarkData &&
+                                                removeBookmarkData.removeBookmark
+                                            ) {
+                                                cache.writeQuery<IsBookmarkedQuery>(
+                                                    {
+                                                        query: IsBookmarkedDocument,
+                                                        data: {
+                                                            isBookmarked: null,
+                                                        },
+                                                        variables: {
+                                                            itemId: post.id,
+                                                            type: post.type,
+                                                        },
                                                     }
-                                                });
+                                                );
                                             }
-                                        }
+                                        },
                                     }).catch(() => {
-                                        addToast("An error occurred while trying to remove the bookmark from this post.");
+                                        addToast(
+                                            "An error occurred while trying to remove the bookmark from this post."
+                                        );
                                     });
                                 } else {
                                     await createBookmark({
@@ -1055,28 +1424,41 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                             type: post.type,
                                             origin,
                                         },
-                                        update: (cache, { data: createBookmarkData }) => {
-                                            if (createBookmarkData && createBookmarkData.createBookmark) {
-                                                cache.writeQuery<IsBookmarkedQuery>({
-                                                    query: IsBookmarkedDocument,
-                                                    data: {
-                                                        isBookmarked: createBookmarkData.createBookmark,
-                                                    },
-                                                    variables: {
-                                                        itemId: post.id,
-                                                        type: post.type,
+                                        update: (
+                                            cache,
+                                            { data: createBookmarkData }
+                                        ) => {
+                                            if (
+                                                createBookmarkData &&
+                                                createBookmarkData.createBookmark
+                                            ) {
+                                                cache.writeQuery<IsBookmarkedQuery>(
+                                                    {
+                                                        query: IsBookmarkedDocument,
+                                                        data: {
+                                                            isBookmarked:
+                                                                createBookmarkData.createBookmark,
+                                                        },
+                                                        variables: {
+                                                            itemId: post.id,
+                                                            type: post.type,
+                                                        },
                                                     }
-                                                });
+                                                );
                                             }
-                                        }
+                                        },
                                     }).catch(() => {
-                                        addToast("An error occurred while trying to bookmark this post.");
+                                        addToast(
+                                            "An error occurred while trying to bookmark this post."
+                                        );
                                     });
                                 }
                             }}
                         >
                             <ControlContainer size={32}>
-                                <BookmarkIcon isActive={bookmark ? true : false} />
+                                <BookmarkIcon
+                                    isActive={bookmark ? true : false}
+                                />
                             </ControlContainer>
                         </PostActionContainer>
                         <PostActionContainer
@@ -1089,12 +1471,10 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                         >
                             <Options
                                 key={`share-options-${post.id}`}
-                                title="Share options" 
+                                title="Share options"
                                 icon={<Share />}
                                 isOpen={activeOptions === -1}
-                                toggleOptions={() =>
-                                    handleOptionsClick(-1)
-                                }
+                                toggleOptions={() => handleOptionsClick(-1)}
                                 size={32}
                                 children={
                                     <>
@@ -1105,12 +1485,17 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
                                             onClick={() => {
                                                 const currentUrl = `${window.location.origin}/${post.author.username}/post/${post.itemId}`;
 
-                                                const response = copy(currentUrl);
+                                                const response =
+                                                    copy(currentUrl);
 
                                                 if (response) {
-                                                    addToast("Link copied to clipboard.");
+                                                    addToast(
+                                                        "Link copied to clipboard."
+                                                    );
                                                 } else {
-                                                    addToast("Failed to copy link.");
+                                                    addToast(
+                                                        "Failed to copy link."
+                                                    );
                                                 }
                                             }}
                                         >
@@ -1142,6 +1527,6 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({ post, showReplyi
             </PostContainer>
         </PostWrapper>
     );
-}
+};
 
 export default PostComponent;

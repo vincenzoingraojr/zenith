@@ -1088,7 +1088,7 @@ export const ModalFormContainer = styled.div`
         padding-left: 36px;
         padding-right: 36px;
     }
-`
+`;
 
 export const AuthForm = styled.div`
     display: block;
@@ -1270,7 +1270,8 @@ export const LinkOptionBaseItem = styled.div`
     justify-content: flex-start;
     width: 100%;
 
-    a, span {
+    a,
+    span {
         display: flex;
         align-items: center;
         color: ${({ theme }) => theme.color};
@@ -1279,12 +1280,16 @@ export const LinkOptionBaseItem = styled.div`
         width: 100%;
     }
 
-    a, a:hover, a:active {
+    a,
+    a:hover,
+    a:active {
         text-decoration: none;
     }
 
-    a:hover, span:hover,
-    a:active, span:focus {
+    a:hover,
+    span:hover,
+    a:active,
+    span:focus {
         background-color: ${({ theme }) => theme.overlayGrey};
     }
 `;

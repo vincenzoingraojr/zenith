@@ -13,7 +13,7 @@ const Exit: FunctionComponent<LinkIconProps> = ({ color, type }) => {
             setSize(24);
         }
     }, [type]);
-    
+
     return (
         <DynamicSizeIcon size={size} isFilled={color ? color : theme.color}>
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

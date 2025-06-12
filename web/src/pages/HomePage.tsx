@@ -5,7 +5,13 @@ import PageLayout from "../components/layouts/PageLayout";
 import PageContentLayout from "../components/layouts/sublayouts/PageContentLayout";
 import { Post, usePostFeedQuery } from "../generated/graphql";
 import LoadingComponent from "../components/utils/LoadingComponent";
-import { EndContainer, FeedLoading, FullWidthFeedContainer, NoElementsAlert, PageBlock } from "../styles/global";
+import {
+    EndContainer,
+    FeedLoading,
+    FullWidthFeedContainer,
+    NoElementsAlert,
+    PageBlock,
+} from "../styles/global";
 import ErrorOrItemNotFound from "../components/utils/ErrorOrItemNotFound";
 import PostComponent from "../components/layouts/items/post/PostComponent";
 import { ERROR_SOMETHING_WENT_WRONG } from "../utils/constants";
@@ -33,7 +39,7 @@ function HomePage() {
     const [isLoading, setIsLoading] = useState(false);
 
     const endContainerRef = useRef<HTMLDivElement | null>(null);
-    
+
     const loadMore = useCallback(() => {
         if (!data || (data && !data.postFeed.hasMore)) return;
 
@@ -44,7 +50,11 @@ function HomePage() {
         fetchMore({
             variables: { limit, cursor: lastPost.createdAt },
             updateQuery: (prev, { fetchMoreResult }) => {
-                if (!fetchMoreResult || fetchMoreResult.postFeed.posts.length === 0) return prev;
+                if (
+                    !fetchMoreResult ||
+                    fetchMoreResult.postFeed.posts.length === 0
+                )
+                    return prev;
 
                 return {
                     postFeed: {
@@ -52,14 +62,16 @@ function HomePage() {
                         posts: [...fetchMoreResult.postFeed.posts],
                         hasMore: fetchMoreResult.postFeed.hasMore,
                         totalCount: prev.postFeed.totalCount,
-                    }
+                    },
                 };
             },
-        }).then(() => {            
-            setIsLoading(false);
-        }).catch((error) => {
-            console.error(error);
-        });
+        })
+            .then(() => {
+                setIsLoading(false);
+            })
+            .catch((error) => {
+                console.error(error);
+            });
     }, [data, fetchMore]);
 
     useEffect(() => {
@@ -77,11 +89,11 @@ function HomePage() {
         }, options);
 
         const current = endContainerRef.current;
-    
+
         if (current) {
             observer.observe(current);
         }
-    
+
         return () => {
             if (current) {
                 observer.unobserve(current);
@@ -95,9 +107,9 @@ function HomePage() {
                 title="Home | Zenith"
                 description="Zenith, the everything app."
             />
-            <PageLayout 
+            <PageLayout
                 children={
-                    <PageContentLayout 
+                    <PageContentLayout
                         title="Home"
                         type="home"
                         children={
@@ -108,7 +120,7 @@ function HomePage() {
                                     buttonText="Create"
                                 />
                                 <FullWidthFeedContainer>
-                                    {(loading && !data) ? (
+                                    {loading && !data ? (
                                         <FeedLoading>
                                             <LoadingComponent />
                                         </FeedLoading>
@@ -116,18 +128,23 @@ function HomePage() {
                                         <>
                                             {data && !error ? (
                                                 <>
-                                                    {data.postFeed.totalCount ===
-                                                    0 ? (
+                                                    {data.postFeed
+                                                        .totalCount === 0 ? (
                                                         <NoElementsAlert>
-                                                            No one has published a post yet.
+                                                            No one has published
+                                                            a post yet.
                                                         </NoElementsAlert>
                                                     ) : (
                                                         <>
                                                             {data.postFeed.posts.map(
                                                                 (post) => (
-                                                                    <PostComponent 
-                                                                        key={post.itemId}
-                                                                        post={post as Post}
+                                                                    <PostComponent
+                                                                        key={
+                                                                            post.itemId
+                                                                        }
+                                                                        post={
+                                                                            post as Post
+                                                                        }
                                                                         origin="post-feed"
                                                                     />
                                                                 )
@@ -137,7 +154,11 @@ function HomePage() {
                                                                     <LoadingComponent />
                                                                 </FeedLoading>
                                                             ) : (
-                                                                <PageBlock ref={endContainerRef}>
+                                                                <PageBlock
+                                                                    ref={
+                                                                        endContainerRef
+                                                                    }
+                                                                >
                                                                     <EndContainer>
                                                                         ⋅
                                                                     </EndContainer>
@@ -149,8 +170,12 @@ function HomePage() {
                                             ) : (
                                                 <ErrorOrItemNotFound
                                                     isError={true}
-                                                    title={ERROR_SOMETHING_WENT_WRONG.title}
-                                                    content={ERROR_SOMETHING_WENT_WRONG.message}
+                                                    title={
+                                                        ERROR_SOMETHING_WENT_WRONG.title
+                                                    }
+                                                    content={
+                                                        ERROR_SOMETHING_WENT_WRONG.message
+                                                    }
                                                 />
                                             )}
                                         </>

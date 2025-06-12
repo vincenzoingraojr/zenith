@@ -5,16 +5,16 @@ import {
     useState,
     ReactNode,
 } from "react";
-  
+
 interface ThemeContextType {
     isDarkMode: boolean;
     toggleTheme: () => void;
 }
-  
+
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-  
+
 const STORAGE_KEY = "isDarkMode";
-  
+
 export const ThemeProviderWrapper = ({ children }: { children: ReactNode }) => {
     const getInitialTheme = (): boolean => {
         const stored = localStorage.getItem(STORAGE_KEY);
@@ -43,9 +43,9 @@ export const ThemeProviderWrapper = ({ children }: { children: ReactNode }) => {
 
 export const useThemeContext = (): ThemeContextType => {
     const context = useContext(ThemeContext);
-    
-    if (!context) 
+
+    if (!context)
         throw new Error("useTheme must be used inside ThemeProviderWrapper");
-    
+
     return context;
 };

@@ -10,11 +10,11 @@ function Payments() {
 
     return (
         <>
-            <Head 
+            <Head
                 title="Payments | Zenith"
                 description="In this page you can create and manage your payments."
             />
-            <PageLayout 
+            <PageLayout
                 children={
                     <PageContentLayout
                         title="Payments"

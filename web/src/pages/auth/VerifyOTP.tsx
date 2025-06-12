@@ -1,9 +1,25 @@
 import { Form, Formik } from "formik";
 import Head from "../../components/Head";
-import { AuthFormContent, AuthForm, PageBlock, StandardButton, Status, ModalFormContainer, PageTextMB24, SmallButton, PageText } from "../../styles/global";
+import {
+    AuthFormContent,
+    AuthForm,
+    PageBlock,
+    StandardButton,
+    Status,
+    ModalFormContainer,
+    PageTextMB24,
+    SmallButton,
+    PageText,
+} from "../../styles/global";
 import InputField from "../../components/input/InputField";
 import { useLocation } from "react-router-dom";
-import { MeDocument, MeQuery, User, useResendOtpMutation, useVerifyOtpMutation } from "../../generated/graphql";
+import {
+    MeDocument,
+    MeQuery,
+    User,
+    useResendOtpMutation,
+    useVerifyOtpMutation,
+} from "../../generated/graphql";
 import { BAD_REQUEST_MESSAGE } from "../../utils/constants";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
@@ -75,7 +91,8 @@ function VerifyOTP() {
             <ModalFormContainer>
                 <AuthForm>
                     <PageTextMB24>
-                        You've just received in your inbox the OTP code to verify this operation.
+                        You've just received in your inbox the OTP code to
+                        verify this operation.
                     </PageTextMB24>
                     <Formik
                         initialValues={{
@@ -89,19 +106,19 @@ function VerifyOTP() {
                             deviceLocation: location.state.deviceLocation || "",
                             country: location.state.country || "",
                         }}
-                        onSubmit={async (
-                            values,
-                            { setStatus }
-                        ) => {
+                        onSubmit={async (values, { setStatus }) => {
                             const response = await verifyOTP({
                                 variables: values,
                                 update: (store, { data }) => {
-                                    if (data && data.verifyOTP.user && data.verifyOTP.ok) {
+                                    if (
+                                        data &&
+                                        data.verifyOTP.user &&
+                                        data.verifyOTP.ok
+                                    ) {
                                         store.writeQuery<MeQuery>({
                                             query: MeDocument,
                                             data: {
-                                                me: data.verifyOTP
-                                                    .user as User,
+                                                me: data.verifyOTP.user as User,
                                             },
                                         });
                                     }
@@ -109,13 +126,21 @@ function VerifyOTP() {
                             });
 
                             setStatus(null);
-                            
+
                             if (response.data) {
                                 setStatus(response.data.verifyOTP.status);
 
-                                if (response.data.verifyOTP.user && response.data.verifyOTP.ok) {
-                                    if (response.data.verifyOTP.accessToken && location.state.isLogin) {
-                                        logInAndSetToken(response.data.verifyOTP.accessToken);
+                                if (
+                                    response.data.verifyOTP.user &&
+                                    response.data.verifyOTP.ok
+                                ) {
+                                    if (
+                                        response.data.verifyOTP.accessToken &&
+                                        location.state.isLogin
+                                    ) {
+                                        logInAndSetToken(
+                                            response.data.verifyOTP.accessToken
+                                        );
                                     }
                                 }
                             } else {
@@ -125,9 +150,7 @@ function VerifyOTP() {
                     >
                         {({ status }) => (
                             <Form>
-                                {status && (
-                                    <Status>{status}</Status>
-                                )}
+                                {status && <Status>{status}</Status>}
                                 <AuthFormContent>
                                     <InputField
                                         field="otp"
@@ -172,7 +195,8 @@ function VerifyOTP() {
                         </ResendOTPButton>
                         {(seconds > 0 || minutes > 0) && (
                             <PageText>
-                                {minutes < 10 ? `0${minutes}` : minutes}:{seconds < 10 ? `0${seconds}` : seconds}
+                                {minutes < 10 ? `0${minutes}` : minutes}:
+                                {seconds < 10 ? `0${seconds}` : seconds}
                             </PageText>
                         )}
                     </ResendOTPContainer>

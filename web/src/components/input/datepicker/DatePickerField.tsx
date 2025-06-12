@@ -22,7 +22,7 @@ const DatePickerField: FunctionComponent<DatePickerFieldProps> = ({
 }) => {
     return (
         <CustomFieldWrapper>
-            {(errors && errors[field]) && (
+            {errors && errors[field] && (
                 <CustomFieldError>{errors[field]}</CustomFieldError>
             )}
             <CustomFieldContainer>

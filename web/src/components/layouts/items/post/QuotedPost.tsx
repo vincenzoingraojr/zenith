@@ -3,11 +3,22 @@ import { Post } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { PageBlock, PageText } from "../../../../styles/global";
-import { AuthorFullNameContainer, AuthorImageContainer, AuthorInfo, AuthorUsername, PostDate, PostMediaItem, PostRightContainer } from "./PostComponent";
+import {
+    AuthorFullNameContainer,
+    AuthorImageContainer,
+    AuthorInfo,
+    AuthorUsername,
+    PostDate,
+    PostMediaItem,
+    PostRightContainer,
+} from "./PostComponent";
 import VerificationBadge from "../../../utils/VerificationBadge";
 import profilePicture from "../../../../images/profile-picture.png";
 import Pen from "../../../icons/Pen";
-import { getDateToLocaleString, processDate } from "../../../../utils/processDate";
+import {
+    getDateToLocaleString,
+    processDate,
+} from "../../../../utils/processDate";
 import { COLORS } from "../../../../styles/colors";
 import AffiliationIcon from "../../../utils/AffiliationIcon";
 
@@ -30,7 +41,8 @@ const QuotedPostContainer = styled.div`
     border-radius: inherit;
     cursor: pointer;
 
-    &:hover, &:focus {
+    &:hover,
+    &:focus {
         background-color: ${({ theme }) => theme.overlayGrey};
     }
 `;
@@ -85,7 +97,8 @@ const QuotedPostMediaContainer = styled.div`
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
 
-    &:has(div:nth-child(3):last-child) div:nth-child(3), &:has(div:nth-child(1):only-child) div:nth-child(1) {
+    &:has(div:nth-child(3):last-child) div:nth-child(3),
+    &:has(div:nth-child(1):only-child) div:nth-child(1) {
         grid-column: span 2;
     }
 `;
@@ -93,9 +106,15 @@ const QuotedPostMediaContainer = styled.div`
 const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin }) => {
     const navigate = useNavigate();
 
-    const date = useMemo(() => processDate(post.createdAt, true, true), [post.createdAt]);
-    
-    const createdAt = useMemo(() => getDateToLocaleString(post.createdAt), [post.createdAt]);
+    const date = useMemo(
+        () => processDate(post.createdAt, true, true),
+        [post.createdAt]
+    );
+
+    const createdAt = useMemo(
+        () => getDateToLocaleString(post.createdAt),
+        [post.createdAt]
+    );
 
     return (
         <QuotedPostWrapper>
@@ -103,7 +122,7 @@ const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin }) => {
                 role="link"
                 onClick={(e) => {
                     e.stopPropagation();
-                    
+
                     if (origin === "feed") {
                         navigate(
                             `/${post.author.username}/post/${post.itemId}`
@@ -116,7 +135,8 @@ const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin }) => {
                         <AuthorImageContainer type={post.author.type}>
                             <img
                                 src={
-                                    post.author.profile.profilePicture.length > 0
+                                    post.author.profile.profilePicture.length >
+                                    0
                                         ? post.author.profile.profilePicture
                                         : profilePicture
                                 }
@@ -129,14 +149,33 @@ const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin }) => {
                                 <QuotedAuthorFullName>
                                     {post.author.name}
                                 </QuotedAuthorFullName>
-                                {post.author.verification.verified === "VERIFIED" && (
+                                {post.author.verification.verified ===
+                                    "VERIFIED" && (
                                     <VerificationBadge
                                         type={post.author.type}
-                                        verifiedSince={post.author.verification.verifiedSince ? new Date(parseInt(post.author.verification.verifiedSince)).toLocaleString("en-us", { month: "long", year: "numeric" }) : undefined}
+                                        verifiedSince={
+                                            post.author.verification
+                                                .verifiedSince
+                                                ? new Date(
+                                                      parseInt(
+                                                          post.author
+                                                              .verification
+                                                              .verifiedSince
+                                                      )
+                                                  ).toLocaleString("en-us", {
+                                                      month: "long",
+                                                      year: "numeric",
+                                                  })
+                                                : undefined
+                                        }
                                         size={18}
                                     />
                                 )}
-                                <AffiliationIcon userId={post.authorId} size={18} />
+                                <AffiliationIcon
+                                    userId={post.authorId}
+                                    size={18}
+                                    noAction={true}
+                                />
                             </AuthorFullNameContainer>
                             <AuthorUsername>
                                 @{post.author.username}
@@ -145,11 +184,7 @@ const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin }) => {
                     </QuotedPostAuthorContainer>
                     <PostRightContainer>
                         <PostDate title={createdAt} aria-label={createdAt}>
-                            <time
-                                dateTime={createdAt}
-                            >
-                                {date}
-                            </time>
+                            <time dateTime={createdAt}>{date}</time>
                         </PostDate>
                         {post.isEdited && (
                             <PageBlock
@@ -174,7 +209,10 @@ const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin }) => {
                                         <img src={media.src} alt={media.alt} />
                                     ) : (
                                         <video controls>
-                                            <source src={media.src} type={media.type} />
+                                            <source
+                                                src={media.src}
+                                                type={media.type}
+                                            />
                                         </video>
                                     )}
                                 </PostMediaItem>
@@ -185,6 +223,6 @@ const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin }) => {
             </QuotedPostContainer>
         </QuotedPostWrapper>
     );
-}
+};
 
 export default QuotedPost;

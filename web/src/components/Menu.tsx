@@ -2,7 +2,13 @@ import { FunctionComponent, useState } from "react";
 import styled from "styled-components";
 import { mediaQuery } from "../utils/mediaQuery";
 import { devices } from "../styles/devices";
-import { ControlContainer, CustomSpanOption, LinkOptionBaseItem, OptionBaseIcon, PageText } from "../styles/global";
+import {
+    ControlContainer,
+    CustomSpanOption,
+    LinkOptionBaseItem,
+    OptionBaseIcon,
+    PageText,
+} from "../styles/global";
 import Close from "./icons/Close";
 import { useMeData } from "../utils/userQueries";
 import profilePicture from "../images/profile-picture.png";
@@ -151,13 +157,16 @@ const ProfileMenuContainer = styled.div`
     }
 `;
 
-const ProfileMenuImageContainer = styled.div.attrs((props: { type: string }) => props)`
+const ProfileMenuImageContainer = styled.div.attrs(
+    (props: { type: string }) => props
+)`
     display: flex;
     align-items: center;
     justify-content: center;
     width: 42px;
     height: 42px;
-    border-radius: ${(props) => (props.type === USER_TYPES.ORGANIZATION ? "6px" : "21px")};
+    border-radius: ${(props) =>
+        props.type === USER_TYPES.ORGANIZATION ? "6px" : "21px"};
 
     img {
         width: inherit;
@@ -222,7 +231,8 @@ const MenuNav = styled.nav`
 const MenuNavEntry = styled(LinkOptionBaseItem)`
     height: 60px;
 
-    a, span {
+    a,
+    span {
         font-weight: 500;
         gap: 16px;
         padding-left: 16px;
@@ -241,7 +251,7 @@ const MenuNavEntryText = styled(PageText).attrs(
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: ${props => props.color ? props.color : "inherit"};
+    color: ${(props) => (props.color ? props.color : "inherit")};
 `;
 
 const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
@@ -291,9 +301,11 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                 <ProfileMenuImageContainer type={me.type}>
                                     <img
                                         src={
-                                            (loading || me.profile.profilePicture.length === 0) ? 
-                                                profilePicture : 
-                                                me.profile.profilePicture
+                                            loading ||
+                                            me.profile.profilePicture.length ===
+                                                0
+                                                ? profilePicture
+                                                : me.profile.profilePicture
                                         }
                                         title={me.name}
                                         alt={me.name}
@@ -304,14 +316,35 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                         <ProfileMenuInfoFullName>
                                             {me.name}
                                         </ProfileMenuInfoFullName>
-                                        {me.verification.verified === "VERIFIED" && (
+                                        {me.verification.verified ===
+                                            "VERIFIED" && (
                                             <VerificationBadge
                                                 type={me.type}
-                                                verifiedSince={me.verification.verifiedSince ? new Date(parseInt(me.verification.verifiedSince)).toLocaleString("en-us", { month: "long", year: "numeric" }) : undefined}
+                                                verifiedSince={
+                                                    me.verification
+                                                        .verifiedSince
+                                                        ? new Date(
+                                                              parseInt(
+                                                                  me
+                                                                      .verification
+                                                                      .verifiedSince
+                                                              )
+                                                          ).toLocaleString(
+                                                              "en-us",
+                                                              {
+                                                                  month: "long",
+                                                                  year: "numeric",
+                                                              }
+                                                          )
+                                                        : undefined
+                                                }
                                                 size={22}
                                             />
                                         )}
-                                        <AffiliationIcon userId={me.id} size={22} />
+                                        <AffiliationIcon
+                                            userId={me.id}
+                                            size={22}
+                                        />
                                     </ProfileMenuInfoFullNameContainer>
                                     <ProfileMenuInfoUsername>
                                         @{me.username}
@@ -319,20 +352,25 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                 </ProfileMenuInfo>
                             </Link>
                         </ProfileMenuContainer>
-                        <MenuNav
-                            role="menu"
-                        >
+                        <MenuNav role="menu">
                             <MenuNavEntry role="menuitem">
                                 <CustomSpanOption
                                     role="button"
-                                    title={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
-                                    aria-label={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
+                                    title={`Switch to ${
+                                        isDarkMode ? "light" : "dark"
+                                    } mode`}
+                                    aria-label={`Switch to ${
+                                        isDarkMode ? "light" : "dark"
+                                    } mode`}
                                     onClick={() => toggleTheme()}
                                 >
                                     <OptionBaseIcon>
                                         <ThemeIcon type="nav" />
                                     </OptionBaseIcon>
-                                    <MenuNavEntryText>Switch to {isDarkMode ? "light" : "dark"}</MenuNavEntryText>
+                                    <MenuNavEntryText>
+                                        Switch to{" "}
+                                        {isDarkMode ? "light" : "dark"}
+                                    </MenuNavEntryText>
                                 </CustomSpanOption>
                             </MenuNavEntry>
                             <MenuNavEntry role="menuitem">
@@ -356,7 +394,9 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                     <OptionBaseIcon>
                                         <Settings type="nav" />
                                     </OptionBaseIcon>
-                                    <MenuNavEntryText>Settings</MenuNavEntryText>
+                                    <MenuNavEntryText>
+                                        Settings
+                                    </MenuNavEntryText>
                                 </Link>
                             </MenuNavEntry>
                             <MenuNavEntry role="menuitem">
@@ -379,6 +419,6 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
             </MenuContainer>
         </MenuWrapper>
     );
-}
+};
 
 export default Menu;

@@ -17,7 +17,9 @@ const CreatePostContentContaiener = styled(PageBlock)`
 function CreatePost() {
     const params = useParams();
 
-    const { post, loading, error } = useFindPost(params.itemIdOrLocation as string);
+    const { post, loading, error } = useFindPost(
+        params.itemIdOrLocation as string
+    );
 
     return (
         <LumenModalContainer>
@@ -43,18 +45,45 @@ function CreatePost() {
                                     )}
                                     {params.operation === "reply" && (
                                         <PageText>
-                                            Replying to <Link to={`/${post.author.username}`} title={post.author.name} aria-label={post.author.name}>@{post.author.username}</Link>
+                                            Replying to{" "}
+                                            <Link
+                                                to={`/${post.author.username}`}
+                                                title={post.author.name}
+                                                aria-label={post.author.name}
+                                            >
+                                                @{post.author.username}
+                                            </Link>
                                         </PageText>
                                     )}
                                 </CreatePostContentContaiener>
                             )}
-                            <LumenInput 
-                                type={params.operation === "reply" ? "comment" : "post"}
+                            <LumenInput
+                                type={
+                                    params.operation === "reply"
+                                        ? "comment"
+                                        : "post"
+                                }
                                 placeholder="What's on your mind?"
-                                buttonText={params.operation === "reply" ? "Reply" : "Post"}
-                                isReplyToId={(params.operation === "reply" && post) ? post.id : undefined}
-                                isReplyToType={params.operation === "reply" ? params.itemType : undefined}
-                                quotedPostId={(params.operation === "quote" && post) ? post.id : undefined}
+                                buttonText={
+                                    params.operation === "reply"
+                                        ? "Reply"
+                                        : "Post"
+                                }
+                                isReplyToId={
+                                    params.operation === "reply" && post
+                                        ? post.id
+                                        : undefined
+                                }
+                                isReplyToType={
+                                    params.operation === "reply"
+                                        ? params.itemType
+                                        : undefined
+                                }
+                                quotedPostId={
+                                    params.operation === "quote" && post
+                                        ? post.id
+                                        : undefined
+                                }
                                 closingOnSubmit={true}
                             />
                         </>

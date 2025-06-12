@@ -3,12 +3,22 @@ import styled from "styled-components";
 import { useMeData } from "../../../utils/userQueries";
 import { Link, useLocation } from "react-router-dom";
 import profilePicture from "../../../images/profile-picture.png";
-import { Button, ControlContainer, PageBlock, PageText } from "../../../styles/global";
+import {
+    Button,
+    ControlContainer,
+    PageBlock,
+    PageText,
+} from "../../../styles/global";
 import { COLORS } from "../../../styles/colors";
 import { mediaQuery } from "../../../utils/mediaQuery";
 import { devices } from "../../../styles/devices";
 import { MentionNode } from "./mentions/MentionNode";
-import { $createParagraphNode, $createTextNode, $getRoot, CLEAR_EDITOR_COMMAND } from "lexical";
+import {
+    $createParagraphNode,
+    $createTextNode,
+    $getRoot,
+    CLEAR_EDITOR_COMMAND,
+} from "lexical";
 import { AutoLinkPlugin } from "@lexical/react/LexicalAutoLinkPlugin";
 import { AutoLinkNode } from "@lexical/link";
 import { $createHashtagNode, HashtagNode } from "@lexical/hashtag";
@@ -19,7 +29,11 @@ import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import Image from "../../icons/Image";
-import { EMPTY_CONTENT_REGEXP, MATCHERS, USER_TYPES } from "../../../utils/constants";
+import {
+    EMPTY_CONTENT_REGEXP,
+    MATCHERS,
+    USER_TYPES,
+} from "../../../utils/constants";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 import MentionsPlugin from "./mentions/MentionsPlugin";
@@ -143,7 +157,8 @@ const ProfileImage = styled.div.attrs((props: { type: string }) => props)`
     justify-content: center;
     width: 48px;
     height: 48px;
-    border-radius: ${(props) => (props.type === USER_TYPES.ORGANIZATION ? "6px" : "24px")};
+    border-radius: ${(props) =>
+        props.type === USER_TYPES.ORGANIZATION ? "6px" : "24px"};
 
     img {
         width: inherit;
@@ -194,7 +209,8 @@ const MediaFileContainer = styled.div`
     height: auto;
     border-radius: 12px 12px 0px 0px;
 
-    img, video {
+    img,
+    video {
         display: block;
         width: inherit;
         height: inherit;
@@ -261,7 +277,15 @@ const ShouldClearEditorPlugin: FunctionComponent<ShouldClearEditorProps> = ({
     return null;
 };
 
-const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form, placeholder, status, values, buttonText, progress }) => {
+const EditorComponent: FunctionComponent<EditorComponentProps> = ({
+    field,
+    form,
+    placeholder,
+    status,
+    values,
+    buttonText,
+    progress,
+}) => {
     const { me } = useMeData();
     const [content, setContent] = useState(values.content || "");
     const [isEditorEmpty, setIsEditorEmpty] = useState(false);
@@ -282,7 +306,7 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
 
             if (values.content.length > 0) {
                 const parts = values.content.split("\n");
-                
+
                 for (const part of parts) {
                     const p = $createParagraphNode();
                     p.append($createTextNode(part));
@@ -294,17 +318,18 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
                 location &&
                 location.state &&
                 location.state.backgroundLocation
-            ) { 
+            ) {
                 const p = $createParagraphNode();
 
-                if (location.state.backgroundLocation.search && location.state.backgroundLocation.search.length > 0) {
+                if (
+                    location.state.backgroundLocation.search &&
+                    location.state.backgroundLocation.search.length > 0
+                ) {
                     const searchParams = new URLSearchParams(
                         location.state.backgroundLocation.search
                     );
 
-                    if (
-                        searchParams.get("q")?.startsWith("#")
-                    ) {
+                    if (searchParams.get("q")?.startsWith("#")) {
                         p.append(
                             $createHashtagNode(`${searchParams.get("q")}`)
                         );
@@ -339,7 +364,11 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
     }, [media]);
 
     useEffect(() => {
-        if (media.filter(item => item.status === "uploading").length === 0 && uploadPostMediaRef && uploadPostMediaRef.current) {
+        if (
+            media.filter((item) => item.status === "uploading").length === 0 &&
+            uploadPostMediaRef &&
+            uploadPostMediaRef.current
+        ) {
             uploadPostMediaRef.current.value = "";
         }
     }, [media]);
@@ -355,7 +384,7 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
                     <ProfileImage type={me?.type}>
                         <img
                             src={
-                                (me && me.profile.profilePicture.length > 0)
+                                me && me.profile.profilePicture.length > 0
                                     ? me.profile.profilePicture
                                     : profilePicture
                             }
@@ -379,14 +408,13 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
                         />
                         <OnChangePlugin
                             onChange={(editorState) => {
-                                const editorContent = editorState.read(() => $getRoot().getTextContent());
-                                
+                                const editorContent = editorState.read(() =>
+                                    $getRoot().getTextContent()
+                                );
+
                                 setContent(editorContent);
 
-                                form.setFieldValue(
-                                    field.name,
-                                    editorContent,
-                                );
+                                form.setFieldValue(field.name, editorContent);
                             }}
                         />
                         <HistoryPlugin />
@@ -402,110 +430,175 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
                     </EditorContainer>
                     <MentionsPlugin />
                 </LexicalComposer>
-                {media.filter((mediaItem) => mediaItem.status !== "to_be_deleted").length > 0 && (
+                {media.filter(
+                    (mediaItem) => mediaItem.status !== "to_be_deleted"
+                ).length > 0 && (
                     <MediaItemsList>
-                        {media.filter((mediaItem) => mediaItem.status !== "to_be_deleted").map((mediaItem) => (
-                            <MediaContainer key={mediaItem.id}>
-                                <MediaMainContainer>
-                                    <MediaFileContainer>
-                                        {mediaItem.file ? (
-                                            <>
-                                                {mediaItem.file.type.includes("image") ? (
-                                                    <img
-                                                        src={URL.createObjectURL(mediaItem.file)}
-                                                        alt={mediaItem.alt}
-                                                    />
-                                                ) : (
-                                                    <video controls>
-                                                        <source
-                                                            src={URL.createObjectURL(mediaItem.file)}
-                                                            type={mediaItem.file.type}
+                        {media
+                            .filter(
+                                (mediaItem) =>
+                                    mediaItem.status !== "to_be_deleted"
+                            )
+                            .map((mediaItem) => (
+                                <MediaContainer key={mediaItem.id}>
+                                    <MediaMainContainer>
+                                        <MediaFileContainer>
+                                            {mediaItem.file ? (
+                                                <>
+                                                    {mediaItem.file.type.includes(
+                                                        "image"
+                                                    ) ? (
+                                                        <img
+                                                            src={URL.createObjectURL(
+                                                                mediaItem.file
+                                                            )}
+                                                            alt={mediaItem.alt}
                                                         />
-                                                    </video>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <>
-                                                {mediaItem.src && mediaItem.src.length > 0 && (
-                                                    <>
-                                                        {mediaItem.type.includes("image") ? (
-                                                            <img
-                                                                src={mediaItem.src}
-                                                                alt={mediaItem.alt}
+                                                    ) : (
+                                                        <video controls>
+                                                            <source
+                                                                src={URL.createObjectURL(
+                                                                    mediaItem.file
+                                                                )}
+                                                                type={
+                                                                    mediaItem
+                                                                        .file
+                                                                        .type
+                                                                }
                                                             />
-                                                        ) : (
-                                                            <video controls>
-                                                                <source src={mediaItem.src} />
-                                                            </video>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </>
-                                        )}
-                                    </MediaFileContainer>
-                                    <MediaFileInfo>
-                                        <MediaAltContainer>
-                                            <Field
-                                                as="input"
-                                                aria-label="Description"
-                                                placeholder="Description"
-                                                autoCapitalize="none"
-                                                spellCheck="false"
-                                                autoComplete="off"
-                                                autoCorrect="off"
-                                                name={`mediaItemAlt[${mediaItem.id}]`}
-                                                type="text"
-                                                value={mediaItem.alt}
-                                                onChange={(
-                                                    e: React.ChangeEvent<HTMLInputElement>
-                                                ) => {
-                                                    setMedia((prevArray) =>
-                                                        prevArray.map((item) =>
-                                                            item.id === mediaItem.id
-                                                            ? { ...item, alt: e.target.value }
-                                                            : item
-                                                        )
-                                                    );
-                                                }}
-                                            />
-                                        </MediaAltContainer>
-                                        <MediaSmallInfo>
-                                            {mediaItem.status === "uploaded" ? (
-                                                <>Already uploaded</>
+                                                        </video>
+                                                    )}
+                                                </>
                                             ) : (
                                                 <>
-                                                    Size: {getExactSize(mediaItem.file?.size)}
-                                                    {" | Type: "}
-                                                    {mediaItem.file?.type}{(progress.find(item => item.id === mediaItem.id) && mediaItem.status === "uploading") && ` | Uploading: ${progress.find(item => item.id === mediaItem.id)?.progress}%`}
+                                                    {mediaItem.src &&
+                                                        mediaItem.src.length >
+                                                            0 && (
+                                                            <>
+                                                                {mediaItem.type.includes(
+                                                                    "image"
+                                                                ) ? (
+                                                                    <img
+                                                                        src={
+                                                                            mediaItem.src
+                                                                        }
+                                                                        alt={
+                                                                            mediaItem.alt
+                                                                        }
+                                                                    />
+                                                                ) : (
+                                                                    <video
+                                                                        controls
+                                                                    >
+                                                                        <source
+                                                                            src={
+                                                                                mediaItem.src
+                                                                            }
+                                                                        />
+                                                                    </video>
+                                                                )}
+                                                            </>
+                                                        )}
                                                 </>
                                             )}
-                                        </MediaSmallInfo>
-                                    </MediaFileInfo>
-                                </MediaMainContainer>
-                                <DeleteMediaButton
-                                    role="button"
-                                    title="Delete media item"
-                                    aria-label="Delete media item"
-                                    onClick={() => {
-                                        if (mediaItem.status === "uploaded") {
-                                            setMedia((prevArray) =>
-                                                prevArray.map((item) =>
-                                                    item.id === mediaItem.id
-                                                    ? { ...item, status: "to_be_deleted" }
-                                                    : item
-                                                )
-                                            );
-                                        } else {
-                                            setMedia((prevArray) =>
-                                                prevArray.filter((item) => item.id !== mediaItem.id)
-                                            );
-                                        }
-                                    }}
-                                >
-                                    <Close type="small" />
-                                </DeleteMediaButton>
-                            </MediaContainer>
-                        ))}
+                                        </MediaFileContainer>
+                                        <MediaFileInfo>
+                                            <MediaAltContainer>
+                                                <Field
+                                                    as="input"
+                                                    aria-label="Description"
+                                                    placeholder="Description"
+                                                    autoCapitalize="none"
+                                                    spellCheck="false"
+                                                    autoComplete="off"
+                                                    autoCorrect="off"
+                                                    name={`mediaItemAlt[${mediaItem.id}]`}
+                                                    type="text"
+                                                    value={mediaItem.alt}
+                                                    onChange={(
+                                                        e: React.ChangeEvent<HTMLInputElement>
+                                                    ) => {
+                                                        setMedia((prevArray) =>
+                                                            prevArray.map(
+                                                                (item) =>
+                                                                    item.id ===
+                                                                    mediaItem.id
+                                                                        ? {
+                                                                              ...item,
+                                                                              alt: e
+                                                                                  .target
+                                                                                  .value,
+                                                                          }
+                                                                        : item
+                                                            )
+                                                        );
+                                                    }}
+                                                />
+                                            </MediaAltContainer>
+                                            <MediaSmallInfo>
+                                                {mediaItem.status ===
+                                                "uploaded" ? (
+                                                    <>Already uploaded</>
+                                                ) : (
+                                                    <>
+                                                        Size:{" "}
+                                                        {getExactSize(
+                                                            mediaItem.file?.size
+                                                        )}
+                                                        {" | Type: "}
+                                                        {mediaItem.file?.type}
+                                                        {progress.find(
+                                                            (item) =>
+                                                                item.id ===
+                                                                mediaItem.id
+                                                        ) &&
+                                                            mediaItem.status ===
+                                                                "uploading" &&
+                                                            ` | Uploading: ${
+                                                                progress.find(
+                                                                    (item) =>
+                                                                        item.id ===
+                                                                        mediaItem.id
+                                                                )?.progress
+                                                            }%`}
+                                                    </>
+                                                )}
+                                            </MediaSmallInfo>
+                                        </MediaFileInfo>
+                                    </MediaMainContainer>
+                                    <DeleteMediaButton
+                                        role="button"
+                                        title="Delete media item"
+                                        aria-label="Delete media item"
+                                        onClick={() => {
+                                            if (
+                                                mediaItem.status === "uploaded"
+                                            ) {
+                                                setMedia((prevArray) =>
+                                                    prevArray.map((item) =>
+                                                        item.id === mediaItem.id
+                                                            ? {
+                                                                  ...item,
+                                                                  status: "to_be_deleted",
+                                                              }
+                                                            : item
+                                                    )
+                                                );
+                                            } else {
+                                                setMedia((prevArray) =>
+                                                    prevArray.filter(
+                                                        (item) =>
+                                                            item.id !==
+                                                            mediaItem.id
+                                                    )
+                                                );
+                                            }
+                                        }}
+                                    >
+                                        <Close type="small" />
+                                    </DeleteMediaButton>
+                                </MediaContainer>
+                            ))}
                     </MediaItemsList>
                 )}
                 <EditorCommandsContainer>
@@ -530,19 +623,34 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
                                     let mediaArrayToUpload: File[] = Array.from(
                                         event.target.files!
                                     );
-                                    
-                                    if ((media.length + mediaArrayToUpload.length) > 4) {
-                                        addToast("You can only upload up to 4 files.");
+
+                                    if (
+                                        media.length +
+                                            mediaArrayToUpload.length >
+                                        4
+                                    ) {
+                                        addToast(
+                                            "You can only upload up to 4 files."
+                                        );
                                     } else {
-                                        const newItems: FileWrapper[] = mediaArrayToUpload.map((item, index) => ({
-                                            id: media.length + index + (new Date().getTime()),
-                                            alt: "",
-                                            file: item,
-                                            type: item.type,
-                                            status: "uploading",
-                                        }));
-                                        
-                                        setMedia((prevArray) => [...prevArray, ...newItems]);
+                                        const newItems: FileWrapper[] =
+                                            mediaArrayToUpload.map(
+                                                (item, index) => ({
+                                                    id:
+                                                        media.length +
+                                                        index +
+                                                        new Date().getTime(),
+                                                    alt: "",
+                                                    file: item,
+                                                    type: item.type,
+                                                    status: "uploading",
+                                                })
+                                            );
+
+                                        setMedia((prevArray) => [
+                                            ...prevArray,
+                                            ...newItems,
+                                        ]);
                                     }
                                 }}
                             />
@@ -564,6 +672,6 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({ field, form,
             </EditorComponentContainer>
         </EditorComponentWrapper>
     );
-}
+};
 
 export default EditorComponent;

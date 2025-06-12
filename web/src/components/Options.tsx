@@ -1,5 +1,11 @@
 import React, { FunctionComponent, useEffect, useRef, useState } from "react";
-import { ControlContainer, OptionBaseItem, PageBlock, PageText, SmallButton } from "../styles/global";
+import {
+    ControlContainer,
+    OptionBaseItem,
+    PageBlock,
+    PageText,
+    SmallButton,
+} from "../styles/global";
 import PortalComponent from "../utils/PortalComponent";
 import styled from "styled-components";
 import { devices } from "../styles/devices";
@@ -31,7 +37,12 @@ const OptionsContainerBackground = styled.div`
 `;
 
 const OptionsContainer = styled.div.attrs(
-    (props: { isInUpperHalf: boolean; position: { top: number; left: number }, mirrored: boolean, size: number }) => props
+    (props: {
+        isInUpperHalf: boolean;
+        position: { top: number; left: number };
+        mirrored: boolean;
+        size: number;
+    }) => props
 )`
     display: flex;
     flex-direction: column;
@@ -64,9 +75,11 @@ const OptionsContainer = styled.div.attrs(
         max-width: 384px;
         min-width: 140px;
         transform: ${(props) =>
-            props.isInUpperHalf
-                ? "translateY(0)"
-                : `translateY(calc(-100% + ${props.size}px))`} ${(props) => !props.mirrored && `translateX(calc(-100% + ${props.size}px))`};
+                props.isInUpperHalf
+                    ? "translateY(0)"
+                    : `translateY(calc(-100% + ${props.size}px))`}
+            ${(props) =>
+                !props.mirrored && `translateX(calc(-100% + ${props.size}px))`};
         padding-top: 0px;
         box-shadow: 0px 0px 2px ${({ theme }) => theme.overlayGrey};
     }
@@ -114,7 +127,15 @@ export const OptionItemText = styled(PageText).attrs(
     color: ${({ theme, isRed }) => (isRed ? COLORS.red : theme.color)};
 `;
 
-const Options: FunctionComponent<OptionsProps> = ({ icon, title, isOpen, toggleOptions, children, size, mirrored }) => {
+const Options: FunctionComponent<OptionsProps> = ({
+    icon,
+    title,
+    isOpen,
+    toggleOptions,
+    children,
+    size,
+    mirrored,
+}) => {
     const buttonRef = useRef<HTMLDivElement>(null);
 
     const [position, setPosition] = useState<{ top: number; left: number }>({
@@ -205,9 +226,7 @@ const Options: FunctionComponent<OptionsProps> = ({ icon, title, isOpen, toggleO
                         mirrored={mirrored || false}
                         size={size || 36}
                     >
-                        <OptionsContent
-                            onClick={() => toggleOptions()}
-                        >
+                        <OptionsContent onClick={() => toggleOptions()}>
                             {children}
                         </OptionsContent>
                         <CloseOptionsContainer>
@@ -227,6 +246,6 @@ const Options: FunctionComponent<OptionsProps> = ({ icon, title, isOpen, toggleO
             )}
         </PageBlock>
     );
-}
+};
 
 export default Options;

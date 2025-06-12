@@ -1,11 +1,28 @@
 import { FunctionComponent, useEffect, useMemo, useRef } from "react";
-import { Notification, UnseenNotificationsDocument, UnseenNotificationsQuery, User, useViewNotificationMutation } from "../../../../generated/graphql";
+import {
+    Notification,
+    UnseenNotificationsDocument,
+    UnseenNotificationsQuery,
+    User,
+    useViewNotificationMutation,
+} from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useNavigate } from "react-router-dom";
-import { NOTIFICATION_TYPES, POST_TYPES, USER_TYPES } from "../../../../utils/constants";
+import {
+    NOTIFICATION_TYPES,
+    POST_TYPES,
+    USER_TYPES,
+} from "../../../../utils/constants";
 import { useFindUserById } from "../../../../utils/userQueries";
-import { getDateToLocaleString, processDate } from "../../../../utils/processDate";
-import { ItemLoading, OptionBaseIcon, PageText } from "../../../../styles/global";
+import {
+    getDateToLocaleString,
+    processDate,
+} from "../../../../utils/processDate";
+import {
+    ItemLoading,
+    OptionBaseIcon,
+    PageText,
+} from "../../../../styles/global";
 import { useFindPostById } from "../../../../utils/postQueries";
 import Bell from "../../../icons/Bell";
 import Profile from "../../../icons/Profile";
@@ -34,7 +51,8 @@ const NotificationInnerWrapper = styled.div`
     background-color: transparent;
     transition: 0.2s background-color ease;
 
-    &:hover, &:focus {
+    &:hover,
+    &:focus {
         background-color: ${({ theme }) => theme.overlayGrey};
     }
 `;
@@ -52,13 +70,16 @@ const NotificationContainer = styled.div`
     overflow: hidden;
 `;
 
-const NotificationImageContainer = styled.div.attrs((props: { type: string }) => props)`
+const NotificationImageContainer = styled.div.attrs(
+    (props: { type: string }) => props
+)`
     display: flex;
     align-items: center;
     justify-content: center;
     width: 32px;
     height: 32px;
-    border-radius: ${(props) => (props.type === USER_TYPES.ORGANIZATION ? "4px" : "16px")};
+    border-radius: ${(props) =>
+        props.type === USER_TYPES.ORGANIZATION ? "4px" : "16px"};
     opacity: 1;
     transition: opacity ease 0.2s;
 
@@ -118,7 +139,14 @@ function transformSentence(sentence: string, user: User | null) {
 
     return (
         <>
-            <Link to={`/${username}`} title={name} aria-label={name} onClick={(e) => e.stopPropagation()}>{name}</Link>
+            <Link
+                to={`/${username}`}
+                title={name}
+                aria-label={name}
+                onClick={(e) => e.stopPropagation()}
+            >
+                {name}
+            </Link>
             {rest}
         </>
     );
@@ -143,17 +171,32 @@ function getIcon(type: string, size: number) {
     }
 }
 
-const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({ notification }) => {
+const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({
+    notification,
+}) => {
     const navigate = useNavigate();
     const size = 32;
     const notificationRef = useRef<HTMLDivElement>(null);
 
-    const { user, loading: userLoading } = useFindUserById(notification.creatorId);
-    const { post, loading: postLoading } = useFindPostById(notification.resourceId);
+    const { user, loading: userLoading } = useFindUserById(
+        notification.creatorId
+    );
+    const { post, loading: postLoading } = useFindPostById(
+        notification.resourceId
+    );
 
-    const content = useMemo(() => transformSentence(notification.content, user || null), [notification.content, user]);
-    const date = useMemo(() => processDate(notification.createdAt, true, false), [notification.createdAt]);
-    const createdAt = useMemo(() => getDateToLocaleString(notification.createdAt), [notification.createdAt]);
+    const content = useMemo(
+        () => transformSentence(notification.content, user || null),
+        [notification.content, user]
+    );
+    const date = useMemo(
+        () => processDate(notification.createdAt, true, false),
+        [notification.createdAt]
+    );
+    const createdAt = useMemo(
+        () => getDateToLocaleString(notification.createdAt),
+        [notification.createdAt]
+    );
 
     const url = useMemo(() => {
         switch (notification.notificationType) {
@@ -162,7 +205,9 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({ 
             case NOTIFICATION_TYPES.COMMENT:
             case NOTIFICATION_TYPES.QUOTE:
             case NOTIFICATION_TYPES.REPOST:
-                return post ? `/${post.author.username}/post/${post.itemId}` : "/notifications";
+                return post
+                    ? `/${post.author.username}/post/${post.itemId}`
+                    : "/notifications";
             case NOTIFICATION_TYPES.FOLLOW:
                 return user ? `/${user.username}` : "/notifications";
             case NOTIFICATION_TYPES.AFFILIATION:
@@ -174,7 +219,10 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({ 
         }
     }, [notification.notificationType, post, user]);
 
-    const icon = useMemo(() => getIcon(notification.notificationType, size), [notification.notificationType]);
+    const icon = useMemo(
+        () => getIcon(notification.notificationType, size),
+        [notification.notificationType]
+    );
 
     const [viewNotification] = useViewNotificationMutation();
 
@@ -194,21 +242,31 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({ 
                         notificationId: notification.notificationId,
                     },
                     update: (cache, { data: viewNotificationData }) => {
-                        if (viewNotificationData && viewNotificationData.viewNotification) {  
-                            const existing = cache.readQuery<UnseenNotificationsQuery>({
-                                query: UnseenNotificationsDocument,
-                            });
+                        if (
+                            viewNotificationData &&
+                            viewNotificationData.viewNotification
+                        ) {
+                            const existing =
+                                cache.readQuery<UnseenNotificationsQuery>({
+                                    query: UnseenNotificationsDocument,
+                                });
 
-                            const existingUnseenNotifications = existing?.unseenNotifications ?? [];
-                            
+                            const existingUnseenNotifications =
+                                existing?.unseenNotifications ?? [];
+
                             cache.writeQuery({
                                 query: UnseenNotificationsDocument,
                                 data: {
-                                    unseenNotifications: existingUnseenNotifications.filter((n: any) => n.notificationId !== notification.notificationId),
+                                    unseenNotifications:
+                                        existingUnseenNotifications.filter(
+                                            (n: any) =>
+                                                n.notificationId !==
+                                                notification.notificationId
+                                        ),
                                 },
                             });
                         }
-                    }
+                    },
                 });
             }
         }, options);
@@ -244,9 +302,7 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({ 
                     onClick={() => navigate(url)}
                     onKeyDown={(e) => e.key === "Enter" && navigate(url)}
                 >
-                    <NotificationTypeIcon>
-                        {icon}
-                    </NotificationTypeIcon>
+                    <NotificationTypeIcon>{icon}</NotificationTypeIcon>
                     <NotificationContainer>
                         <NotificationImageContainer
                             key={notification.id}
@@ -261,22 +317,26 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({ 
                         >
                             <img
                                 src={
-                                    (user && user.profile.profilePicture.length > 0)
+                                    user &&
+                                    user.profile.profilePicture.length > 0
                                         ? user.profile.profilePicture
                                         : profilePicture
                                 }
-                                title={user ? `${user.name}'s profile picture` : ""}
-                                alt={user ? `${user.name}'s profile picture` : ""}
+                                title={
+                                    user ? `${user.name}'s profile picture` : ""
+                                }
+                                alt={
+                                    user ? `${user.name}'s profile picture` : ""
+                                }
                             />
                         </NotificationImageContainer>
-                        <NotificationContent>
-                            {content}
-                        </NotificationContent>
-                        {post && (notification.resourceType === POST_TYPES.POST || notification.resourceType === POST_TYPES.COMMENT) && (
-                            <PostContent>
-                                {post.content}
-                            </PostContent>
-                        )}
+                        <NotificationContent>{content}</NotificationContent>
+                        {post &&
+                            (notification.resourceType === POST_TYPES.POST ||
+                                notification.resourceType ===
+                                    POST_TYPES.COMMENT) && (
+                                <PostContent>{post.content}</PostContent>
+                            )}
                         <NotificationDate
                             title={createdAt}
                             aria-label={createdAt}
@@ -294,6 +354,6 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({ 
             )}
         </NotificationWrapper>
     );
-}
+};
 
 export default NotificationComponent;

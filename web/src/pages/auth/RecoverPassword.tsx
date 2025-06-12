@@ -1,7 +1,15 @@
 import { Form, Formik } from "formik";
 import Head from "../../components/Head";
 import AuthLayout from "../../components/layouts/AuthLayout";
-import { AuthForm, AuthFormContent, AuthFormTitle, PageBlock, PageTextMB24, StandardButton, Status } from "../../styles/global";
+import {
+    AuthForm,
+    AuthFormContent,
+    AuthFormTitle,
+    PageBlock,
+    PageTextMB24,
+    StandardButton,
+    Status,
+} from "../../styles/global";
 import { useSendRecoveryEmailMutation } from "../../generated/graphql";
 import InputField from "../../components/input/InputField";
 import { BAD_REQUEST_MESSAGE } from "../../utils/constants";
@@ -21,7 +29,8 @@ function RecoverPassword() {
                     <AuthForm>
                         <AuthFormTitle>Recover your password</AuthFormTitle>
                         <PageTextMB24>
-                            In this page you can recover your account password using the email associated with it.
+                            In this page you can recover your account password
+                            using the email associated with it.
                         </PageTextMB24>
                         <Formik
                             initialValues={{ email: "" }}
@@ -34,12 +43,25 @@ function RecoverPassword() {
                                 });
 
                                 setStatus(null);
-                                
+
                                 if (response.data) {
-                                    if (response.data.sendRecoveryEmail.errors && response.data.sendRecoveryEmail.errors.length > 0) {
-                                        setErrors(toErrorMap(response.data.sendRecoveryEmail.errors));
+                                    if (
+                                        response.data.sendRecoveryEmail
+                                            .errors &&
+                                        response.data.sendRecoveryEmail.errors
+                                            .length > 0
+                                    ) {
+                                        setErrors(
+                                            toErrorMap(
+                                                response.data.sendRecoveryEmail
+                                                    .errors
+                                            )
+                                        );
                                     } else {
-                                        setStatus(response.data.sendRecoveryEmail.status);
+                                        setStatus(
+                                            response.data.sendRecoveryEmail
+                                                .status
+                                        );
                                     }
                                 } else {
                                     setStatus(BAD_REQUEST_MESSAGE);
@@ -48,9 +70,7 @@ function RecoverPassword() {
                         >
                             {({ errors, status }) => (
                                 <Form>
-                                    {status && (
-                                        <Status>{status}</Status>
-                                    )}
+                                    {status && <Status>{status}</Status>}
                                     <AuthFormContent>
                                         <InputField
                                             field="email"
