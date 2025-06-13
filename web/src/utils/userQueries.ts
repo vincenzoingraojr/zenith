@@ -1,7 +1,9 @@
 import {
     useFindUserByIdQuery,
     useFindUserQuery,
+    useHasThisUserAsAffiliateQuery,
     useHasUserBlockedMeQuery,
+    useIsAffiliatedToQuery,
     useIsFollowedByMeQuery,
     useIsUserBlockedByMeQuery,
     useMeQuery,
@@ -70,8 +72,33 @@ export const useHasBlockedMeData = (id: number) => {
         variables: {
             id,
         },
-        fetchPolicy: "cache-first",
+        fetchPolicy: "cache-and-network",
     });
 
     return data && data.hasUserBlockedMe ? data.hasUserBlockedMe : null;
 };
+
+export const useIsAffiliatedTo = (userId: number | null) => {
+    const { data, loading, error } = useIsAffiliatedToQuery({
+        variables: { id: userId },
+        fetchPolicy: "cache-first",
+    });
+
+    return {
+        isAffiliatedData: data && data.isAffiliatedTo ? data.isAffiliatedTo : null,
+        loading,
+        error,
+    };
+};
+
+export const useHasThisUserAsAffiliate = (id: number | null, userId: number | null) => {
+    const { data } = useHasThisUserAsAffiliateQuery({
+        variables: {
+            id,
+            userId,
+        },
+        fetchPolicy: "cache-and-network",
+    });
+
+    return data?.hasThisUserAsAffiliate || false;
+}

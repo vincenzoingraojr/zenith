@@ -1220,8 +1220,10 @@ export class UserResolver {
             const user = await this.findUserById(userId);
             const follower = await this.findUserById(payload.id);
             const existingFollow = await this.followRepository.findOne({ where: { user: { id: userId }, follower: { id: payload.id } }, relations: ["user", "follower"] });
+            const isBlockedByMe = await this.userService.whoHasBlockedWho(userId, payload.id);
+            const hasBlockedMe = await this.userService.whoHasBlockedWho(payload.id, userId);
 
-            if (user && follower && !existingFollow) {
+            if (user && follower && !existingFollow && !isBlockedByMe && !hasBlockedMe) {
                 const follow = await this.followRepository.create({
                     user,
                     follower,
@@ -2221,6 +2223,15 @@ export class UserResolver {
                     const user = await this.findUserById(userId);
 
                     if (user) {
+                        const isAffiliatedToMe = await this.hasThisUserAsAffiliate(userId, payload.id);
+                        const isAnAffiliate = await this.hasThisUserAsAffiliate(payload.id, userId);
+
+                        if (isAffiliatedToMe || isAnAffiliate) {
+                            logger.warn("Can't block someone when there is an affiliation.");
+
+                            return null;
+                        }
+
                         const block = await this.blockRepository.create({
                             blockedId: user.id,
                             userId: me.id,
@@ -2370,7 +2381,7 @@ export class UserResolver {
         }
 
         try {
-            const block = await this.blockRepository.findOne({ where: { blockedId: id, userId: payload.id } });
+            const block = await this.userService.whoHasBlockedWho(id, payload.id);
 
             return block;
         } catch (error) {
@@ -2399,8 +2410,8 @@ export class UserResolver {
         }
 
         try {
-            const block = await this.blockRepository.findOne({ where: { blockedId: payload.id, userId: id } });
-
+            const block = await this.userService.whoHasBlockedWho(payload.id, id);
+            
             return block;
         } catch (error) {
             logger.error(error);
@@ -2821,6 +2832,53 @@ export class UserResolver {
             logger.error(error);
 
             return null;
+        }
+    }
+
+    @Query(() => Boolean)
+    async hasThisUserAsAffiliate(
+        @Arg("id", () => Int, { nullable: true }) id: number,
+        @Arg("userId", () => Int, { nullable: true }) userId: number,
+    ) {
+        if (!id) {
+            logger.warn("Organization id not provided.");
+
+            return false;
+        }
+
+        if (!userId) {
+            logger.warn("User id not provided.");
+
+            return false;
+        }
+
+        try {
+            const organization = await this.findUserById(id, false);
+
+            if (!organization || (organization && organization.type !== USER_TYPES.ORGANIZATION)) {
+                logger.warn("Organization not found.");
+
+                return false;
+            }
+
+            const affiliation = await this.affiliationRepository.findOne({
+                where: {
+                    organizationId: id,
+                    userId,
+                },
+            });
+
+            if (!affiliation) {
+                logger.warn("Affiliation not found.");
+
+                return false;
+            }
+
+            return true;
+        } catch (error) {
+            logger.error(error);
+
+            return false;
         }
     }
 

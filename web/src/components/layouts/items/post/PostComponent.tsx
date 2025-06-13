@@ -52,7 +52,7 @@ import {
     processDate,
 } from "../../../../utils/processDate";
 import Pen from "../../../icons/Pen";
-import { useFollowData, useHasBlockedMeData, useIsUserBlockedData, useMeData } from "../../../../utils/userQueries";
+import { useHasThisUserAsAffiliate, useFollowData, useHasBlockedMeData, useIsUserBlockedData, useMeData } from "../../../../utils/userQueries";
 import Bin from "../../../icons/Bin";
 import FollowIcon from "../../../icons/FollowIcon";
 import Chain from "../../../icons/Chain";
@@ -498,6 +498,13 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
     const [blockUser] = useBlockUserMutation();
     const [unblockUser] = useUnblockUserMutation();
 
+    const isAffiliatedToMe = useHasThisUserAsAffiliate(me ? me.id : null, post.authorId);
+    const isAffiliatedToAuthor = useHasThisUserAsAffiliate(post.authorId, me ? me.id : null);
+
+    const affiliation = useMemo(() => {
+        return isAffiliatedToMe || isAffiliatedToAuthor;
+    }, [isAffiliatedToMe, isAffiliatedToAuthor]);
+
     return (
         <PostWrapper>
             <PostContainer
@@ -856,108 +863,110 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                             </OptionItemText>
                                                         </OptionItem>
                                                     )}
-                                                    <OptionItem
-                                                        role="menuitem"
-                                                        title={`${blockedByMe ? "Unblock" : "Block"} ${post.author.username}`}
-                                                        aria-label={`${blockedByMe ? "Unblock" : "Block"} ${post.author.username}`}
-                                                        onClick={async (e) => {
-                                                            e.stopPropagation();
+                                                    {!affiliation && (
+                                                        <OptionItem
+                                                            role="menuitem"
+                                                            title={`${blockedByMe ? "Unblock" : "Block"} ${post.author.username}`}
+                                                            aria-label={`${blockedByMe ? "Unblock" : "Block"} ${post.author.username}`}
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
 
-                                                            if (blockedByMe) {
-                                                                await unblockUser({
-                                                                    variables: {
-                                                                        blockedId: post.authorId,
-                                                                    },
-                                                                    update: (
-                                                                        cache,
-                                                                        {
-                                                                            data: unblockUserData,
-                                                                        }
-                                                                    ) => {
-                                                                        if (
-                                                                            unblockUserData &&
-                                                                            unblockUserData.unblockUser
-                                                                        ) {
-                                                                            cache.writeQuery<IsUserBlockedByMeQuery>(
-                                                                                {
-                                                                                    query: IsUserBlockedByMeDocument,
-                                                                                    data: {
-                                                                                        isUserBlockedByMe:
-                                                                                            null,
-                                                                                    },
-                                                                                    variables:
+                                                                if (blockedByMe) {
+                                                                    await unblockUser({
+                                                                        variables: {
+                                                                            blockedId: post.authorId,
+                                                                        },
+                                                                        update: (
+                                                                            cache,
+                                                                            {
+                                                                                data: unblockUserData,
+                                                                            }
+                                                                        ) => {
+                                                                            if (
+                                                                                unblockUserData &&
+                                                                                unblockUserData.unblockUser
+                                                                            ) {
+                                                                                cache.writeQuery<IsUserBlockedByMeQuery>(
                                                                                     {
-                                                                                        id: post.authorId,
-                                                                                    },
-                                                                                }
-                                                                            );
-                                                                        }
-                                                                    },
-                                                                }).catch(() => {
-                                                                    addToast(
-                                                                        "An error occurred while trying to unblock this user."
-                                                                    );
-                                                                });
-                                                            } else {
-                                                                await blockUser({
-                                                                    variables: {
-                                                                        userId: post.authorId,
-                                                                        origin,
-                                                                    },
-                                                                    update: (
-                                                                        cache,
-                                                                        {
-                                                                            data: blockUserData,
-                                                                        }
-                                                                    ) => {
-                                                                        if (
-                                                                            blockUserData &&
-                                                                            blockUserData.blockUser
-                                                                        ) {
-                                                                            cache.writeQuery<IsUserBlockedByMeQuery>(
-                                                                                {
-                                                                                    query: IsUserBlockedByMeDocument,
-                                                                                    data: {
-                                                                                        isUserBlockedByMe:
-                                                                                            blockUserData.blockUser,
-                                                                                    },
-                                                                                    variables:
-                                                                                    {
-                                                                                        id: post.authorId,
-                                                                                    },
-                                                                                }
-                                                                            );
-
-                                                                            cache.writeQuery<IsFollowedByMeQuery>(
-                                                                                {
-                                                                                    query: IsFollowedByMeDocument,
-                                                                                    data: {
-                                                                                        isFollowedByMe:
-                                                                                            null,
-                                                                                    },
-                                                                                    variables:
+                                                                                        query: IsUserBlockedByMeDocument,
+                                                                                        data: {
+                                                                                            isUserBlockedByMe:
+                                                                                                null,
+                                                                                        },
+                                                                                        variables:
                                                                                         {
                                                                                             id: post.authorId,
                                                                                         },
-                                                                                }
-                                                                            );
-                                                                        }
-                                                                    },
-                                                                }).catch(() => {
-                                                                    addToast(
-                                                                        "An error occurred while trying to block this user."
-                                                                    );
-                                                                });
-                                                            }
-                                                        }}
-                                                    >
-                                                        <OptionBaseIcon>
-                                                            <Block />
-                                                        </OptionBaseIcon>
-                                                        <OptionItemText>
-                                                            {blockedByMe ? "Unblock" : "Block"}{" "}@{post.author.username}
-                                                        </OptionItemText>
-                                                    </OptionItem>
+                                                                                    }
+                                                                                );
+                                                                            }
+                                                                        },
+                                                                    }).catch(() => {
+                                                                        addToast(
+                                                                            "An error occurred while trying to unblock this user."
+                                                                        );
+                                                                    });
+                                                                } else {
+                                                                    await blockUser({
+                                                                        variables: {
+                                                                            userId: post.authorId,
+                                                                            origin,
+                                                                        },
+                                                                        update: (
+                                                                            cache,
+                                                                            {
+                                                                                data: blockUserData,
+                                                                            }
+                                                                        ) => {
+                                                                            if (
+                                                                                blockUserData &&
+                                                                                blockUserData.blockUser
+                                                                            ) {
+                                                                                cache.writeQuery<IsUserBlockedByMeQuery>(
+                                                                                    {
+                                                                                        query: IsUserBlockedByMeDocument,
+                                                                                        data: {
+                                                                                            isUserBlockedByMe:
+                                                                                                blockUserData.blockUser,
+                                                                                        },
+                                                                                        variables:
+                                                                                        {
+                                                                                            id: post.authorId,
+                                                                                        },
+                                                                                    }
+                                                                                );
+
+                                                                                cache.writeQuery<IsFollowedByMeQuery>(
+                                                                                    {
+                                                                                        query: IsFollowedByMeDocument,
+                                                                                        data: {
+                                                                                            isFollowedByMe:
+                                                                                                null,
+                                                                                        },
+                                                                                        variables:
+                                                                                            {
+                                                                                                id: post.authorId,
+                                                                                            },
+                                                                                    }
+                                                                                );
+                                                                            }
+                                                                        },
+                                                                    }).catch(() => {
+                                                                        addToast(
+                                                                            "An error occurred while trying to block this user."
+                                                                        );
+                                                                    });
+                                                                }
+                                                            }}
+                                                        >
+                                                            <OptionBaseIcon>
+                                                                <Block />
+                                                            </OptionBaseIcon>
+                                                            <OptionItemText>
+                                                                {blockedByMe ? "Unblock" : "Block"}{" "}@{post.author.username}
+                                                            </OptionItemText>
+                                                        </OptionItem>
+                                                    )}
                                                 </>
                                             )}
                                         </>

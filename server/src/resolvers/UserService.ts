@@ -1,15 +1,17 @@
 import { logger } from "../helpers/logger";
 import appDataSource from "../dataSource";
-import { User } from "../entities/User";
+import { Block, User } from "../entities/User";
 import { In, Repository } from "typeorm";
 import { isValidUserInput } from "../helpers/user/isValidUserInput";
 import { isEmail } from "class-validator";
 
 export class UserService {
     private readonly userRepository: Repository<User>;
+    private readonly blockRepository: Repository<Block>;
 
     constructor() {
         this.userRepository = appDataSource.getRepository(User);
+        this.blockRepository = appDataSource.getRepository(Block);
     }
 
     async findUser(username: string, deleted: boolean = false): Promise<User | null> {
@@ -115,6 +117,30 @@ export class UserService {
             }
 
             return user;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
+    }
+
+    async whoHasBlockedWho(blockedId: number, userId: number): Promise<Block | null> {
+        if (!blockedId) {
+            logger.warn("blockedId not provided.");
+
+            return null;
+        }
+
+        if (!userId) {
+            logger.warn("userId not provided.");
+
+            return null;
+        }
+
+        try {
+            const block = await this.blockRepository.findOne({ where: { blockedId, userId } });
+
+            return block;
         } catch (error) {
             logger.error(error);
 

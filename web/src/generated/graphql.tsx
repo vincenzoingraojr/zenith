@@ -822,6 +822,7 @@ export type Query = {
   getLikedPosts: PaginatedPosts;
   getPostLikes: PaginatedUsers;
   getReposts: PaginatedReposts;
+  hasThisUserAsAffiliate: Scalars['Boolean']['output'];
   hasUserBlockedMe?: Maybe<Block>;
   isAffiliatedTo?: Maybe<User>;
   isBookmarked?: Maybe<Bookmark>;
@@ -985,6 +986,12 @@ export type QueryGetRepostsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit: Scalars['Int']['input'];
   postId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryHasThisUserAsAffiliateArgs = {
+  id?: InputMaybe<Scalars['Int']['input']>;
+  userId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1630,6 +1637,14 @@ export type GetFollowersQueryVariables = Exact<{
 
 
 export type GetFollowersQuery = { __typename?: 'Query', getFollowers: { __typename?: 'PaginatedUsers', hasMore: boolean, totalCount?: number | null, users: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }> } };
+
+export type HasThisUserAsAffiliateQueryVariables = Exact<{
+  id?: InputMaybe<Scalars['Int']['input']>;
+  userId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type HasThisUserAsAffiliateQuery = { __typename?: 'Query', hasThisUserAsAffiliate: boolean };
 
 export type HasUserBlockedMeQueryVariables = Exact<{
   id?: InputMaybe<Scalars['Int']['input']>;
@@ -3863,6 +3878,45 @@ export type GetFollowersQueryHookResult = ReturnType<typeof useGetFollowersQuery
 export type GetFollowersLazyQueryHookResult = ReturnType<typeof useGetFollowersLazyQuery>;
 export type GetFollowersSuspenseQueryHookResult = ReturnType<typeof useGetFollowersSuspenseQuery>;
 export type GetFollowersQueryResult = Apollo.QueryResult<GetFollowersQuery, GetFollowersQueryVariables>;
+export const HasThisUserAsAffiliateDocument = gql`
+    query HasThisUserAsAffiliate($id: Int, $userId: Int) {
+  hasThisUserAsAffiliate(id: $id, userId: $userId)
+}
+    `;
+
+/**
+ * __useHasThisUserAsAffiliateQuery__
+ *
+ * To run a query within a React component, call `useHasThisUserAsAffiliateQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHasThisUserAsAffiliateQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHasThisUserAsAffiliateQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *      userId: // value for 'userId'
+ *   },
+ * });
+ */
+export function useHasThisUserAsAffiliateQuery(baseOptions?: Apollo.QueryHookOptions<HasThisUserAsAffiliateQuery, HasThisUserAsAffiliateQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<HasThisUserAsAffiliateQuery, HasThisUserAsAffiliateQueryVariables>(HasThisUserAsAffiliateDocument, options);
+      }
+export function useHasThisUserAsAffiliateLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HasThisUserAsAffiliateQuery, HasThisUserAsAffiliateQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<HasThisUserAsAffiliateQuery, HasThisUserAsAffiliateQueryVariables>(HasThisUserAsAffiliateDocument, options);
+        }
+export function useHasThisUserAsAffiliateSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<HasThisUserAsAffiliateQuery, HasThisUserAsAffiliateQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<HasThisUserAsAffiliateQuery, HasThisUserAsAffiliateQueryVariables>(HasThisUserAsAffiliateDocument, options);
+        }
+export type HasThisUserAsAffiliateQueryHookResult = ReturnType<typeof useHasThisUserAsAffiliateQuery>;
+export type HasThisUserAsAffiliateLazyQueryHookResult = ReturnType<typeof useHasThisUserAsAffiliateLazyQuery>;
+export type HasThisUserAsAffiliateSuspenseQueryHookResult = ReturnType<typeof useHasThisUserAsAffiliateSuspenseQuery>;
+export type HasThisUserAsAffiliateQueryResult = Apollo.QueryResult<HasThisUserAsAffiliateQuery, HasThisUserAsAffiliateQueryVariables>;
 export const HasUserBlockedMeDocument = gql`
     query HasUserBlockedMe($id: Int) {
   hasUserBlockedMe(id: $id) {

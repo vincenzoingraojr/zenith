@@ -1,0 +1,9 @@
+query HasThisUserAsAffiliate(
+    $id: Int
+    $userId: Int
+) {
+    hasThisUserAsAffiliate(
+        id: $id
+        userId: $userId
+    )
+}

@@ -1,9 +1,9 @@
 import { FunctionComponent } from "react";
 import { PageBlock } from "../../styles/global";
-import { useIsAffiliatedToQuery } from "../../generated/graphql";
 import { useNavigate } from "react-router-dom";
 import profilePicture from "../../images/profile-picture.png";
 import styled from "styled-components";
+import { useIsAffiliatedTo } from "../../utils/userQueries";
 
 interface AffiliationIconProps {
     userId: number;
@@ -34,27 +34,24 @@ const AffiliationIcon: FunctionComponent<AffiliationIconProps> = ({
     size,
     noAction,
 }) => {
-    const { data, loading, error } = useIsAffiliatedToQuery({
-        variables: { id: userId },
-        fetchPolicy: "cache-first",
-    });
+    const { isAffiliatedData, loading, error } = useIsAffiliatedTo(userId);
 
     const navigate = useNavigate();
 
-    if (!data || !data.isAffiliatedTo || error) return null;
+    if (!isAffiliatedData || error) return null;
 
     return (
         <PageBlock>
             <AffiliationIconContainer
                 role="link"
-                title={data.isAffiliatedTo?.name}
-                aria-label={data.isAffiliatedTo?.name}
+                title={isAffiliatedData.name}
+                aria-label={isAffiliatedData.name}
                 onClick={(e) => {
-                    if (!noAction) {
+                    if (!noAction && isAffiliatedData) {
                         e.stopPropagation();
                         e.preventDefault();
 
-                        navigate(`/${data.isAffiliatedTo?.username}`);
+                        navigate(`/${isAffiliatedData.username}`);
                     }
                 }}
                 size={size}
@@ -62,12 +59,12 @@ const AffiliationIcon: FunctionComponent<AffiliationIconProps> = ({
                 <img
                     src={
                         loading ||
-                        data.isAffiliatedTo?.profile.profilePicture.length === 0
+                        isAffiliatedData.profile.profilePicture.length === 0
                             ? profilePicture
-                            : data.isAffiliatedTo?.profile.profilePicture
+                            : isAffiliatedData.profile.profilePicture
                     }
-                    title={data.isAffiliatedTo?.name}
-                    alt={data.isAffiliatedTo?.name}
+                    title={isAffiliatedData.name}
+                    alt={isAffiliatedData.name}
                 />
             </AffiliationIconContainer>
         </PageBlock>

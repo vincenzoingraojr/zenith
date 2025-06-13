@@ -368,7 +368,7 @@ export class PostResolver {
     }
 
     @Query(() => Post, { nullable: true })
-    async findPostById(@Arg("id", () => Int, { nullable: true }) id: number): Promise<Post | null> {
+    async findPostById(@Arg("id", () => Int, { nullable: true }) id: number | null): Promise<Post | null> {
         if (!id) {
             logger.warn("Id not provided.");
 
@@ -463,7 +463,28 @@ export class PostResolver {
                 try {
                     const user = await this.userService.findUserById(payload.id);
                 
-                    if (user) {
+                    let isReplyToItem: FeedItem | null = null;
+
+                    if (isReplyToType === POST_TYPES.POST || isReplyToType === POST_TYPES.COMMENT) {
+                        isReplyToItem = await this.findPostById(isReplyToId ? isReplyToId : null);
+                    } else {
+                        isReplyToItem = await this.articleRepository.findOne({ where: { id: isReplyToId, draft: false } });
+                    }
+
+                    const quotedPost = await this.findPostById(quotedPostId ? quotedPostId : null);
+
+                    let hasBlockedMe = false;
+                    let isBlockedByMe = false;
+
+                    if (isReplyToItem && !quotedPost) {
+                        hasBlockedMe = await this.userService.whoHasBlockedWho(payload.id, isReplyToItem.authorId) ? true : false;
+                        isBlockedByMe = await this.userService.whoHasBlockedWho(isReplyToItem.authorId, payload.id) ? true : false;
+                    } else if (quotedPost) {
+                        hasBlockedMe = await this.userService.whoHasBlockedWho(payload.id, quotedPost.authorId) ? true : false;
+                        isBlockedByMe = await this.userService.whoHasBlockedWho(quotedPost.authorId, payload.id) ? true : false;
+                    }
+
+                    if (user && !hasBlockedMe) {
                         let mentions: string[] = lumen.extractMentions(content);
                         const index = mentions.indexOf(user.username);
     
@@ -538,61 +559,51 @@ export class PostResolver {
                             await post.save();
                         }
     
-                        if (isReplyToId) {
-                            let isReplyToItem: FeedItem | null = null;
-
-                            if (isReplyToType === POST_TYPES.POST || isReplyToType === POST_TYPES.COMMENT) {
-                                isReplyToItem = await this.findPostById(isReplyToId);
-                            } else {
-                                isReplyToItem = await this.articleRepository.findOne({ where: { id: isReplyToId, draft: false } });
-                            }
+                        if (isReplyToItem && (type === POST_TYPES.COMMENT) && (isReplyToItem.authorId !== payload.id) && !isBlockedByMe) {
+                            const notification = await this.notificationService.createNotification(payload.id, isReplyToItem.authorId, post.id, type, NOTIFICATION_TYPES.COMMENT, `${post.author.name} (@${post.author.username}) commented your ${isReplyToType === POST_TYPES.ARTICLE ? POST_TYPES.ARTICLE : POST_TYPES.POST}.`);
     
-                            if (isReplyToItem && (type === POST_TYPES.COMMENT) && (isReplyToItem.authorId !== payload.id)) {
-                                const notification = await this.notificationService.createNotification(payload.id, isReplyToItem.authorId, post.id, type, NOTIFICATION_TYPES.COMMENT, `${post.author.name} (@${post.author.username}) commented your ${isReplyToType === POST_TYPES.ARTICLE ? POST_TYPES.ARTICLE : POST_TYPES.POST}.`);
-        
-                                const author = await this.userService.findUserById(isReplyToItem.authorId);
+                            const author = await this.userService.findUserById(isReplyToItem.authorId);
 
-                                if (notification && author) {
-                                    pubSub.publish("NEW_NOTIFICATION", notification);
-        
-                                    const tokens = await this.userDeviceTokenRepository.find({ where: { userId: isReplyToItem.authorId } });
-                                    const pushNotification: FirebaseNotification = {
-                                        title: `@${post.author.username} commented your ${isReplyToType === POST_TYPES.ARTICLE ? POST_TYPES.ARTICLE : POST_TYPES.POST} (for @${author.username})`,
-                                        body: notification.content,
-                                        imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
-                                    };
-                                    const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.itemId}?n_id=${notification.notificationId}`;
-                                    await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: author.username, type: notification.notificationType });
-                                }
+                            if (notification && author) {
+                                pubSub.publish("NEW_NOTIFICATION", notification);
+    
+                                const tokens = await this.userDeviceTokenRepository.find({ where: { userId: isReplyToItem.authorId } });
+                                const pushNotification: FirebaseNotification = {
+                                    title: `@${post.author.username} commented your ${isReplyToType === POST_TYPES.ARTICLE ? POST_TYPES.ARTICLE : POST_TYPES.POST} (for @${author.username})`,
+                                    body: notification.content,
+                                    imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
+                                };
+                                const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.itemId}?n_id=${notification.notificationId}`;
+                                await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: author.username, type: notification.notificationType });
                             }
                         }
 
-                        if (quotedPostId) {
-                            const quotedPost = await this.findPostById(quotedPostId);
+                        if (quotedPost && quotedPost.authorId !== payload.id && !isBlockedByMe) {
+                            const notification = await this.notificationService.createNotification(payload.id, quotedPost.authorId, post.id, type, NOTIFICATION_TYPES.QUOTE, `${post.author.name} (@${post.author.username}) quoted your post.`);
+    
+                            const author = await this.userService.findUserById(quotedPost.authorId);
 
-                            if (quotedPost && quotedPost.authorId !== payload.id) {
-                                const notification = await this.notificationService.createNotification(payload.id, quotedPost.authorId, post.id, type, NOTIFICATION_TYPES.QUOTE, `${post.author.name} (@${post.author.username}) quoted your post.`);
-        
-                                const author = await this.userService.findUserById(quotedPost.authorId);
-
-                                if (notification && author) {
-                                    pubSub.publish("NEW_NOTIFICATION", notification);
-        
-                                    const tokens = await this.userDeviceTokenRepository.find({ where: { userId: quotedPost.authorId } });
-                                    const pushNotification: FirebaseNotification = {
-                                        title: `@${post.author.username} quoted your post (for @${author.username})`,
-                                        body: notification.content,
-                                        imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
-                                    };
-                                    const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.itemId}?n_id=${notification.notificationId}`;
-                                    await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: author.username, type: notification.notificationType });
-                                }
+                            if (notification && author) {
+                                pubSub.publish("NEW_NOTIFICATION", notification);
+    
+                                const tokens = await this.userDeviceTokenRepository.find({ where: { userId: quotedPost.authorId } });
+                                const pushNotification: FirebaseNotification = {
+                                    title: `@${post.author.username} quoted your post (for @${author.username})`,
+                                    body: notification.content,
+                                    imageUrl: post.author.profile.profilePicture.length > 0 ? post.author.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
+                                };
+                                const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.itemId}?n_id=${notification.notificationId}`;
+                                await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: author.username, type: notification.notificationType });
                             }
                         }
 
                         ok = true;
                     } else {
-                        status = "Can't find the user.";
+                        if (hasBlockedMe) {
+                            status = "This user has blocked you.";
+                        } else {
+                            status = "Can't find the user.";
+                        }
                     }
                 } catch (error) {
                     logger.error(error);
@@ -988,7 +999,22 @@ export class PostResolver {
                 return null;
             }
 
-            if (item && !existingLike) {
+            if (!item) {
+                logger.warn("Feed item not found.");
+
+                return null;
+            }
+
+            const hasBlockedMe = await this.userService.whoHasBlockedWho(payload.id, item.authorId);
+            const isBlockedByMe = await this.userService.whoHasBlockedWho(item.authorId, payload.id);
+
+            if (hasBlockedMe) {
+                logger.warn("Can't like the post because the item author has blocked me.");
+
+                return null;
+            }
+
+            if (!existingLike) {
                 const like = await this.likeRepository.create({
                     userId: payload.id,
                     likedItemId: itemId,
@@ -999,7 +1025,7 @@ export class PostResolver {
 
                 const author = await this.userService.findUserById(item.authorId);
 
-                if (payload.id !== item.authorId && author) {
+                if (payload.id !== item.authorId && author && !isBlockedByMe) {
                     const notification = await this.notificationService.createNotification(payload.id, item.authorId, item.id, item.type, NOTIFICATION_TYPES.LIKE, `${user.name} (@${user.username}) liked your ${(item.type === POST_TYPES.ARTICLE) ? POST_TYPES.ARTICLE : ((item.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST)}.`);
 
                     if (notification) {
@@ -1361,6 +1387,12 @@ export class PostResolver {
                 return null;
             }
 
+            const hasBlockedMe = await this.userService.whoHasBlockedWho(payload.id, item.authorId);
+
+            if (hasBlockedMe) {
+                return null;
+            }
+
             const bookmark = await this.bookmarkRepository.create({
                 itemId: item.id,
                 itemType: type,
@@ -1539,6 +1571,13 @@ export class PostResolver {
                 return null;
             }
 
+            const hasBlockedMe = await this.userService.whoHasBlockedWho(payload.id, item.authorId);
+            const isBlockedByMe = await this.userService.whoHasBlockedWho(item.authorId, payload.id);
+
+            if (hasBlockedMe) {
+                return null;
+            }
+
             const me = await this.userService.findUserById(payload.id);
 
             if (!me) {
@@ -1559,7 +1598,7 @@ export class PostResolver {
                 return null;
             }
 
-            if (item.authorId !== payload.id) {
+            if (item.authorId !== payload.id && !isBlockedByMe) {
                 const notification = await this.notificationService.createNotification(payload.id, item.authorId, item.id, item.type, NOTIFICATION_TYPES.REPOST, `${me.name} (@${me.username}) reposted your ${(item.type === POST_TYPES.COMMENT) ? POST_TYPES.COMMENT : POST_TYPES.POST}.`);
 
                 if (notification) {
