@@ -30,7 +30,6 @@ import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
     ControlContainer,
-    OptionBaseIcon,
     PageBlock,
     PageText,
 } from "../../../../styles/global";
@@ -42,7 +41,7 @@ import { formatter } from "../../../../utils/formatter";
 import { COLORS } from "../../../../styles/colors";
 import Share from "../../../icons/Share";
 import Views from "../../../icons/Views";
-import Options, { OptionItem, OptionItemText } from "../../../Options";
+import Options from "../../options/Options";
 import More from "../../../icons/More";
 import { useOptions } from "../../../utils/hooks";
 import Flag from "../../../icons/Flag";
@@ -75,6 +74,7 @@ import LoadingComponent from "../../../utils/LoadingComponent";
 import AffiliationIcon from "../../../utils/AffiliationIcon";
 import BookmarkIcon from "../../../icons/Bookmark";
 import Block from "../../../icons/Block";
+import OptionComponent from "../../options/OptionComponent";
 
 interface PostComponentProps {
     post: Post;
@@ -608,10 +608,8 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                 <>
                                     {((me && post.authorId !== me.id) ||
                                         !me) && (
-                                        <OptionItem
-                                            role="menuitem"
+                                        <OptionComponent
                                             title="Report this post"
-                                            aria-label="Report this post"
                                             onClick={() => {
                                                 navigate(
                                                     `/report/post/${post.itemId}`,
@@ -623,23 +621,16 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                     }
                                                 );
                                             }}
-                                        >
-                                            <OptionBaseIcon>
-                                                <Flag />
-                                            </OptionBaseIcon>
-                                            <OptionItemText>
-                                                Report this post
-                                            </OptionItemText>
-                                        </OptionItem>
+                                            icon={<Flag />}
+                                            text="Report this post"
+                                        />
                                     )}
                                     {me && (
                                         <>
                                             {post.authorId === me.id ? (
                                                 <>
-                                                    <OptionItem
-                                                        role="menuitem"
+                                                    <OptionComponent
                                                         title="Edit this post"
-                                                        aria-label="Edit this post"
                                                         onClick={() => {
                                                             navigate(
                                                                 `/edit_post/${post.itemId}`,
@@ -651,18 +642,11 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                                 }
                                                             );
                                                         }}
-                                                    >
-                                                        <OptionBaseIcon>
-                                                            <Pen />
-                                                        </OptionBaseIcon>
-                                                        <OptionItemText>
-                                                            Edit this post
-                                                        </OptionItemText>
-                                                    </OptionItem>
-                                                    <OptionItem
-                                                        role="menuitem"
+                                                        icon={<Pen />}
+                                                        text="Edit this post"
+                                                    />
+                                                    <OptionComponent
                                                         title="Delete this post"
-                                                        aria-label="Delete this post"
                                                         onClick={async () => {
                                                             const response =
                                                                 await deletePost(
@@ -725,34 +709,22 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                                 );
                                                             }
                                                         }}
-                                                    >
-                                                        <OptionBaseIcon>
+                                                        icon={
                                                             <Bin
                                                                 color={
                                                                     COLORS.red
                                                                 }
                                                             />
-                                                        </OptionBaseIcon>
-                                                        <OptionItemText
-                                                            isRed={true}
-                                                        >
-                                                            Delete this post
-                                                        </OptionItemText>
-                                                    </OptionItem>
+                                                        }
+                                                        text="Delete this post"
+                                                        isRed
+                                                    />
                                                 </>
                                             ) : (
                                                 <>
                                                     {(!blockedByMe && !hasBlockedMe) && (
-                                                        <OptionItem
-                                                            role="menuitem"
+                                                        <OptionComponent
                                                             title={`${
-                                                                follow
-                                                                    ? "Unfollow"
-                                                                    : "Follow"
-                                                            } @${
-                                                                post.author.username
-                                                            }`}
-                                                            aria-label={`${
                                                                 follow
                                                                     ? "Unfollow"
                                                                     : "Follow"
@@ -841,8 +813,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                                     });
                                                                 }
                                                             }}
-                                                        >
-                                                            <OptionBaseIcon>
+                                                            icon={
                                                                 <FollowIcon
                                                                     isActive={
                                                                         follow
@@ -850,24 +821,20 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                                             : false
                                                                     }
                                                                 />
-                                                            </OptionBaseIcon>
-                                                            <OptionItemText>
-                                                                {follow
+                                                            }
+                                                            text={`${follow
                                                                     ? "Unfollow"
-                                                                    : "Follow"}{" "}
+                                                                    : "Follow"} 
                                                                 @
-                                                                {
+                                                                ${
                                                                     post.author
                                                                         .username
-                                                                }
-                                                            </OptionItemText>
-                                                        </OptionItem>
+                                                                }`}
+                                                        />
                                                     )}
                                                     {!affiliation && (
-                                                        <OptionItem
-                                                            role="menuitem"
+                                                        <OptionComponent
                                                             title={`${blockedByMe ? "Unblock" : "Block"} ${post.author.username}`}
-                                                            aria-label={`${blockedByMe ? "Unblock" : "Block"} ${post.author.username}`}
                                                             onClick={async (e) => {
                                                                 e.stopPropagation();
 
@@ -958,14 +925,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                                     });
                                                                 }
                                                             }}
-                                                        >
-                                                            <OptionBaseIcon>
-                                                                <Block />
-                                                            </OptionBaseIcon>
-                                                            <OptionItemText>
-                                                                {blockedByMe ? "Unblock" : "Block"}{" "}@{post.author.username}
-                                                            </OptionItemText>
-                                                        </OptionItem>
+                                                            icon={<Block />}
+                                                            text={`${blockedByMe ? "Unblock" : "Block"} @${post.author.username}`}
+                                                        />
                                                     )}
                                                 </>
                                             )}
@@ -1238,14 +1200,8 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                             mirrored={true}
                             children={
                                 <>
-                                    <OptionItem
-                                        role="menuitem"
+                                    <OptionComponent
                                         title={
-                                            repost
-                                                ? "Remove repost"
-                                                : "Repost this post"
-                                        }
-                                        aria-label={
                                             repost
                                                 ? "Remove repost"
                                                 : "Repost this post"
@@ -1441,21 +1397,12 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                 }
                                             }
                                         }}
-                                    >
-                                        <OptionBaseIcon>
-                                            <RepostIcon size={24} />
-                                        </OptionBaseIcon>
-                                        <OptionItemText>
-                                            {repost
-                                                ? "Remove repost"
-                                                : "Repost this post"}
-                                        </OptionItemText>
-                                    </OptionItem>
+                                        icon={<RepostIcon size={24} />}
+                                        text={repost ? "Remove repost" : "Repost this post"}
+                                    />
                                     {!blockedMe && (
-                                        <OptionItem
-                                            role="menuitem"
+                                        <OptionComponent
                                             title="Quote this post"
-                                            aria-label="Quote this post"
                                             onClick={() => {
                                                 navigate(
                                                     `/create_post/quote/post/${post.itemId}`,
@@ -1467,14 +1414,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                     }
                                                 );
                                             }}
-                                        >
-                                            <OptionBaseIcon>
-                                                <Pen />
-                                            </OptionBaseIcon>
-                                            <OptionItemText>
-                                                Quote this post
-                                            </OptionItemText>
-                                        </OptionItem>
+                                            icon={<Pen />}
+                                            text="Quote this post"
+                                        />
                                     )}
                                 </>
                             }
@@ -1633,10 +1575,8 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                 size={32}
                                 children={
                                     <>
-                                        <OptionItem
-                                            role="menuitem"
+                                        <OptionComponent
                                             title="Copy link to this post"
-                                            aria-label="Copy link to this post"
                                             onClick={() => {
                                                 const currentUrl = `${window.location.origin}/${post.author.username}/post/${post.itemId}`;
 
@@ -1653,26 +1593,15 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                     );
                                                 }
                                             }}
-                                        >
-                                            <OptionBaseIcon>
-                                                <Chain />
-                                            </OptionBaseIcon>
-                                            <OptionItemText>
-                                                Copy link to this post
-                                            </OptionItemText>
-                                        </OptionItem>
-                                        <OptionItem
-                                            role="menuitem"
+                                            icon={<Chain />}
+                                            text="Copy link to this post"
+                                        />
+                                        <OptionComponent
                                             title="Send this post"
-                                            aria-label="Send this post"
-                                        >
-                                            <OptionBaseIcon>
-                                                <Mail type="options" />
-                                            </OptionBaseIcon>
-                                            <OptionItemText>
-                                                Send this post
-                                            </OptionItemText>
-                                        </OptionItem>
+                                            onClick={() => {}}
+                                            icon={<Mail type="options" />}
+                                            text="Send this post"
+                                        />
                                     </>
                                 }
                             />

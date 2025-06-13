@@ -5,10 +5,11 @@ import Settings from "../../components/icons/Settings";
 import SearchBar from "../../components/layouts/items/search/SearchBar";
 import PageLayout from "../../components/layouts/PageLayout";
 import PageContentLayout from "../../components/layouts/sublayouts/PageContentLayout";
-import Options, { OptionItem, OptionItemText } from "../../components/Options";
+import Options from "../../components/layouts/options/Options";
 import { useOptions } from "../../components/utils/hooks";
-import { OptionBaseIcon, PageText } from "../../styles/global";
+import { PageText } from "../../styles/global";
 import More from "../../components/icons/More";
+import OptionComponent from "../../components/layouts/options/OptionComponent";
 
 function SearchPage() {
     const { activeOptions, handleOptionsClick } = useOptions();
@@ -49,28 +50,28 @@ function SearchPage() {
                                 toggleOptions={() => handleOptionsClick(0)}
                                 children={
                                     <>
-                                        <OptionItem>
-                                            <OptionBaseIcon>
+                                        <OptionComponent 
+                                            title="Advanced search"
+                                            onClick={() => {}}
+                                            icon={
                                                 <Magnifier
                                                     type="options"
                                                     isActive={false}
                                                 />
-                                            </OptionBaseIcon>
-                                            <OptionItemText>
-                                                Advanced search
-                                            </OptionItemText>
-                                        </OptionItem>
-                                        <OptionItem>
-                                            <OptionBaseIcon>
+                                            }
+                                            text="Advanced search"
+                                        />
+                                        <OptionComponent 
+                                            title="Search settings"
+                                            onClick={() => {}}
+                                            icon={
                                                 <Settings
                                                     type="options"
                                                     isActive={false}
                                                 />
-                                            </OptionBaseIcon>
-                                            <OptionItemText>
-                                                Search settings
-                                            </OptionItemText>
-                                        </OptionItem>
+                                            }
+                                            text="Search settings"
+                                        />
                                     </>
                                 }
                             />

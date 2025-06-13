@@ -1,15 +1,12 @@
 import React, { FunctionComponent, useEffect, useRef, useState } from "react";
 import {
     ControlContainer,
-    OptionBaseItem,
     PageBlock,
-    PageText,
     SmallButton,
-} from "../styles/global";
-import PortalComponent from "../utils/PortalComponent";
+} from "../../../styles/global";
+import PortalComponent from "../../../utils/PortalComponent";
 import styled from "styled-components";
-import { devices } from "../styles/devices";
-import { COLORS } from "../styles/colors";
+import { devices } from "../../../styles/devices";
 
 interface OptionsProps {
     icon: React.ReactNode;
@@ -110,20 +107,6 @@ const CloseOptionsButton = styled(SmallButton)`
     color: ${({ theme }) => theme.color};
     border: 2px solid ${({ theme }) => theme.color};
     width: 100%;
-`;
-
-export const OptionItem = styled(OptionBaseItem)`
-    justify-content: flex-start;
-    gap: 16px;
-    padding: 12px 16px;
-    font-weight: 700;
-`;
-
-export const OptionItemText = styled(PageText).attrs(
-    (props: { isRed?: boolean }) => props
-)`
-    font-weight: inherit;
-    color: ${({ theme, isRed }) => (isRed ? COLORS.red : theme.color)};
 `;
 
 const Options: FunctionComponent<OptionsProps> = ({
