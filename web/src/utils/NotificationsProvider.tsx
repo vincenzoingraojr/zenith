@@ -5,7 +5,6 @@ import {
     useContext,
     useEffect,
     useMemo,
-    useState,
 } from "react";
 import { useMeData } from "./userQueries";
 import {
@@ -21,7 +20,6 @@ interface NotificationsContextType {
     notificationFeed: PaginatedNotifications | undefined;
     loading: boolean;
     notificationsCount: number;
-    moreLoading: boolean;
     error: ApolloError | undefined;
     loadMore: () => void;
 }
@@ -65,12 +63,8 @@ export const NotificationsProvider = ({
             notifyOnNetworkStatusChange: true,
         });
 
-    const [moreLoading, setMoreloading] = useState(false);
-
     const loadMore = useCallback(() => {
-        if (!data || (data && !data.notificationFeed.nextCursor)) return;
-
-        setMoreloading(true);
+        if (!data || (data && !data.notificationFeed.nextCursor) || loading) return;
 
         fetchMore({
             variables: { limit, cursor: data.notificationFeed.nextCursor },
@@ -92,13 +86,10 @@ export const NotificationsProvider = ({
                 };
             },
         })
-            .then(() => {
-                setMoreloading(false);
-            })
-            .catch((error) => {
-                console.error(error);
-            });
-    }, [data, fetchMore, limit]);
+        .catch((error) => {
+            console.error(error);
+        });
+    }, [data, fetchMore, limit, loading]);
 
     const { data: newNotificationData } = useNewNotificationSubscription({
         variables: { userId: me?.id },
@@ -220,7 +211,6 @@ export const NotificationsProvider = ({
             value={{
                 notificationFeed: data?.notificationFeed,
                 loading,
-                moreLoading,
                 error,
                 loadMore,
                 notificationsCount,

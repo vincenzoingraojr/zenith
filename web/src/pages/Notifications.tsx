@@ -5,54 +5,36 @@ import PageLayout from "../components/layouts/PageLayout";
 import PageContentLayout from "../components/layouts/sublayouts/PageContentLayout";
 import {
     ControlContainer,
-    EndContainer,
-    FeedLoading,
     FullWidthFeedContainer,
-    NoElementsAlert,
-    PageBlock,
 } from "../styles/global";
-import { useEffect, useRef } from "react";
-import LoadingComponent from "../components/utils/LoadingComponent";
-import ErrorOrItemNotFound from "../components/utils/ErrorOrItemNotFound";
-import { ERROR_SOMETHING_WENT_WRONG } from "../utils/constants";
 import NotificationComponent from "../components/layouts/items/notifications/NotificationComponent";
 import { useNotificationsContext } from "../utils/NotificationsProvider";
+import FeedComponent from "../components/utils/FeedComponent";
+import { useMemo } from "react";
 
 function Notifications() {
     const navigate = useNavigate();
 
-    const { notificationFeed, loading, moreLoading, loadMore, error } =
+    const { notificationFeed, loading, loadMore, error } =
         useNotificationsContext();
 
-    const endContainerRef = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        const options = {
-            root: null,
-            rootMargin: "0px",
-            threshold: 0.5,
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            const target = entries[0];
-            if (target.isIntersecting) {
-                loadMore();
-            }
-        }, options);
-
-        const current = endContainerRef.current;
-
-        if (current) {
-            observer.observe(current);
-        }
-
-        return () => {
-            if (current) {
-                observer.unobserve(current);
-            }
-        };
-    }, [loadMore, endContainerRef]);
-
+    const feedContent = useMemo(() => (
+        <>
+            {notificationFeed?.notifications.map(
+                (notification) => (
+                    <NotificationComponent
+                        key={
+                            notification.notificationId
+                        }
+                        notification={
+                            notification
+                        }
+                    />
+                )
+            )}
+        </>
+    ), [notificationFeed?.notifications]);
+    
     return (
         <>
             <Head
@@ -66,65 +48,15 @@ function Notifications() {
                         type="main"
                         children={
                             <FullWidthFeedContainer>
-                                {loading && !notificationFeed ? (
-                                    <FeedLoading>
-                                        <LoadingComponent />
-                                    </FeedLoading>
-                                ) : (
-                                    <>
-                                        {notificationFeed && !error ? (
-                                            <>
-                                                {notificationFeed.notifications
-                                                    .length === 0 &&
-                                                !notificationFeed.nextCursor ? (
-                                                    <NoElementsAlert>
-                                                        No activity yet.
-                                                    </NoElementsAlert>
-                                                ) : (
-                                                    <>
-                                                        {notificationFeed.notifications.map(
-                                                            (notification) => (
-                                                                <NotificationComponent
-                                                                    key={
-                                                                        notification.notificationId
-                                                                    }
-                                                                    notification={
-                                                                        notification
-                                                                    }
-                                                                />
-                                                            )
-                                                        )}
-                                                        {moreLoading ? (
-                                                            <FeedLoading>
-                                                                <LoadingComponent />
-                                                            </FeedLoading>
-                                                        ) : (
-                                                            <PageBlock
-                                                                ref={
-                                                                    endContainerRef
-                                                                }
-                                                            >
-                                                                <EndContainer>
-                                                                    ⋅
-                                                                </EndContainer>
-                                                            </PageBlock>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <ErrorOrItemNotFound
-                                                isError={true}
-                                                title={
-                                                    ERROR_SOMETHING_WENT_WRONG.title
-                                                }
-                                                content={
-                                                    ERROR_SOMETHING_WENT_WRONG.message
-                                                }
-                                            />
-                                        )}
-                                    </>
-                                )}
+                                <FeedComponent
+                                    key="notifications"
+                                    feedContent={feedContent}
+                                    loading={loading}
+                                    error={error}
+                                    loadMore={loadMore}
+                                    noElementsText="No activity yet."
+                                    isFeedEmpty={notificationFeed?.notifications.length === 0 && !notificationFeed?.nextCursor}
+                                />
                             </FullWidthFeedContainer>
                         }
                         headerIconsComponent={

@@ -4,18 +4,12 @@ import LumenInput from "../components/input/lumen/LumenInput";
 import PageLayout from "../components/layouts/PageLayout";
 import PageContentLayout from "../components/layouts/sublayouts/PageContentLayout";
 import { Post, usePostFeedQuery } from "../generated/graphql";
-import LoadingComponent from "../components/utils/LoadingComponent";
 import {
-    EndContainer,
-    FeedLoading,
     FullWidthFeedContainer,
-    NoElementsAlert,
-    PageBlock,
 } from "../styles/global";
-import ErrorOrItemNotFound from "../components/utils/ErrorOrItemNotFound";
 import PostComponent from "../components/layouts/items/post/PostComponent";
-import { ERROR_SOMETHING_WENT_WRONG } from "../utils/constants";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useMemo } from "react";
+import FeedComponent from "../components/utils/FeedComponent";
 
 const HomePageContainer = styled.div`
     display: flex;
@@ -36,16 +30,10 @@ function HomePage() {
         notifyOnNetworkStatusChange: true,
     });
 
-    const [isLoading, setIsLoading] = useState(false);
-
-    const endContainerRef = useRef<HTMLDivElement | null>(null);
-
     const loadMore = useCallback(() => {
-        if (!data || (data && !data.postFeed.hasMore)) return;
+        if (!data || (data && !data.postFeed.hasMore) || loading) return;
 
         const lastPost = data.postFeed.posts[data.postFeed.posts.length - 1];
-
-        setIsLoading(true);
 
         fetchMore({
             variables: { limit, cursor: lastPost.createdAt },
@@ -66,40 +54,28 @@ function HomePage() {
                 };
             },
         })
-            .then(() => {
-                setIsLoading(false);
-            })
-            .catch((error) => {
-                console.error(error);
-            });
-    }, [data, fetchMore]);
+        .catch((error) => {
+            console.error(error);
+        });
+    }, [data, fetchMore, loading]);
 
-    useEffect(() => {
-        const options = {
-            root: null,
-            rootMargin: "0px",
-            threshold: 0.5,
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            const target = entries[0];
-            if (target.isIntersecting) {
-                loadMore();
-            }
-        }, options);
-
-        const current = endContainerRef.current;
-
-        if (current) {
-            observer.observe(current);
-        }
-
-        return () => {
-            if (current) {
-                observer.unobserve(current);
-            }
-        };
-    }, [loadMore, endContainerRef]);
+    const feedContent = useMemo(() => (
+        <>
+            {data?.postFeed.posts.map(
+                (post) => (
+                    <PostComponent
+                        key={
+                            post.itemId
+                        }
+                        post={
+                            post as Post
+                        }
+                        origin="post-feed"
+                    />
+                )
+            )}
+        </>
+    ), [data?.postFeed.posts]);
 
     return (
         <>
@@ -120,66 +96,15 @@ function HomePage() {
                                     buttonText="Create"
                                 />
                                 <FullWidthFeedContainer>
-                                    {loading && !data ? (
-                                        <FeedLoading>
-                                            <LoadingComponent />
-                                        </FeedLoading>
-                                    ) : (
-                                        <>
-                                            {data && !error ? (
-                                                <>
-                                                    {data.postFeed
-                                                        .totalCount === 0 ? (
-                                                        <NoElementsAlert>
-                                                            No one has published
-                                                            a post yet.
-                                                        </NoElementsAlert>
-                                                    ) : (
-                                                        <>
-                                                            {data.postFeed.posts.map(
-                                                                (post) => (
-                                                                    <PostComponent
-                                                                        key={
-                                                                            post.itemId
-                                                                        }
-                                                                        post={
-                                                                            post as Post
-                                                                        }
-                                                                        origin="post-feed"
-                                                                    />
-                                                                )
-                                                            )}
-                                                            {isLoading ? (
-                                                                <FeedLoading>
-                                                                    <LoadingComponent />
-                                                                </FeedLoading>
-                                                            ) : (
-                                                                <PageBlock
-                                                                    ref={
-                                                                        endContainerRef
-                                                                    }
-                                                                >
-                                                                    <EndContainer>
-                                                                        ⋅
-                                                                    </EndContainer>
-                                                                </PageBlock>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                </>
-                                            ) : (
-                                                <ErrorOrItemNotFound
-                                                    isError={true}
-                                                    title={
-                                                        ERROR_SOMETHING_WENT_WRONG.title
-                                                    }
-                                                    content={
-                                                        ERROR_SOMETHING_WENT_WRONG.message
-                                                    }
-                                                />
-                                            )}
-                                        </>
-                                    )}
+                                    <FeedComponent
+                                        key="home"
+                                        feedContent={feedContent}
+                                        loading={loading}
+                                        error={error}
+                                        loadMore={loadMore}
+                                        noElementsText="No one has published a post yet."
+                                        isFeedEmpty={data?.postFeed.totalCount === 0}
+                                    />
                                 </FullWidthFeedContainer>
                             </HomePageContainer>
                         }
