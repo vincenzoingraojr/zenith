@@ -1,30 +1,16 @@
 import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
 import {
-    GetPostLikesDocument,
     GetRepostsDocument,
     IsBookmarkedDocument,
     IsBookmarkedQuery,
-    IsFollowedByMeDocument,
-    IsFollowedByMeQuery,
-    IsPostLikedByMeDocument,
-    IsPostLikedByMeQuery,
     IsRepostedByUserDocument,
     IsRepostedByUserQuery,
-    IsUserBlockedByMeDocument,
-    IsUserBlockedByMeQuery,
     Post,
-    useBlockUserMutation,
     useCreateBookmarkMutation,
     useCreateRepostMutation,
-    useDeletePostMutation,
     useDeleteRepostMutation,
-    useFollowUserMutation,
     useIncrementPostViewsMutation,
-    useLikePostMutation,
     useRemoveBookmarkMutation,
-    useRemoveLikeMutation,
-    useUnblockUserMutation,
-    useUnfollowUserMutation,
 } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -75,6 +61,8 @@ import AffiliationIcon from "../../../utils/AffiliationIcon";
 import BookmarkIcon from "../../../icons/Bookmark";
 import Block from "../../../icons/Block";
 import OptionComponent from "../../options/OptionComponent";
+import { usePostMutations } from "../../../../utils/postMutations";
+import { useUserMutations } from "../../../../utils/userMutations";
 
 interface PostComponentProps {
     post: Post;
@@ -389,9 +377,6 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
         };
     }, [incrementPostViews, post, origin]);
 
-    const [likePost] = useLikePostMutation();
-    const [removeLike] = useRemoveLikeMutation();
-
     const isPostLikedByMe = useLikeData(post.itemId, post.type);
 
     const like = useMemo(() => isPostLikedByMe, [isPostLikedByMe]);
@@ -441,8 +426,6 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
         }
     }, [userReposts]);
 
-    const [deletePost, { client }] = useDeletePostMutation();
-
     const {
         post: quotedPost,
         loading,
@@ -458,9 +441,6 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
             return null;
         }
     }, [isFollowedByMe]);
-
-    const [followUser] = useFollowUserMutation();
-    const [unfollowUser] = useUnfollowUserMutation();
 
     const isBookmarked = useBookmarkData(post.id, post.type);
 
@@ -495,15 +475,16 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
         }
     }, [hasBlockedMe]);
 
-    const [blockUser] = useBlockUserMutation();
-    const [unblockUser] = useUnblockUserMutation();
-
     const isAffiliatedToMe = useHasThisUserAsAffiliate(me ? me.id : null, post.authorId);
     const isAffiliatedToAuthor = useHasThisUserAsAffiliate(post.authorId, me ? me.id : null);
 
     const affiliation = useMemo(() => {
         return isAffiliatedToMe || isAffiliatedToAuthor;
     }, [isAffiliatedToMe, isAffiliatedToAuthor]);
+
+    const { handleDeletePost, handleLikePost } = usePostMutations();
+
+    const { handleFollowUser, handleBlockUser } = useUserMutations();
 
     return (
         <PostWrapper>
@@ -648,66 +629,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                     <OptionComponent
                                                         title="Delete this post"
                                                         onClick={async () => {
-                                                            const response =
-                                                                await deletePost(
-                                                                    {
-                                                                        variables:
-                                                                            {
-                                                                                postId: post.itemId,
-                                                                            },
-                                                                    }
-                                                                );
+                                                            const status = await handleDeletePost(post.itemId, post.id);
 
-                                                            if (
-                                                                response.data &&
-                                                                response.data
-                                                                    .deletePost
-                                                            ) {
-                                                                const refId = `Post:${post.id}`;
-
-                                                                client.cache.modify(
-                                                                    {
-                                                                        fields: {
-                                                                            postFeed(
-                                                                                existing = {
-                                                                                    posts: [],
-                                                                                    hasMore:
-                                                                                        true,
-                                                                                }
-                                                                            ) {
-                                                                                const filteredPosts =
-                                                                                    existing.posts.filter(
-                                                                                        (
-                                                                                            p: any
-                                                                                        ) =>
-                                                                                            p.__ref !==
-                                                                                            refId
-                                                                                    );
-
-                                                                                return {
-                                                                                    hasMore:
-                                                                                        existing.hasMore,
-                                                                                    posts: filteredPosts,
-                                                                                    totalCount:
-                                                                                        existing.totalCount -
-                                                                                        1,
-                                                                                };
-                                                                            },
-                                                                        },
-                                                                    }
-                                                                );
-
-                                                                client.cache.evict(
-                                                                    {
-                                                                        id: refId,
-                                                                    }
-                                                                );
-                                                                client.cache.gc();
-                                                            } else {
-                                                                addToast(
-                                                                    "An error occurred while deleting the post."
-                                                                );
-                                                            }
+                                                            addToast(status);
                                                         }}
                                                         icon={
                                                             <Bin
@@ -731,87 +655,10 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                             } @${
                                                                 post.author.username
                                                             }`}
-                                                            onClick={async (e) => {
-                                                                e.stopPropagation();
-
-                                                                if (follow) {
-                                                                    await unfollowUser(
-                                                                        {
-                                                                            variables:
-                                                                                {
-                                                                                    userId: post.authorId,
-                                                                                },
-                                                                            update: (
-                                                                                cache,
-                                                                                {
-                                                                                    data: unfollowUserData,
-                                                                                }
-                                                                            ) => {
-                                                                                if (
-                                                                                    unfollowUserData &&
-                                                                                    unfollowUserData.unfollowUser
-                                                                                ) {
-                                                                                    cache.writeQuery<IsFollowedByMeQuery>(
-                                                                                        {
-                                                                                            query: IsFollowedByMeDocument,
-                                                                                            data: {
-                                                                                                isFollowedByMe:
-                                                                                                    null,
-                                                                                            },
-                                                                                            variables:
-                                                                                                {
-                                                                                                    id: post.authorId,
-                                                                                                },
-                                                                                        }
-                                                                                    );
-                                                                                }
-                                                                            },
-                                                                        }
-                                                                    ).catch(() => {
-                                                                        addToast(
-                                                                            "An error occurred while trying to unfollow this user."
-                                                                        );
-                                                                    });
-                                                                } else {
-                                                                    await followUser(
-                                                                        {
-                                                                            variables:
-                                                                                {
-                                                                                    userId: post.authorId,
-                                                                                    origin,
-                                                                                },
-                                                                            update: (
-                                                                                cache,
-                                                                                {
-                                                                                    data: followUserData,
-                                                                                }
-                                                                            ) => {
-                                                                                if (
-                                                                                    followUserData &&
-                                                                                    followUserData.followUser
-                                                                                ) {
-                                                                                    cache.writeQuery<IsFollowedByMeQuery>(
-                                                                                        {
-                                                                                            query: IsFollowedByMeDocument,
-                                                                                            data: {
-                                                                                                isFollowedByMe:
-                                                                                                    followUserData.followUser,
-                                                                                            },
-                                                                                            variables:
-                                                                                                {
-                                                                                                    id: post.authorId,
-                                                                                                },
-                                                                                        }
-                                                                                    );
-                                                                                }
-                                                                            },
-                                                                        }
-                                                                    ).catch(() => {
-                                                                        addToast(
-                                                                            "An error occurred while trying to follow this user."
-                                                                        );
-                                                                    });
-                                                                }
+                                                            onClick={async () => {
+                                                                const response = await handleFollowUser(post.authorId, post.author.username, origin, follow ? true : false)
+                                                            
+                                                                addToast(response);
                                                             }}
                                                             icon={
                                                                 <FollowIcon
@@ -835,95 +682,10 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                     {!affiliation && (
                                                         <OptionComponent
                                                             title={`${blockedByMe ? "Unblock" : "Block"} ${post.author.username}`}
-                                                            onClick={async (e) => {
-                                                                e.stopPropagation();
-
-                                                                if (blockedByMe) {
-                                                                    await unblockUser({
-                                                                        variables: {
-                                                                            blockedId: post.authorId,
-                                                                        },
-                                                                        update: (
-                                                                            cache,
-                                                                            {
-                                                                                data: unblockUserData,
-                                                                            }
-                                                                        ) => {
-                                                                            if (
-                                                                                unblockUserData &&
-                                                                                unblockUserData.unblockUser
-                                                                            ) {
-                                                                                cache.writeQuery<IsUserBlockedByMeQuery>(
-                                                                                    {
-                                                                                        query: IsUserBlockedByMeDocument,
-                                                                                        data: {
-                                                                                            isUserBlockedByMe:
-                                                                                                null,
-                                                                                        },
-                                                                                        variables:
-                                                                                        {
-                                                                                            id: post.authorId,
-                                                                                        },
-                                                                                    }
-                                                                                );
-                                                                            }
-                                                                        },
-                                                                    }).catch(() => {
-                                                                        addToast(
-                                                                            "An error occurred while trying to unblock this user."
-                                                                        );
-                                                                    });
-                                                                } else {
-                                                                    await blockUser({
-                                                                        variables: {
-                                                                            userId: post.authorId,
-                                                                            origin,
-                                                                        },
-                                                                        update: (
-                                                                            cache,
-                                                                            {
-                                                                                data: blockUserData,
-                                                                            }
-                                                                        ) => {
-                                                                            if (
-                                                                                blockUserData &&
-                                                                                blockUserData.blockUser
-                                                                            ) {
-                                                                                cache.writeQuery<IsUserBlockedByMeQuery>(
-                                                                                    {
-                                                                                        query: IsUserBlockedByMeDocument,
-                                                                                        data: {
-                                                                                            isUserBlockedByMe:
-                                                                                                blockUserData.blockUser,
-                                                                                        },
-                                                                                        variables:
-                                                                                        {
-                                                                                            id: post.authorId,
-                                                                                        },
-                                                                                    }
-                                                                                );
-
-                                                                                cache.writeQuery<IsFollowedByMeQuery>(
-                                                                                    {
-                                                                                        query: IsFollowedByMeDocument,
-                                                                                        data: {
-                                                                                            isFollowedByMe:
-                                                                                                null,
-                                                                                        },
-                                                                                        variables:
-                                                                                            {
-                                                                                                id: post.authorId,
-                                                                                            },
-                                                                                    }
-                                                                                );
-                                                                            }
-                                                                        },
-                                                                    }).catch(() => {
-                                                                        addToast(
-                                                                            "An error occurred while trying to block this user."
-                                                                        );
-                                                                    });
-                                                                }
+                                                            onClick={async () => {
+                                                                const response = await handleBlockUser(post.authorId, post.author.username, origin, blockedByMe ? true : false)
+                                                            
+                                                                addToast(response);
                                                             }}
                                                             icon={<Block />}
                                                             text={`${blockedByMe ? "Unblock" : "Block"} @${post.author.username}`}
@@ -1008,161 +770,13 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                             e.stopPropagation();
 
                             if (me) {
-                                if (like) {
-                                    await removeLike({
-                                        variables: {
-                                            itemId: post.itemId,
-                                            itemType: post.type,
-                                        },
-                                        update: (
-                                            cache,
-                                            { data: removeLikeData }
-                                        ) => {
-                                            if (
-                                                removeLikeData &&
-                                                removeLikeData.removeLike
-                                            ) {
-                                                const existing =
-                                                    cache.readQuery({
-                                                        query: GetPostLikesDocument,
-                                                        variables: {
-                                                            itemId: post.itemId,
-                                                            type: post.type,
-                                                            limit: 3,
-                                                        },
-                                                    });
+                                const response = await handleLikePost(post.itemId, post.type, like ? true : false, origin, false);
 
-                                                const {
-                                                    users: oldUsers,
-                                                    totalCount: oldCount,
-                                                    hasMore,
-                                                } = (
-                                                    existing as {
-                                                        getPostLikes: {
-                                                            users: any[];
-                                                            totalCount: number;
-                                                            hasMore: boolean;
-                                                        };
-                                                    }
-                                                ).getPostLikes;
-
-                                                cache.writeQuery({
-                                                    query: GetPostLikesDocument,
-                                                    variables: {
-                                                        itemId: post.itemId,
-                                                        type: post.type,
-                                                        limit: 3,
-                                                    },
-                                                    data: {
-                                                        getPostLikes: {
-                                                            users: oldUsers.filter(
-                                                                (user) =>
-                                                                    user.id !==
-                                                                    me.id
-                                                            ),
-                                                            totalCount:
-                                                                Math.max(
-                                                                    oldCount -
-                                                                        1,
-                                                                    0
-                                                                ),
-                                                            hasMore,
-                                                        },
-                                                    },
-                                                });
-
-                                                cache.writeQuery<IsPostLikedByMeQuery>(
-                                                    {
-                                                        query: IsPostLikedByMeDocument,
-                                                        data: {
-                                                            isPostLikedByMe:
-                                                                null,
-                                                        },
-                                                        variables: {
-                                                            itemId: post.itemId,
-                                                            type: post.type,
-                                                        },
-                                                    }
-                                                );
-                                            }
-                                        },
-                                    });
-                                } else {
-                                    await likePost({
-                                        variables: {
-                                            itemId: post.itemId,
-                                            origin,
-                                            itemOpened: false,
-                                            itemType: post.type,
-                                        },
-                                        update: (
-                                            cache,
-                                            { data: likePostData }
-                                        ) => {
-                                            if (
-                                                likePostData &&
-                                                likePostData.likePost
-                                            ) {
-                                                const existing =
-                                                    cache.readQuery({
-                                                        query: GetPostLikesDocument,
-                                                        variables: {
-                                                            itemId: post.itemId,
-                                                            type: post.type,
-                                                            limit: 3,
-                                                        },
-                                                    });
-
-                                                const {
-                                                    totalCount: oldCount,
-                                                    hasMore,
-                                                } = (
-                                                    existing as {
-                                                        getPostLikes: {
-                                                            totalCount: number;
-                                                            hasMore: boolean;
-                                                        };
-                                                    }
-                                                ).getPostLikes;
-
-                                                cache.writeQuery({
-                                                    query: GetPostLikesDocument,
-                                                    variables: {
-                                                        itemId: post.itemId,
-                                                        type: post.type,
-                                                        limit: 3,
-                                                    },
-                                                    data: {
-                                                        getPostLikes: {
-                                                            users: [me],
-                                                            totalCount:
-                                                                oldCount + 1,
-                                                            hasMore,
-                                                        },
-                                                    },
-                                                });
-
-                                                cache.writeQuery<IsPostLikedByMeQuery>(
-                                                    {
-                                                        query: IsPostLikedByMeDocument,
-                                                        data: {
-                                                            isPostLikedByMe:
-                                                                likePostData.likePost,
-                                                        },
-                                                        variables: {
-                                                            itemId: post.itemId,
-                                                            type: post.type,
-                                                        },
-                                                    }
-                                                );
-                                            }
-                                        },
-                                    }).catch(() => {
-                                        addToast(
-                                            "An error occurred while trying to like this post."
-                                        );
-                                    });
+                                if (!response) {
+                                    addToast("An error occurred while trying to like this post.");
                                 }
+                            } else {
+                                addToast("You're not authenticated.");
                             }
                         }}
                         isActive={like ? true : false}
