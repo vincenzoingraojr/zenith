@@ -1,16 +1,7 @@
 import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
 import {
-    GetRepostsDocument,
-    IsBookmarkedDocument,
-    IsBookmarkedQuery,
-    IsRepostedByUserDocument,
-    IsRepostedByUserQuery,
     Post,
-    useCreateBookmarkMutation,
-    useCreateRepostMutation,
-    useDeleteRepostMutation,
     useIncrementPostViewsMutation,
-    useRemoveBookmarkMutation,
 } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -403,9 +394,6 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
 
     const { addToast } = useToasts();
 
-    const [createRepost] = useCreateRepostMutation();
-    const [deleteRepost] = useDeleteRepostMutation();
-
     const isRepostedByUser = useRepostData(post.id, me ? me.id : null);
 
     const repost = useMemo(() => {
@@ -452,9 +440,6 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
         }
     }, [isBookmarked]);
 
-    const [createBookmark] = useCreateBookmarkMutation();
-    const [removeBookmark] = useRemoveBookmarkMutation();
-
     const isBlockedByMe = useIsUserBlockedData(post.authorId);
 
     const blockedByMe = useMemo(() => {
@@ -482,7 +467,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
         return isAffiliatedToMe || isAffiliatedToAuthor;
     }, [isAffiliatedToMe, isAffiliatedToAuthor]);
 
-    const { handleDeletePost, handleLikePost } = usePostMutations();
+    const { handleDeletePost, handleLikePost, handleRepost, handleBookmark } = usePostMutations();
 
     const { handleFollowUser, handleBlockUser } = useUserMutations();
 
@@ -773,7 +758,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                 const response = await handleLikePost(post.itemId, post.type, like ? true : false, origin, false);
 
                                 if (!response) {
-                                    addToast("An error occurred while trying to like this post.");
+                                    addToast(`An error occurred while trying to ${like ? "remove the like from" : "like"} this post.`);
                                 }
                             } else {
                                 addToast("You're not authenticated.");
@@ -826,189 +811,13 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                             }
 
                                             if (me) {
-                                                if (repost) {
-                                                    await deleteRepost({
-                                                        variables: {
-                                                            postId: post.id,
-                                                        },
-                                                        update: (
-                                                            cache,
-                                                            {
-                                                                data: deleteRepostData,
-                                                            }
-                                                        ) => {
-                                                            if (
-                                                                deleteRepostData &&
-                                                                deleteRepostData.deleteRepost &&
-                                                                repost
-                                                            ) {
-                                                                const existing =
-                                                                    cache.readQuery(
-                                                                        {
-                                                                            query: GetRepostsDocument,
-                                                                            variables:
-                                                                                {
-                                                                                    postId: post.id,
-                                                                                    userId: me.id,
-                                                                                    limit: 3,
-                                                                                },
-                                                                        }
-                                                                    );
+                                                const response = await handleRepost(post.itemId, post.id, repost);
 
-                                                                const {
-                                                                    reposts:
-                                                                        oldReposts,
-                                                                    totalCount:
-                                                                        oldCount,
-                                                                    hasMore,
-                                                                } = (
-                                                                    existing as {
-                                                                        getReposts: {
-                                                                            reposts: any[];
-                                                                            totalCount: number;
-                                                                            hasMore: boolean;
-                                                                        };
-                                                                    }
-                                                                ).getReposts;
-
-                                                                cache.writeQuery(
-                                                                    {
-                                                                        query: GetRepostsDocument,
-                                                                        variables:
-                                                                            {
-                                                                                postId: post.id,
-                                                                                userId: me.id,
-                                                                                limit: 3,
-                                                                            },
-                                                                        data: {
-                                                                            getReposts:
-                                                                                {
-                                                                                    reposts:
-                                                                                        oldReposts.filter(
-                                                                                            (
-                                                                                                r
-                                                                                            ) =>
-                                                                                                r.id !==
-                                                                                                repost.id
-                                                                                        ),
-                                                                                    totalCount:
-                                                                                        Math.max(
-                                                                                            oldCount -
-                                                                                                1,
-                                                                                            0
-                                                                                        ),
-                                                                                    hasMore,
-                                                                                },
-                                                                        },
-                                                                    }
-                                                                );
-
-                                                                cache.writeQuery<IsRepostedByUserQuery>(
-                                                                    {
-                                                                        query: IsRepostedByUserDocument,
-                                                                        data: {
-                                                                            isRepostedByUser:
-                                                                                null,
-                                                                        },
-                                                                        variables:
-                                                                            {
-                                                                                postId: post.id,
-                                                                                userId: me.id,
-                                                                            },
-                                                                    }
-                                                                );
-                                                            }
-                                                        },
-                                                    });
-                                                } else {
-                                                    await createRepost({
-                                                        variables: {
-                                                            postId: post.itemId,
-                                                        },
-                                                        update: (
-                                                            cache,
-                                                            {
-                                                                data: createRepostData,
-                                                            }
-                                                        ) => {
-                                                            if (
-                                                                createRepostData &&
-                                                                createRepostData.createRepost &&
-                                                                !repost
-                                                            ) {
-                                                                const existing =
-                                                                    cache.readQuery(
-                                                                        {
-                                                                            query: GetRepostsDocument,
-                                                                            variables:
-                                                                                {
-                                                                                    postId: post.id,
-                                                                                    userId: me.id,
-                                                                                    limit: 3,
-                                                                                },
-                                                                        }
-                                                                    );
-
-                                                                const {
-                                                                    totalCount:
-                                                                        oldCount,
-                                                                    hasMore,
-                                                                } = (
-                                                                    existing as {
-                                                                        getReposts: {
-                                                                            totalCount: number;
-                                                                            hasMore: boolean;
-                                                                        };
-                                                                    }
-                                                                ).getReposts;
-
-                                                                cache.writeQuery(
-                                                                    {
-                                                                        query: GetRepostsDocument,
-                                                                        variables:
-                                                                            {
-                                                                                postId: post.id,
-                                                                                userId: me.id,
-                                                                                limit: 3,
-                                                                            },
-                                                                        data: {
-                                                                            getReposts:
-                                                                                {
-                                                                                    reposts:
-                                                                                        [
-                                                                                            createRepostData.createRepost,
-                                                                                        ],
-                                                                                    totalCount:
-                                                                                        oldCount +
-                                                                                        1,
-                                                                                    hasMore,
-                                                                                },
-                                                                        },
-                                                                    }
-                                                                );
-
-                                                                cache.writeQuery<IsRepostedByUserQuery>(
-                                                                    {
-                                                                        query: IsRepostedByUserDocument,
-                                                                        data: {
-                                                                            isRepostedByUser:
-                                                                                createRepostData.createRepost,
-                                                                        },
-                                                                        variables:
-                                                                            {
-                                                                                postId: post.id,
-                                                                                userId: me.id,
-                                                                            },
-                                                                    }
-                                                                );
-                                                            }
-                                                        },
-                                                    }).catch(() => {
-                                                        addToast(
-                                                            "An error occurred while trying to repost this post."
-                                                        );
-                                                    });
+                                                if (!response) {
+                                                    addToast(`An error occurred while trying to ${repost ? "remove the repost from" : "repost"} this post.`);
                                                 }
+                                            } else {
+                                                addToast("You're not authenticated.");
                                             }
                                         }}
                                         icon={<RepostIcon size={24} />}
@@ -1094,75 +903,15 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                             onClick={async (e) => {
                                 e.stopPropagation();
 
-                                if (bookmark) {
-                                    await removeBookmark({
-                                        variables: {
-                                            itemId: post.itemId,
-                                            type: post.type,
-                                        },
-                                        update: (
-                                            cache,
-                                            { data: removeBookmarkData }
-                                        ) => {
-                                            if (
-                                                removeBookmarkData &&
-                                                removeBookmarkData.removeBookmark
-                                            ) {
-                                                cache.writeQuery<IsBookmarkedQuery>(
-                                                    {
-                                                        query: IsBookmarkedDocument,
-                                                        data: {
-                                                            isBookmarked: null,
-                                                        },
-                                                        variables: {
-                                                            itemId: post.id,
-                                                            type: post.type,
-                                                        },
-                                                    }
-                                                );
-                                            }
-                                        },
-                                    }).catch(() => {
-                                        addToast(
-                                            "An error occurred while trying to remove the bookmark from this post."
-                                        );
-                                    });
+                                if (me) {
+                                    const response = await handleBookmark(post.itemId, post.type, post.id, origin, bookmark ? true : false);
+
+                                    if (!response) {
+                                        addToast(`An error occurred while trying to ${bookmark ? "remove the bookmark from" : "bookmark"} this post.`);
+                                    }
                                 } else {
-                                    await createBookmark({
-                                        variables: {
-                                            itemId: post.itemId,
-                                            type: post.type,
-                                            origin,
-                                        },
-                                        update: (
-                                            cache,
-                                            { data: createBookmarkData }
-                                        ) => {
-                                            if (
-                                                createBookmarkData &&
-                                                createBookmarkData.createBookmark
-                                            ) {
-                                                cache.writeQuery<IsBookmarkedQuery>(
-                                                    {
-                                                        query: IsBookmarkedDocument,
-                                                        data: {
-                                                            isBookmarked:
-                                                                createBookmarkData.createBookmark,
-                                                        },
-                                                        variables: {
-                                                            itemId: post.id,
-                                                            type: post.type,
-                                                        },
-                                                    }
-                                                );
-                                            }
-                                        },
-                                    }).catch(() => {
-                                        addToast(
-                                            "An error occurred while trying to bookmark this post."
-                                        );
-                                    });
-                                }
+                                    addToast("You're not authenticated.");
+                                }                                
                             }}
                         >
                             <ControlContainer size={32}>
