@@ -20,6 +20,8 @@ function useFeedScroll(feedKey: string | null, debounceMs = 200) {
         const saved = scrollPositions.get(`scroll-${feedKey}`);
         if (saved !== undefined) {
             window.scrollTo(0, saved);
+        } else {
+            window.scrollTo(0, 0);
         }
     }, [feedKey]);
 

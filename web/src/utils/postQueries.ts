@@ -29,7 +29,7 @@ export const useFindPostById = (id?: number) => {
     });
 
     return {
-        post: data && data?.findPostById ? data.findPostById : null,
+        post: data && data.findPostById ? data.findPostById : null,
         loading,
         error,
     };

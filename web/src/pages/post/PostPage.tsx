@@ -7,6 +7,13 @@ import PageContentLayout from "../../components/layouts/sublayouts/PageContentLa
 import LoadingComponent from "../../components/utils/LoadingComponent";
 import ErrorOrItemNotFound from "../../components/utils/ErrorOrItemNotFound";
 import { ERROR_SOMETHING_WENT_WRONG } from "../../utils/constants";
+import styled from "styled-components";
+
+const PostPageContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+`;
 
 function PostPage() {
     const params = useParams();
@@ -53,18 +60,19 @@ function PostPage() {
                                         {error ? (
                                             <ErrorOrItemNotFound
                                                 isError={true}
-                                                title={
-                                                    ERROR_SOMETHING_WENT_WRONG.title
-                                                }
-                                                content={
-                                                    ERROR_SOMETHING_WENT_WRONG.message
-                                                }
+                                                title={ERROR_SOMETHING_WENT_WRONG.title}
+                                                content={ERROR_SOMETHING_WENT_WRONG.message}
+                                            />
+                                        ) : !post ? (
+                                            <ErrorOrItemNotFound
+                                                isError={false}
+                                                title="Post not found"
+                                                content="The post you are looking for does not exist."
                                             />
                                         ) : (
-                                            <>
-                                                /{post?.author.username}/post/
-                                                {post?.itemId}
-                                            </>
+                                            <PostPageContainer>
+                                                {post.content}
+                                            </PostPageContainer>
                                         )}
                                     </>
                                 )}
