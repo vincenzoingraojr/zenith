@@ -36,7 +36,7 @@ const QuotedPostWrapper = styled.div`
 const QuotedPostContainer = styled.div`
     display: flex;
     flex-direction: column;
-    background-color: ${({ theme }) => theme.background};
+    background-color: transparent;
     transition: 0.2s background-color ease;
     border-radius: inherit;
     cursor: pointer;

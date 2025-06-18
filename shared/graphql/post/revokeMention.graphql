@@ -1,0 +1,10 @@
+mutation RevokeMention(
+    $postId: String!
+) {
+    revokeMention(
+        postId: $postId
+    ) {
+        ok
+        status
+    }
+}

@@ -1573,6 +1573,13 @@ export type RemoveLikeMutationVariables = Exact<{
 
 export type RemoveLikeMutation = { __typename?: 'Mutation', removeLike: boolean };
 
+export type RevokeMentionMutationVariables = Exact<{
+  postId: Scalars['String']['input'];
+}>;
+
+
+export type RevokeMentionMutation = { __typename?: 'Mutation', revokeMention: { __typename?: 'PostResponse', ok: boolean, status?: string | null } };
+
 export type CreateReportMutationVariables = Exact<{
   contentId: Scalars['String']['input'];
   contentType: Scalars['String']['input'];
@@ -3319,6 +3326,40 @@ export function useRemoveLikeMutation(baseOptions?: Apollo.MutationHookOptions<R
 export type RemoveLikeMutationHookResult = ReturnType<typeof useRemoveLikeMutation>;
 export type RemoveLikeMutationResult = Apollo.MutationResult<RemoveLikeMutation>;
 export type RemoveLikeMutationOptions = Apollo.BaseMutationOptions<RemoveLikeMutation, RemoveLikeMutationVariables>;
+export const RevokeMentionDocument = gql`
+    mutation RevokeMention($postId: String!) {
+  revokeMention(postId: $postId) {
+    ok
+    status
+  }
+}
+    `;
+export type RevokeMentionMutationFn = Apollo.MutationFunction<RevokeMentionMutation, RevokeMentionMutationVariables>;
+
+/**
+ * __useRevokeMentionMutation__
+ *
+ * To run a mutation, you first call `useRevokeMentionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRevokeMentionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [revokeMentionMutation, { data, loading, error }] = useRevokeMentionMutation({
+ *   variables: {
+ *      postId: // value for 'postId'
+ *   },
+ * });
+ */
+export function useRevokeMentionMutation(baseOptions?: Apollo.MutationHookOptions<RevokeMentionMutation, RevokeMentionMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RevokeMentionMutation, RevokeMentionMutationVariables>(RevokeMentionDocument, options);
+      }
+export type RevokeMentionMutationHookResult = ReturnType<typeof useRevokeMentionMutation>;
+export type RevokeMentionMutationResult = Apollo.MutationResult<RevokeMentionMutation>;
+export type RevokeMentionMutationOptions = Apollo.BaseMutationOptions<RevokeMentionMutation, RevokeMentionMutationVariables>;
 export const CreateReportDocument = gql`
     mutation CreateReport($contentId: String!, $contentType: String!, $categoryId: Int!, $subCategoryId: Int, $additionalContentIds: [Int!], $additionalContentType: String) {
   createReport(

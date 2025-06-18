@@ -103,6 +103,7 @@ const cache = new InMemoryCache({
             },
         },
         Post: {
+            keyFields: ["id"],
             fields: {
                 media: {
                     merge: (_existing = [], incoming) => {

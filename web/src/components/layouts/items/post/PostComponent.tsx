@@ -1,7 +1,8 @@
-import { FunctionComponent, useEffect, useMemo, useRef, useState } from "react";
+import { FunctionComponent, useEffect, useMemo, useRef } from "react";
 import {
     Post,
     useIncrementPostViewsMutation,
+    useRevokeMentionMutation,
 } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -54,6 +55,7 @@ import Block from "../../../icons/Block";
 import OptionComponent from "../../options/OptionComponent";
 import { usePostMutations } from "../../../../utils/postMutations";
 import { useUserMutations } from "../../../../utils/userMutations";
+import Unmention from "../../../icons/Unmention";
 
 interface PostComponentProps {
     post: Post;
@@ -327,8 +329,6 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
     const postRef = useRef<HTMLDivElement>(null);
     const [incrementPostViews] = useIncrementPostViewsMutation();
 
-    const [views, setViews] = useState(post.views);
-
     useEffect(() => {
         let postDivRef = postRef.current;
 
@@ -347,10 +347,18 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                         itemOpened: false,
                         origin,
                     },
-                }).then((response) => {
-                    if (response.data && response.data.incrementPostViews) {
-                        setViews(response.data.incrementPostViews.views);
-                    }
+                    update: (cache, { data }) => {
+                        if (data && data.incrementPostViews) {
+                            cache.modify({
+                                id: cache.identify({ __typename: "Post", id: post.id }),
+                                fields: {
+                                    views(existingViews = 0) {
+                                        return existingViews + 1;
+                                    }
+                                }
+                            });
+                        }
+                    },
                 });
             }
         }, options);
@@ -470,6 +478,8 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
     const { handleDeletePost, handleLikePost, handleRepost, handleBookmark } = usePostMutations();
 
     const { handleFollowUser, handleBlockUser } = useUserMutations();
+
+    const [revokeMention] = useRevokeMentionMutation();
 
     return (
         <PostWrapper>
@@ -674,6 +684,38 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                             }}
                                                             icon={<Block />}
                                                             text={`${blockedByMe ? "Unblock" : "Block"} @${post.author.username}`}
+                                                        />
+                                                    )}
+                                                    {post.mentions.includes(me.username) && (
+                                                        <OptionComponent
+                                                            title="Unmention yourself"
+                                                            onClick={async () => {
+                                                                const response = await revokeMention({
+                                                                    variables: {
+                                                                        postId: post.itemId
+                                                                    },
+                                                                    update: (cache, { data }) => {
+                                                                        if (data && data.revokeMention && data.revokeMention.ok) {
+                                                                            cache.modify({
+                                                                                id: cache.identify({ __typename: "Post", id: post.id }),
+                                                                                fields: {
+                                                                                    mentions(existingMentions = []) {
+                                                                                        return existingMentions.filter(
+                                                                                            (mention: string) => mention !== me.username
+                                                                                        );
+                                                                                    }
+                                                                                }
+                                                                            });
+                                                                        }
+                                                                    },
+                                                                });
+
+                                                                if (response.data && response.data.revokeMention.status) {
+                                                                    addToast(response.data.revokeMention.status);
+                                                                }
+                                                            }}
+                                                            icon={<Unmention />}
+                                                            text="Unmention yourself"
                                                         />
                                                     )}
                                                 </>
@@ -883,7 +925,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                             <Views />
                         </ControlContainer>
                         <PostActionInfo>
-                            {formatter.format(views)}
+                            {formatter.format(post.views)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionsGroup>

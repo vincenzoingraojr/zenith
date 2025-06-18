@@ -1,4 +1,4 @@
-import { FunctionComponent, useEffect, useMemo, useRef } from "react";
+import { FunctionComponent, useCallback, useMemo, useRef } from "react";
 import {
     Notification,
     UnseenNotificationsDocument,
@@ -176,7 +176,6 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({
 }) => {
     const navigate = useNavigate();
     const size = 32;
-    const notificationRef = useRef<HTMLDivElement>(null);
 
     const { user, loading: userLoading } = useFindUserById(
         notification.creatorId
@@ -226,8 +225,12 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({
 
     const [viewNotification] = useViewNotificationMutation();
 
-    useEffect(() => {
-        let notificationDivRef = notificationRef.current;
+    const observerRef = useRef<IntersectionObserver | null>(null);
+
+    const setNotificationRef = useCallback((node: HTMLDivElement | null) => {
+        if (observerRef.current) {
+            observerRef.current.disconnect();
+        }
 
         const options = {
             root: null,
@@ -235,53 +238,45 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({
             threshold: 0.5,
         };
 
-        const observer = new IntersectionObserver(([entry]) => {
-            if (entry.isIntersecting) {
-                viewNotification({
-                    variables: {
-                        notificationId: notification.notificationId,
-                    },
-                    update: (cache, { data: viewNotificationData }) => {
-                        if (
-                            viewNotificationData &&
-                            viewNotificationData.viewNotification
-                        ) {
-                            const existing =
-                                cache.readQuery<UnseenNotificationsQuery>({
+        if (node) {
+            observerRef.current = new IntersectionObserver(([entry]) => {
+                if (entry.isIntersecting) {
+                    viewNotification({
+                        variables: {
+                            notificationId: notification.notificationId,
+                        },
+                        update: (cache, { data: viewNotificationData }) => {
+                            if (
+                                viewNotificationData &&
+                                viewNotificationData.viewNotification
+                            ) {
+                                const existing =
+                                    cache.readQuery<UnseenNotificationsQuery>({
+                                        query: UnseenNotificationsDocument,
+                                    });
+
+                                const existingUnseenNotifications =
+                                    existing?.unseenNotifications ?? [];
+
+                                cache.writeQuery({
                                     query: UnseenNotificationsDocument,
+                                    data: {
+                                        unseenNotifications:
+                                            existingUnseenNotifications.filter(
+                                                (n: any) =>
+                                                    n.notificationId !==
+                                                    notification.notificationId
+                                            ),
+                                    },
                                 });
+                            }
+                        },
+                    });
+                }
+            }, options);
 
-                            const existingUnseenNotifications =
-                                existing?.unseenNotifications ?? [];
-
-                            cache.writeQuery({
-                                query: UnseenNotificationsDocument,
-                                data: {
-                                    unseenNotifications:
-                                        existingUnseenNotifications.filter(
-                                            (n: any) =>
-                                                n.notificationId !==
-                                                notification.notificationId
-                                        ),
-                                },
-                            });
-                        }
-                    },
-                });
-            }
-        }, options);
-
-        if (notificationDivRef) {
-            observer.observe(notificationDivRef);
+            observerRef.current.observe(node);
         }
-
-        return () => {
-            if (notificationDivRef) {
-                observer.unobserve(notificationDivRef);
-            }
-
-            notificationDivRef = null;
-        };
     }, [viewNotification, notification]);
 
     const loading = userLoading || postLoading;
@@ -298,7 +293,7 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({
                     tabIndex={0}
                     title="Open notification"
                     aria-label="Open notification"
-                    ref={notificationRef}
+                    ref={setNotificationRef}
                     onClick={() => navigate(url)}
                     onKeyDown={(e) => e.key === "Enter" && navigate(url)}
                 >

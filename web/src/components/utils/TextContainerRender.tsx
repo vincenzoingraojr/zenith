@@ -30,22 +30,27 @@ const TextContainerRender: FunctionComponent<TextContainerRenderProps> = ({
         replace: (domNode: any) => {
             if (domNode.name === "a" && domNode.attribs.class) {
                 if (
-                    domNode.attribs.class.includes("username") &&
-                    mentions.includes(domNode.attribs["data-screen-name"])
+                    domNode.attribs.class.includes("username")
                 ) {
-                    return (
-                        <Link
-                            to={domNode.attribs.href}
-                            className={domNode.attribs.class}
-                            data-screen-name={
-                                domNode.attribs["data-screen-name"]
-                            }
-                            rel={domNode.attribs.rel}
-                            onClick={handleClick}
-                        >
-                            {domNode.children[0].data}
-                        </Link>
-                    );
+                    if (mentions.includes(domNode.attribs["data-screen-name"])) {
+                        return (
+                            <Link
+                                to={domNode.attribs.href}
+                                className={domNode.attribs.class}
+                                data-screen-name={
+                                    domNode.attribs["data-screen-name"]
+                                }
+                                rel={domNode.attribs.rel}
+                                onClick={handleClick}
+                            >
+                                {domNode.children[0].data}
+                            </Link>
+                        );
+                    } else {
+                        return (
+                            <>{domNode.children[0].data}</>
+                        )
+                    }
                 } else if (domNode.attribs.class.includes("hashtag")) {
                     return (
                         <Link
