@@ -9,11 +9,10 @@ import { TextNode } from "lexical";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { $createMentionNode } from "./MentionNode";
-import profilePicture from "../../../../images/profile-picture.png";
 import { User, useUsersToMentionQuery } from "../../../../generated/graphql";
 import VerificationBadge from "../../../utils/VerificationBadge";
-import { USER_TYPES } from "../../../../utils/constants";
 import AffiliationIcon from "../../../utils/AffiliationIcon";
+import ProfilePicture from "../../../utils/ProfilePicture";
 
 const MentionsMenuContainer = styled.div`
     display: block;
@@ -40,25 +39,6 @@ const MentionItem = styled.div`
 
     &.selected {
         background-color: ${({ theme }) => theme.overlayGrey};
-    }
-`;
-
-const MentionImageContainer = styled.div.attrs(
-    (props: { type: string }) => props
-)`
-    display: block;
-    width: 32px;
-    height: 32px;
-    border-radius: ${(props) =>
-        props.type === USER_TYPES.ORGANIZATION ? "4px" : "16px"};
-
-    img {
-        display: block;
-        width: inherit;
-        height: inherit;
-        border-radius: inherit;
-        object-fit: cover;
-        object-position: center;
     }
 `;
 
@@ -238,16 +218,13 @@ function MentionsTypeaheadMenuItem({
             onMouseEnter={onMouseEnter}
             onClick={onClick}
         >
-            <MentionImageContainer type={option.type}>
-                <img
-                    src={
-                        option.avatar && option.avatar.length > 0
-                            ? option.avatar
-                            : profilePicture
-                    }
-                    alt={option.name}
-                />
-            </MentionImageContainer>
+            <ProfilePicture
+                loading={false}
+                pictureUrl={option.avatar}
+                type={option.type}
+                size={32}
+                title={option.name}
+            />
             <MentionUserInfo>
                 <MentionNameContainer>
                     <MentionName>{option.name}</MentionName>

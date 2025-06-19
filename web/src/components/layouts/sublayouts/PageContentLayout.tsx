@@ -2,18 +2,17 @@ import { FunctionComponent } from "react";
 import { LayoutProps } from "../common";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import { ControlContainer, OptionBaseIcon } from "../../../styles/global";
+import { ControlContainer, OptionBaseIcon, ProfilePictureWrapper } from "../../../styles/global";
 import Back from "../../icons/Back";
 import { devices } from "../../../styles/devices";
 import { mediaQuery } from "../../../utils/mediaQuery";
 import { useMeData } from "../../../utils/userQueries";
-import profilePicture from "../../../images/profile-picture.png";
-import { USER_TYPES } from "../../../utils/constants";
 import { useMenu } from "../../utils/hooks";
 import Menu from "../../Menu";
 import Logo from "../../icons/Logo";
 import { useToasts } from "../../utils/ToastProvider";
 import { scrollToTop } from "../../../utils/scrollToTop";
+import ProfilePicture from "../../utils/ProfilePicture";
 
 interface PageContentLayoutProps extends LayoutProps {
     title: string;
@@ -118,25 +117,6 @@ const MainHeaderProfileContainer = styled.div`
     }
 `;
 
-const MainHeaderProfileImageContainer = styled.div.attrs(
-    (props: { type: string }) => props
-)`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: ${(props) =>
-        props.type === USER_TYPES.ORGANIZATION ? "4px" : "16px"};
-    cursor: pointer;
-
-    img {
-        width: inherit;
-        height: inherit;
-        border-radius: inherit;
-    }
-`;
-
 const HomeContainer = styled.div`
     display: flex;
     align-items: center;
@@ -216,8 +196,7 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({
                                 {me && !error && (
                                     <>
                                         <MainHeaderProfileContainer>
-                                            <MainHeaderProfileImageContainer
-                                                type={me.type}
+                                            <ProfilePictureWrapper
                                                 role="button"
                                                 title={me.name}
                                                 aria-label={me.name}
@@ -225,20 +204,14 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({
                                                     openMenu();
                                                 }}
                                             >
-                                                <img
-                                                    src={
-                                                        loading ||
-                                                        me.profile
-                                                            .profilePicture
-                                                            .length === 0
-                                                            ? profilePicture
-                                                            : me.profile
-                                                                  .profilePicture
-                                                    }
+                                                <ProfilePicture
+                                                    loading={loading}
+                                                    pictureUrl={me.profile.profilePicture}
+                                                    type={me.type}
+                                                    size={32}
                                                     title={me.name}
-                                                    alt={me.name}
                                                 />
-                                            </MainHeaderProfileImageContainer>
+                                            </ProfilePictureWrapper>
                                         </MainHeaderProfileContainer>
                                         {showMenu && (
                                             <Menu closeMenu={closeMenu} />

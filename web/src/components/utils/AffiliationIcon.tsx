@@ -1,33 +1,14 @@
 import { FunctionComponent } from "react";
-import { PageBlock } from "../../styles/global";
+import { PageBlock, ProfilePictureWrapper } from "../../styles/global";
 import { useNavigate } from "react-router-dom";
-import profilePicture from "../../images/profile-picture.png";
-import styled from "styled-components";
 import { useIsAffiliatedTo } from "../../utils/userQueries";
+import ProfilePicture from "./ProfilePicture";
 
 interface AffiliationIconProps {
     userId: number;
     size: number;
     noAction?: boolean;
 }
-
-const AffiliationIconContainer = styled.div.attrs(
-    (props: { size: number }) => props
-)`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: ${(props) => `${props.size}px`};
-    height: ${(props) => `${props.size}px`};
-    border-radius: ${(props) => `${props.size / 8}px`};
-    cursor: pointer;
-
-    img {
-        width: inherit;
-        height: inherit;
-        border-radius: inherit;
-    }
-`;
 
 const AffiliationIcon: FunctionComponent<AffiliationIconProps> = ({
     userId,
@@ -42,7 +23,7 @@ const AffiliationIcon: FunctionComponent<AffiliationIconProps> = ({
 
     return (
         <PageBlock>
-            <AffiliationIconContainer
+            <ProfilePictureWrapper
                 role="link"
                 title={isAffiliatedData.name}
                 aria-label={isAffiliatedData.name}
@@ -54,19 +35,15 @@ const AffiliationIcon: FunctionComponent<AffiliationIconProps> = ({
                         navigate(`/${isAffiliatedData.username}`);
                     }
                 }}
-                size={size}
             >
-                <img
-                    src={
-                        loading ||
-                        isAffiliatedData.profile.profilePicture.length === 0
-                            ? profilePicture
-                            : isAffiliatedData.profile.profilePicture
-                    }
+                <ProfilePicture
+                    loading={loading}
+                    pictureUrl={isAffiliatedData.profile.profilePicture}
+                    type={isAffiliatedData.type}
+                    size={size}
                     title={isAffiliatedData.name}
-                    alt={isAffiliatedData.name}
                 />
-            </AffiliationIconContainer>
+            </ProfilePictureWrapper>
         </PageBlock>
     );
 };

@@ -1,4 +1,4 @@
-import { GetPostLikesDocument, GetRepostsDocument, IsBookmarkedDocument, IsBookmarkedQuery, IsPostLikedByMeDocument, IsPostLikedByMeQuery, IsRepostedByUserDocument, IsRepostedByUserQuery, Repost, useCreateBookmarkMutation, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useLikePostMutation, useRemoveBookmarkMutation, useRemoveLikeMutation } from "../generated/graphql";
+import { GetPostLikesDocument, GetRepostsDocument, IsBookmarkedDocument, IsBookmarkedQuery, IsPostLikedByMeDocument, IsPostLikedByMeQuery, IsRepostedByUserDocument, IsRepostedByUserQuery, Repost, useCreateBookmarkMutation, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useIncrementPostViewsMutation, useLikePostMutation, useRemoveBookmarkMutation, useRemoveLikeMutation, useRevokeMentionMutation } from "../generated/graphql";
 import { useMeData } from "./userQueries";
 
 export function usePostMutations() {
@@ -10,6 +10,8 @@ export function usePostMutations() {
     const [deleteRepost] = useDeleteRepostMutation();
     const [createBookmark] = useCreateBookmarkMutation();
     const [removeBookmark] = useRemoveBookmarkMutation();
+    const [incrementPostViews] = useIncrementPostViewsMutation();
+    const [revokeMention] = useRevokeMentionMutation();
 
     const handleDeletePost = async (itemId: string, postId: number) => {
         try {
@@ -480,5 +482,64 @@ export function usePostMutations() {
         }
     }
 
-    return { handleDeletePost, handleLikePost, handleRepost, handleBookmark };
+    const handleViewPost = (postId: number, itemId: string, type: string, itemOpened: boolean, origin: string) => {
+        const response = incrementPostViews({
+            variables: {
+                itemId,
+                type,
+                itemOpened,
+                origin,
+            },
+            update: (cache, { data }) => {
+                if (data && data.incrementPostViews) {
+                    cache.modify({
+                        id: cache.identify({ __typename: "Post", id: postId }),
+                        fields: {
+                            views(existingViews = 0) {
+                                return existingViews + 1;
+                            }
+                        }
+                    });
+                }
+            },
+        });
+
+        return response;
+    }
+
+    const handleRevokeMention = async (itemId: string, postId: number) => {
+        try {
+            const response = await revokeMention({
+                variables: {
+                    postId: itemId,
+                },
+                update: (cache, { data }) => {
+                    if (data && data.revokeMention && data.revokeMention.ok && me) {
+                        cache.modify({
+                            id: cache.identify({ __typename: "Post", id: postId }),
+                            fields: {
+                                mentions(existingMentions = []) {
+                                    return existingMentions.filter(
+                                        (mention: string) => mention !== me.username
+                                    );
+                                }
+                            }
+                        });
+                    }
+                },
+            });
+
+            if (response.data && response.data.revokeMention.status) {
+                return response.data.revokeMention.status;
+            } else {
+                return "An error occurred while trying to remove your mention.";
+            }
+        } catch (error) {
+            console.log(error);
+
+            return "Unexpected error while trying to remove your mention.";
+        }
+    }
+
+    return { handleDeletePost, handleLikePost, handleRepost, handleBookmark, handleViewPost, handleRevokeMention };
 }

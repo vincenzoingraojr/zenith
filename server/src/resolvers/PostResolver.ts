@@ -773,7 +773,6 @@ export class PostResolver {
 
                                         if (newNotification) {
                                             pubSub.publish("NEW_NOTIFICATION", newNotification);
-                                            postMentions.push(mentionedUser.username);
 
                                             const tokens = await this.userDeviceTokenRepository.find({ where: { userId: mentionedUser.id } });
                                             const pushNotification: FirebaseNotification = {
@@ -784,9 +783,9 @@ export class PostResolver {
                                             const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.itemId}?n_id=${newNotification.notificationId}`;
                                             await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: mentionedUser.username, type: newNotification.notificationType });
                                         }
-                                    } else {
-                                        postMentions.push(mentionedUser.username);
                                     }
+
+                                    postMentions.push(mentionedUser.username);
                                 }
                             }
 
@@ -803,9 +802,10 @@ export class PostResolver {
                                 },
                             });
 
-                            const uselessNotifications = mentionNotifications.filter(notification =>
-                                mentionedUsers && !mentionedUsers.some(mention => mention.id === notification.recipientId)
-                            );
+                            const uselessNotifications = mentionedUsers
+                                ? mentionNotifications.filter(n => !mentionedUsers.some(u => u.id === n.recipientId))
+                                : mentionNotifications;
+
 
                             for (const deletedNotification of uselessNotifications) {
                                 await this.notificationService.deleteNotification(deletedNotification.notificationId);

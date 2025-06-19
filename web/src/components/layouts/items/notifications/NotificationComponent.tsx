@@ -22,6 +22,7 @@ import {
     ItemLoading,
     OptionBaseIcon,
     PageText,
+    ProfilePictureWrapper,
 } from "../../../../styles/global";
 import { useFindPostById } from "../../../../utils/postQueries";
 import Bell from "../../../icons/Bell";
@@ -31,8 +32,8 @@ import Comment from "../../../icons/Comment";
 import { COLORS } from "../../../../styles/colors";
 import Pen from "../../../icons/Pen";
 import RepostIcon from "../../../icons/Repost";
-import profilePicture from "../../../../images/profile-picture.png";
 import LoadingComponent from "../../../utils/LoadingComponent";
+import ProfilePicture from "../../../utils/ProfilePicture";
 
 interface NotificationComponentProps {
     notification: Notification;
@@ -65,36 +66,10 @@ const NotificationTypeIcon = styled(OptionBaseIcon)`
 const NotificationContainer = styled.div`
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
     gap: 16px;
     width: 100%;
     overflow: hidden;
-`;
-
-const NotificationImageContainer = styled.div.attrs(
-    (props: { type: string }) => props
-)`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: ${(props) =>
-        props.type === USER_TYPES.ORGANIZATION ? "4px" : "16px"};
-    opacity: 1;
-    transition: opacity ease 0.2s;
-
-    img {
-        width: inherit;
-        height: inherit;
-        border-radius: inherit;
-        object-fit: cover;
-        object-position: center;
-    }
-
-    &:hover,
-    &:focus {
-        opacity: 0.8;
-    }
 `;
 
 const NotificationContent = styled(PageText)`
@@ -192,10 +167,7 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({
         () => processDate(notification.createdAt, true, false),
         [notification.createdAt]
     );
-    const createdAt = useMemo(
-        () => getDateToLocaleString(notification.createdAt),
-        [notification.createdAt]
-    );
+    const createdAt = getDateToLocaleString(notification.createdAt);
 
     const url = useMemo(() => {
         switch (notification.notificationType) {
@@ -299,8 +271,9 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({
                 >
                     <NotificationTypeIcon>{icon}</NotificationTypeIcon>
                     <NotificationContainer>
-                        <NotificationImageContainer
+                        <ProfilePictureWrapper
                             key={notification.id}
+                            role="link"
                             onClick={(e) => {
                                 e.stopPropagation();
 
@@ -308,23 +281,15 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({
                                     navigate(`/${user.username}`);
                                 }
                             }}
-                            type={user ? user.type : USER_TYPES.USER}
                         >
-                            <img
-                                src={
-                                    user &&
-                                    user.profile.profilePicture.length > 0
-                                        ? user.profile.profilePicture
-                                        : profilePicture
-                                }
-                                title={
-                                    user ? `${user.name}'s profile picture` : ""
-                                }
-                                alt={
-                                    user ? `${user.name}'s profile picture` : ""
-                                }
+                            <ProfilePicture
+                                loading={userLoading}
+                                pictureUrl={user ? user.profile.profilePicture : ""}
+                                type={user ? user.type : USER_TYPES.USER}
+                                size={32}
+                                title={user ? user.name : ""}
                             />
-                        </NotificationImageContainer>
+                        </ProfilePictureWrapper>
                         <NotificationContent>{content}</NotificationContent>
                         {post &&
                             (notification.resourceType === POST_TYPES.POST ||

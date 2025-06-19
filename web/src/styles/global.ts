@@ -1366,3 +1366,13 @@ export const SettingsPageDescription = styled(PageText)`
     padding-right: 16px;
     margin-bottom: 24px;
 `;
+
+export const ProfilePictureWrapper = styled(PageBlock)`
+    opacity: 1;
+    transition: opacity ease 0.2s;
+
+    &:hover,
+    &:focus {
+        opacity: 0.8;
+    }
+`;

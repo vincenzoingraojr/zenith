@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { PageBlock, PageText } from "../../../../styles/global";
 import {
     AuthorFullNameContainer,
-    AuthorImageContainer,
     AuthorInfo,
     AuthorUsername,
     PostDate,
@@ -13,7 +12,6 @@ import {
     PostRightContainer,
 } from "./PostComponent";
 import VerificationBadge from "../../../utils/VerificationBadge";
-import profilePicture from "../../../../images/profile-picture.png";
 import Pen from "../../../icons/Pen";
 import {
     getDateToLocaleString,
@@ -21,6 +19,7 @@ import {
 } from "../../../../utils/processDate";
 import { COLORS } from "../../../../styles/colors";
 import AffiliationIcon from "../../../utils/AffiliationIcon";
+import ProfilePicture from "../../../utils/ProfilePicture";
 
 interface QuotedPostProps {
     post: Post;
@@ -111,10 +110,7 @@ const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin }) => {
         [post.createdAt]
     );
 
-    const createdAt = useMemo(
-        () => getDateToLocaleString(post.createdAt),
-        [post.createdAt]
-    );
+    const createdAt = getDateToLocaleString(post.createdAt);
 
     return (
         <QuotedPostWrapper>
@@ -132,18 +128,13 @@ const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin }) => {
             >
                 <QuotedPostHeader>
                     <QuotedPostAuthorContainer>
-                        <AuthorImageContainer type={post.author.type}>
-                            <img
-                                src={
-                                    post.author.profile.profilePicture.length >
-                                    0
-                                        ? post.author.profile.profilePicture
-                                        : profilePicture
-                                }
-                                title={`${post.author.name}'s profile picture`}
-                                alt={post.author.name}
-                            />
-                        </AuthorImageContainer>
+                        <ProfilePicture
+                            loading={false}
+                            pictureUrl={post.author.profile.profilePicture}
+                            type={post.author.type}
+                            size={40}
+                            title={post.author.name}
+                        />
                         <AuthorInfo>
                             <AuthorFullNameContainer>
                                 <QuotedAuthorFullName>

@@ -1,8 +1,6 @@
 import { FunctionComponent, useEffect, useMemo, useRef } from "react";
 import {
     Post,
-    useIncrementPostViewsMutation,
-    useRevokeMentionMutation,
 } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -11,9 +9,7 @@ import {
     PageBlock,
     PageText,
 } from "../../../../styles/global";
-import profilePicture from "../../../../images/profile-picture.png";
 import TextContainerRender from "../../../utils/TextContainerRender";
-import { USER_TYPES } from "../../../../utils/constants";
 import LikeIcon from "../../../icons/Like";
 import { formatter } from "../../../../utils/formatter";
 import { COLORS } from "../../../../styles/colors";
@@ -56,6 +52,7 @@ import OptionComponent from "../../options/OptionComponent";
 import { usePostMutations } from "../../../../utils/postMutations";
 import { useUserMutations } from "../../../../utils/userMutations";
 import Unmention from "../../../icons/Unmention";
+import ProfilePicture from "../../../utils/ProfilePicture";
 
 interface PostComponentProps {
     post: Post;
@@ -107,24 +104,6 @@ const PostAuthorContainer = styled(Link)`
     &:hover,
     &:active {
         text-decoration: none;
-    }
-`;
-
-export const AuthorImageContainer = styled.div.attrs(
-    (props: { type: string }) => props
-)`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: ${(props) =>
-        props.type === USER_TYPES.ORGANIZATION ? "5px" : "20px"};
-
-    img {
-        width: inherit;
-        height: inherit;
-        border-radius: inherit;
     }
 `;
 
@@ -317,17 +296,14 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
         [post.createdAt]
     );
 
-    const createdAt = useMemo(
-        () => getDateToLocaleString(post.createdAt),
-        [post.createdAt]
-    );
+    const createdAt = getDateToLocaleString(post.createdAt);
 
     const { me } = useMeData();
 
     const location = useLocation();
 
     const postRef = useRef<HTMLDivElement>(null);
-    const [incrementPostViews] = useIncrementPostViewsMutation();
+    const { handleDeletePost, handleLikePost, handleRepost, handleBookmark, handleViewPost, handleRevokeMention } = usePostMutations();
 
     useEffect(() => {
         let postDivRef = postRef.current;
@@ -340,26 +316,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
 
         const observer = new IntersectionObserver(([entry]) => {
             if (entry.isIntersecting) {
-                incrementPostViews({
-                    variables: {
-                        itemId: post.itemId,
-                        type: post.type,
-                        itemOpened: false,
-                        origin,
-                    },
-                    update: (cache, { data }) => {
-                        if (data && data.incrementPostViews) {
-                            cache.modify({
-                                id: cache.identify({ __typename: "Post", id: post.id }),
-                                fields: {
-                                    views(existingViews = 0) {
-                                        return existingViews + 1;
-                                    }
-                                }
-                            });
-                        }
-                    },
-                });
+                handleViewPost(post.id, post.itemId, post.type, false, origin);
             }
         }, options);
 
@@ -374,7 +331,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
 
             postDivRef = null;
         };
-    }, [incrementPostViews, post, origin]);
+    }, [handleViewPost, post, origin]);
 
     const isPostLikedByMe = useLikeData(post.itemId, post.type);
 
@@ -382,45 +339,21 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
 
     const { postLikes } = usePostLikes(post.itemId, post.type);
 
-    const likes = useMemo(() => {
-        if (postLikes && postLikes.totalCount) {
-            return postLikes.totalCount;
-        } else {
-            return 0;
-        }
-    }, [postLikes]);
+    const likes = postLikes?.totalCount || 0;
 
     const { postComments } = useComments(post.id, post.type);
 
-    const comments = useMemo(() => {
-        if (postComments && postComments.totalCount) {
-            return postComments.totalCount;
-        } else {
-            return 0;
-        }
-    }, [postComments]);
+    const comments = postComments?.totalCount || 0;
 
     const { addToast } = useToasts();
 
     const isRepostedByUser = useRepostData(post.id, me ? me.id : null);
 
-    const repost = useMemo(() => {
-        if (isRepostedByUser) {
-            return isRepostedByUser;
-        } else {
-            return null;
-        }
-    }, [isRepostedByUser]);
+    const repost = useMemo(() => isRepostedByUser, [isRepostedByUser]);
 
     const { userReposts } = useReposts(post.id);
 
-    const reposts = useMemo(() => {
-        if (userReposts && userReposts.totalCount) {
-            return userReposts.totalCount;
-        } else {
-            return 0;
-        }
-    }, [userReposts]);
+    const reposts = userReposts?.totalCount || 0;
 
     const {
         post: quotedPost,
@@ -430,43 +363,19 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
 
     const isFollowedByMe = useFollowData(post.authorId);
 
-    const follow = useMemo(() => {
-        if (isFollowedByMe) {
-            return isFollowedByMe;
-        } else {
-            return null;
-        }
-    }, [isFollowedByMe]);
+    const follow = useMemo(() => isFollowedByMe, [isFollowedByMe]);
 
     const isBookmarked = useBookmarkData(post.id, post.type);
 
-    const bookmark = useMemo(() => {
-        if (isBookmarked) {
-            return isBookmarked;
-        } else {
-            return null;
-        }
-    }, [isBookmarked]);
+    const bookmark = useMemo(() => isBookmarked, [isBookmarked]);
 
     const isBlockedByMe = useIsUserBlockedData(post.authorId);
 
-    const blockedByMe = useMemo(() => {
-        if (isBlockedByMe) {
-            return isBlockedByMe;
-        } else {
-            return null;
-        }
-    }, [isBlockedByMe]);
+    const blockedByMe = useMemo(() => isBlockedByMe, [isBlockedByMe]);
 
     const hasBlockedMe = useHasBlockedMeData(post.authorId);
 
-    const blockedMe = useMemo(() => {
-        if (hasBlockedMe) {
-            return hasBlockedMe;
-        } else {
-            return null;
-        }
-    }, [hasBlockedMe]);
+    const blockedMe = useMemo(() => hasBlockedMe, [hasBlockedMe]);
 
     const isAffiliatedToMe = useHasThisUserAsAffiliate(me ? me.id : null, post.authorId);
     const isAffiliatedToAuthor = useHasThisUserAsAffiliate(post.authorId, me ? me.id : null);
@@ -475,11 +384,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
         return isAffiliatedToMe || isAffiliatedToAuthor;
     }, [isAffiliatedToMe, isAffiliatedToAuthor]);
 
-    const { handleDeletePost, handleLikePost, handleRepost, handleBookmark } = usePostMutations();
-
     const { handleFollowUser, handleBlockUser } = useUserMutations();
-
-    const [revokeMention] = useRevokeMentionMutation();
 
     return (
         <PostWrapper>
@@ -512,18 +417,13 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                         to={`/${post.author.username}`}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <AuthorImageContainer type={post.author.type}>
-                            <img
-                                src={
-                                    post.author.profile.profilePicture.length >
-                                    0
-                                        ? post.author.profile.profilePicture
-                                        : profilePicture
-                                }
-                                title={`${post.author.name}'s profile picture`}
-                                alt={post.author.name}
-                            />
-                        </AuthorImageContainer>
+                        <ProfilePicture
+                            loading={false}
+                            pictureUrl={post.author.profile.profilePicture}
+                            type={post.author.type}
+                            size={40}
+                            title={post.author.name}
+                        />
                         <AuthorInfo>
                             <AuthorFullNameContainer>
                                 <AuthorFullName>
@@ -690,29 +590,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                         <OptionComponent
                                                             title="Unmention yourself"
                                                             onClick={async () => {
-                                                                const response = await revokeMention({
-                                                                    variables: {
-                                                                        postId: post.itemId
-                                                                    },
-                                                                    update: (cache, { data }) => {
-                                                                        if (data && data.revokeMention && data.revokeMention.ok) {
-                                                                            cache.modify({
-                                                                                id: cache.identify({ __typename: "Post", id: post.id }),
-                                                                                fields: {
-                                                                                    mentions(existingMentions = []) {
-                                                                                        return existingMentions.filter(
-                                                                                            (mention: string) => mention !== me.username
-                                                                                        );
-                                                                                    }
-                                                                                }
-                                                                            });
-                                                                        }
-                                                                    },
-                                                                });
+                                                                const response = await handleRevokeMention(post.itemId, post.id);
 
-                                                                if (response.data && response.data.revokeMention.status) {
-                                                                    addToast(response.data.revokeMention.status);
-                                                                }
+                                                                addToast(response);
                                                             }}
                                                             icon={<Unmention />}
                                                             text="Unmention yourself"

@@ -2,7 +2,6 @@ import { FunctionComponent, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { useMeData } from "../../../utils/userQueries";
 import { Link, useLocation } from "react-router-dom";
-import profilePicture from "../../../images/profile-picture.png";
 import {
     Button,
     ControlContainer,
@@ -43,6 +42,7 @@ import Close from "../../icons/Close";
 import { getExactSize } from "../../../utils/getExactSize";
 import { useToasts } from "../../utils/ToastProvider";
 import { FileWrapper, ProgressStatus } from "../commons";
+import ProfilePicture from "../../utils/ProfilePicture";
 
 interface EditorComponentProps {
     field: any;
@@ -148,22 +148,6 @@ const ProfileImageContainer = styled.div`
     a:active {
         text-decoration: none;
         opacity: 0.8;
-    }
-`;
-
-const ProfileImage = styled.div.attrs((props: { type: string }) => props)`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: ${(props) =>
-        props.type === USER_TYPES.ORGANIZATION ? "6px" : "24px"};
-
-    img {
-        width: inherit;
-        height: inherit;
-        border-radius: inherit;
     }
 `;
 
@@ -286,7 +270,7 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({
     buttonText,
     progress,
 }) => {
-    const { me } = useMeData();
+    const { me, loading } = useMeData();
     const [content, setContent] = useState(values.content || "");
     const [isEditorEmpty, setIsEditorEmpty] = useState(false);
     const { addToast } = useToasts();
@@ -378,20 +362,16 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({
             <ProfileImageContainer>
                 <Link
                     to={me ? `/${me.username}` : "/"}
-                    title={me ? `${me.name}` : ""}
-                    aria-label={me ? `${me.name}` : ""}
+                    title={me ? me.name : ""}
+                    aria-label={me ? me.name : ""}
                 >
-                    <ProfileImage type={me?.type}>
-                        <img
-                            src={
-                                me && me.profile.profilePicture.length > 0
-                                    ? me.profile.profilePicture
-                                    : profilePicture
-                            }
-                            title={me ? `${me.name}'s profile picture` : ""}
-                            alt={me ? `${me.name}` : ""}
-                        />
-                    </ProfileImage>
+                    <ProfilePicture
+                        loading={loading}
+                        pictureUrl={me ? me.profile.profilePicture : ""}
+                        type={me ? me.type : USER_TYPES.USER}
+                        size={48}
+                        title={me ? me.name : ""}
+                    />
                 </Link>
             </ProfileImageContainer>
             <EditorComponentContainer>

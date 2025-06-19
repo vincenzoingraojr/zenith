@@ -11,17 +11,16 @@ import {
 } from "../styles/global";
 import Close from "./icons/Close";
 import { useMeData } from "../utils/userQueries";
-import profilePicture from "../images/profile-picture.png";
 import { Link } from "react-router-dom";
 import Profile from "./icons/Profile";
 import Settings from "./icons/Settings";
 import Exit from "./icons/Exit";
 import { COLORS } from "../styles/colors";
-import { USER_TYPES } from "../utils/constants";
 import { useThemeContext } from "../styles/ThemeContext";
 import ThemeIcon from "./icons/ThemeIcon";
 import VerificationBadge from "./utils/VerificationBadge";
 import AffiliationIcon from "./utils/AffiliationIcon";
+import ProfilePicture from "./utils/ProfilePicture";
 
 interface MenuProps {
     closeMenu: () => void;
@@ -157,26 +156,6 @@ const ProfileMenuContainer = styled.div`
     }
 `;
 
-const ProfileMenuImageContainer = styled.div.attrs(
-    (props: { type: string }) => props
-)`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 42px;
-    height: 42px;
-    border-radius: ${(props) =>
-        props.type === USER_TYPES.ORGANIZATION ? "6px" : "21px"};
-
-    img {
-        width: inherit;
-        height: inherit;
-        border-radius: inherit;
-        object-fit: cover;
-        object-position: center;
-    }
-`;
-
 const ProfileMenuInfo = styled.div`
     display: flex;
     flex-direction: column;
@@ -298,19 +277,13 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                                 title={me.name}
                                 aria-label={me.name}
                             >
-                                <ProfileMenuImageContainer type={me.type}>
-                                    <img
-                                        src={
-                                            loading ||
-                                            me.profile.profilePicture.length ===
-                                                0
-                                                ? profilePicture
-                                                : me.profile.profilePicture
-                                        }
-                                        title={me.name}
-                                        alt={me.name}
-                                    />
-                                </ProfileMenuImageContainer>
+                                <ProfilePicture
+                                    loading={loading}
+                                    pictureUrl={me.profile.profilePicture}
+                                    type={me.type}
+                                    size={42}
+                                    title={me.name}
+                                />
                                 <ProfileMenuInfo>
                                     <ProfileMenuInfoFullNameContainer>
                                         <ProfileMenuInfoFullName>
