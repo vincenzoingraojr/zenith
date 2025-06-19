@@ -1006,7 +1006,7 @@ export type QueryIsAffiliatedToArgs = {
 
 
 export type QueryIsBookmarkedArgs = {
-  itemId: Scalars['Int']['input'];
+  itemId?: InputMaybe<Scalars['Int']['input']>;
   type: Scalars['String']['input'];
 };
 
@@ -1023,7 +1023,7 @@ export type QueryIsPostLikedByMeArgs = {
 
 
 export type QueryIsRepostedByUserArgs = {
-  postId: Scalars['Int']['input'];
+  postId?: InputMaybe<Scalars['Int']['input']>;
   userId?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -1487,7 +1487,7 @@ export type GetPostLikesQueryVariables = Exact<{
 export type GetPostLikesQuery = { __typename?: 'Query', getPostLikes: { __typename?: 'PaginatedUsers', hasMore: boolean, totalCount?: number | null, users: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }> } };
 
 export type GetRepostsQueryVariables = Exact<{
-  postId: Scalars['Int']['input'];
+  postId?: InputMaybe<Scalars['Int']['input']>;
   limit: Scalars['Int']['input'];
   cursor?: InputMaybe<Scalars['String']['input']>;
 }>;
@@ -1506,7 +1506,7 @@ export type IncrementPostViewsMutationVariables = Exact<{
 export type IncrementPostViewsMutation = { __typename?: 'Mutation', incrementPostViews?: { __typename?: 'FeedItem', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, views: number, lang: string, topics?: Array<any> | null, createdAt: string, updatedAt: string } | null };
 
 export type IsBookmarkedQueryVariables = Exact<{
-  itemId: Scalars['Int']['input'];
+  itemId?: InputMaybe<Scalars['Int']['input']>;
   type: Scalars['String']['input'];
 }>;
 
@@ -1522,7 +1522,7 @@ export type IsPostLikedByMeQueryVariables = Exact<{
 export type IsPostLikedByMeQuery = { __typename?: 'Query', isPostLikedByMe?: { __typename?: 'Like', id: number, userId: number, likedItemId: string, itemOpened: boolean, itemType: string, origin: string, createdAt: string, updatedAt: string } | null };
 
 export type IsRepostedByUserQueryVariables = Exact<{
-  postId: Scalars['Int']['input'];
+  postId?: InputMaybe<Scalars['Int']['input']>;
   userId?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
@@ -2760,7 +2760,7 @@ export type GetPostLikesLazyQueryHookResult = ReturnType<typeof useGetPostLikesL
 export type GetPostLikesSuspenseQueryHookResult = ReturnType<typeof useGetPostLikesSuspenseQuery>;
 export type GetPostLikesQueryResult = Apollo.QueryResult<GetPostLikesQuery, GetPostLikesQueryVariables>;
 export const GetRepostsDocument = gql`
-    query GetReposts($postId: Int!, $limit: Int!, $cursor: String) {
+    query GetReposts($postId: Int, $limit: Int!, $cursor: String) {
   getReposts(postId: $postId, limit: $limit, cursor: $cursor) {
     reposts {
       id
@@ -2862,7 +2862,7 @@ export type IncrementPostViewsMutationHookResult = ReturnType<typeof useIncremen
 export type IncrementPostViewsMutationResult = Apollo.MutationResult<IncrementPostViewsMutation>;
 export type IncrementPostViewsMutationOptions = Apollo.BaseMutationOptions<IncrementPostViewsMutation, IncrementPostViewsMutationVariables>;
 export const IsBookmarkedDocument = gql`
-    query IsBookmarked($itemId: Int!, $type: String!) {
+    query IsBookmarked($itemId: Int, $type: String!) {
   isBookmarked(itemId: $itemId, type: $type) {
     id
     itemId
@@ -2957,7 +2957,7 @@ export type IsPostLikedByMeLazyQueryHookResult = ReturnType<typeof useIsPostLike
 export type IsPostLikedByMeSuspenseQueryHookResult = ReturnType<typeof useIsPostLikedByMeSuspenseQuery>;
 export type IsPostLikedByMeQueryResult = Apollo.QueryResult<IsPostLikedByMeQuery, IsPostLikedByMeQueryVariables>;
 export const IsRepostedByUserDocument = gql`
-    query IsRepostedByUser($postId: Int!, $userId: Int) {
+    query IsRepostedByUser($postId: Int, $userId: Int) {
   isRepostedByUser(postId: $postId, userId: $userId) {
     id
     repostId
@@ -2986,7 +2986,7 @@ export const IsRepostedByUserDocument = gql`
  *   },
  * });
  */
-export function useIsRepostedByUserQuery(baseOptions: Apollo.QueryHookOptions<IsRepostedByUserQuery, IsRepostedByUserQueryVariables> & ({ variables: IsRepostedByUserQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useIsRepostedByUserQuery(baseOptions?: Apollo.QueryHookOptions<IsRepostedByUserQuery, IsRepostedByUserQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<IsRepostedByUserQuery, IsRepostedByUserQueryVariables>(IsRepostedByUserDocument, options);
       }

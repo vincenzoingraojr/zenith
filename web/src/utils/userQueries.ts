@@ -45,7 +45,7 @@ export const useFindUser = (username: string) => {
     };
 };
 
-export const useFollowData = (id: number) => {
+export const useFollowData = (id?: number) => {
     const { data } = useIsFollowedByMeQuery({
         variables: {
             id,
@@ -56,7 +56,7 @@ export const useFollowData = (id: number) => {
     return data && data.isFollowedByMe ? data.isFollowedByMe : null;
 };
 
-export const useIsUserBlockedData = (id: number) => {
+export const useIsUserBlockedData = (id?: number) => {
     const { data } = useIsUserBlockedByMeQuery({
         variables: {
             id,
@@ -67,7 +67,7 @@ export const useIsUserBlockedData = (id: number) => {
     return data && data.isUserBlockedByMe ? data.isUserBlockedByMe : null;
 };
 
-export const useHasBlockedMeData = (id: number) => {
+export const useHasBlockedMeData = (id?: number) => {
     const { data } = useHasUserBlockedMeQuery({
         variables: {
             id,
@@ -78,7 +78,7 @@ export const useHasBlockedMeData = (id: number) => {
     return data && data.hasUserBlockedMe ? data.hasUserBlockedMe : null;
 };
 
-export const useIsAffiliatedTo = (userId: number | null) => {
+export const useIsAffiliatedTo = (userId?: number) => {
     const { data, loading, error } = useIsAffiliatedToQuery({
         variables: { id: userId },
         fetchPolicy: "cache-first",
@@ -91,7 +91,7 @@ export const useIsAffiliatedTo = (userId: number | null) => {
     };
 };
 
-export const useHasThisUserAsAffiliate = (id: number | null, userId: number | null) => {
+export const useHasThisUserAsAffiliate = (id?: number, userId?: number) => {
     const { data } = useHasThisUserAsAffiliateQuery({
         variables: {
             id,

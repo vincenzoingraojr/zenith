@@ -16,6 +16,7 @@ interface OptionsProps {
     children: React.ReactNode;
     size?: number;
     mirrored?: boolean;
+    disabled?: boolean;
 }
 
 const OptionsContainerBackground = styled.div`
@@ -117,6 +118,7 @@ const Options: FunctionComponent<OptionsProps> = ({
     children,
     size,
     mirrored,
+    disabled,
 }) => {
     const buttonRef = useRef<HTMLDivElement>(null);
 
@@ -186,10 +188,13 @@ const Options: FunctionComponent<OptionsProps> = ({
                 aria-label={title}
                 onClick={(e) => {
                     e.stopPropagation();
-                    toggleOptions();
+                    if (!disabled) {
+                        toggleOptions();
+                    }
                 }}
                 size={size}
                 ref={buttonRef}
+                isDisabled={disabled}
             >
                 {icon}
             </ControlContainer>

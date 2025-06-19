@@ -1465,12 +1465,18 @@ export class PostResolver {
     @Query(() => Bookmark, { nullable: true })
     @UseMiddleware(isAuth)
     async isBookmarked(
-        @Arg("itemId", () => Int) itemId: number,
+        @Arg("itemId", () => Int, { nullable: true }) itemId: number,
         @Arg("type") type: string,
         @Ctx() { payload }: AuthContext
     ): Promise<Bookmark | null> {
         if (!payload) {
             logger.warn("User not authenticated.");
+
+            return null;
+        }
+
+        if (!itemId) {
+            logger.warn("Item id not provided.");
 
             return null;
         }
@@ -1669,11 +1675,17 @@ export class PostResolver {
     @Query(() => Repost, { nullable: true })
     @UseMiddleware(isAuth)
     async isRepostedByUser(
-        @Arg("postId", () => Int) postId: number,
+        @Arg("postId", () => Int, { nullable: true }) postId: number,
         @Arg("userId", () => Int, { nullable: true }) userId: number,
     ): Promise<Repost | null> {
         if (!userId) {
             logger.warn("User id not provided.");
+
+            return null;
+        }
+
+        if (!postId) {
+            logger.warn("Post id not provided.");
 
             return null;
         }

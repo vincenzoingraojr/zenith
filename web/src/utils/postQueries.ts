@@ -1,3 +1,4 @@
+import { WatchQueryFetchPolicy } from "@apollo/client";
 import {
     useFindPostByIdQuery,
     useFindPostQuery,
@@ -22,7 +23,7 @@ export const useFindPost = (postId: string) => {
     };
 };
 
-export const useFindPostById = (id?: number) => {
+export const useFindPostById = (id?: number | null) => {
     const { data, loading, error } = useFindPostByIdQuery({
         variables: { id },
         fetchPolicy: "cache-first",
@@ -57,20 +58,22 @@ export const usePostLikes = (itemId: string, type: string) => {
     };
 };
 
-export const useComments = (id: number, type: string) => {
-    const { data, loading, error } = usePostCommentsQuery({
-        fetchPolicy: "cache-and-network",
-        variables: { id, type, limit: 3 },
+export const useComments = (type: string, fetchPolicy: WatchQueryFetchPolicy | undefined, id?: number) => {
+    const { data, loading, error, fetchMore } = usePostCommentsQuery({
+        fetchPolicy,
+        variables: { id, type, limit: 3, cursor: null },
+        notifyOnNetworkStatusChange: true,
     });
 
     return {
         postComments: data?.postComments,
         loading,
         error,
+        fetchMore,
     };
 };
 
-export const useRepostData = (id: number, userId: number | null) => {
+export const useRepostData = (id?: number, userId?: number) => {
     const { data } = useIsRepostedByUserQuery({
         fetchPolicy: "cache-first",
         variables: { postId: id, userId },
@@ -79,7 +82,7 @@ export const useRepostData = (id: number, userId: number | null) => {
     return data && data.isRepostedByUser ? data.isRepostedByUser : null;
 };
 
-export const useReposts = (id: number) => {
+export const useReposts = (id?: number) => {
     const { data, loading, error } = useGetRepostsQuery({
         fetchPolicy: "cache-and-network",
         variables: { postId: id, limit: 3 },
@@ -92,7 +95,7 @@ export const useReposts = (id: number) => {
     };
 };
 
-export const useBookmarkData = (id: number, type: string) => {
+export const useBookmarkData = (type: string, id?: number) => {
     const { data } = useIsBookmarkedQuery({
         variables: {
             itemId: id,

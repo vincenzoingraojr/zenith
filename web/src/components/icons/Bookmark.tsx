@@ -1,14 +1,14 @@
 import { FunctionComponent } from "react";
-import { DynamicSizeIcon, IconProps } from "./common";
+import { DynamicSizeIcon, IconSizeProps } from "./common";
 import { COLORS } from "../../styles/colors";
 import { useTheme } from "../../styles/theme";
 
-const BookmarkIcon: FunctionComponent<IconProps> = ({ isActive }) => {
+const BookmarkIcon: FunctionComponent<IconSizeProps> = ({ isActive, size }) => {
     const theme = useTheme();
 
     return (
         <DynamicSizeIcon
-            size={22}
+            size={size ? size : 22}
             isFilled={isActive ? COLORS.blue : theme.color}
         >
             {isActive ? (

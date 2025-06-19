@@ -41,14 +41,23 @@ export function usePostMutations() {
                 client.cache.evict({ id: refId });
                 client.cache.gc();
 
-                return "Your post has been deleted.";
+                return {
+                    ok: true,
+                    status: "Your post has been deleted.",
+                };
             } else {
-                return "An error occurred while deleting the post.";
+                return {
+                    ok: false, 
+                    status: "An error occurred while deleting the post.",
+                };
             }
         } catch (error) {
             console.error(error);
 
-            return "Unexpected error while deleting the post.";
+            return {
+                ok: false, 
+                status: "Unexpected error while deleting the post.",
+            };
         }
     };
 

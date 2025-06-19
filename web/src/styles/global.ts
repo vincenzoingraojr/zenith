@@ -1065,6 +1065,26 @@ export const SvgIcon = styled.div`
 `;
 
 export const ControlContainer = styled.div.attrs(
+    (props: { size?: number, isDisabled?: boolean }) => props
+)`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    width: ${(props) => (props.size ? `${props.size}px` : `36px`)};
+    height: ${(props) => (props.size ? `${props.size}px` : `36px`)};
+    border-radius: 9999px;
+    background-color: transparent;
+    transition: background-color ease 0.2s;
+    opacity: ${(props) => (props.isDisabled ? "0.6" : "1")};
+
+    &:hover,
+    &:focus {
+        background-color: ${({ theme }) => theme.overlayGrey};
+    }
+`;
+
+export const ButtonControlContainer = styled.button.attrs(
     (props: { size?: number }) => props
 )`
     display: flex;
@@ -1076,10 +1096,15 @@ export const ControlContainer = styled.div.attrs(
     border-radius: 9999px;
     background-color: transparent;
     transition: background-color ease 0.2s;
+    opacity: 1;
 
     &:hover,
     &:focus {
         background-color: ${({ theme }) => theme.overlayGrey};
+    }
+
+    &:disabled {
+        opacity: 0.6;
     }
 `;
 
@@ -1375,4 +1400,16 @@ export const ProfilePictureWrapper = styled(PageBlock)`
     &:focus {
         opacity: 0.8;
     }
+`;
+
+export const FeedWithLumenInput = styled.div`
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 24px;
+`;
+
+export const SignUpOrLogInText = styled(PageText)`
+    padding-left: 16px;
+    padding-right: 16px;
 `;

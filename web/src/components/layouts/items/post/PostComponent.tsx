@@ -78,7 +78,7 @@ const PostContainer = styled.div`
     cursor: pointer;
 `;
 
-const PostHeader = styled.div`
+export const PostHeader = styled.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -91,7 +91,7 @@ const PostHeader = styled.div`
     overflow: hidden;
 `;
 
-const PostAuthorContainer = styled(Link)`
+export const PostAuthorContainer = styled(Link)`
     display: flex;
     align-items: center;
     justify-content: flex-start;
@@ -126,7 +126,7 @@ export const AuthorFullNameContainer = styled.div`
     gap: 8px;
 `;
 
-const AuthorFullName = styled(PageText)`
+export const AuthorFullName = styled(PageText)`
     font-weight: 700;
     font-size: 16px;
     width: auto;
@@ -172,7 +172,7 @@ export const PostDate = styled(PageText)`
     }
 `;
 
-const PostContentContainer = styled.div`
+export const PostContentContainer = styled.div`
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -182,12 +182,12 @@ const PostContentContainer = styled.div`
     padding-bottom: 10px;
 `;
 
-const PostTextContainer = styled.div`
+export const PostTextContainer = styled.div`
     display: block;
     font-size: 22px;
 `;
 
-const PostMediaContainer = styled.div`
+export const PostMediaContainer = styled.div`
     display: grid;
     width: 100%;
     grid-template-columns: repeat(2, 1fr);
@@ -216,7 +216,7 @@ export const PostMediaItem = styled.div`
     }
 `;
 
-const PostActionsContainer = styled.div`
+export const PostActionsContainer = styled.div`
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -228,7 +228,7 @@ const PostActionsContainer = styled.div`
     padding-bottom: 10px;
 `;
 
-const PostActionsGroup = styled.div`
+export const PostActionsGroup = styled.div`
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -267,13 +267,13 @@ const PostActionContainer = styled.button.attrs(
     }
 `;
 
-const PostActionInfo = styled(PageText)`
+export const PostActionInfo = styled(PageText)`
     font-size: 14px;
     color: inherit;
     background-color: transparent;
 `;
 
-const QuotedPostNotAvailable = styled.div`
+export const QuotedPostNotAvailable = styled.div`
     display: block;
     color: ${({ theme }) => theme.inputText};
     background-color: ${({ theme }) => theme.inputBackground};
@@ -341,13 +341,13 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
 
     const likes = postLikes?.totalCount || 0;
 
-    const { postComments } = useComments(post.id, post.type);
+    const { postComments } = useComments(post.type, "cache-and-network", post.id);
 
     const comments = postComments?.totalCount || 0;
 
     const { addToast } = useToasts();
 
-    const isRepostedByUser = useRepostData(post.id, me ? me.id : null);
+    const isRepostedByUser = useRepostData(post.id, me?.id);
 
     const repost = useMemo(() => isRepostedByUser, [isRepostedByUser]);
 
@@ -359,13 +359,13 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
         post: quotedPost,
         loading,
         error,
-    } = useFindPostById(post.quotedPostId as number | undefined);
+    } = useFindPostById(post.quotedPostId);
 
     const isFollowedByMe = useFollowData(post.authorId);
 
     const follow = useMemo(() => isFollowedByMe, [isFollowedByMe]);
 
-    const isBookmarked = useBookmarkData(post.id, post.type);
+    const isBookmarked = useBookmarkData(post.type, post.id);
 
     const bookmark = useMemo(() => isBookmarked, [isBookmarked]);
 
@@ -377,8 +377,8 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
 
     const blockedMe = useMemo(() => hasBlockedMe, [hasBlockedMe]);
 
-    const isAffiliatedToMe = useHasThisUserAsAffiliate(me ? me.id : null, post.authorId);
-    const isAffiliatedToAuthor = useHasThisUserAsAffiliate(post.authorId, me ? me.id : null);
+    const isAffiliatedToMe = useHasThisUserAsAffiliate(me?.id, post.authorId);
+    const isAffiliatedToAuthor = useHasThisUserAsAffiliate(post.authorId, me?.id);
 
     const affiliation = useMemo(() => {
         return isAffiliatedToMe || isAffiliatedToAuthor;
@@ -524,9 +524,9 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                     <OptionComponent
                                                         title="Delete this post"
                                                         onClick={async () => {
-                                                            const status = await handleDeletePost(post.itemId, post.id);
+                                                            const response = await handleDeletePost(post.itemId, post.id);
 
-                                                            addToast(status);
+                                                            addToast(response.status);
                                                         }}
                                                         icon={
                                                             <Bin
@@ -541,7 +541,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                 </>
                                             ) : (
                                                 <>
-                                                    {(!blockedByMe && !hasBlockedMe) && (
+                                                    {(!blockedByMe && !blockedMe) && (
                                                         <OptionComponent
                                                             title={`${
                                                                 follow

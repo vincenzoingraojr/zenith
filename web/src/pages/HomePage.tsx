@@ -1,22 +1,15 @@
-import styled from "styled-components";
 import Head from "../components/Head";
 import LumenInput from "../components/input/lumen/LumenInput";
 import PageLayout from "../components/layouts/PageLayout";
 import PageContentLayout from "../components/layouts/sublayouts/PageContentLayout";
 import { Post, usePostFeedQuery } from "../generated/graphql";
 import {
+    FeedWithLumenInput,
     FullWidthFeedContainer,
 } from "../styles/global";
 import PostComponent from "../components/layouts/items/post/PostComponent";
 import { useCallback, useMemo } from "react";
 import FeedComponent from "../components/utils/FeedComponent";
-
-const HomePageContainer = styled.div`
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    gap: 24px;
-`;
 
 function HomePage() {
     const limit = 3;
@@ -89,7 +82,7 @@ function HomePage() {
                         title="Home"
                         type="home"
                         children={
-                            <HomePageContainer>
+                            <FeedWithLumenInput>
                                 <LumenInput
                                     type="post"
                                     placeholder="What's happening right now?"
@@ -106,7 +99,7 @@ function HomePage() {
                                         isFeedEmpty={data?.postFeed.totalCount === 0}
                                     />
                                 </FullWidthFeedContainer>
-                            </HomePageContainer>
+                            </FeedWithLumenInput>
                         }
                     />
                 }

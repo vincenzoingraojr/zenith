@@ -1,5 +1,5 @@
 query IsRepostedByUser(
-    $postId: Int!
+    $postId: Int
     $userId: Int
 ) {
     isRepostedByUser(

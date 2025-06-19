@@ -1,5 +1,5 @@
 query GetReposts(
-    $postId: Int!
+    $postId: Int
     $limit: Int!
     $cursor: String
 ) {

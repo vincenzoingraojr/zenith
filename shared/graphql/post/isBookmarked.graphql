@@ -1,5 +1,5 @@
 query IsBookmarked(
-    $itemId: Int!
+    $itemId: Int
     $type: String!
 ) {
     isBookmarked(
