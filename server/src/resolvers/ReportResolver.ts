@@ -73,19 +73,13 @@ export class ReportResolver {
     }
 
     @Query(() => [ReportOption], { nullable: true })
-    @UseMiddleware(isAuth)
     reportOptions(
         @Arg("type") type: string,
-        @Ctx() { payload }: AuthContext,
     ): ReportOption[] | null {
-        if (payload) {
-            if (type === "user" || type === "post") {
-                return reportOptions;
-            } else {
-                return altReportOptions;
-            }
+        if (type === "user" || type === "post") {
+            return reportOptions;
         } else {
-            return null;
+            return altReportOptions;
         }
     }
 }

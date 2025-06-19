@@ -198,6 +198,7 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({
     const [viewNotification] = useViewNotificationMutation();
 
     const observerRef = useRef<IntersectionObserver | null>(null);
+    const viewedRef = useRef(false);
 
     const setNotificationRef = useCallback((node: HTMLDivElement | null) => {
         if (observerRef.current) {
@@ -212,7 +213,9 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({
 
         if (node) {
             observerRef.current = new IntersectionObserver(([entry]) => {
-                if (entry.isIntersecting) {
+                if (entry.isIntersecting && !viewedRef.current) {
+                    viewedRef.current = true;
+                    
                     viewNotification({
                         variables: {
                             notificationId: notification.notificationId,

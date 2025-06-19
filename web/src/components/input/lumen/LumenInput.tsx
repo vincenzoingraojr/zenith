@@ -6,6 +6,7 @@ import axios from "axios";
 import { useToasts } from "../../utils/ToastProvider";
 import { FileWrapper, ProgressStatus } from "../commons";
 import {
+    Post,
     PostCommentsDocument,
     useCreatePostMutation,
 } from "../../../generated/graphql";
@@ -304,9 +305,10 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({
                                     },
                                 });
 
-                                const { totalCount: oldCount, hasMore } = (
+                                const { posts: existingPosts, totalCount: oldCount, hasMore } = (
                                     existing as {
                                         postComments: {
+                                            posts: Post[],
                                             totalCount: number;
                                             hasMore: boolean;
                                         };
@@ -324,6 +326,7 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({
                                         postComments: {
                                             posts: [
                                                 response.data.createPost.post,
+                                                ...existingPosts,
                                             ],
                                             totalCount: oldCount + 1,
                                             hasMore,

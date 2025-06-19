@@ -8,7 +8,7 @@ import LoadingComponent from "../../components/utils/LoadingComponent";
 import ErrorOrItemNotFound from "../../components/utils/ErrorOrItemNotFound";
 import { ERROR_SOMETHING_WENT_WRONG } from "../../utils/constants";
 import styled from "styled-components";
-import PostComponent, { AuthorFullName, AuthorFullNameContainer, AuthorInfo, AuthorUsername, PostActionInfo, PostActionsContainer, PostActionsGroup, PostAuthorContainer, PostContentContainer, PostHeader, PostMediaContainer, PostMediaItem, PostTextContainer, QuotedPostNotAvailable } from "../../components/layouts/items/post/PostComponent";
+import PostComponent, { AuthorFullName, AuthorFullNameContainer, AuthorInfo, AuthorUsername, PostActionInfo, PostActionsContainer, PostActionsGroup, PostAuthorContainer, PostContentContainer, PostDate, PostHeader, PostMediaContainer, PostMediaItem, PostTextContainer, QuotedPostNotAvailable } from "../../components/layouts/items/post/PostComponent";
 import ProfilePicture from "../../components/utils/ProfilePicture";
 import VerificationBadge from "../../components/utils/VerificationBadge";
 import AffiliationIcon from "../../components/utils/AffiliationIcon";
@@ -29,7 +29,7 @@ import FollowIcon from "../../components/icons/FollowIcon";
 import Block from "../../components/icons/Block";
 import Unmention from "../../components/icons/Unmention";
 import TextContainerRender from "../../components/utils/TextContainerRender";
-import { ButtonControlContainer, FeedWithLumenInput, FullWidthFeedContainer, PageText, SignUpOrLogInText } from "../../styles/global";
+import { ButtonControlContainer, FeedWithLumenInput, FullWidthFeedContainer, OptionBaseIcon, PageText, SignUpOrLogInText } from "../../styles/global";
 import QuotedPost from "../../components/layouts/items/post/QuotedPost";
 import { Post } from "../../generated/graphql";
 import { formatter } from "../../utils/formatter";
@@ -42,6 +42,7 @@ import Chain from "../../components/icons/Chain";
 import Mail from "../../components/icons/Mail";
 import LumenInput from "../../components/input/lumen/LumenInput";
 import FeedComponent from "../../components/utils/FeedComponent";
+import { getDateToLocaleString, processDate } from "../../utils/processDate";
 
 const PostPageWrapper = styled.div`
     display: flex;
@@ -102,6 +103,45 @@ const PostPageControlWrapper = styled.div.attrs(
     }
 `;
 
+const PostInfoContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 16px;
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+`;
+
+const PostPageInfoItem = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+`;
+
+const PostPageInfoText = styled(PageText)`
+    font-size: 16px;
+`;
+
+const PostPageDate = styled(PostDate)`
+    font-size: 16px;
+`;
+
+const PostPageEditedStatus = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+`;
+
+const PostPageEditedStatusText = styled(PostPageInfoText)`
+    color: ${COLORS.blue};
+    font-weight: 500;
+`;
+
 function PostPage() {
     const params = useParams();
 
@@ -145,11 +185,11 @@ function PostPage() {
         error: quotedPostError,
     } = useFindPostById(post?.quotedPostId);
 
-    const isPostLikedByMe = useLikeData(post?.itemId as string, post?.type as string);
+    const isPostLikedByMe = useLikeData(post?.itemId || "", post?.type || "");
     
     const like = useMemo(() => isPostLikedByMe, [isPostLikedByMe]);
 
-    const { postLikes } = usePostLikes(post?.itemId as string, post?.type as string);
+    const { postLikes } = usePostLikes(post?.itemId || "", post?.type || "");
 
     const likes = postLikes?.totalCount || 0;
 
@@ -161,11 +201,11 @@ function PostPage() {
 
     const reposts = userReposts?.totalCount || 0;
 
-    const isBookmarked = useBookmarkData(post?.type as string, post?.id);
+    const isBookmarked = useBookmarkData(post?.type || "", post?.id);
     
     const bookmark = useMemo(() => isBookmarked, [isBookmarked]);
     
-    const { postComments, loading: postCommentsLoading, error: postCommentsError, fetchMore } = useComments(post?.type as string, "cache-first", post?.id);
+    const { postComments, loading: postCommentsLoading, error: postCommentsError, fetchMore } = useComments(post?.type || "", post?.id);
 
     const loadMore = useCallback(() => {
         if (!postComments || (postComments && !postComments.hasMore) || postCommentsLoading) return;
@@ -174,27 +214,13 @@ function PostPage() {
 
         fetchMore({
             variables: { id: post?.id, type: post?.type, limit: 3, cursor: lastPost.createdAt },
-            updateQuery: (prev, { fetchMoreResult }) => {
-                if (
-                    !fetchMoreResult ||
-                    fetchMoreResult.postComments.posts.length === 0
-                )
-                    return prev;
-
-                return {
-                    postComments: {
-                        __typename: prev.postComments.__typename,
-                        posts: [...fetchMoreResult.postComments.posts],
-                        hasMore: fetchMoreResult.postComments.hasMore,
-                        totalCount: prev.postComments.totalCount,
-                    },
-                };
-            },
         })
         .catch((error) => {
             console.error(error);
         });
     }, [postComments, fetchMore, postCommentsLoading, post?.id, post?.type]);
+
+    const origin = "post-page";
 
     const feedContent = useMemo(() => (
         <>
@@ -213,6 +239,15 @@ function PostPage() {
             )}
         </>
     ), [postComments?.posts]);
+
+    const createdAt = getDateToLocaleString(post?.createdAt as string);
+
+    const comments = postComments?.totalCount || 0;
+
+    const date = useMemo(
+        () => processDate(post?.updatedAt as string, true, false),
+        [post?.updatedAt]
+    );
 
     return (
         <>
@@ -508,6 +543,39 @@ function PostPage() {
                                                             </>
                                                         )}
                                                     </PostContentContainer>
+                                                    <PostInfoContainer>
+                                                        <PostPageInfoItem>
+                                                            <PostPageDate title={createdAt} aria-label={createdAt}>
+                                                                <time dateTime={createdAt}>{createdAt}</time>
+                                                            </PostPageDate>
+                                                        </PostPageInfoItem>
+                                                        <PostPageInfoItem>
+                                                            <PostPageInfoText>
+                                                                <b>{formatter.format(post.views)}</b>{" "}{post.views === 1 ? "view" : "views"}
+                                                            </PostPageInfoText>
+                                                            <PostPageInfoText>
+                                                                ⋅
+                                                            </PostPageInfoText>
+                                                            <PostPageInfoText>
+                                                                <b>{formatter.format(comments)}</b>{" "}{comments === 1 ? "comment" : "comments"}
+                                                            </PostPageInfoText>
+                                                            {post.isEdited && (
+                                                                <>
+                                                                    <PostPageInfoText>
+                                                                        ⋅
+                                                                    </PostPageInfoText>
+                                                                    <PostPageEditedStatus>
+                                                                        <OptionBaseIcon>
+                                                                            <Pen color={COLORS.blue} />
+                                                                        </OptionBaseIcon>
+                                                                        <PostPageEditedStatusText>
+                                                                            {date}
+                                                                        </PostPageEditedStatusText>
+                                                                    </PostPageEditedStatus>  
+                                                                </>
+                                                            )}
+                                                        </PostPageInfoItem>
+                                                    </PostInfoContainer>
                                                     <PostPageActionsContainer>
                                                         <PostPageActionContainer>
                                                             <PostPageControlContainer
@@ -542,7 +610,7 @@ function PostPage() {
                                                                     if (blockedMe) {
                                                                         addToast("This user blocked you, so you can't see who liked this post.");
                                                                     } else if (!me) {
-                                                                        addToast("You are not authenticated.");
+                                                                        addToast("You're not authenticated.");
                                                                     } else {
                                                                         navigate(
                                                                             `/${post.author.username}/post/${post.itemId}/likes`,
@@ -556,7 +624,7 @@ function PostPage() {
                                                                     }
                                                                 }}
                                                             >
-                                                                {formatter.format(likes)}{" "}{likes === 1 ? "Like" : "Likes"}
+                                                                {formatter.format(likes)}{" "}{likes === 1 ? "like" : "likes"}
                                                             </PostPageActionInfo>
                                                         </PostPageActionContainer>
                                                         <PostPageActionContainer>
@@ -571,7 +639,13 @@ function PostPage() {
                                                                         />
                                                                     }
                                                                     isOpen={activeOptions === -2}
-                                                                    toggleOptions={() => handleOptionsClick(-2)}
+                                                                    toggleOptions={() => {
+                                                                        if (me) {
+                                                                            handleOptionsClick(-2);
+                                                                        } else {
+                                                                            addToast("You're not authenticated.");
+                                                                        }
+                                                                    }}
                                                                     disabled={(blockedMe && !repost) ? true : false}
                                                                     mirrored={true}
                                                                     children={
@@ -626,7 +700,7 @@ function PostPage() {
                                                                     if (blockedMe) {
                                                                         addToast("This user has blocked you, so you can't see who reposted this post.");
                                                                     } else if (!me) {
-                                                                        addToast("You are not authenticated.");
+                                                                        addToast("You're not authenticated.");
                                                                     } else {
                                                                         navigate(
                                                                             `/${post.author.username}/post/${post.itemId}/reposts`,
@@ -640,7 +714,7 @@ function PostPage() {
                                                                     }
                                                                 }}
                                                             >
-                                                                {formatter.format(reposts)}{" "}{reposts === 1 ? "Repost" : "Reposts"}
+                                                                {formatter.format(reposts)}{" "}{reposts === 1 ? "repost" : "reposts"}
                                                             </PostPageActionInfo>
                                                         </PostPageActionContainer>
                                                         <PostActionsGroup>
@@ -708,12 +782,14 @@ function PostPage() {
                                                                                     icon={<Chain />}
                                                                                     text="Copy link to this post"
                                                                                 />
-                                                                                <OptionComponent
-                                                                                    title="Send this post"
-                                                                                    onClick={() => {}}
-                                                                                    icon={<Mail type="options" />}
-                                                                                    text="Send this post"
-                                                                                />
+                                                                                {me && (
+                                                                                    <OptionComponent
+                                                                                        title="Send this post"
+                                                                                        onClick={() => {}}
+                                                                                        icon={<Mail type="options" />}
+                                                                                        text="Send this post"
+                                                                                    />
+                                                                                )}
                                                                             </>
                                                                         }
                                                                     />
@@ -733,7 +809,7 @@ function PostPage() {
                                                         />
                                                     ) : (
                                                         <SignUpOrLogInText>
-                                                            Access the complete experience. <Link to="/login" title="Log in to Zenith" aria-label="Log in to Zenith">Log in</Link> or <Link to="/signup" title="Sign up to Zenith" aria-label="Sign up to Zenith">Sign up</Link> to Zenith.
+                                                            Get the full experience. <Link to="/login" title="Log in to Zenith" aria-label="Log in to Zenith">Log in</Link> or <Link to="/signup" title="Sign up to Zenith" aria-label="Sign up to Zenith">Sign up</Link> to Zenith.
                                                         </SignUpOrLogInText>
                                                     )}
                                                     <FullWidthFeedContainer>

@@ -1,4 +1,4 @@
-import { FunctionComponent, useEffect, useMemo, useRef } from "react";
+import { FunctionComponent, useCallback, useEffect, useMemo, useRef } from "react";
 import {
     Post,
 } from "../../../../generated/graphql";
@@ -302,11 +302,16 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
 
     const location = useLocation();
 
-    const postRef = useRef<HTMLDivElement>(null);
     const { handleDeletePost, handleLikePost, handleRepost, handleBookmark, handleViewPost, handleRevokeMention } = usePostMutations();
 
-    useEffect(() => {
-        let postDivRef = postRef.current;
+    const observerRef = useRef<IntersectionObserver | null>(null);
+    const viewedRef = useRef(false);
+
+    const setPostRef = useCallback((node: HTMLDivElement | null) => {
+        if (observerRef.current) {
+            observerRef.current.disconnect();
+            observerRef.current = null;
+        }
 
         const options = {
             root: null,
@@ -314,24 +319,25 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
             threshold: 0.5,
         };
 
-        const observer = new IntersectionObserver(([entry]) => {
-            if (entry.isIntersecting) {
-                handleViewPost(post.id, post.itemId, post.type, false, origin);
-            }
-        }, options);
+        if (node) {
+            observerRef.current = new IntersectionObserver(([entry]) => {
+                if (entry.isIntersecting && !viewedRef.current) {
+                    viewedRef.current = true;
 
-        if (postDivRef) {
-            observer.observe(postDivRef);
+                    handleViewPost(post.id, post.itemId, post.type, false, origin);
+                }
+            }, options);
+
+            observerRef.current.observe(node);
         }
+    }, [handleViewPost, post.id, post.itemId, post.type, origin]);
 
+    useEffect(() => {
         return () => {
-            if (postDivRef) {
-                observer.unobserve(postDivRef);
-            }
-
-            postDivRef = null;
+            observerRef.current?.disconnect();
+            observerRef.current = null;
         };
-    }, [handleViewPost, post, origin]);
+    }, []);
 
     const isPostLikedByMe = useLikeData(post.itemId, post.type);
 
@@ -341,7 +347,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
 
     const likes = postLikes?.totalCount || 0;
 
-    const { postComments } = useComments(post.type, "cache-and-network", post.id);
+    const { postComments } = useComments(post.type, post.id);
 
     const comments = postComments?.totalCount || 0;
 
@@ -391,7 +397,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
             <PostContainer
                 role="link"
                 tabIndex={0}
-                ref={postRef}
+                ref={setPostRef}
                 onClick={(e: any) => {
                     if (
                         e.target.tagName === "A" &&
@@ -716,7 +722,13 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                 />
                             }
                             isOpen={activeOptions === -2}
-                            toggleOptions={() => handleOptionsClick(-2)}
+                            toggleOptions={() => {
+                                if (me) {
+                                    handleOptionsClick(-2);
+                                } else {
+                                    addToast("You're not authenticated.");
+                                }
+                            }}
                             size={32}
                             mirrored={true}
                             children={
@@ -778,11 +790,15 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                         onClick={(e) => {
                             e.stopPropagation();
 
-                            navigate(`/create_post/reply/post/${post.itemId}`, {
-                                state: {
-                                    backgroundLocation: location,
-                                },
-                            });
+                            if (me) {
+                                navigate(`/create_post/reply/post/${post.itemId}`, {
+                                    state: {
+                                        backgroundLocation: location,
+                                    },
+                                });
+                            } else {
+                                addToast("You're not authenticated.");
+                            }
                         }}
                     >
                         <ControlContainer size={32}>
@@ -881,12 +897,14 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                             icon={<Chain />}
                                             text="Copy link to this post"
                                         />
-                                        <OptionComponent
-                                            title="Send this post"
-                                            onClick={() => {}}
-                                            icon={<Mail type="options" />}
-                                            text="Send this post"
-                                        />
+                                        {me && (
+                                            <OptionComponent
+                                                title="Send this post"
+                                                onClick={() => {}}
+                                                icon={<Mail type="options" />}
+                                                text="Send this post"
+                                            />
+                                        )}
                                     </>
                                 }
                             />

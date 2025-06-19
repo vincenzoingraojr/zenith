@@ -1,4 +1,3 @@
-import { WatchQueryFetchPolicy } from "@apollo/client";
 import {
     useFindPostByIdQuery,
     useFindPostQuery,
@@ -46,21 +45,23 @@ export const useLikeData = (itemId: string, type: string) => {
 };
 
 export const usePostLikes = (itemId: string, type: string) => {
-    const { data, loading, error } = useGetPostLikesQuery({
+    const { data, loading, error, fetchMore } = useGetPostLikesQuery({
         fetchPolicy: "cache-and-network",
-        variables: { itemId, type, limit: 3 },
+        variables: { itemId, type, limit: 3, cursor: null },
+        notifyOnNetworkStatusChange: true,
     });
 
     return {
         postLikes: data?.getPostLikes,
         loading,
         error,
+        fetchMore,
     };
 };
 
-export const useComments = (type: string, fetchPolicy: WatchQueryFetchPolicy | undefined, id?: number) => {
+export const useComments = (type: string, id?: number) => {
     const { data, loading, error, fetchMore } = usePostCommentsQuery({
-        fetchPolicy,
+        fetchPolicy: "cache-and-network",
         variables: { id, type, limit: 3, cursor: null },
         notifyOnNetworkStatusChange: true,
     });
@@ -83,15 +84,17 @@ export const useRepostData = (id?: number, userId?: number) => {
 };
 
 export const useReposts = (id?: number) => {
-    const { data, loading, error } = useGetRepostsQuery({
+    const { data, loading, error, fetchMore } = useGetRepostsQuery({
         fetchPolicy: "cache-and-network",
-        variables: { postId: id, limit: 3 },
+        variables: { postId: id, limit: 3, cursor: null },
+        notifyOnNetworkStatusChange: true,
     });
 
     return {
         userReposts: data?.getReposts,
         loading,
         error,
+        fetchMore,
     };
 };
 

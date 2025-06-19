@@ -30,22 +30,6 @@ function HomePage() {
 
         fetchMore({
             variables: { limit, cursor: lastPost.createdAt },
-            updateQuery: (prev, { fetchMoreResult }) => {
-                if (
-                    !fetchMoreResult ||
-                    fetchMoreResult.postFeed.posts.length === 0
-                )
-                    return prev;
-
-                return {
-                    postFeed: {
-                        __typename: prev.postFeed.__typename,
-                        posts: [...fetchMoreResult.postFeed.posts],
-                        hasMore: fetchMoreResult.postFeed.hasMore,
-                        totalCount: prev.postFeed.totalCount,
-                    },
-                };
-            },
         })
         .catch((error) => {
             console.error(error);

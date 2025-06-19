@@ -58,7 +58,11 @@ const cache = new InMemoryCache({
                 },
                 getPostLikes: {
                     keyArgs: ["itemId", "type"],
-                    merge: (existing, incoming) => {
+                    merge: (existing, incoming, { args }) => {
+                        if (!args?.cursor) {
+                            return incoming;
+                        }
+                        
                         return {
                             users: [
                                 ...(existing?.users || []),
@@ -71,7 +75,11 @@ const cache = new InMemoryCache({
                 },
                 getReposts: {
                     keyArgs: ["postId"],
-                    merge: (existing, incoming) => {
+                    merge: (existing, incoming, { args }) => {
+                        if (!args?.cursor) {
+                            return incoming;
+                        }
+
                         return {
                             reposts: [
                                 ...(existing?.reposts || []),
@@ -84,7 +92,11 @@ const cache = new InMemoryCache({
                 },
                 postComments: {
                     keyArgs: ["id", "type"],
-                    merge: (existing, incoming) => {
+                    merge: (existing, incoming, { args }) => {
+                        if (!args?.cursor) {
+                            return incoming;
+                        }
+
                         return {
                             posts: [
                                 ...(existing?.posts || []),
@@ -100,6 +112,11 @@ const cache = new InMemoryCache({
                         return incoming;
                     },
                 },
+                usersToMention: {
+                    merge: (_existing = [], incoming) => {
+                        return incoming;
+                    },
+                },
             },
         },
         Post: {
@@ -108,6 +125,11 @@ const cache = new InMemoryCache({
                 media: {
                     merge: (_existing = [], incoming) => {
                         return incoming;
+                    },
+                },
+                mentions: {
+                    merge: (_existing = [], incoming) => {
+                        return incoming;  
                     },
                 },
             },

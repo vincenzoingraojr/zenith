@@ -226,6 +226,16 @@ export class PostResolver {
                 totalCount: 0,
             };
         }
+
+        if (type.length === 0) {
+            logger.warn("Invalid type provided.");
+
+            return {
+                posts: [],
+                hasMore: false,
+                totalCount: 0,
+            };
+        }
     
         try {
             const [posts, totalCount] = await Promise.all([
@@ -1184,6 +1194,16 @@ export class PostResolver {
             };
         }
 
+        if (type.length === 0) {
+            logger.warn("Invalid type provided.");
+
+            return {
+                users: [],
+                hasMore: false,
+                totalCount: 0,
+            };
+        }
+
         try {        
             const [likes, totalCount] = await Promise.all([
                 this.likeRepository.find({
@@ -1248,6 +1268,12 @@ export class PostResolver {
 
         if (!isUUID(itemId)) {
             logger.warn("Invalid itemId provided.");
+
+            return null;
+        }
+
+        if (type.length === 0) {
+            logger.warn("Invalid type provided.");
 
             return null;
         }
@@ -1477,6 +1503,12 @@ export class PostResolver {
 
         if (!itemId) {
             logger.warn("Item id not provided.");
+
+            return null;
+        }
+
+        if (type.length === 0) {
+            logger.warn("Invalid type provided.");
 
             return null;
         }

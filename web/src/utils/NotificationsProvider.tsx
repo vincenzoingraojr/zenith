@@ -68,23 +68,6 @@ export const NotificationsProvider = ({
 
         fetchMore({
             variables: { limit, cursor: data.notificationFeed.nextCursor },
-            updateQuery: (prev, { fetchMoreResult }) => {
-                if (
-                    !fetchMoreResult ||
-                    fetchMoreResult.notificationFeed.notifications.length === 0
-                )
-                    return prev;
-
-                return {
-                    notificationFeed: {
-                        __typename: prev.notificationFeed.__typename,
-                        notifications: [
-                            ...fetchMoreResult.notificationFeed.notifications,
-                        ],
-                        nextCursor: fetchMoreResult.notificationFeed.nextCursor,
-                    },
-                };
-            },
         })
         .catch((error) => {
             console.error(error);
