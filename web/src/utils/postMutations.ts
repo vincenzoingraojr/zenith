@@ -1,4 +1,4 @@
-import { GetPostLikesDocument, GetRepostsDocument, IsBookmarkedDocument, IsBookmarkedQuery, IsPostLikedByMeDocument, IsPostLikedByMeQuery, IsRepostedByUserDocument, IsRepostedByUserQuery, Repost, useCreateBookmarkMutation, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useIncrementPostViewsMutation, useLikePostMutation, useRemoveBookmarkMutation, useRemoveLikeMutation, useRevokeMentionMutation } from "../generated/graphql";
+import { GetPostLikesDocument, GetRepostsDocument, IsBookmarkedDocument, IsBookmarkedQuery, IsPostLikedByMeDocument, IsPostLikedByMeQuery, IsRepostedByUserDocument, IsRepostedByUserQuery, Post, PostCommentsDocument, Repost, useCreateBookmarkMutation, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useIncrementPostViewsMutation, useLikePostMutation, useRemoveBookmarkMutation, useRemoveLikeMutation, useRevokeMentionMutation } from "../generated/graphql";
 import { useMeData } from "./userQueries";
 
 export function usePostMutations() {
@@ -13,33 +13,76 @@ export function usePostMutations() {
     const [incrementPostViews] = useIncrementPostViewsMutation();
     const [revokeMention] = useRevokeMentionMutation();
 
-    const handleDeletePost = async (itemId: string, postId: number) => {
+    const handleDeletePost = async (itemId: string, postId: number, isComment?: boolean, isReplyToId?: number | null, isReplyToType?: string | null) => {
         try {
             const response = await deletePost({
                 variables: { postId: itemId },
             });
 
             if (response.data && response.data.deletePost) {
-                const refId = `Post:${postId}`;
-
-                client.cache.modify({
-                    fields: {
-                        postFeed(existing = { posts: [], hasMore: true, totalCount: 0 }) {
-                            const filteredPosts = existing.posts.filter(
-                                (p: any) => p.__ref !== refId
-                            );
-
-                            return {
-                                ...existing,
-                                posts: filteredPosts,
-                                totalCount: existing.totalCount - 1,
-                            };
+                if (isComment && isReplyToId && isReplyToType) {
+                    const existing = client.cache.readQuery({
+                        query: PostCommentsDocument,
+                        variables: {
+                            id: isReplyToId,
+                            type: isReplyToType,
+                            limit: 3,
                         },
-                    },
-                });
+                    });
 
-                client.cache.evict({ id: refId });
-                client.cache.gc();
+                    const { posts: existingPosts, totalCount: oldCount, hasMore } = (
+                        existing as {
+                            postComments: {
+                                posts: Post[];
+                                totalCount: number;
+                                hasMore: boolean;
+                            };
+                        }
+                    ).postComments;
+
+                    client.cache.writeQuery({
+                        query: PostCommentsDocument,
+                        variables: {
+                            id: isReplyToId,
+                            type: isReplyToType,
+                            limit: 3,
+                        },
+                        data: {
+                            postComments: {
+                                posts: existingPosts.filter(post => post.id !== postId),
+                                totalCount: Math.max(
+                                    oldCount - 1,
+                                    0
+                                ),
+                                hasMore,
+                            },
+                        },
+                    });
+                } else {
+                    const refId = `Post:${postId}`;
+
+                    client.cache.modify({
+                        fields: {
+                            postFeed(existing = { posts: [], hasMore: true, totalCount: 0 }) {
+                                const filteredPosts = existing.posts.filter(
+                                    (p: any) => p.__ref !== refId
+                                );
+
+                                return {
+                                    ...existing,
+                                    posts: filteredPosts,
+                                    totalCount: Math.max(
+                                        existing.totalCount - 1,
+                                        0
+                                    ),
+                                };
+                            },
+                        },
+                    });
+
+                    client.cache.evict({ id: refId });
+                    client.cache.gc();
+                }
 
                 return {
                     ok: true,

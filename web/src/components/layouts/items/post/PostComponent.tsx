@@ -53,6 +53,7 @@ import { usePostMutations } from "../../../../utils/postMutations";
 import { useUserMutations } from "../../../../utils/userMutations";
 import Unmention from "../../../icons/Unmention";
 import ProfilePicture from "../../../utils/ProfilePicture";
+import { POST_TYPES } from "../../../../utils/constants";
 
 interface PostComponentProps {
     post: Post;
@@ -530,7 +531,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                     <OptionComponent
                                                         title="Delete this post"
                                                         onClick={async () => {
-                                                            const response = await handleDeletePost(post.itemId, post.id);
+                                                            const response = await handleDeletePost(post.itemId, post.id, post.type === POST_TYPES.COMMENT, post.isReplyToId, post.isReplyToType);
 
                                                             addToast(response.status);
                                                         }}
