@@ -1,0 +1,14 @@
+mutation ViewFeedItem($itemId: String!, $type: String!, $itemOpened: Boolean!, $origin: String!) {
+    viewFeedItem(itemId: $itemId, type: $type, itemOpened: $itemOpened, origin: $origin) {
+        id
+        itemId
+        uniqueIdentifier
+        userId
+        isAuth
+        itemOpened
+        itemType
+        origin
+        createdAt
+        updatedAt
+    }
+}

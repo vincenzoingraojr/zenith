@@ -37,7 +37,9 @@ import VerificationBadge from "../../../utils/VerificationBadge";
 import {
     useBookmarkData,
     useComments,
+    useFeedItemStats,
     useFindPostById,
+    useGetPostMentions,
     useLikeData,
     usePostLikes,
     useRepostData,
@@ -303,7 +305,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
 
     const location = useLocation();
 
-    const { handleDeletePost, handleLikePost, handleRepost, handleBookmark, handleViewPost, handleRevokeMention } = usePostMutations();
+    const { handleDeletePost, handleLikePost, handleRepost, handleBookmark, handleViewFeedItem, handleRevokeMention } = usePostMutations();
 
     const observerRef = useRef<IntersectionObserver | null>(null);
     const viewedRef = useRef(false);
@@ -325,13 +327,13 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                 if (entry.isIntersecting && !viewedRef.current) {
                     viewedRef.current = true;
 
-                    handleViewPost(post.id, post.itemId, post.type, false, origin);
+                    handleViewFeedItem(post.itemId, post.type, false, origin);
                 }
             }, options);
 
             observerRef.current.observe(node);
         }
-    }, [handleViewPost, post.id, post.itemId, post.type, origin]);
+    }, [handleViewFeedItem, post.itemId, post.type, origin]);
 
     useEffect(() => {
         return () => {
@@ -392,6 +394,14 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
     }, [isAffiliatedToMe, isAffiliatedToAuthor]);
 
     const { handleFollowUser, handleBlockUser } = useUserMutations();
+
+    const postStats = useFeedItemStats(post.itemId, post.type);
+
+    const views = postStats?.views || 0;
+
+    const postMentions = useGetPostMentions(post.itemId);
+    
+    const mentions = postMentions?.mentions || [];
 
     return (
         <PostWrapper>
@@ -593,11 +603,11 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                             text={`${blockedByMe ? "Unblock" : "Block"} @${post.author.username}`}
                                                         />
                                                     )}
-                                                    {post.mentions.includes(me.username) && (
+                                                    {mentions.includes(me.username) && (
                                                         <OptionComponent
                                                             title="Unmention yourself"
                                                             onClick={async () => {
-                                                                const response = await handleRevokeMention(post.itemId, post.id);
+                                                                const response = await handleRevokeMention(post.itemId);
 
                                                                 addToast(response);
                                                             }}
@@ -618,7 +628,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                     <PostTextContainer>
                         <TextContainerRender
                             content={post.content}
-                            mentions={post.mentions}
+                            mentions={mentions}
                         />
                     </PostTextContainer>
                     {post.media && post.media.length > 0 && (
@@ -822,7 +832,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                             <Views />
                         </ControlContainer>
                         <PostActionInfo>
-                            {formatter.format(post.views)}
+                            {formatter.format(views)}
                         </PostActionInfo>
                     </PostActionContainer>
                     <PostActionsGroup>

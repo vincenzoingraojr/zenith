@@ -31,10 +31,6 @@ export class FeedItem extends BaseItem {
     @Column({ default: false })
     isEdited: boolean;
 
-    @Field(() => Int)
-    @Column("int", { default: 0 })
-    views: number;
-
     @Field(() => String)
     @Column()
     lang: string;
@@ -66,10 +62,6 @@ export class Post extends FeedItem {
     @Field(() => [MediaItem], { nullable: true, defaultValue: [] })
     @OneToMany(() => MediaItem, (mediaItem) => mediaItem.post, { nullable: true, cascade: true, eager: true })
     media: MediaItem[];
-    
-    @Field(() => [String])
-    @Column({ type: "text", array: true, default: [] })
-    mentions: string[];
 
     @Field(() => [String])
     @Column({ type: "text", array: true, default: [] })
@@ -118,6 +110,34 @@ export class MediaItem extends BaseItem {
     @Field(() => String)
     @Column()
     alt: string;
+}
+
+@ObjectType()
+@Entity("feed-item-stats")
+export class FeedItemStats extends BaseItem {
+    @Field(() => String)
+    @Column({ type: "uuid" })
+    itemId: string;
+
+    @Field(() => String)
+    @Column()
+    itemType: string;
+
+    @Field(() => Int)
+    @Column("int", { default: 0 })
+    views: number;
+}
+
+@ObjectType()
+@Entity("post-mentions")
+export class PostMentions extends BaseItem {
+    @Field(() => String)
+    @Column({ type: "uuid" })
+    postId: string;
+        
+    @Field(() => [String])
+    @Column({ type: "text", array: true, default: [] })
+    mentions: string[];
 }
 
 @ObjectType()

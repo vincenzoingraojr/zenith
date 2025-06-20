@@ -1,6 +1,6 @@
 import { Arg, Ctx, Field, Int, Mutation, ObjectType, Query, Resolver, Root, Subscription, UseMiddleware } from "type-graphql";
 import { FeedWrapper, FieldError } from "./common";
-import { Article, Bookmark, FeedItem, Like, MediaItem, Post, Repost, ViewLog } from "../entities/Post";
+import { Article, Bookmark, FeedItem, Like, MediaItem, Post, FeedItemStats, Repost, ViewLog, PostMentions } from "../entities/Post";
 import { isAuth } from "../middleware/isAuth";
 import { AuthContext } from "../types";
 import { v4 as uuidv4 } from "uuid";
@@ -56,6 +56,8 @@ export class PostResolver {
     private readonly userService: UserService;
     private readonly notificationService: NotificationService;
     private readonly postRepository: Repository<Post>;
+    private readonly postMentionsRepository: Repository<PostMentions>;
+    private readonly feedItemStatsRepository: Repository<FeedItemStats>;
     private readonly articleRepository: Repository<Article>;
     private readonly mediaItemRepository: Repository<MediaItem>;
     private readonly notificationRepository: Repository<Notification>;
@@ -70,6 +72,8 @@ export class PostResolver {
         this.userService = new UserService();
         this.notificationService = new NotificationService();
         this.postRepository = appDataSource.getRepository(Post);
+        this.postMentionsRepository = appDataSource.getRepository(PostMentions);
+        this.feedItemStatsRepository = appDataSource.getRepository(FeedItemStats);
         this.articleRepository = appDataSource.getRepository(Article);
         this.mediaItemRepository = appDataSource.getRepository(MediaItem);
         this.notificationRepository = appDataSource.getRepository(Notification);
@@ -564,9 +568,10 @@ export class PostResolver {
                                 }
                             }
 
-                            post.mentions = postMentions;
-
-                            await post.save();
+                            await this.postMentionsRepository.create({
+                                postId: post.itemId,
+                                mentions: postMentions,
+                            }).save();
                         }
     
                         if (isReplyToItem && (type === POST_TYPES.COMMENT) && (isReplyToItem.authorId !== payload.id) && !isBlockedByMe) {
@@ -607,6 +612,11 @@ export class PostResolver {
                             }
                         }
 
+                        await this.feedItemStatsRepository.create({
+                            itemId: post.itemId,
+                            itemType: post.type,
+                        }).save();
+
                         ok = true;
                     } else {
                         if (hasBlockedMe) {
@@ -629,6 +639,31 @@ export class PostResolver {
             ok,
             status,
         };
+    }
+
+    @Query(() => PostMentions, { nullable: true })
+    async getPostMentions(
+        @Arg("postId") postId: string
+    ): Promise<PostMentions | null> {
+        if (!isUUID(postId)) {
+            logger.warn("Invalid postId provided.");
+
+            return null;
+        }
+
+        try {
+            const postMentions = await this.postMentionsRepository.findOne({
+                where: {
+                    postId,
+                },
+            });
+
+            return postMentions;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
     }
 
     @Mutation(() => PostResponse)
@@ -799,9 +834,18 @@ export class PostResolver {
                                 }
                             }
 
-                            post.mentions = postMentions;
+                            const existingMentions = await this.getPostMentions(post.itemId);
+                            
+                            if (existingMentions) {
+                                existingMentions.mentions = postMentions;
 
-                            await post.save();
+                                await existingMentions.save();
+                            } else {
+                                await this.postMentionsRepository.create({
+                                    postId: post.itemId,
+                                    mentions: postMentions,
+                                }).save();
+                            }
 
                             const mentionNotifications = await this.notificationRepository.find({
                                 where: {
@@ -815,7 +859,6 @@ export class PostResolver {
                             const uselessNotifications = mentionedUsers
                                 ? mentionNotifications.filter(n => !mentionedUsers.some(u => u.id === n.recipientId))
                                 : mentionNotifications;
-
 
                             for (const deletedNotification of uselessNotifications) {
                                 await this.notificationService.deleteNotification(deletedNotification.notificationId);
@@ -899,10 +942,15 @@ export class PostResolver {
                 notificationType: In([NOTIFICATION_TYPES.MENTION, NOTIFICATION_TYPES.LIKE, NOTIFICATION_TYPES.COMMENT, NOTIFICATION_TYPES.QUOTE, NOTIFICATION_TYPES.REPOST]),
             });
     
-            await this.postRepository.delete({ itemId: postId, authorId: payload.id }).catch((error) => {
-                logger.error(error);
+            await this.postRepository.delete({ itemId: postId, authorId: payload.id });
 
-                return false;
+            await this.feedItemStatsRepository.delete({
+                itemId: post.itemId,
+                itemType: post.type,
+            });
+
+            await this.postMentionsRepository.delete({
+                postId: post.itemId,
             });
 
             return true;
@@ -933,11 +981,13 @@ export class PostResolver {
                 if (post) {
                     const me = await this.userService.findUserById(payload.id);
                     
-                    if (me && post.mentions.includes(me.username)) {
-                        const mentions = post.mentions.filter(mention => mention !== me.username);
-                        post.mentions = mentions;
+                    const postMentions = await this.getPostMentions(post.itemId);
 
-                        await post.save();
+                    if (me && postMentions && postMentions.mentions.includes(me.username)) {
+                        const mentions = postMentions.mentions.filter(mention => mention !== me.username);
+                        postMentions.mentions = mentions;
+
+                        await postMentions.save();
 
                         status = "Your mention has been removed from the post.";
 
@@ -948,8 +998,10 @@ export class PostResolver {
                         }
 
                         ok = true;
-                    } else if (me && !post.mentions.includes(me.username)) {
+                    } else if (me && postMentions && !postMentions.mentions.includes(me.username)) {
                         status = "Mention not found.";
+                    } else if (!postMentions) {
+                        status = "This post doesn't have mentions.";
                     } else {
                         status = "User not found.";
                     }
@@ -1289,17 +1341,23 @@ export class PostResolver {
         }
     }
 
-    @Mutation(() => FeedItem, { nullable: true })
+    @Mutation(() => ViewLog, { nullable: true })
     @UseMiddleware(isAuth)
-    async incrementPostViews(
+    async viewFeedItem(
         @Arg("itemId") itemId: string,
         @Arg("type") type: string,
         @Arg("itemOpened") itemOpened: boolean,
         @Arg("origin") origin: string,
         @Ctx() { payload, req }: AuthContext
-    ): Promise<FeedItem | null> {
+    ): Promise<ViewLog | null> {
         if (!isUUID(itemId)) {
             logger.warn("Invalid itemId provided.");
+
+            return null;
+        }
+
+        if (type.length === 0) {
+            logger.warn("Invalid type provided.");
 
             return null;
         }
@@ -1316,6 +1374,16 @@ export class PostResolver {
             const uniqueIdentifier = req.cookies["uid"];
 
             if (!item) {
+                logger.warn("Item not found.");
+
+                return null;
+            }
+
+            const itemStats = await this.getFeedItemStats(item.itemId, item.type);
+
+            if (!itemStats) {
+                logger.warn("Not stats found for this feed item.");
+
                 return null;
             }
 
@@ -1329,10 +1397,11 @@ export class PostResolver {
                 });
         
                 if (!hasViewed) {
-                    item.views += 1;
-                    await item.save();
-                
-                    await this.viewLogRepository.create({
+                    itemStats.views += 1;
+                    
+                    await itemStats.save();
+
+                    const viewLog = await this.viewLogRepository.create({
                         itemId,
                         uniqueIdentifier,
                         isAuth: false,
@@ -1341,7 +1410,7 @@ export class PostResolver {
                         origin,
                     }).save();
 
-                    return item;
+                    return viewLog;
                 } else {
                     return null;
                 }
@@ -1354,11 +1423,12 @@ export class PostResolver {
                     }
                 });
         
-                if (!userHasViewed) {
-                    item.views += 1;
-                    await item.save();
-                
-                    await this.viewLogRepository.create({
+                if (!userHasViewed) {    
+                    itemStats.views += 1;
+                    
+                    await itemStats.save();
+
+                    const viewLog = await this.viewLogRepository.create({
                         itemId,
                         userId: payload.id,
                         uniqueIdentifier,
@@ -1368,11 +1438,58 @@ export class PostResolver {
                         origin,
                     }).save();
 
-                    return item;
+                    return viewLog;
                 } else {
                     return null;
                 }
             }
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
+    }
+
+    @Query(() => FeedItemStats, { nullable: true })
+    async getFeedItemStats(
+        @Arg("itemId") itemId: string,
+        @Arg("type") type: string,
+    ): Promise<FeedItemStats | null> {
+        if (!isUUID(itemId)) {
+            logger.warn("Invalid itemId provided.");
+
+            return null;
+        }
+
+        if (type.length === 0) {
+            logger.warn("Invalid type provided.");
+
+            return null;
+        }
+
+        try {
+            let item: FeedItem | null = null;
+
+            if (type === POST_TYPES.POST || type === POST_TYPES.COMMENT) {
+                item = await this.findPost(itemId);
+            } else {
+                item = await this.articleRepository.findOne({ where: { itemId, draft: false } });
+            }
+
+            if (!item) {
+                logger.warn("Feed item not found.");
+
+                return null;
+            }
+
+            const feedItemStats = await this.feedItemStatsRepository.findOne({
+                where: {
+                    itemId,
+                    itemType: type,
+                },
+            });
+
+            return feedItemStats;
         } catch (error) {
             logger.error(error);
 

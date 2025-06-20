@@ -1,0 +1,9 @@
+query GetPostMentions(
+    $postId: String!
+) {
+    getPostMentions(
+        postId: $postId
+    ) {
+        mentions
+    }
+}

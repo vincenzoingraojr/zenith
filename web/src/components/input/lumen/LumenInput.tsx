@@ -229,7 +229,6 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({
                                                                 type
                                                                 content
                                                                 isEdited
-                                                                views
                                                                 lang
                                                                 topics
                                                                 author {
@@ -280,7 +279,6 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({
                                                                     src
                                                                     alt
                                                                 }
-                                                                mentions
                                                                 hashtags
                                                                 createdAt
                                                                 updatedAt

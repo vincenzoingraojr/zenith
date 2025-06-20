@@ -10,7 +10,6 @@ query FindPost(
         type
         content
         isEdited
-        views
         lang
         topics
         author {
@@ -61,7 +60,6 @@ query FindPost(
             src
             alt
         }
-        mentions
         hashtags
         createdAt
         updatedAt

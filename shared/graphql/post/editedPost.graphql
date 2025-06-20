@@ -1,8 +1,8 @@
-query FindPostById(
-    $id: Int
+subscription EditedPost(
+    $postId: String!
 ) {
-    findPostById(
-        id: $id
+    editedPost(
+        postId: $postId
     ) {
         id
         itemId

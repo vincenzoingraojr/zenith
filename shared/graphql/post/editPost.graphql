@@ -17,7 +17,6 @@ mutation EditPost(
             type
             content
             isEdited
-            views
             lang
             topics
             author {
@@ -68,7 +67,6 @@ mutation EditPost(
                 src
                 alt
             }
-            mentions
             hashtags
             createdAt
             updatedAt

@@ -17,7 +17,6 @@ query PostComments(
             type
             content
             isEdited
-            views
             lang
             topics
             author {
@@ -68,7 +67,6 @@ query PostComments(
                 src
                 alt
             }
-            mentions
             hashtags
             createdAt
             updatedAt

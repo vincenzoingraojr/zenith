@@ -1,12 +1,12 @@
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import Head from "../../components/Head";
-import { useBookmarkData, useComments, useFindPost, useFindPostById, useLikeData, usePostLikes, useRepostData, useReposts } from "../../utils/postQueries";
+import { useBookmarkData, useComments, useFeedItemStats, useFindPost, useFindPostById, useGetPostMentions, useLikeData, usePostLikes, useRepostData, useReposts } from "../../utils/postQueries";
 import { truncateString } from "../../utils/truncateString";
 import PageLayout from "../../components/layouts/PageLayout";
 import PageContentLayout from "../../components/layouts/sublayouts/PageContentLayout";
 import LoadingComponent from "../../components/utils/LoadingComponent";
 import ErrorOrItemNotFound from "../../components/utils/ErrorOrItemNotFound";
-import { ERROR_SOMETHING_WENT_WRONG } from "../../utils/constants";
+import { ERROR_SOMETHING_WENT_WRONG, POST_TYPES } from "../../utils/constants";
 import styled from "styled-components";
 import PostComponent, { AuthorFullName, AuthorFullNameContainer, AuthorInfo, AuthorUsername, PostActionInfo, PostActionsContainer, PostActionsGroup, PostAuthorContainer, PostContentContainer, PostDate, PostHeader, PostMediaContainer, PostMediaItem, PostTextContainer, QuotedPostNotAvailable } from "../../components/layouts/items/post/PostComponent";
 import ProfilePicture from "../../components/utils/ProfilePicture";
@@ -24,14 +24,14 @@ import Bin from "../../components/icons/Bin";
 import { COLORS } from "../../styles/colors";
 import { usePostMutations } from "../../utils/postMutations";
 import { useUserMutations } from "../../utils/userMutations";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import FollowIcon from "../../components/icons/FollowIcon";
 import Block from "../../components/icons/Block";
 import Unmention from "../../components/icons/Unmention";
 import TextContainerRender from "../../components/utils/TextContainerRender";
-import { ButtonControlContainer, FeedWithLumenInput, FullWidthFeedContainer, OptionBaseIcon, PageText, SignUpOrLogInText } from "../../styles/global";
+import { ButtonControlContainer, FeedWithLumenInput, FullWidthFeedContainer, OptionBaseIcon, PageBlock, PageText, SignUpOrLogInText, StandardButton } from "../../styles/global";
 import QuotedPost from "../../components/layouts/items/post/QuotedPost";
-import { Post } from "../../generated/graphql";
+import { FindPostByIdDocument, FindPostByIdQuery, FindPostDocument, FindPostQuery, Post, useEditedPostSubscription } from "../../generated/graphql";
 import { formatter } from "../../utils/formatter";
 import LikeIcon from "../../components/icons/Like";
 import RepostIcon from "../../components/icons/Repost";
@@ -43,6 +43,7 @@ import Mail from "../../components/icons/Mail";
 import LumenInput from "../../components/input/lumen/LumenInput";
 import FeedComponent from "../../components/utils/FeedComponent";
 import { getDateToLocaleString, processDate } from "../../utils/processDate";
+import { devices } from "../../styles/devices";
 
 const PostPageWrapper = styled.div`
     display: flex;
@@ -142,10 +143,44 @@ const PostPageEditedStatusText = styled(PostPageInfoText)`
     font-weight: 500;
 `;
 
+const AttachedPostNotAvailable = styled(QuotedPostNotAvailable)`
+    margin-left: 16px;
+    margin-right: 16px;
+`;
+
+const AttachedPostErrorText = styled(PageText)`
+    padding-left: 16px;
+    padding-right: 16px;
+`;
+
+const UpdateContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    position: fixed;
+    top: 60px;
+    bottom: unset;
+    left: 24px;
+    right: 24px;
+    transform: unset;
+    z-index: 9999;
+
+    @media ${devices.mobileL} {
+        left: 50%;
+        right: unset;
+        transform: translateX(-50%);
+    }
+`;
+
+const UpdateButton = styled(StandardButton)`
+    box-shadow: 0px 0px 2px ${({ theme }) => theme.overlayGrey};
+`;
+
 function PostPage() {
     const params = useParams();
 
-    const { post, loading, error } = useFindPost(params.itemId as string);
+    const { post, loading, error, client } = useFindPost(params.itemId as string);
 
     const { activeOptions, handleOptionsClick } = useOptions();
 
@@ -153,10 +188,17 @@ function PostPage() {
 
     const navigate = useNavigate();
     const location = useLocation();
+    const origin = "post-page";
 
     const { addToast } = useToasts();
 
-    const { handleDeletePost, handleRevokeMention, handleLikePost, handleRepost, handleBookmark } = usePostMutations();
+    const { handleDeletePost, handleRevokeMention, handleLikePost, handleRepost, handleBookmark, handleViewFeedItem } = usePostMutations();
+
+    useEffect(() => {
+        if (post) {
+            handleViewFeedItem(post.itemId, post.type, true, origin);
+        }
+    }, [post, handleViewFeedItem]);
 
     const { handleFollowUser, handleBlockUser } = useUserMutations();
 
@@ -184,6 +226,12 @@ function PostPage() {
         loading: quotedPostLoading,
         error: quotedPostError,
     } = useFindPostById(post?.quotedPostId);
+
+    const {
+        post: replyToPost,
+        loading: replyToLoading,
+        error: replyToError,
+    } = useFindPostById(post?.isReplyToId && post.isReplyToType !== POST_TYPES.ARTICLE ? post.isReplyToId : null);
 
     const isPostLikedByMe = useLikeData(post?.itemId || "", post?.type || "");
     
@@ -220,8 +268,6 @@ function PostPage() {
         });
     }, [postComments, fetchMore, postCommentsLoading, post?.id, post?.type]);
 
-    const origin = "post-page";
-
     const feedContent = useMemo(() => (
         <>
             {postComments?.posts.map(
@@ -248,6 +294,65 @@ function PostPage() {
         () => processDate(post?.updatedAt as string, true, false),
         [post?.updatedAt]
     );
+
+    const postStats = useFeedItemStats(post?.itemId || "", post?.type || "");
+
+    const views = postStats?.views || 0;
+
+    const postMentions = useGetPostMentions(post?.itemId || "");
+
+    const mentions = postMentions?.mentions || [];
+
+    const { data: editedPostData } = useEditedPostSubscription({
+        variables: { postId: post?.itemId || "" },
+        fetchPolicy: "no-cache",
+        skip: !post,
+    });
+
+    const [updateAvailable, setUpdateAvailable] = useState(false);
+
+    const handleEditedPost = useCallback(
+        (editedPost: Post) => {
+            if (post) {
+                client.cache.writeQuery<FindPostByIdQuery>(
+                    {
+                        query: FindPostByIdDocument,
+                        data: {
+                            findPostById:
+                                editedPost,
+                        },
+                        variables: {
+                            id: post.id,
+                        },
+                    }
+                );
+
+                client.cache.writeQuery<FindPostQuery>(
+                    {
+                        query: FindPostDocument,
+                        data: {
+                            findPost:
+                                editedPost,
+                        },
+                        variables: {
+                            postId: post.itemId,
+                        },
+                    }
+                );
+
+                setUpdateAvailable(false);
+            }
+        },
+        [client, post]
+    );
+
+    useEffect(() => {
+        if (editedPostData && editedPostData.editedPost.authorId !== me?.id) {
+            setUpdateAvailable(true);
+        } else {
+            setUpdateAvailable(false);
+        }
+    }, [editedPostData, me?.id]);
 
     return (
         <>
@@ -300,6 +405,53 @@ function PostPage() {
                                             />
                                         ) : (
                                             <PostPageWrapper>
+                                                {(updateAvailable && editedPostData) && (
+                                                    <UpdateContainer>
+                                                        <PageBlock>
+                                                            <UpdateButton
+                                                                type="button"
+                                                                role="button"
+                                                                title="Update this post"
+                                                                aria-label="Update this post"
+                                                                onClick={() => {
+                                                                    handleEditedPost(editedPostData.editedPost as Post);
+                                                                }}
+                                                            >
+                                                                Update available
+                                                            </UpdateButton>
+                                                        </PageBlock>
+                                                    </UpdateContainer>
+                                                )}
+                                                {post.isReplyToId && (
+                                                    <>
+                                                        {replyToLoading || replyToError ? (
+                                                            <>
+                                                                {replyToError ? (
+                                                                    <AttachedPostErrorText>
+                                                                        An error occurred while trying to
+                                                                        load the commented post.
+                                                                    </AttachedPostErrorText>
+                                                                ) : (
+                                                                    <LoadingComponent />
+                                                                )}
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                {replyToPost ? (
+                                                                    <PostComponent
+                                                                        key={replyToPost.itemId}
+                                                                        post={replyToPost as Post}
+                                                                        origin="post-reply"
+                                                                    />
+                                                                ) : (
+                                                                    <AttachedPostNotAvailable>
+                                                                        The commented post has been deleted by its author.
+                                                                    </AttachedPostNotAvailable>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    </>
+                                                )}
                                                 <PostPageContainer>
                                                     <PostHeader>
                                                         <PostAuthorContainer
@@ -402,7 +554,7 @@ function PostPage() {
                                                                                     <OptionComponent
                                                                                         title="Delete this post"
                                                                                         onClick={async () => {
-                                                                                            const response = await handleDeletePost(post.itemId, post.id);
+                                                                                            const response = await handleDeletePost(post.itemId, post.id, post.type === POST_TYPES.COMMENT, post.isReplyToId, post.isReplyToType);
 
                                                                                             addToast(response.status);
 
@@ -468,11 +620,11 @@ function PostPage() {
                                                                                             text={`${blockedByMe ? "Unblock" : "Block"} @${post.author.username}`}
                                                                                         />
                                                                                     )}
-                                                                                    {post.mentions.includes(me.username) && (
+                                                                                    {mentions.includes(me.username) && (
                                                                                         <OptionComponent
                                                                                             title="Unmention yourself"
                                                                                             onClick={async () => {
-                                                                                                const response = await handleRevokeMention(post.itemId, post.id);
+                                                                                                const response = await handleRevokeMention(post.itemId);
 
                                                                                                 addToast(response);
                                                                                             }}
@@ -492,7 +644,7 @@ function PostPage() {
                                                         <PostTextContainer>
                                                             <TextContainerRender
                                                                 content={post.content}
-                                                                mentions={post.mentions}
+                                                                mentions={mentions}
                                                             />
                                                         </PostTextContainer>
                                                         {post.media && post.media.length > 0 && (
@@ -551,7 +703,7 @@ function PostPage() {
                                                         </PostPageInfoItem>
                                                         <PostPageInfoItem>
                                                             <PostPageInfoText>
-                                                                <b>{formatter.format(post.views)}</b>{" "}{post.views === 1 ? "view" : "views"}
+                                                                <b>{formatter.format(views)}</b>{" "}{views === 1 ? "view" : "views"}
                                                             </PostPageInfoText>
                                                             <PostPageInfoText>
                                                                 ⋅

@@ -1,7 +1,9 @@
 import {
     useFindPostByIdQuery,
     useFindPostQuery,
+    useGetFeedItemStatsQuery,
     useGetPostLikesQuery,
+    useGetPostMentionsQuery,
     useGetRepostsQuery,
     useIsBookmarkedQuery,
     useIsPostLikedByMeQuery,
@@ -10,7 +12,7 @@ import {
 } from "../generated/graphql";
 
 export const useFindPost = (postId: string) => {
-    const { data, loading, error } = useFindPostQuery({
+    const { data, loading, error, client } = useFindPostQuery({
         variables: { postId },
         fetchPolicy: "cache-first",
     });
@@ -19,6 +21,7 @@ export const useFindPost = (postId: string) => {
         post: data && data?.findPost ? data.findPost : null,
         loading,
         error,
+        client,
     };
 };
 
@@ -108,4 +111,22 @@ export const useBookmarkData = (type: string, id?: number) => {
     });
 
     return data && data.isBookmarked ? data.isBookmarked : null;
+};
+
+export const useFeedItemStats = (itemId: string, type: string) => {
+    const { data } = useGetFeedItemStatsQuery({
+        fetchPolicy: "cache-and-network",
+        variables: { itemId, type },
+    });
+
+    return data && data.getFeedItemStats ? data.getFeedItemStats : null;
+};
+
+export const useGetPostMentions = (postId: string) => {
+    const { data } = useGetPostMentionsQuery({
+        fetchPolicy: "cache-and-network",
+        variables: { postId },
+    });
+
+    return data && data.getPostMentions ? data.getPostMentions : null;
 };

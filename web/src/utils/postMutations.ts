@@ -1,4 +1,4 @@
-import { GetPostLikesDocument, GetRepostsDocument, IsBookmarkedDocument, IsBookmarkedQuery, IsPostLikedByMeDocument, IsPostLikedByMeQuery, IsRepostedByUserDocument, IsRepostedByUserQuery, Post, PostCommentsDocument, Repost, useCreateBookmarkMutation, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useIncrementPostViewsMutation, useLikePostMutation, useRemoveBookmarkMutation, useRemoveLikeMutation, useRevokeMentionMutation } from "../generated/graphql";
+import { GetPostLikesDocument, GetRepostsDocument, IsBookmarkedDocument, IsBookmarkedQuery, IsPostLikedByMeDocument, IsPostLikedByMeQuery, IsRepostedByUserDocument, IsRepostedByUserQuery, Post, PostCommentsDocument, Repost, useCreateBookmarkMutation, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useViewFeedItemMutation, useLikePostMutation, useRemoveBookmarkMutation, useRemoveLikeMutation, useRevokeMentionMutation, GetFeedItemStatsDocument, GetPostMentionsDocument, FindPostByIdQuery, FindPostByIdDocument, FindPostQuery, FindPostDocument } from "../generated/graphql";
 import { useMeData } from "./userQueries";
 
 export function usePostMutations() {
@@ -10,16 +10,18 @@ export function usePostMutations() {
     const [deleteRepost] = useDeleteRepostMutation();
     const [createBookmark] = useCreateBookmarkMutation();
     const [removeBookmark] = useRemoveBookmarkMutation();
-    const [incrementPostViews] = useIncrementPostViewsMutation();
+    const [viewFeedItem] = useViewFeedItemMutation();
     const [revokeMention] = useRevokeMentionMutation();
 
-    const handleDeletePost = async (itemId: string, postId: number, isComment?: boolean, isReplyToId?: number | null, isReplyToType?: string | null) => {
+    const handleDeletePost = async (itemId: string, postId: number, isComment: boolean, isReplyToId?: number | null, isReplyToType?: string | null) => {
         try {
             const response = await deletePost({
                 variables: { postId: itemId },
             });
 
             if (response.data && response.data.deletePost) {
+                const refId = `Post:${postId}`;
+
                 if (isComment && isReplyToId && isReplyToType) {
                     const existing = client.cache.readQuery({
                         query: PostCommentsDocument,
@@ -58,9 +60,7 @@ export function usePostMutations() {
                             },
                         },
                     });
-                } else {
-                    const refId = `Post:${postId}`;
-
+                } else {                    
                     client.cache.modify({
                         fields: {
                             postFeed(existing = { posts: [], hasMore: true, totalCount: 0 }) {
@@ -79,8 +79,37 @@ export function usePostMutations() {
                             },
                         },
                     });
+                }
 
-                    client.cache.evict({ id: refId });
+                client.cache.writeQuery<FindPostByIdQuery>(
+                    {
+                        query: FindPostByIdDocument,
+                        data: {
+                            findPostById:
+                                null,
+                        },
+                        variables: {
+                            id: postId,
+                        },
+                    }
+                );
+
+                client.cache.writeQuery<FindPostQuery>(
+                    {
+                        query: FindPostDocument,
+                        data: {
+                            findPost:
+                                null,
+                        },
+                        variables: {
+                            postId: itemId,
+                        },
+                    }
+                );
+
+                client.cache.evict({ id: refId });
+
+                if (!isComment) {
                     client.cache.gc();
                 }
 
@@ -534,8 +563,8 @@ export function usePostMutations() {
         }
     }
 
-    const handleViewPost = (postId: number, itemId: string, type: string, itemOpened: boolean, origin: string) => {
-        const response = incrementPostViews({
+    const handleViewFeedItem = (itemId: string, type: string, itemOpened: boolean, origin: string) => {
+        const response = viewFeedItem({
             variables: {
                 itemId,
                 type,
@@ -543,15 +572,45 @@ export function usePostMutations() {
                 origin,
             },
             update: (cache, { data }) => {
-                if (data && data.incrementPostViews) {
-                    cache.modify({
-                        id: cache.identify({ __typename: "Post", id: postId }),
-                        fields: {
-                            views(existingViews = 0) {
-                                return existingViews + 1;
+                if (data && data.viewFeedItem) {
+                    const existing =
+                        cache.readQuery(
+                            {
+                                query: GetFeedItemStatsDocument,
+                                variables:
+                                    {
+                                        itemId,
+                                        type,
+                                    },
                             }
+                        );
+
+                    const {
+                        views
+                    } = (
+                        existing as {
+                            getFeedItemStats: {
+                                views: number;
+                            };
                         }
-                    });
+                    ).getFeedItemStats;
+
+                    cache.writeQuery(
+                        {
+                            query: GetFeedItemStatsDocument,
+                            variables:
+                                {
+                                    itemId,
+                                    type,
+                                },
+                            data: {
+                                getFeedItemStats:
+                                    {
+                                        views: views + 1,
+                                    },
+                            },
+                        }
+                    );
                 }
             },
         });
@@ -559,7 +618,7 @@ export function usePostMutations() {
         return response;
     }
 
-    const handleRevokeMention = async (itemId: string, postId: number) => {
+    const handleRevokeMention = async (itemId: string) => {
         try {
             const response = await revokeMention({
                 variables: {
@@ -567,16 +626,42 @@ export function usePostMutations() {
                 },
                 update: (cache, { data }) => {
                     if (data && data.revokeMention && data.revokeMention.ok && me) {
-                        cache.modify({
-                            id: cache.identify({ __typename: "Post", id: postId }),
-                            fields: {
-                                mentions(existingMentions = []) {
-                                    return existingMentions.filter(
-                                        (mention: string) => mention !== me.username
-                                    );
+                        const existing =
+                            cache.readQuery(
+                                {
+                                    query: GetPostMentionsDocument,
+                                    variables:
+                                        {
+                                            postId: itemId,
+                                        },
                                 }
+                            );
+
+                        const {
+                            mentions
+                        } = (
+                            existing as {
+                                getPostMentions: {
+                                    mentions: string[];
+                                };
                             }
-                        });
+                        ).getPostMentions;
+
+                        cache.writeQuery(
+                            {
+                                query: GetPostMentionsDocument,
+                                variables:
+                                    {
+                                        postId: itemId
+                                    },
+                                data: {
+                                    getPostMentions:
+                                        {
+                                            mentions: mentions.filter((mention) => mention !== me.username),
+                                        },
+                                },
+                            }
+                        );
                     }
                 },
             });
@@ -593,5 +678,5 @@ export function usePostMutations() {
         }
     }
 
-    return { handleDeletePost, handleLikePost, handleRepost, handleBookmark, handleViewPost, handleRevokeMention };
+    return { handleDeletePost, handleLikePost, handleRepost, handleBookmark, handleViewFeedItem, handleRevokeMention };
 }

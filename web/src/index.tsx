@@ -117,19 +117,25 @@ const cache = new InMemoryCache({
                         return incoming;
                     },
                 },
+                getFeedItemStats: {
+                    keyArgs: ["itemId", "type"],
+                    merge: (_existing, incoming) => {
+                        return incoming;
+                    },
+                },
+                getPostMentions: {
+                    keyArgs: ["postId"],
+                    merge: (_existing, incoming) => {
+                        return incoming;
+                    },
+                },
             },
         },
         Post: {
-            keyFields: ["id"],
             fields: {
                 media: {
                     merge: (_existing = [], incoming) => {
                         return incoming;
-                    },
-                },
-                mentions: {
-                    merge: (_existing = [], incoming) => {
-                        return incoming;  
                     },
                 },
             },

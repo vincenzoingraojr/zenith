@@ -1,0 +1,11 @@
+query GetFeedItemStats(
+    $itemId: String!
+    $type: String!
+) {
+    getFeedItemStats(
+        itemId: $itemId
+        type: $type
+    ) {
+        views
+    }
+}
