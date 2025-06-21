@@ -1,6 +1,17 @@
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import Head from "../../components/Head";
-import { useBookmarkData, useComments, useFeedItemStats, useFindPost, useFindPostById, useGetPostMentions, useLikeData, usePostLikes, useRepostData, useReposts } from "../../utils/postQueries";
+import {
+    useBookmarkData,
+    useComments,
+    useFeedItemStats,
+    useFindPost,
+    useFindPostById,
+    useGetPostMentions,
+    useLikeData,
+    usePostLikes,
+    useRepostData,
+    useReposts,
+} from "../../utils/postQueries";
 import { truncateString } from "../../utils/truncateString";
 import PageLayout from "../../components/layouts/PageLayout";
 import PageContentLayout from "../../components/layouts/sublayouts/PageContentLayout";
@@ -8,14 +19,32 @@ import LoadingComponent from "../../components/utils/LoadingComponent";
 import ErrorOrItemNotFound from "../../components/utils/ErrorOrItemNotFound";
 import { ERROR_SOMETHING_WENT_WRONG, POST_TYPES } from "../../utils/constants";
 import styled from "styled-components";
-import PostComponent, { PostActionInfo, PostActionsContainer, PostActionsGroup, PostAuthorContainer, PostContentContainer, PostDate, PostHeader, PostMediaContainer, PostMediaItem, PostTextContainer, QuotedPostNotAvailable } from "../../components/layouts/items/post/PostComponent";
+import PostComponent, {
+    PostActionInfo,
+    PostActionsContainer,
+    PostActionsGroup,
+    PostAuthorContainer,
+    PostContentContainer,
+    PostDate,
+    PostHeader,
+    PostMediaContainer,
+    PostMediaItem,
+    PostTextContainer,
+    QuotedPostNotAvailable,
+} from "../../components/layouts/items/post/PostComponent";
 import ProfilePicture from "../../components/utils/ProfilePicture";
 import VerificationBadge from "../../components/utils/VerificationBadge";
 import AffiliationIcon from "../../components/utils/AffiliationIcon";
 import Options from "../../components/layouts/options/Options";
 import More from "../../components/icons/More";
 import { useOptions } from "../../components/utils/hooks";
-import { useFollowData, useHasBlockedMeData, useHasThisUserAsAffiliate, useIsUserBlockedData, useMeData } from "../../utils/userQueries";
+import {
+    useFollowData,
+    useHasBlockedMeData,
+    useHasThisUserAsAffiliate,
+    useIsUserBlockedData,
+    useMeData,
+} from "../../utils/userQueries";
 import OptionComponent from "../../components/layouts/options/OptionComponent";
 import Flag from "../../components/icons/Flag";
 import Pen from "../../components/icons/Pen";
@@ -29,9 +58,29 @@ import FollowIcon from "../../components/icons/FollowIcon";
 import Block from "../../components/icons/Block";
 import Unmention from "../../components/icons/Unmention";
 import TextContainerRender from "../../components/utils/TextContainerRender";
-import { ButtonControlContainer, FeedWithLumenInput, FullWidthFeedContainer, OptionBaseIcon, PageBlock, PageText, SignUpOrLogInText, StandardButton, UserFullName, UserFullNameContainer, UserInfo, UsernameContainer } from "../../styles/global";
+import {
+    ButtonControlContainer,
+    FeedWithLumenInput,
+    FullWidthFeedContainer,
+    OptionBaseIcon,
+    PageBlock,
+    PageText,
+    SignUpOrLogInText,
+    StandardButton,
+    UserFullName,
+    UserFullNameContainer,
+    UserInfo,
+    UsernameContainer,
+} from "../../styles/global";
 import QuotedPost from "../../components/layouts/items/post/QuotedPost";
-import { FindPostByIdDocument, FindPostByIdQuery, FindPostDocument, FindPostQuery, Post, useEditedPostSubscription } from "../../generated/graphql";
+import {
+    FindPostByIdDocument,
+    FindPostByIdQuery,
+    FindPostDocument,
+    FindPostQuery,
+    Post,
+    useEditedPostSubscription,
+} from "../../generated/graphql";
 import { formatter } from "../../utils/formatter";
 import LikeIcon from "../../components/icons/Like";
 import RepostIcon from "../../components/icons/Repost";
@@ -79,7 +128,8 @@ const PostPageActionInfo = styled(PostActionInfo)`
     text-decoration: none;
     cursor: pointer;
 
-    &:hover, &:focus {
+    &:hover,
+    &:focus {
         text-decoration: underline;
     }
 `;
@@ -180,7 +230,10 @@ const UpdateButton = styled(StandardButton)`
 function PostPage() {
     const params = useParams();
 
-    const { post, loading, error, client } = useFindPost(params.itemId as string, params.username as string);
+    const { post, loading, error, client } = useFindPost(
+        params.itemId as string,
+        params.username as string
+    );
 
     const { activeOptions, handleOptionsClick } = useOptions();
 
@@ -192,7 +245,14 @@ function PostPage() {
 
     const { addToast } = useToasts();
 
-    const { handleDeletePost, handleRevokeMention, handleLikePost, handleRepost, handleBookmark, handleViewFeedItem } = usePostMutations();
+    const {
+        handleDeletePost,
+        handleRevokeMention,
+        handleLikePost,
+        handleRepost,
+        handleBookmark,
+        handleViewFeedItem,
+    } = usePostMutations();
 
     useEffect(() => {
         if (post) {
@@ -203,11 +263,11 @@ function PostPage() {
     const { handleFollowUser, handleBlockUser } = useUserMutations();
 
     const isFollowedByMe = useFollowData(post?.authorId);
-    
+
     const follow = useMemo(() => isFollowedByMe, [isFollowedByMe]);
-    
+
     const isBlockedByMe = useIsUserBlockedData(post?.authorId);
-    
+
     const blockedByMe = useMemo(() => isBlockedByMe, [isBlockedByMe]);
 
     const hasBlockedMe = useHasBlockedMeData(post?.authorId);
@@ -215,7 +275,10 @@ function PostPage() {
     const blockedMe = useMemo(() => hasBlockedMe, [hasBlockedMe]);
 
     const isAffiliatedToMe = useHasThisUserAsAffiliate(me?.id, post?.authorId);
-    const isAffiliatedToAuthor = useHasThisUserAsAffiliate(post?.authorId, me?.id);
+    const isAffiliatedToAuthor = useHasThisUserAsAffiliate(
+        post?.authorId,
+        me?.id
+    );
 
     const affiliation = useMemo(() => {
         return isAffiliatedToMe || isAffiliatedToAuthor;
@@ -231,10 +294,14 @@ function PostPage() {
         post: replyToPost,
         loading: replyToLoading,
         error: replyToError,
-    } = useFindPostById(post?.isReplyToId && post.isReplyToType !== POST_TYPES.ARTICLE ? post.isReplyToId : null);
+    } = useFindPostById(
+        post?.isReplyToId && post.isReplyToType !== POST_TYPES.ARTICLE
+            ? post.isReplyToId
+            : null
+    );
 
     const isPostLikedByMe = useLikeData(post?.itemId || "", post?.type || "");
-    
+
     const like = useMemo(() => isPostLikedByMe, [isPostLikedByMe]);
 
     const { postLikes } = usePostLikes(post?.itemId || "", post?.type || "");
@@ -242,7 +309,7 @@ function PostPage() {
     const likes = postLikes?.totalCount || 0;
 
     const isRepostedByUser = useRepostData(post?.id, me?.id);
-    
+
     const repost = useMemo(() => isRepostedByUser, [isRepostedByUser]);
 
     const { userReposts } = useReposts(post?.id);
@@ -250,41 +317,52 @@ function PostPage() {
     const reposts = userReposts?.totalCount || 0;
 
     const isBookmarked = useBookmarkData(post?.type || "", post?.id);
-    
+
     const bookmark = useMemo(() => isBookmarked, [isBookmarked]);
-    
-    const { postComments, loading: postCommentsLoading, error: postCommentsError, fetchMore } = useComments(post?.type || "", post?.id);
+
+    const {
+        postComments,
+        loading: postCommentsLoading,
+        error: postCommentsError,
+        fetchMore,
+    } = useComments(post?.type || "", post?.id);
 
     const loadMore = useCallback(() => {
-        if (!postComments || (postComments && !postComments.hasMore) || postCommentsLoading) return;
+        if (
+            !postComments ||
+            (postComments && !postComments.hasMore) ||
+            postCommentsLoading
+        )
+            return;
 
         const lastPost = postComments.posts[postComments.posts.length - 1];
 
         fetchMore({
-            variables: { id: post?.id, type: post?.type, limit: 3, cursor: lastPost.createdAt },
-        })
-        .catch((error) => {
+            variables: {
+                id: post?.id,
+                type: post?.type,
+                limit: 3,
+                cursor: lastPost.createdAt,
+            },
+        }).catch((error) => {
             console.error(error);
         });
     }, [postComments, fetchMore, postCommentsLoading, post?.id, post?.type]);
 
-    const feedContent = useMemo(() => (
-        <>
-            {postComments?.posts.map(
-                (post) => (
+    const feedContent = useMemo(
+        () => (
+            <>
+                {postComments?.posts.map((post) => (
                     <PostComponent
-                        key={
-                            post.itemId
-                        }
-                        post={
-                            post as Post
-                        }
+                        key={post.itemId}
+                        post={post as Post}
                         origin="post-comments"
                     />
-                )
-            )}
-        </>
-    ), [postComments?.posts]);
+                ))}
+            </>
+        ),
+        [postComments?.posts]
+    );
 
     const createdAt = getDateToLocaleString(post?.createdAt as string);
 
@@ -314,31 +392,25 @@ function PostPage() {
     const handleEditedPost = useCallback(
         (editedPost: Post) => {
             if (post) {
-                client.cache.writeQuery<FindPostByIdQuery>(
-                    {
-                        query: FindPostByIdDocument,
-                        data: {
-                            findPostById:
-                                editedPost,
-                        },
-                        variables: {
-                            id: post.id,
-                        },
-                    }
-                );
+                client.cache.writeQuery<FindPostByIdQuery>({
+                    query: FindPostByIdDocument,
+                    data: {
+                        findPostById: editedPost,
+                    },
+                    variables: {
+                        id: post.id,
+                    },
+                });
 
-                client.cache.writeQuery<FindPostQuery>(
-                    {
-                        query: FindPostDocument,
-                        data: {
-                            findPost:
-                                editedPost,
-                        },
-                        variables: {
-                            postId: post.itemId,
-                        },
-                    }
-                );
+                client.cache.writeQuery<FindPostQuery>({
+                    query: FindPostDocument,
+                    data: {
+                        findPost: editedPost,
+                    },
+                    variables: {
+                        postId: post.itemId,
+                    },
+                });
 
                 setUpdateAvailable(false);
             }
@@ -394,8 +466,12 @@ function PostPage() {
                                         {error ? (
                                             <ErrorOrItemNotFound
                                                 isError={true}
-                                                title={ERROR_SOMETHING_WENT_WRONG.title}
-                                                content={ERROR_SOMETHING_WENT_WRONG.message}
+                                                title={
+                                                    ERROR_SOMETHING_WENT_WRONG.title
+                                                }
+                                                content={
+                                                    ERROR_SOMETHING_WENT_WRONG.message
+                                                }
                                             />
                                         ) : !post ? (
                                             <ErrorOrItemNotFound
@@ -405,31 +481,42 @@ function PostPage() {
                                             />
                                         ) : (
                                             <PostPageWrapper>
-                                                {(updateAvailable && editedPostData) && (
-                                                    <UpdateContainer>
-                                                        <PageBlock>
-                                                            <UpdateButton
-                                                                type="button"
-                                                                role="button"
-                                                                title="Update this post"
-                                                                aria-label="Update this post"
-                                                                onClick={() => {
-                                                                    handleEditedPost(editedPostData.editedPost as Post);
-                                                                }}
-                                                            >
-                                                                Update available
-                                                            </UpdateButton>
-                                                        </PageBlock>
-                                                    </UpdateContainer>
-                                                )}
+                                                {updateAvailable &&
+                                                    editedPostData && (
+                                                        <UpdateContainer>
+                                                            <PageBlock>
+                                                                <UpdateButton
+                                                                    type="button"
+                                                                    role="button"
+                                                                    title="Update this post"
+                                                                    aria-label="Update this post"
+                                                                    onClick={() => {
+                                                                        handleEditedPost(
+                                                                            editedPostData.editedPost as Post
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    Update
+                                                                    available
+                                                                </UpdateButton>
+                                                            </PageBlock>
+                                                        </UpdateContainer>
+                                                    )}
                                                 {post.isReplyToId && (
                                                     <>
-                                                        {replyToLoading || replyToError ? (
+                                                        {replyToLoading ||
+                                                        replyToError ? (
                                                             <>
                                                                 {replyToError ? (
                                                                     <AttachedPostErrorText>
-                                                                        An error occurred while trying to
-                                                                        load the commented post.
+                                                                        An error
+                                                                        occurred
+                                                                        while
+                                                                        trying
+                                                                        to load
+                                                                        the
+                                                                        commented
+                                                                        post.
                                                                     </AttachedPostErrorText>
                                                                 ) : (
                                                                     <LoadingComponent />
@@ -439,13 +526,23 @@ function PostPage() {
                                                             <>
                                                                 {replyToPost ? (
                                                                     <PostComponent
-                                                                        key={replyToPost.itemId}
-                                                                        post={replyToPost as Post}
+                                                                        key={
+                                                                            replyToPost.itemId
+                                                                        }
+                                                                        post={
+                                                                            replyToPost as Post
+                                                                        }
                                                                         origin="post-reply"
                                                                     />
                                                                 ) : (
                                                                     <AttachedPostNotAvailable>
-                                                                        The commented post has been deleted by its author.
+                                                                        The
+                                                                        commented
+                                                                        post has
+                                                                        been
+                                                                        deleted
+                                                                        by its
+                                                                        author.
                                                                     </AttachedPostNotAvailable>
                                                                 )}
                                                             </>
@@ -462,45 +559,82 @@ function PostPage() {
                                                         >
                                                             <ProfilePicture
                                                                 loading={false}
-                                                                pictureUrl={post.author.profile.profilePicture}
-                                                                type={post.author.type}
+                                                                pictureUrl={
+                                                                    post.author
+                                                                        .profile
+                                                                        .profilePicture
+                                                                }
+                                                                type={
+                                                                    post.author
+                                                                        .type
+                                                                }
                                                                 size={40}
-                                                                title={post.author.name}
+                                                                title={
+                                                                    post.author
+                                                                        .name
+                                                                }
                                                             />
                                                             <UserInfo>
                                                                 <UserFullNameContainer>
                                                                     <UserFullName>
-                                                                        {post.author.name}
+                                                                        {
+                                                                            post
+                                                                                .author
+                                                                                .name
+                                                                        }
                                                                     </UserFullName>
-                                                                    {post.author.verification.verified ===
+                                                                    {post.author
+                                                                        .verification
+                                                                        .verified ===
                                                                         "VERIFIED" && (
                                                                         <VerificationBadge
-                                                                            type={post.author.type}
+                                                                            type={
+                                                                                post
+                                                                                    .author
+                                                                                    .type
+                                                                            }
                                                                             verifiedSince={
-                                                                                post.author.verification
+                                                                                post
+                                                                                    .author
+                                                                                    .verification
                                                                                     .verifiedSince
                                                                                     ? new Date(
-                                                                                            parseInt(
-                                                                                                post.author
-                                                                                                    .verification
-                                                                                                    .verifiedSince
-                                                                                            )
-                                                                                        ).toLocaleString("en-us", {
-                                                                                            month: "long",
-                                                                                            year: "numeric",
-                                                                                        })
+                                                                                          parseInt(
+                                                                                              post
+                                                                                                  .author
+                                                                                                  .verification
+                                                                                                  .verifiedSince
+                                                                                          )
+                                                                                      ).toLocaleString(
+                                                                                          "en-us",
+                                                                                          {
+                                                                                              month: "long",
+                                                                                              year: "numeric",
+                                                                                          }
+                                                                                      )
                                                                                     : undefined
                                                                             }
-                                                                            size={18}
+                                                                            size={
+                                                                                18
+                                                                            }
                                                                         />
                                                                     )}
                                                                     <AffiliationIcon
-                                                                        userId={post.authorId}
-                                                                        size={18}
+                                                                        userId={
+                                                                            post.authorId
+                                                                        }
+                                                                        size={
+                                                                            18
+                                                                        }
                                                                     />
                                                                 </UserFullNameContainer>
                                                                 <UsernameContainer>
-                                                                    @{post.author.username}
+                                                                    @
+                                                                    {
+                                                                        post
+                                                                            .author
+                                                                            .username
+                                                                    }
                                                                 </UsernameContainer>
                                                             </UserInfo>
                                                         </PostAuthorContainer>
@@ -508,11 +642,20 @@ function PostPage() {
                                                             key={post.id}
                                                             title="Post options"
                                                             icon={<More />}
-                                                            isOpen={activeOptions === post.id}
-                                                            toggleOptions={() => handleOptionsClick(post.id)}
+                                                            isOpen={
+                                                                activeOptions ===
+                                                                post.id
+                                                            }
+                                                            toggleOptions={() =>
+                                                                handleOptionsClick(
+                                                                    post.id
+                                                                )
+                                                            }
                                                             children={
                                                                 <>
-                                                                    {((me && post.authorId !== me.id) ||
+                                                                    {((me &&
+                                                                        post.authorId !==
+                                                                            me.id) ||
                                                                         !me) && (
                                                                         <OptionComponent
                                                                             title="Report this post"
@@ -527,13 +670,16 @@ function PostPage() {
                                                                                     }
                                                                                 );
                                                                             }}
-                                                                            icon={<Flag />}
+                                                                            icon={
+                                                                                <Flag />
+                                                                            }
                                                                             text="Report this post"
                                                                         />
                                                                     )}
                                                                     {me && (
                                                                         <>
-                                                                            {post.authorId === me.id ? (
+                                                                            {post.authorId ===
+                                                                            me.id ? (
                                                                                 <>
                                                                                     <OptionComponent
                                                                                         title="Edit this post"
@@ -548,18 +694,34 @@ function PostPage() {
                                                                                                 }
                                                                                             );
                                                                                         }}
-                                                                                        icon={<Pen />}
+                                                                                        icon={
+                                                                                            <Pen />
+                                                                                        }
                                                                                         text="Edit this post"
                                                                                     />
                                                                                     <OptionComponent
                                                                                         title="Delete this post"
                                                                                         onClick={async () => {
-                                                                                            const response = await handleDeletePost(post.itemId, post.id, post.type === POST_TYPES.COMMENT, post.isReplyToId, post.isReplyToType);
+                                                                                            const response =
+                                                                                                await handleDeletePost(
+                                                                                                    post.itemId,
+                                                                                                    post.id,
+                                                                                                    post.type ===
+                                                                                                        POST_TYPES.COMMENT,
+                                                                                                    post.isReplyToId,
+                                                                                                    post.isReplyToType
+                                                                                                );
 
-                                                                                            addToast(response.status);
+                                                                                            addToast(
+                                                                                                response.status
+                                                                                            );
 
-                                                                                            if (response.ok) {
-                                                                                                navigate(-1);
+                                                                                            if (
+                                                                                                response.ok
+                                                                                            ) {
+                                                                                                navigate(
+                                                                                                    -1
+                                                                                                );
                                                                                             }
                                                                                         }}
                                                                                         icon={
@@ -575,60 +737,117 @@ function PostPage() {
                                                                                 </>
                                                                             ) : (
                                                                                 <>
-                                                                                    {(!blockedByMe && !blockedMe) && (
-                                                                                        <OptionComponent
-                                                                                            title={`${
-                                                                                                follow
-                                                                                                    ? "Unfollow"
-                                                                                                    : "Follow"
-                                                                                            } @${
-                                                                                                post.author.username
-                                                                                            }`}
-                                                                                            onClick={async () => {
-                                                                                                const response = await handleFollowUser(post.authorId, post.author.username, origin, follow ? true : false)
-                                                                                            
-                                                                                                addToast(response);
-                                                                                            }}
-                                                                                            icon={
-                                                                                                <FollowIcon
-                                                                                                    isActive={
-                                                                                                        follow
-                                                                                                            ? true
-                                                                                                            : false
-                                                                                                    }
-                                                                                                />
-                                                                                            }
-                                                                                            text={`${follow
-                                                                                                    ? "Unfollow"
-                                                                                                    : "Follow"} 
-                                                                                                @
-                                                                                                ${
-                                                                                                    post.author
+                                                                                    {!blockedByMe &&
+                                                                                        !blockedMe && (
+                                                                                            <OptionComponent
+                                                                                                title={`${
+                                                                                                    follow
+                                                                                                        ? "Unfollow"
+                                                                                                        : "Follow"
+                                                                                                } @${
+                                                                                                    post
+                                                                                                        .author
                                                                                                         .username
                                                                                                 }`}
-                                                                                        />
-                                                                                    )}
+                                                                                                onClick={async () => {
+                                                                                                    const response =
+                                                                                                        await handleFollowUser(
+                                                                                                            post.authorId,
+                                                                                                            post
+                                                                                                                .author
+                                                                                                                .username,
+                                                                                                            origin,
+                                                                                                            follow
+                                                                                                                ? true
+                                                                                                                : false
+                                                                                                        );
+
+                                                                                                    addToast(
+                                                                                                        response
+                                                                                                    );
+                                                                                                }}
+                                                                                                icon={
+                                                                                                    <FollowIcon
+                                                                                                        isActive={
+                                                                                                            follow
+                                                                                                                ? true
+                                                                                                                : false
+                                                                                                        }
+                                                                                                    />
+                                                                                                }
+                                                                                                text={`${
+                                                                                                    follow
+                                                                                                        ? "Unfollow"
+                                                                                                        : "Follow"
+                                                                                                } 
+                                                                                                @
+                                                                                                ${
+                                                                                                    post
+                                                                                                        .author
+                                                                                                        .username
+                                                                                                }`}
+                                                                                            />
+                                                                                        )}
                                                                                     {!affiliation && (
                                                                                         <OptionComponent
-                                                                                            title={`${blockedByMe ? "Unblock" : "Block"} ${post.author.username}`}
+                                                                                            title={`${
+                                                                                                blockedByMe
+                                                                                                    ? "Unblock"
+                                                                                                    : "Block"
+                                                                                            } ${
+                                                                                                post
+                                                                                                    .author
+                                                                                                    .username
+                                                                                            }`}
                                                                                             onClick={async () => {
-                                                                                                const response = await handleBlockUser(post.authorId, post.author.username, origin, blockedByMe ? true : false)
-                                                                                            
-                                                                                                addToast(response);
+                                                                                                const response =
+                                                                                                    await handleBlockUser(
+                                                                                                        post.authorId,
+                                                                                                        post
+                                                                                                            .author
+                                                                                                            .username,
+                                                                                                        origin,
+                                                                                                        blockedByMe
+                                                                                                            ? true
+                                                                                                            : false
+                                                                                                    );
+
+                                                                                                addToast(
+                                                                                                    response
+                                                                                                );
                                                                                             }}
-                                                                                            icon={<Block />}
-                                                                                            text={`${blockedByMe ? "Unblock" : "Block"} @${post.author.username}`}
+                                                                                            icon={
+                                                                                                <Block />
+                                                                                            }
+                                                                                            text={`${
+                                                                                                blockedByMe
+                                                                                                    ? "Unblock"
+                                                                                                    : "Block"
+                                                                                            } @${
+                                                                                                post
+                                                                                                    .author
+                                                                                                    .username
+                                                                                            }`}
                                                                                         />
                                                                                     )}
-                                                                                    {mentions.includes(me.username) && (
+                                                                                    {mentions.includes(
+                                                                                        me.username
+                                                                                    ) && (
                                                                                         <OptionComponent
                                                                                             title="Unmention yourself"
                                                                                             onClick={async () => {
-                                                                                                const response = await handleRevokeMention(post.itemId);
+                                                                                                const response =
+                                                                                                    await handleRevokeMention(
+                                                                                                        post.itemId
+                                                                                                    );
 
-                                                                                                addToast(response);
+                                                                                                addToast(
+                                                                                                    response
+                                                                                                );
                                                                                             }}
-                                                                                            icon={<Unmention />}
+                                                                                            icon={
+                                                                                                <Unmention />
+                                                                                            }
                                                                                             text="Unmention yourself"
                                                                                         />
                                                                                     )}
@@ -643,36 +862,74 @@ function PostPage() {
                                                     <PostContentContainer>
                                                         <PostTextContainer>
                                                             <TextContainerRender
-                                                                content={post.content}
-                                                                mentions={mentions}
+                                                                content={
+                                                                    post.content
+                                                                }
+                                                                mentions={
+                                                                    mentions
+                                                                }
                                                             />
                                                         </PostTextContainer>
-                                                        {post.media && post.media.length > 0 && (
-                                                            <PostMediaContainer>
-                                                                {post.media.map((media) => (
-                                                                    <PostMediaItem key={media.id}>
-                                                                        {media.type.includes("image") ? (
-                                                                            <img src={media.src} alt={media.alt} />
-                                                                        ) : (
-                                                                            <video controls>
-                                                                                <source
-                                                                                    src={media.src}
-                                                                                    type={media.type}
-                                                                                />
-                                                                            </video>
-                                                                        )}
-                                                                    </PostMediaItem>
-                                                                ))}
-                                                            </PostMediaContainer>
-                                                        )}
+                                                        {post.media &&
+                                                            post.media.length >
+                                                                0 && (
+                                                                <PostMediaContainer>
+                                                                    {post.media.map(
+                                                                        (
+                                                                            media
+                                                                        ) => (
+                                                                            <PostMediaItem
+                                                                                key={
+                                                                                    media.id
+                                                                                }
+                                                                            >
+                                                                                {media.type.includes(
+                                                                                    "image"
+                                                                                ) ? (
+                                                                                    <img
+                                                                                        src={
+                                                                                            media.src
+                                                                                        }
+                                                                                        alt={
+                                                                                            media.alt
+                                                                                        }
+                                                                                    />
+                                                                                ) : (
+                                                                                    <video
+                                                                                        controls
+                                                                                    >
+                                                                                        <source
+                                                                                            src={
+                                                                                                media.src
+                                                                                            }
+                                                                                            type={
+                                                                                                media.type
+                                                                                            }
+                                                                                        />
+                                                                                    </video>
+                                                                                )}
+                                                                            </PostMediaItem>
+                                                                        )
+                                                                    )}
+                                                                </PostMediaContainer>
+                                                            )}
                                                         {post.quotedPostId && (
                                                             <>
-                                                                {quotedPostLoading || quotedPostError ? (
+                                                                {quotedPostLoading ||
+                                                                quotedPostError ? (
                                                                     <>
                                                                         {quotedPostError ? (
                                                                             <PageText>
-                                                                                An error occurred while trying to
-                                                                                load the quoted post.
+                                                                                An
+                                                                                error
+                                                                                occurred
+                                                                                while
+                                                                                trying
+                                                                                to
+                                                                                load
+                                                                                the
+                                                                                quoted
+                                                                                post.
                                                                             </PageText>
                                                                         ) : (
                                                                             <LoadingComponent />
@@ -682,12 +939,19 @@ function PostPage() {
                                                                     <>
                                                                         {quotedPost ? (
                                                                             <QuotedPost
-                                                                                post={quotedPost as Post}
+                                                                                post={
+                                                                                    quotedPost as Post
+                                                                                }
                                                                                 origin="feed"
                                                                             />
                                                                         ) : (
                                                                             <QuotedPostNotAvailable>
-                                                                                The quoted post is not available.
+                                                                                The
+                                                                                quoted
+                                                                                post
+                                                                                is
+                                                                                not
+                                                                                available.
                                                                             </QuotedPostNotAvailable>
                                                                         )}
                                                                     </>
@@ -697,19 +961,46 @@ function PostPage() {
                                                     </PostContentContainer>
                                                     <PostInfoContainer>
                                                         <PostPageInfoItem>
-                                                            <PostPageDate title={createdAt} aria-label={createdAt}>
-                                                                <time dateTime={createdAt}>{createdAt}</time>
+                                                            <PostPageDate
+                                                                title={
+                                                                    createdAt
+                                                                }
+                                                                aria-label={
+                                                                    createdAt
+                                                                }
+                                                            >
+                                                                <time
+                                                                    dateTime={
+                                                                        createdAt
+                                                                    }
+                                                                >
+                                                                    {createdAt}
+                                                                </time>
                                                             </PostPageDate>
                                                         </PostPageInfoItem>
                                                         <PostPageInfoItem>
                                                             <PostPageInfoText>
-                                                                <b>{formatter.format(views)}</b>{" "}{views === 1 ? "view" : "views"}
+                                                                <b>
+                                                                    {formatter.format(
+                                                                        views
+                                                                    )}
+                                                                </b>{" "}
+                                                                {views === 1
+                                                                    ? "view"
+                                                                    : "views"}
                                                             </PostPageInfoText>
                                                             <PostPageInfoText>
                                                                 ⋅
                                                             </PostPageInfoText>
                                                             <PostPageInfoText>
-                                                                <b>{formatter.format(comments)}</b>{" "}{comments === 1 ? "comment" : "comments"}
+                                                                <b>
+                                                                    {formatter.format(
+                                                                        comments
+                                                                    )}
+                                                                </b>{" "}
+                                                                {comments === 1
+                                                                    ? "comment"
+                                                                    : "comments"}
                                                             </PostPageInfoText>
                                                             {post.isEdited && (
                                                                 <>
@@ -718,12 +1009,18 @@ function PostPage() {
                                                                     </PostPageInfoText>
                                                                     <PostPageEditedStatus>
                                                                         <OptionBaseIcon>
-                                                                            <Pen color={COLORS.blue} />
+                                                                            <Pen
+                                                                                color={
+                                                                                    COLORS.blue
+                                                                                }
+                                                                            />
                                                                         </OptionBaseIcon>
                                                                         <PostPageEditedStatusText>
-                                                                            {date}
+                                                                            {
+                                                                                date
+                                                                            }
                                                                         </PostPageEditedStatusText>
-                                                                    </PostPageEditedStatus>  
+                                                                    </PostPageEditedStatus>
                                                                 </>
                                                             )}
                                                         </PostPageInfoItem>
@@ -732,37 +1029,88 @@ function PostPage() {
                                                         <PostPageActionContainer>
                                                             <PostPageControlContainer
                                                                 type="button"
-                                                                title={`${like ? "Remove like from" : "Like"} @${
-                                                                    post.author.username
+                                                                title={`${
+                                                                    like
+                                                                        ? "Remove like from"
+                                                                        : "Like"
+                                                                } @${
+                                                                    post.author
+                                                                        .username
                                                                 }'s post`}
-                                                                aria-label={`${like ? "Remove like from" : "Like"} @${
-                                                                    post.author.username
+                                                                aria-label={`${
+                                                                    like
+                                                                        ? "Remove like from"
+                                                                        : "Like"
+                                                                } @${
+                                                                    post.author
+                                                                        .username
                                                                 }'s post`}
-                                                                color={COLORS.red}
-                                                                disabled={(blockedMe && !like) ? true : false}
+                                                                color={
+                                                                    COLORS.red
+                                                                }
+                                                                disabled={
+                                                                    blockedMe &&
+                                                                    !like
+                                                                        ? true
+                                                                        : false
+                                                                }
                                                                 onClick={async () => {
                                                                     if (me) {
-                                                                        const response = await handleLikePost(post.itemId, post.type, like ? true : false, origin, false);
-                                        
-                                                                        if (!response) {
-                                                                            addToast(`An error occurred while trying to ${like ? "remove the like from" : "like"} this post.`);
+                                                                        const response =
+                                                                            await handleLikePost(
+                                                                                post.itemId,
+                                                                                post.type,
+                                                                                like
+                                                                                    ? true
+                                                                                    : false,
+                                                                                origin,
+                                                                                false
+                                                                            );
+
+                                                                        if (
+                                                                            !response
+                                                                        ) {
+                                                                            addToast(
+                                                                                `An error occurred while trying to ${
+                                                                                    like
+                                                                                        ? "remove the like from"
+                                                                                        : "like"
+                                                                                } this post.`
+                                                                            );
                                                                         }
                                                                     } else {
-                                                                        addToast("You're not authenticated.");
+                                                                        addToast(
+                                                                            "You're not authenticated."
+                                                                        );
                                                                     }
                                                                 }}
                                                             >
-                                                                <LikeIcon size={24} isActive={like ? true : false} />
+                                                                <LikeIcon
+                                                                    size={24}
+                                                                    isActive={
+                                                                        like
+                                                                            ? true
+                                                                            : false
+                                                                    }
+                                                                />
                                                             </PostPageControlContainer>
                                                             <PostPageActionInfo
                                                                 role="link"
                                                                 title="See who liked this post"
                                                                 aria-label="See who liked this post"
                                                                 onClick={() => {
-                                                                    if (blockedMe) {
-                                                                        addToast("This user blocked you, so you can't see who liked this post.");
-                                                                    } else if (!me) {
-                                                                        addToast("You're not authenticated.");
+                                                                    if (
+                                                                        blockedMe
+                                                                    ) {
+                                                                        addToast(
+                                                                            "This user blocked you, so you can't see who liked this post."
+                                                                        );
+                                                                    } else if (
+                                                                        !me
+                                                                    ) {
+                                                                        addToast(
+                                                                            "You're not authenticated."
+                                                                        );
                                                                     } else {
                                                                         navigate(
                                                                             `/${post.author.username}/post/${post.itemId}/likes`,
@@ -776,30 +1124,61 @@ function PostPage() {
                                                                     }
                                                                 }}
                                                             >
-                                                                {formatter.format(likes)}{" "}{likes === 1 ? "like" : "likes"}
+                                                                {formatter.format(
+                                                                    likes
+                                                                )}{" "}
+                                                                {likes === 1
+                                                                    ? "like"
+                                                                    : "likes"}
                                                             </PostPageActionInfo>
                                                         </PostPageActionContainer>
                                                         <PostPageActionContainer>
-                                                            <PostPageControlWrapper color={COLORS.green}>
+                                                            <PostPageControlWrapper
+                                                                color={
+                                                                    COLORS.green
+                                                                }
+                                                            >
                                                                 <Options
                                                                     key={`repost-options-${post.id}`}
                                                                     title="Repost options"
                                                                     icon={
                                                                         <RepostIcon
-                                                                            size={24}
-                                                                            isActive={repost ? true : false}
+                                                                            size={
+                                                                                24
+                                                                            }
+                                                                            isActive={
+                                                                                repost
+                                                                                    ? true
+                                                                                    : false
+                                                                            }
                                                                         />
                                                                     }
-                                                                    isOpen={activeOptions === -2}
+                                                                    isOpen={
+                                                                        activeOptions ===
+                                                                        -2
+                                                                    }
                                                                     toggleOptions={() => {
-                                                                        if (me) {
-                                                                            handleOptionsClick(-2);
+                                                                        if (
+                                                                            me
+                                                                        ) {
+                                                                            handleOptionsClick(
+                                                                                -2
+                                                                            );
                                                                         } else {
-                                                                            addToast("You're not authenticated.");
+                                                                            addToast(
+                                                                                "You're not authenticated."
+                                                                            );
                                                                         }
                                                                     }}
-                                                                    disabled={(blockedMe && !repost) ? true : false}
-                                                                    mirrored={true}
+                                                                    disabled={
+                                                                        blockedMe &&
+                                                                        !repost
+                                                                            ? true
+                                                                            : false
+                                                                    }
+                                                                    mirrored={
+                                                                        true
+                                                                    }
                                                                     children={
                                                                         <>
                                                                             <OptionComponent
@@ -809,18 +1188,45 @@ function PostPage() {
                                                                                         : "Repost this post"
                                                                                 }
                                                                                 onClick={async () => {
-                                                                                    if (me) {
-                                                                                        const response = await handleRepost(post.itemId, post.id, repost);
+                                                                                    if (
+                                                                                        me
+                                                                                    ) {
+                                                                                        const response =
+                                                                                            await handleRepost(
+                                                                                                post.itemId,
+                                                                                                post.id,
+                                                                                                repost
+                                                                                            );
 
-                                                                                        if (!response) {
-                                                                                            addToast(`An error occurred while trying to ${repost ? "remove the repost from" : "repost"} this post.`);
+                                                                                        if (
+                                                                                            !response
+                                                                                        ) {
+                                                                                            addToast(
+                                                                                                `An error occurred while trying to ${
+                                                                                                    repost
+                                                                                                        ? "remove the repost from"
+                                                                                                        : "repost"
+                                                                                                } this post.`
+                                                                                            );
                                                                                         }
                                                                                     } else {
-                                                                                        addToast("You're not authenticated.");
+                                                                                        addToast(
+                                                                                            "You're not authenticated."
+                                                                                        );
                                                                                     }
                                                                                 }}
-                                                                                icon={<RepostIcon size={24} />}
-                                                                                text={repost ? "Remove repost" : "Repost this post"}
+                                                                                icon={
+                                                                                    <RepostIcon
+                                                                                        size={
+                                                                                            24
+                                                                                        }
+                                                                                    />
+                                                                                }
+                                                                                text={
+                                                                                    repost
+                                                                                        ? "Remove repost"
+                                                                                        : "Repost this post"
+                                                                                }
                                                                             />
                                                                             {!blockedMe && (
                                                                                 <OptionComponent
@@ -836,7 +1242,9 @@ function PostPage() {
                                                                                             }
                                                                                         );
                                                                                     }}
-                                                                                    icon={<Pen />}
+                                                                                    icon={
+                                                                                        <Pen />
+                                                                                    }
                                                                                     text="Quote this post"
                                                                                 />
                                                                             )}
@@ -849,10 +1257,18 @@ function PostPage() {
                                                                 title="See who reposted this post"
                                                                 aria-label="See who reposted this post"
                                                                 onClick={() => {
-                                                                    if (blockedMe) {
-                                                                        addToast("This user has blocked you, so you can't see who reposted this post.");
-                                                                    } else if (!me) {
-                                                                        addToast("You're not authenticated.");
+                                                                    if (
+                                                                        blockedMe
+                                                                    ) {
+                                                                        addToast(
+                                                                            "This user has blocked you, so you can't see who reposted this post."
+                                                                        );
+                                                                    } else if (
+                                                                        !me
+                                                                    ) {
+                                                                        addToast(
+                                                                            "You're not authenticated."
+                                                                        );
                                                                     } else {
                                                                         navigate(
                                                                             `/${post.author.username}/post/${post.itemId}/reposts`,
@@ -866,7 +1282,12 @@ function PostPage() {
                                                                     }
                                                                 }}
                                                             >
-                                                                {formatter.format(reposts)}{" "}{reposts === 1 ? "repost" : "reposts"}
+                                                                {formatter.format(
+                                                                    reposts
+                                                                )}{" "}
+                                                                {reposts === 1
+                                                                    ? "repost"
+                                                                    : "reposts"}
                                                             </PostPageActionInfo>
                                                         </PostPageActionContainer>
                                                         <PostActionsGroup>
@@ -883,22 +1304,54 @@ function PostPage() {
                                                                             ? "Remove the bookmark from this post"
                                                                             : "Bookmark this post"
                                                                     }
-                                                                    disabled={(blockedMe && !bookmark) ? true : false}
+                                                                    disabled={
+                                                                        blockedMe &&
+                                                                        !bookmark
+                                                                            ? true
+                                                                            : false
+                                                                    }
                                                                     onClick={async () => {
-                                                                        if (me) {
-                                                                            const response = await handleBookmark(post.itemId, post.type, post.id, origin, bookmark ? true : false);
+                                                                        if (
+                                                                            me
+                                                                        ) {
+                                                                            const response =
+                                                                                await handleBookmark(
+                                                                                    post.itemId,
+                                                                                    post.type,
+                                                                                    post.id,
+                                                                                    origin,
+                                                                                    bookmark
+                                                                                        ? true
+                                                                                        : false
+                                                                                );
 
-                                                                            if (!response) {
-                                                                                addToast(`An error occurred while trying to ${bookmark ? "remove the bookmark from" : "bookmark"} this post.`);
+                                                                            if (
+                                                                                !response
+                                                                            ) {
+                                                                                addToast(
+                                                                                    `An error occurred while trying to ${
+                                                                                        bookmark
+                                                                                            ? "remove the bookmark from"
+                                                                                            : "bookmark"
+                                                                                    } this post.`
+                                                                                );
                                                                             }
                                                                         } else {
-                                                                            addToast("You're not authenticated.");
-                                                                        }                                
+                                                                            addToast(
+                                                                                "You're not authenticated."
+                                                                            );
+                                                                        }
                                                                     }}
                                                                 >
                                                                     <BookmarkIcon
-                                                                        isActive={bookmark ? true : false}
-                                                                        size={24}
+                                                                        isActive={
+                                                                            bookmark
+                                                                                ? true
+                                                                                : false
+                                                                        }
+                                                                        size={
+                                                                            24
+                                                                        }
                                                                     />
                                                                 </PostPageControlContainer>
                                                             </PostPageActionContainer>
@@ -907,10 +1360,27 @@ function PostPage() {
                                                                     <Options
                                                                         key={`share-options-${post.id}`}
                                                                         title="Share options"
-                                                                        icon={<Share size={24} />}
-                                                                        isOpen={activeOptions === -1}
-                                                                        toggleOptions={() => handleOptionsClick(-1)}
-                                                                        disabled={blockedMe ? true : false}
+                                                                        icon={
+                                                                            <Share
+                                                                                size={
+                                                                                    24
+                                                                                }
+                                                                            />
+                                                                        }
+                                                                        isOpen={
+                                                                            activeOptions ===
+                                                                            -1
+                                                                        }
+                                                                        toggleOptions={() =>
+                                                                            handleOptionsClick(
+                                                                                -1
+                                                                            )
+                                                                        }
+                                                                        disabled={
+                                                                            blockedMe
+                                                                                ? true
+                                                                                : false
+                                                                        }
                                                                         children={
                                                                             <>
                                                                                 <OptionComponent
@@ -919,9 +1389,13 @@ function PostPage() {
                                                                                         const currentUrl = `${window.location.origin}/${post.author.username}/post/${post.itemId}`;
 
                                                                                         const response =
-                                                                                            copy(currentUrl);
+                                                                                            copy(
+                                                                                                currentUrl
+                                                                                            );
 
-                                                                                        if (response) {
+                                                                                        if (
+                                                                                            response
+                                                                                        ) {
                                                                                             addToast(
                                                                                                 "Link copied to clipboard."
                                                                                             );
@@ -931,14 +1405,18 @@ function PostPage() {
                                                                                             );
                                                                                         }
                                                                                     }}
-                                                                                    icon={<Chain />}
+                                                                                    icon={
+                                                                                        <Chain />
+                                                                                    }
                                                                                     text="Copy link to this post"
                                                                                 />
                                                                                 {me && (
                                                                                     <OptionComponent
                                                                                         title="Send this post"
                                                                                         onClick={() => {}}
-                                                                                        icon={<Mail type="options" />}
+                                                                                        icon={
+                                                                                            <Mail type="options" />
+                                                                                        }
                                                                                         text="Send this post"
                                                                                     />
                                                                                 )}
@@ -956,23 +1434,53 @@ function PostPage() {
                                                             type="comment"
                                                             placeholder={`Reply to @${post.author.username}`}
                                                             buttonText="Reply"
-                                                            isReplyToId={post.id}
-                                                            isReplyToType={post.type}
+                                                            isReplyToId={
+                                                                post.id
+                                                            }
+                                                            isReplyToType={
+                                                                post.type
+                                                            }
                                                         />
                                                     ) : (
                                                         <SignUpOrLogInText>
-                                                            Get the full experience. <Link to="/login" title="Log in to Zenith" aria-label="Log in to Zenith">Log in</Link> or <Link to="/signup" title="Sign up to Zenith" aria-label="Sign up to Zenith">Sign up</Link> to Zenith.
+                                                            Get the full
+                                                            experience.{" "}
+                                                            <Link
+                                                                to="/login"
+                                                                title="Log in to Zenith"
+                                                                aria-label="Log in to Zenith"
+                                                            >
+                                                                Log in
+                                                            </Link>{" "}
+                                                            or{" "}
+                                                            <Link
+                                                                to="/signup"
+                                                                title="Sign up to Zenith"
+                                                                aria-label="Sign up to Zenith"
+                                                            >
+                                                                Sign up
+                                                            </Link>{" "}
+                                                            to Zenith.
                                                         </SignUpOrLogInText>
                                                     )}
                                                     <FullWidthFeedContainer>
                                                         <FeedComponent
                                                             key="post-comments"
-                                                            feedContent={feedContent}
-                                                            loading={postCommentsLoading}
-                                                            error={postCommentsError}
+                                                            feedContent={
+                                                                feedContent
+                                                            }
+                                                            loading={
+                                                                postCommentsLoading
+                                                            }
+                                                            error={
+                                                                postCommentsError
+                                                            }
                                                             loadMore={loadMore}
                                                             noElementsText="No one has replied to this post yet."
-                                                            isFeedEmpty={postComments?.totalCount === 0}
+                                                            isFeedEmpty={
+                                                                postComments?.totalCount ===
+                                                                0
+                                                            }
                                                         />
                                                     </FullWidthFeedContainer>
                                                 </FeedWithLumenInput>

@@ -298,7 +298,9 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({
                 }
 
                 root.selectEnd();
-            } else if (
+            } 
+            
+            if (
                 location &&
                 location.state &&
                 location.state.backgroundLocation

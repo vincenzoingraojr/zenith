@@ -297,12 +297,22 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                     </CustomNavContainer>
                 )}
                 <NavItemLink role="menuitem">
-                    <NavLink to="/home" title="Home" aria-label="Home" onClick={() => scrollToTop("/home")}>
+                    <NavLink
+                        to="/home"
+                        title="Home"
+                        aria-label="Home"
+                        onClick={() => scrollToTop("/home")}
+                    >
                         {({ isActive }) => <Home isActive={isActive} />}
                     </NavLink>
                 </NavItemLink>
                 <NavItemLink role="menuitem">
-                    <NavLink to="/search" title="Search" aria-label="Search" onClick={() => scrollToTop("/search")}>
+                    <NavLink
+                        to="/search"
+                        title="Search"
+                        aria-label="Search"
+                        onClick={() => scrollToTop("/search")}
+                    >
                         {({ isActive }) => (
                             <Magnifier type="normal" isActive={isActive} />
                         )}

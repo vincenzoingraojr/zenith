@@ -11,7 +11,10 @@ export const isAuth: MiddlewareFn<AuthContext> = ({ context }, next) => {
     } else {
         try {
             const token = authorization.split(" ")[1];
-            const payload = verify(token, process.env.ACCESS_TOKEN_SECRET as string);
+            const payload = verify(
+                token,
+                process.env.ACCESS_TOKEN_SECRET as string
+            );
             context.payload = payload as any;
         } catch (error) {
             logger.error(error);

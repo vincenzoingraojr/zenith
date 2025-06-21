@@ -1,0 +1,120 @@
+query Search(
+    $keyword: String!
+    $type: String!
+    $postsLimit: Int!
+    $postsOffset: Int!
+    $usersLimit: Int!
+    $usersOffset: Int!
+) {
+    search(
+        keyword: $keyword
+        type: $type
+        postsLimit: $postsLimit
+        postsOffset: $postsOffset
+        usersLimit: $usersLimit
+        usersOffset: $usersOffset
+    ) {
+        posts {
+            id
+            itemId
+            authorId
+            type
+            content
+            isEdited
+            lang
+            topics
+            author {
+                id
+                name
+                username
+                email
+                type
+                gender
+                birthDate {
+                    date
+                    monthAndDayVisibility
+                    yearVisibility
+                }
+                emailVerified
+                profile {
+                    profilePicture
+                    profileBanner
+                    bio
+                    website
+                }
+                userSettings {
+                    incomingMessages
+                    twoFactorAuth
+                }
+                searchSettings {
+                    hideSensitiveContent
+                    hideBlockedAccounts
+                }
+                createdAt
+                updatedAt
+                hiddenPosts
+                identity {
+                    verified
+                    verifiedSince
+                }
+                verification {
+                    verified
+                    verifiedSince
+                }
+            }
+            isReplyToId
+            isReplyToType
+            quotedPostId
+            media {
+                id
+                type
+                src
+                alt
+            }
+            hashtags
+            createdAt
+            updatedAt
+        }
+        users {
+            id
+            name
+            username
+            email
+            type
+            gender
+            birthDate {
+                date
+                monthAndDayVisibility
+                yearVisibility
+            }
+            emailVerified
+            profile {
+                profilePicture
+                profileBanner
+                bio
+                website
+            }
+            userSettings {
+                incomingMessages
+                twoFactorAuth
+            }
+            searchSettings {
+                hideSensitiveContent
+                hideBlockedAccounts
+            }
+            createdAt
+            updatedAt
+            hiddenPosts
+            identity {
+                verified
+                verifiedSince
+            }
+            verification {
+                verified
+                verifiedSince
+            }
+        }
+        hasMorePosts
+        hasMoreUsers
+    }
+}

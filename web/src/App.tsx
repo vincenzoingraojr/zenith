@@ -245,9 +245,7 @@ function App() {
                     element={
                         <IsAuthenticated
                             isAuth={isAuth}
-                            children={
-                                <PostLikes />
-                            }
+                            children={<PostLikes />}
                         />
                     }
                 />
@@ -256,9 +254,7 @@ function App() {
                     element={
                         <IsAuthenticated
                             isAuth={isAuth}
-                            children={
-                                <Reposts />
-                            }
+                            children={<Reposts />}
                         />
                     }
                 />
@@ -327,9 +323,7 @@ function App() {
                         element={
                             <IsAuthenticated
                                 isAuth={isAuth}
-                                children={
-                                    <PostLikes />
-                                }
+                                children={<PostLikes />}
                             />
                         }
                     />
@@ -338,9 +332,7 @@ function App() {
                         element={
                             <IsAuthenticated
                                 isAuth={isAuth}
-                                children={
-                                    <Reposts />
-                                }
+                                children={<Reposts />}
                             />
                         }
                     />

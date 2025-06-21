@@ -2,11 +2,15 @@ import { FunctionComponent, useMemo } from "react";
 import { Post } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import { PageBlock, RightContainer, UserFullName, UserFullNameContainer, UserInfo, UsernameContainer } from "../../../../styles/global";
 import {
-    PostDate,
-    PostMediaItem,
-} from "./PostComponent";
+    PageBlock,
+    RightContainer,
+    UserFullName,
+    UserFullNameContainer,
+    UserInfo,
+    UsernameContainer,
+} from "../../../../styles/global";
+import { PostDate, PostMediaItem } from "./PostComponent";
 import VerificationBadge from "../../../utils/VerificationBadge";
 import Pen from "../../../icons/Pen";
 import {

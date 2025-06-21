@@ -3,10 +3,7 @@ import Head from "../components/Head";
 import Settings from "../components/icons/Settings";
 import PageLayout from "../components/layouts/PageLayout";
 import PageContentLayout from "../components/layouts/sublayouts/PageContentLayout";
-import {
-    ControlContainer,
-    FullWidthFeedContainer,
-} from "../styles/global";
+import { ControlContainer, FullWidthFeedContainer } from "../styles/global";
 import NotificationComponent from "../components/layouts/items/notification/NotificationComponent";
 import { useNotificationsContext } from "../utils/NotificationsProvider";
 import FeedComponent from "../components/utils/FeedComponent";
@@ -18,23 +15,20 @@ function Notifications() {
     const { notificationFeed, loading, loadMore, error } =
         useNotificationsContext();
 
-    const feedContent = useMemo(() => (
-        <>
-            {notificationFeed?.notifications.map(
-                (notification) => (
+    const feedContent = useMemo(
+        () => (
+            <>
+                {notificationFeed?.notifications.map((notification) => (
                     <NotificationComponent
-                        key={
-                            notification.notificationId
-                        }
-                        notification={
-                            notification
-                        }
+                        key={notification.notificationId}
+                        notification={notification}
                     />
-                )
-            )}
-        </>
-    ), [notificationFeed?.notifications]);
-    
+                ))}
+            </>
+        ),
+        [notificationFeed?.notifications]
+    );
+
     return (
         <>
             <Head
@@ -55,7 +49,11 @@ function Notifications() {
                                     error={error}
                                     loadMore={loadMore}
                                     noElementsText="No activity yet."
-                                    isFeedEmpty={notificationFeed?.notifications.length === 0 && !notificationFeed?.nextCursor}
+                                    isFeedEmpty={
+                                        notificationFeed?.notifications
+                                            .length === 0 &&
+                                        !notificationFeed?.nextCursor
+                                    }
                                 />
                             </FullWidthFeedContainer>
                         }

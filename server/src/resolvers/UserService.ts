@@ -14,22 +14,28 @@ export class UserService {
         this.blockRepository = appDataSource.getRepository(Block);
     }
 
-    async findUser(username: string, deleted: boolean = false): Promise<User | null> {
+    async findUser(
+        username: string,
+        deleted: boolean = false
+    ): Promise<User | null> {
         if (!isValidUserInput(username)) {
             logger.warn("Invalid username.");
 
             return null;
         }
-    
+
         try {
-            const user = await this.userRepository.findOne({ where: { username }, withDeleted: deleted });
-            
+            const user = await this.userRepository.findOne({
+                where: { username },
+                withDeleted: deleted,
+            });
+
             if (!user) {
                 logger.warn(`User with username "${username}" not found.`);
 
                 return null;
             }
-    
+
             return user;
         } catch (error) {
             logger.error(error);
@@ -38,7 +44,10 @@ export class UserService {
         }
     }
 
-    async findUserById(id: number, deleted: boolean = false): Promise<User | null> {
+    async findUserById(
+        id: number,
+        deleted: boolean = false
+    ): Promise<User | null> {
         if (!id) {
             logger.warn("Id not provided.");
 
@@ -46,7 +55,10 @@ export class UserService {
         }
 
         try {
-            const user = await this.userRepository.findOne({ where: { id }, withDeleted: deleted });
+            const user = await this.userRepository.findOne({
+                where: { id },
+                withDeleted: deleted,
+            });
 
             if (!user) {
                 logger.warn(`User with id "${id}" not found.`);
@@ -62,7 +74,10 @@ export class UserService {
         }
     }
 
-    async findUsersById(ids: number[], deleted: boolean = false): Promise<User[] | null> {
+    async findUsersById(
+        ids: number[],
+        deleted: boolean = false
+    ): Promise<User[] | null> {
         if (ids.length === 0) {
             logger.warn("Ids not provided.");
 
@@ -70,7 +85,10 @@ export class UserService {
         }
 
         try {
-            const users = await this.userRepository.find({ where: { id: In(ids) }, withDeleted: deleted });
+            const users = await this.userRepository.find({
+                where: { id: In(ids) },
+                withDeleted: deleted,
+            });
 
             return users;
         } catch (error) {
@@ -80,7 +98,10 @@ export class UserService {
         }
     }
 
-    async findUsersByUsername(usernames: string[], deleted: boolean = false): Promise<User[] | null> {
+    async findUsersByUsername(
+        usernames: string[],
+        deleted: boolean = false
+    ): Promise<User[] | null> {
         if (usernames.length === 0) {
             logger.warn("Ids not provided.");
 
@@ -88,7 +109,10 @@ export class UserService {
         }
 
         try {
-            const users = await this.userRepository.find({ where: { username: In(usernames) }, withDeleted: deleted });
+            const users = await this.userRepository.find({
+                where: { username: In(usernames) },
+                withDeleted: deleted,
+            });
 
             return users;
         } catch (error) {
@@ -98,7 +122,10 @@ export class UserService {
         }
     }
 
-    async findUserByEmail(email: string, deleted: boolean = false): Promise<User | null> {
+    async findUserByEmail(
+        email: string,
+        deleted: boolean = false
+    ): Promise<User | null> {
         const valid = isEmail(email);
 
         if (!valid) {
@@ -108,7 +135,10 @@ export class UserService {
         }
 
         try {
-            const user = await this.userRepository.findOne({ where: { email }, withDeleted: deleted || false });
+            const user = await this.userRepository.findOne({
+                where: { email },
+                withDeleted: deleted || false,
+            });
 
             if (!user) {
                 logger.warn(`User with email "${email}" not found.`);
@@ -124,7 +154,10 @@ export class UserService {
         }
     }
 
-    async whoHasBlockedWho(blockedId: number, userId: number): Promise<Block | null> {
+    async whoHasBlockedWho(
+        blockedId: number,
+        userId: number
+    ): Promise<Block | null> {
         if (!blockedId) {
             logger.warn("blockedId not provided.");
 
@@ -138,7 +171,9 @@ export class UserService {
         }
 
         try {
-            const block = await this.blockRepository.findOne({ where: { blockedId, userId } });
+            const block = await this.blockRepository.findOne({
+                where: { blockedId, userId },
+            });
 
             return block;
         } catch (error) {

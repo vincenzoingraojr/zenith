@@ -1,6 +1,6 @@
 import { LandingUser } from "../entities/LandingUser";
 import { Arg, Mutation, Query, Resolver } from "type-graphql";
-import {  UserResponse } from "./UserResolver";
+import { UserResponse } from "./UserResolver";
 import { Repository } from "typeorm";
 import ejs from "ejs";
 import path from "path";
@@ -62,8 +62,11 @@ export class LandingUserResolver {
         let status;
 
         try {
-            const existingUserWithUsername = await this.userService.findUser(username);
-            const existingUserWithEmail = await this.userService.findUserByEmail(email);
+            const existingUserWithUsername = await this.userService.findUser(
+                username
+            );
+            const existingUserWithEmail =
+                await this.userService.findUserByEmail(email);
 
             if (existingUserWithEmail) {
                 errors.push({
@@ -80,14 +83,19 @@ export class LandingUserResolver {
             }
 
             if (errors.length === 0) {
-                await this.landingUserRepository.create({
-                    name,
-                    username,
-                    email,
-                }).save();
+                await this.landingUserRepository
+                    .create({
+                        name,
+                        username,
+                        email,
+                    })
+                    .save();
 
                 const welcomeUserData = await ejs.renderFile(
-                    path.join(__dirname, "../helpers/templates/WelcomeUser.ejs"),
+                    path.join(
+                        __dirname,
+                        "../helpers/templates/WelcomeUser.ejs"
+                    ),
                     { name, username }
                 );
 
@@ -108,12 +116,17 @@ export class LandingUserResolver {
                     Source: "noreply@zenith.to",
                 };
 
-                const welcomeUserSESCommand = new SendEmailCommand(welcomeUserParams);
+                const welcomeUserSESCommand = new SendEmailCommand(
+                    welcomeUserParams
+                );
 
                 await mailHelper.send(welcomeUserSESCommand);
 
                 const notifyCreatorData = await ejs.renderFile(
-                    path.join(__dirname, "../helpers/templates/NotifyCreator.ejs"),
+                    path.join(
+                        __dirname,
+                        "../helpers/templates/NotifyCreator.ejs"
+                    ),
                     { name, email, username }
                 );
 
@@ -134,11 +147,14 @@ export class LandingUserResolver {
                     Source: "noreply@zenith.to",
                 };
 
-                const notifyCreatorSESCommand = new SendEmailCommand(notifyCreatorParams);
+                const notifyCreatorSESCommand = new SendEmailCommand(
+                    notifyCreatorParams
+                );
 
                 await mailHelper.send(notifyCreatorSESCommand);
 
-                status = "You are now signed up. You will be notified when the platform is completed.";
+                status =
+                    "You are now signed up. You will be notified when the platform is completed.";
 
                 ok = true;
             }
@@ -150,13 +166,17 @@ export class LandingUserResolver {
                     field: "username",
                     message: "Username already taken",
                 });
-            } else if (error.detail.includes("email") && error.code === "23505") {
+            } else if (
+                error.detail.includes("email") &&
+                error.code === "23505"
+            ) {
                 errors.push({
                     field: "email",
                     message: "A user using this email already exists",
                 });
             } else {
-                status = "An unknown error has occured, please try again later.";
+                status =
+                    "An unknown error has occured, please try again later.";
             }
         }
 

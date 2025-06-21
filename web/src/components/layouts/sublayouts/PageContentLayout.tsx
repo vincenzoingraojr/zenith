@@ -2,7 +2,11 @@ import { FunctionComponent } from "react";
 import { LayoutProps } from "../common";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import { ControlContainer, OptionBaseIcon, ProfilePictureWrapper } from "../../../styles/global";
+import {
+    ControlContainer,
+    OptionBaseIcon,
+    ProfilePictureWrapper,
+} from "../../../styles/global";
 import Back from "../../icons/Back";
 import { devices } from "../../../styles/devices";
 import { mediaQuery } from "../../../utils/mediaQuery";
@@ -206,7 +210,10 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({
                                             >
                                                 <ProfilePicture
                                                     loading={loading}
-                                                    pictureUrl={me.profile.profilePicture}
+                                                    pictureUrl={
+                                                        me.profile
+                                                            .profilePicture
+                                                    }
                                                     type={me.type}
                                                     size={32}
                                                     title={me.name}
@@ -249,14 +256,22 @@ const PageContentLayout: FunctionComponent<PageContentLayoutProps> = ({
                                                         <Logo type="inline" />
                                                     </HomeLogoContainer>
                                                 </HomeLogo>
-                                                <HomeHeaderTitle onClick={() => scrollToTop()}>
+                                                <HomeHeaderTitle
+                                                    onClick={() =>
+                                                        scrollToTop()
+                                                    }
+                                                >
                                                     {title}
                                                 </HomeHeaderTitle>
                                             </>
                                         )}
                                     </HomeContainer>
                                 ) : (
-                                    <MainHeaderTitle onClick={() => scrollToTop()}>{title}</MainHeaderTitle>
+                                    <MainHeaderTitle
+                                        onClick={() => scrollToTop()}
+                                    >
+                                        {title}
+                                    </MainHeaderTitle>
                                 )}
                             </>
                         )}

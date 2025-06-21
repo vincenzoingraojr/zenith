@@ -14,8 +14,14 @@ import { Session, User } from "./entities/User";
 import { createAccessToken, createRefreshToken } from "./auth/auth";
 import { sendRefreshToken } from "./auth/sendRefreshToken";
 import { PostResolver } from "./resolvers/PostResolver";
-import { getPresignedUrlForDeleteCommand, getPresignedUrlForPutCommand } from "./helpers/getPresignedUrls";
-import { MessageNotificationResolver, NotificationResolver } from "./resolvers/NotificationResolver";
+import {
+    getPresignedUrlForDeleteCommand,
+    getPresignedUrlForPutCommand,
+} from "./helpers/getPresignedUrls";
+import {
+    MessageNotificationResolver,
+    NotificationResolver,
+} from "./resolvers/NotificationResolver";
 import { WebSocketServer } from "ws";
 import { useServer } from "graphql-ws/lib/use/ws";
 import { execute, subscribe } from "graphql";
@@ -44,7 +50,7 @@ async function main() {
     const app = express();
 
     app.use(cookieParser());
-    
+
     const allowedOriginRegex = new RegExp(process.env.ORIGIN!);
 
     const corsOptions: CorsOptions = {
@@ -52,15 +58,13 @@ async function main() {
             if (!origin || allowedOriginRegex.test(origin)) {
                 callback(null, true);
             } else {
-                callback(new Error('Not allowed by CORS'));
+                callback(new Error("Not allowed by CORS"));
             }
         },
         credentials: true,
     };
 
-    app.use(
-        cors(corsOptions),
-    );
+    app.use(cors(corsOptions));
 
     app.use(express.static(path.join(__dirname, "./public")));
     app.use(favicon(path.join(__dirname, "./public", "favicon.ico")));
@@ -72,7 +76,8 @@ async function main() {
 
     app.use(express.json());
 
-    await appDataSource.initialize()
+    await appDataSource
+        .initialize()
         .then(() => {
             logger.info("Data source ready.");
         })
@@ -104,8 +109,14 @@ async function main() {
             return res.send({ ok: false, accessToken: "", sessionId: "" });
         }
 
-        const user = await userRepository.findOne({ where: { id: payload.id }, relations: ["sessions"] });
-        const session = await sessionRepository.findOne({ where: { sessionId: payload.sessionId }, relations: ["user"] });
+        const user = await userRepository.findOne({
+            where: { id: payload.id },
+            relations: ["sessions"],
+        });
+        const session = await sessionRepository.findOne({
+            where: { sessionId: payload.sessionId },
+            relations: ["user"],
+        });
 
         if (!user || !session) {
             return res.send({ ok: false, accessToken: "", sessionId: "" });
@@ -113,7 +124,11 @@ async function main() {
 
         sendRefreshToken(res, createRefreshToken(user, session));
 
-        return res.send({ ok: true, accessToken: createAccessToken(user, session), sessionId: session.sessionId });
+        return res.send({
+            ok: true,
+            accessToken: createAccessToken(user, session),
+            sessionId: session.sessionId,
+        });
     });
 
     app.post("/presigned-url", async (req, res) => {
@@ -130,22 +145,38 @@ async function main() {
     });
 
     const schema = await buildSchema({
-        resolvers: [UserResolver, PostResolver, NotificationResolver, SearchResolver, ChatResolver, MessageResolver, MessageNotificationResolver, ReportResolver, LandingUserResolver],
+        resolvers: [
+            UserResolver,
+            PostResolver,
+            NotificationResolver,
+            SearchResolver,
+            ChatResolver,
+            MessageResolver,
+            MessageNotificationResolver,
+            ReportResolver,
+            LandingUserResolver,
+        ],
         pubSub,
     });
 
     const httpServer = http.createServer(app);
-    const wsServer = new WebSocketServer({ server: httpServer, path: "/graphql" });
+    const wsServer = new WebSocketServer({
+        server: httpServer,
+        path: "/graphql",
+    });
 
-    const serverCleanup = useServer({ 
-        schema, 
-        execute, 
-        subscribe,
-    }, wsServer);
+    const serverCleanup = useServer(
+        {
+            schema,
+            execute,
+            subscribe,
+        },
+        wsServer
+    );
 
     const server = new ApolloServer({
         schema,
-        plugins: [        
+        plugins: [
             ApolloServerPluginDrainHttpServer({ httpServer }),
             {
                 async serverWillStart() {
@@ -164,7 +195,7 @@ async function main() {
         "/graphql",
         expressMiddleware(server, {
             context: async ({ req, res }) => ({ req, res }),
-        }),
+        })
     );
 
     httpServer.listen({ port: process.env.PORT || 4000 }, () => {

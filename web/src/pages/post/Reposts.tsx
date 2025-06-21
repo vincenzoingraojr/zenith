@@ -4,7 +4,10 @@ import { useFindPost, useReposts } from "../../utils/postQueries";
 import ModalLoading from "../../components/layouts/modal/ModalLoading";
 import ErrorOrItemNotFound from "../../components/utils/ErrorOrItemNotFound";
 import { ERROR_SOMETHING_WENT_WRONG } from "../../utils/constants";
-import { FullWidthFeedContainer, ModalFeedContainer } from "../../styles/global";
+import {
+    FullWidthFeedContainer,
+    ModalFeedContainer,
+} from "../../styles/global";
 import FeedComponent from "../../components/utils/FeedComponent";
 import { useCallback, useMemo } from "react";
 import Head from "../../components/Head";
@@ -13,38 +16,55 @@ import UserComponent from "../../components/layouts/items/user/UserComponent";
 function Reposts() {
     const params = useParams();
 
-    const { post, loading, error } = useFindPost(params.itemId as string, params.username as string);
-    
-    const { userReposts, loading: repostsLoading, error: repostsError, fetchMore } = useReposts(post?.id);
+    const { post, loading, error } = useFindPost(
+        params.itemId as string,
+        params.username as string
+    );
+
+    const {
+        userReposts,
+        loading: repostsLoading,
+        error: repostsError,
+        fetchMore,
+    } = useReposts(post?.id);
 
     const loadMore = useCallback(() => {
-        if (!userReposts || (userReposts && !userReposts.hasMore) || repostsLoading) return;
+        if (
+            !userReposts ||
+            (userReposts && !userReposts.hasMore) ||
+            repostsLoading
+        )
+            return;
 
         const lastRepost = userReposts.reposts[userReposts.reposts.length - 1];
 
         fetchMore({
-            variables: { postId: post?.id, limit: 3, cursor: lastRepost.createdAt },
-        })
-        .catch((error) => {
+            variables: {
+                postId: post?.id,
+                limit: 3,
+                cursor: lastRepost.createdAt,
+            },
+        }).catch((error) => {
             console.error(error);
         });
     }, [userReposts, fetchMore, repostsLoading, post?.id]);
 
     const origin = "reposts";
 
-    const feedContent = useMemo(() => (
-        <>
-            {userReposts?.reposts.map(
-                (repost) => (
+    const feedContent = useMemo(
+        () => (
+            <>
+                {userReposts?.reposts.map((repost) => (
                     <UserComponent
                         key={repost.id}
                         id={repost.authorId}
                         origin={origin}
                     />
-                )
-            )}
-        </>
-    ), [userReposts?.reposts]);
+                ))}
+            </>
+        ),
+        [userReposts?.reposts]
+    );
 
     return (
         <>
@@ -77,7 +97,9 @@ function Reposts() {
                                     <ErrorOrItemNotFound
                                         isError={true}
                                         title={ERROR_SOMETHING_WENT_WRONG.title}
-                                        content={ERROR_SOMETHING_WENT_WRONG.message}
+                                        content={
+                                            ERROR_SOMETHING_WENT_WRONG.message
+                                        }
                                     />
                                 ) : !post ? (
                                     <ErrorOrItemNotFound
@@ -94,7 +116,9 @@ function Reposts() {
                                             error={repostsError}
                                             loadMore={loadMore}
                                             noElementsText="No one has reposted this post yet."
-                                            isFeedEmpty={userReposts?.totalCount === 0}
+                                            isFeedEmpty={
+                                                userReposts?.totalCount === 0
+                                            }
                                         />
                                     </FullWidthFeedContainer>
                                 )}

@@ -64,12 +64,12 @@ export const NotificationsProvider = ({
         });
 
     const loadMore = useCallback(() => {
-        if (!data || (data && !data.notificationFeed.nextCursor) || loading) return;
+        if (!data || (data && !data.notificationFeed.nextCursor) || loading)
+            return;
 
         fetchMore({
             variables: { limit, cursor: data.notificationFeed.nextCursor },
-        })
-        .catch((error) => {
+        }).catch((error) => {
             console.error(error);
         });
     }, [data, fetchMore, limit, loading]);

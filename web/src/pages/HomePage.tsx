@@ -3,10 +3,7 @@ import LumenInput from "../components/input/lumen/LumenInput";
 import PageLayout from "../components/layouts/PageLayout";
 import PageContentLayout from "../components/layouts/sublayouts/PageContentLayout";
 import { Post, usePostFeedQuery } from "../generated/graphql";
-import {
-    FeedWithLumenInput,
-    FullWidthFeedContainer,
-} from "../styles/global";
+import { FeedWithLumenInput, FullWidthFeedContainer } from "../styles/global";
 import PostComponent from "../components/layouts/items/post/PostComponent";
 import { useCallback, useMemo } from "react";
 import FeedComponent from "../components/utils/FeedComponent";
@@ -30,29 +27,25 @@ function HomePage() {
 
         fetchMore({
             variables: { limit, cursor: lastPost.createdAt },
-        })
-        .catch((error) => {
+        }).catch((error) => {
             console.error(error);
         });
     }, [data, fetchMore, loading]);
 
-    const feedContent = useMemo(() => (
-        <>
-            {data?.postFeed.posts.map(
-                (post) => (
+    const feedContent = useMemo(
+        () => (
+            <>
+                {data?.postFeed.posts.map((post) => (
                     <PostComponent
-                        key={
-                            post.itemId
-                        }
-                        post={
-                            post as Post
-                        }
+                        key={post.itemId}
+                        post={post as Post}
                         origin="post-feed"
                     />
-                )
-            )}
-        </>
-    ), [data?.postFeed.posts]);
+                ))}
+            </>
+        ),
+        [data?.postFeed.posts]
+    );
 
     return (
         <>
@@ -80,7 +73,9 @@ function HomePage() {
                                         error={error}
                                         loadMore={loadMore}
                                         noElementsText="No one has published a post yet."
-                                        isFeedEmpty={data?.postFeed.totalCount === 0}
+                                        isFeedEmpty={
+                                            data?.postFeed.totalCount === 0
+                                        }
                                     />
                                 </FullWidthFeedContainer>
                             </FeedWithLumenInput>

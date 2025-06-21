@@ -1,10 +1,5 @@
 import { createUnionType, Field, Int, ObjectType } from "type-graphql";
-import {
-    Entity,
-    Column,
-    ManyToOne,
-    OneToMany,
-} from "typeorm";
+import { Entity, Column, ManyToOne, OneToMany } from "typeorm";
 import { User } from "./User";
 import { BaseItem } from "./BaseItem";
 import { GraphQLJSONObject } from "graphql-scalars";
@@ -60,7 +55,11 @@ export class Post extends FeedItem {
     quotedPostId: number;
 
     @Field(() => [MediaItem], { nullable: true, defaultValue: [] })
-    @OneToMany(() => MediaItem, (mediaItem) => mediaItem.post, { nullable: true, cascade: true, eager: true })
+    @OneToMany(() => MediaItem, (mediaItem) => mediaItem.post, {
+        nullable: true,
+        cascade: true,
+        eager: true,
+    })
     media: MediaItem[];
 
     @Field(() => [String])
@@ -134,7 +133,7 @@ export class PostMentions extends BaseItem {
     @Field(() => String)
     @Column({ type: "uuid" })
     postId: string;
-        
+
     @Field(() => [String])
     @Column({ type: "text", array: true, default: [] })
     mentions: string[];
@@ -248,10 +247,10 @@ export const PostOrArticle = createUnionType({
     description: "Post or Article type",
     types: () => [Post, Article] as const,
     resolveType: (value) => {
-        if (value && ("media" in value)) {
+        if (value && "media" in value) {
             return Post;
         }
-        if (value && ("title" in value)) {
+        if (value && "title" in value) {
             return Article;
         }
 

@@ -1,4 +1,31 @@
-import { GetPostLikesDocument, GetRepostsDocument, IsBookmarkedDocument, IsBookmarkedQuery, IsPostLikedByMeDocument, IsPostLikedByMeQuery, IsRepostedByUserDocument, IsRepostedByUserQuery, Post, PostCommentsDocument, Repost, useCreateBookmarkMutation, useCreateRepostMutation, useDeletePostMutation, useDeleteRepostMutation, useViewFeedItemMutation, useLikePostMutation, useRemoveBookmarkMutation, useRemoveLikeMutation, useRevokeMentionMutation, GetFeedItemStatsDocument, GetPostMentionsDocument, FindPostByIdQuery, FindPostByIdDocument, FindPostQuery, FindPostDocument } from "../generated/graphql";
+import {
+    GetPostLikesDocument,
+    GetRepostsDocument,
+    IsBookmarkedDocument,
+    IsBookmarkedQuery,
+    IsPostLikedByMeDocument,
+    IsPostLikedByMeQuery,
+    IsRepostedByUserDocument,
+    IsRepostedByUserQuery,
+    Post,
+    PostCommentsDocument,
+    Repost,
+    useCreateBookmarkMutation,
+    useCreateRepostMutation,
+    useDeletePostMutation,
+    useDeleteRepostMutation,
+    useViewFeedItemMutation,
+    useLikePostMutation,
+    useRemoveBookmarkMutation,
+    useRemoveLikeMutation,
+    useRevokeMentionMutation,
+    GetFeedItemStatsDocument,
+    GetPostMentionsDocument,
+    FindPostByIdQuery,
+    FindPostByIdDocument,
+    FindPostQuery,
+    FindPostDocument,
+} from "../generated/graphql";
 import { useMeData } from "./userQueries";
 
 export function usePostMutations() {
@@ -13,7 +40,13 @@ export function usePostMutations() {
     const [viewFeedItem] = useViewFeedItemMutation();
     const [revokeMention] = useRevokeMentionMutation();
 
-    const handleDeletePost = async (itemId: string, postId: number, isComment: boolean, isReplyToId?: number | null, isReplyToType?: string | null) => {
+    const handleDeletePost = async (
+        itemId: string,
+        postId: number,
+        isComment: boolean,
+        isReplyToId?: number | null,
+        isReplyToType?: string | null
+    ) => {
         try {
             const response = await deletePost({
                 variables: { postId: itemId },
@@ -32,7 +65,11 @@ export function usePostMutations() {
                         },
                     });
 
-                    const { posts: existingPosts, totalCount: oldCount, hasMore } = (
+                    const {
+                        posts: existingPosts,
+                        totalCount: oldCount,
+                        hasMore,
+                    } = (
                         existing as {
                             postComments: {
                                 posts: Post[];
@@ -51,19 +88,24 @@ export function usePostMutations() {
                         },
                         data: {
                             postComments: {
-                                posts: existingPosts.filter(post => post.id !== postId),
-                                totalCount: Math.max(
-                                    oldCount - 1,
-                                    0
+                                posts: existingPosts.filter(
+                                    (post) => post.id !== postId
                                 ),
+                                totalCount: Math.max(oldCount - 1, 0),
                                 hasMore,
                             },
                         },
                     });
-                } else {                    
+                } else {
                     client.cache.modify({
                         fields: {
-                            postFeed(existing = { posts: [], hasMore: true, totalCount: 0 }) {
+                            postFeed(
+                                existing = {
+                                    posts: [],
+                                    hasMore: true,
+                                    totalCount: 0,
+                                }
+                            ) {
                                 const filteredPosts = existing.posts.filter(
                                     (p: any) => p.__ref !== refId
                                 );
@@ -81,31 +123,25 @@ export function usePostMutations() {
                     });
                 }
 
-                client.cache.writeQuery<FindPostByIdQuery>(
-                    {
-                        query: FindPostByIdDocument,
-                        data: {
-                            findPostById:
-                                null,
-                        },
-                        variables: {
-                            id: postId,
-                        },
-                    }
-                );
+                client.cache.writeQuery<FindPostByIdQuery>({
+                    query: FindPostByIdDocument,
+                    data: {
+                        findPostById: null,
+                    },
+                    variables: {
+                        id: postId,
+                    },
+                });
 
-                client.cache.writeQuery<FindPostQuery>(
-                    {
-                        query: FindPostDocument,
-                        data: {
-                            findPost:
-                                null,
-                        },
-                        variables: {
-                            postId: itemId,
-                        },
-                    }
-                );
+                client.cache.writeQuery<FindPostQuery>({
+                    query: FindPostDocument,
+                    data: {
+                        findPost: null,
+                    },
+                    variables: {
+                        postId: itemId,
+                    },
+                });
 
                 client.cache.evict({ id: refId });
 
@@ -119,7 +155,7 @@ export function usePostMutations() {
                 };
             } else {
                 return {
-                    ok: false, 
+                    ok: false,
                     status: "An error occurred while deleting the post.",
                 };
             }
@@ -127,13 +163,19 @@ export function usePostMutations() {
             console.error(error);
 
             return {
-                ok: false, 
+                ok: false,
                 status: "Unexpected error while deleting the post.",
             };
         }
     };
 
-    const handleLikePost = async (itemId: string, type: string, liked: boolean, origin: string, itemOpened: boolean) => {
+    const handleLikePost = async (
+        itemId: string,
+        type: string,
+        liked: boolean,
+        origin: string,
+        itemOpened: boolean
+    ) => {
         try {
             if (liked) {
                 const removeLikeResponse = await removeLike({
@@ -141,23 +183,16 @@ export function usePostMutations() {
                         itemId,
                         itemType: type,
                     },
-                    update: (
-                        cache,
-                        { data: removeLikeData }
-                    ) => {
-                        if (
-                            removeLikeData &&
-                            removeLikeData.removeLike && me
-                        ) {
-                            const existing =
-                                cache.readQuery({
-                                    query: GetPostLikesDocument,
-                                    variables: {
-                                        itemId,
-                                        type,
-                                        limit: 3,
-                                    },
-                                });
+                    update: (cache, { data: removeLikeData }) => {
+                        if (removeLikeData && removeLikeData.removeLike && me) {
+                            const existing = cache.readQuery({
+                                query: GetPostLikesDocument,
+                                variables: {
+                                    itemId,
+                                    type,
+                                    limit: 3,
+                                },
+                            });
 
                             const {
                                 likes: oldLikes,
@@ -183,39 +218,32 @@ export function usePostMutations() {
                                 data: {
                                     getPostLikes: {
                                         likes: oldLikes.filter(
-                                            (like) =>
-                                                like.userId !==
-                                                me.id
+                                            (like) => like.userId !== me.id
                                         ),
-                                        totalCount:
-                                            Math.max(
-                                                oldCount -
-                                                    1,
-                                                0
-                                            ),
+                                        totalCount: Math.max(oldCount - 1, 0),
                                         hasMore,
                                     },
                                 },
                             });
 
-                            cache.writeQuery<IsPostLikedByMeQuery>(
-                                {
-                                    query: IsPostLikedByMeDocument,
-                                    data: {
-                                        isPostLikedByMe:
-                                            null,
-                                    },
-                                    variables: {
-                                        itemId,
-                                        type,
-                                    },
-                                }
-                            );
+                            cache.writeQuery<IsPostLikedByMeQuery>({
+                                query: IsPostLikedByMeDocument,
+                                data: {
+                                    isPostLikedByMe: null,
+                                },
+                                variables: {
+                                    itemId,
+                                    type,
+                                },
+                            });
                         }
                     },
                 });
 
-                return removeLikeResponse.data && removeLikeResponse.data.removeLike;
+                return (
+                    removeLikeResponse.data &&
+                    removeLikeResponse.data.removeLike
+                );
             } else {
                 const likePostResponse = await likePost({
                     variables: {
@@ -224,28 +252,18 @@ export function usePostMutations() {
                         itemOpened,
                         itemType: type,
                     },
-                    update: (
-                        cache,
-                        { data: likePostData }
-                    ) => {
-                        if (
-                            likePostData &&
-                            likePostData.likePost
-                        ) {
-                            const existing =
-                                cache.readQuery({
-                                    query: GetPostLikesDocument,
-                                    variables: {
-                                        itemId,
-                                        type,
-                                        limit: 3,
-                                    },
-                                });
+                    update: (cache, { data: likePostData }) => {
+                        if (likePostData && likePostData.likePost) {
+                            const existing = cache.readQuery({
+                                query: GetPostLikesDocument,
+                                variables: {
+                                    itemId,
+                                    type,
+                                    limit: 3,
+                                },
+                            });
 
-                            const {
-                                totalCount: oldCount,
-                                hasMore,
-                            } = (
+                            const { totalCount: oldCount, hasMore } = (
                                 existing as {
                                     getPostLikes: {
                                         totalCount: number;
@@ -264,26 +282,22 @@ export function usePostMutations() {
                                 data: {
                                     getPostLikes: {
                                         likes: [likePostData.likePost],
-                                        totalCount:
-                                            oldCount + 1,
+                                        totalCount: oldCount + 1,
                                         hasMore,
                                     },
                                 },
                             });
 
-                            cache.writeQuery<IsPostLikedByMeQuery>(
-                                {
-                                    query: IsPostLikedByMeDocument,
-                                    data: {
-                                        isPostLikedByMe:
-                                            likePostData.likePost,
-                                    },
-                                    variables: {
-                                        itemId,
-                                        type,
-                                    },
-                                }
-                            );
+                            cache.writeQuery<IsPostLikedByMeQuery>({
+                                query: IsPostLikedByMeDocument,
+                                data: {
+                                    isPostLikedByMe: likePostData.likePost,
+                                },
+                                variables: {
+                                    itemId,
+                                    type,
+                                },
+                            });
                         }
                     },
                 });
@@ -295,43 +309,37 @@ export function usePostMutations() {
 
             return false;
         }
-    }
+    };
 
-    const handleRepost = async (itemId: string, id: number, repost: Repost | null) => {
+    const handleRepost = async (
+        itemId: string,
+        id: number,
+        repost: Repost | null
+    ) => {
         try {
             if (repost) {
                 const deleteRepostResponse = await deleteRepost({
                     variables: {
                         postId: id,
                     },
-                    update: (
-                        cache,
-                        {
-                            data: deleteRepostData,
-                        }
-                    ) => {
+                    update: (cache, { data: deleteRepostData }) => {
                         if (
                             deleteRepostData &&
                             deleteRepostData.deleteRepost &&
-                            repost && me
+                            repost &&
+                            me
                         ) {
-                            const existing =
-                                cache.readQuery(
-                                    {
-                                        query: GetRepostsDocument,
-                                        variables:
-                                            {
-                                                postId: id,
-                                                limit: 3,
-                                            },
-                                    }
-                                );
+                            const existing = cache.readQuery({
+                                query: GetRepostsDocument,
+                                variables: {
+                                    postId: id,
+                                    limit: 3,
+                                },
+                            });
 
                             const {
-                                reposts:
-                                    oldReposts,
-                                totalCount:
-                                    oldCount,
+                                reposts: oldReposts,
+                                totalCount: oldCount,
                                 hasMore,
                             } = (
                                 existing as {
@@ -343,89 +351,62 @@ export function usePostMutations() {
                                 }
                             ).getReposts;
 
-                            cache.writeQuery(
-                                {
-                                    query: GetRepostsDocument,
-                                    variables:
-                                        {
-                                            postId: id,
-                                            limit: 3,
-                                        },
-                                    data: {
-                                        getReposts:
-                                            {
-                                                reposts:
-                                                    oldReposts.filter(
-                                                        (
-                                                            r
-                                                        ) =>
-                                                            r.id !==
-                                                            repost.id
-                                                    ),
-                                                totalCount:
-                                                    Math.max(
-                                                        oldCount -
-                                                            1,
-                                                        0
-                                                    ),
-                                                hasMore,
-                                            },
+                            cache.writeQuery({
+                                query: GetRepostsDocument,
+                                variables: {
+                                    postId: id,
+                                    limit: 3,
+                                },
+                                data: {
+                                    getReposts: {
+                                        reposts: oldReposts.filter(
+                                            (r) => r.id !== repost.id
+                                        ),
+                                        totalCount: Math.max(oldCount - 1, 0),
+                                        hasMore,
                                     },
-                                }
-                            );
+                                },
+                            });
 
-                            cache.writeQuery<IsRepostedByUserQuery>(
-                                {
-                                    query: IsRepostedByUserDocument,
-                                    data: {
-                                        isRepostedByUser:
-                                            null,
-                                    },
-                                    variables:
-                                        {
-                                            postId: id,
-                                            userId: me.id,
-                                        },
-                                }
-                            );
+                            cache.writeQuery<IsRepostedByUserQuery>({
+                                query: IsRepostedByUserDocument,
+                                data: {
+                                    isRepostedByUser: null,
+                                },
+                                variables: {
+                                    postId: id,
+                                    userId: me.id,
+                                },
+                            });
                         }
                     },
                 });
 
-                return deleteRepostResponse.data && deleteRepostResponse.data.deleteRepost;
+                return (
+                    deleteRepostResponse.data &&
+                    deleteRepostResponse.data.deleteRepost
+                );
             } else {
                 const createRepostResponse = await createRepost({
                     variables: {
                         postId: itemId,
                     },
-                    update: (
-                        cache,
-                        {
-                            data: createRepostData,
-                        }
-                    ) => {
+                    update: (cache, { data: createRepostData }) => {
                         if (
                             createRepostData &&
                             createRepostData.createRepost &&
-                            !repost && me
+                            !repost &&
+                            me
                         ) {
-                            const existing =
-                                cache.readQuery(
-                                    {
-                                        query: GetRepostsDocument,
-                                        variables:
-                                            {
-                                                postId: id,
-                                                limit: 3,
-                                            },
-                                    }
-                                );
+                            const existing = cache.readQuery({
+                                query: GetRepostsDocument,
+                                variables: {
+                                    postId: id,
+                                    limit: 3,
+                                },
+                            });
 
-                            const {
-                                totalCount:
-                                    oldCount,
-                                hasMore,
-                            } = (
+                            const { totalCount: oldCount, hasMore } = (
                                 existing as {
                                     getReposts: {
                                         totalCount: number;
@@ -434,58 +415,57 @@ export function usePostMutations() {
                                 }
                             ).getReposts;
 
-                            cache.writeQuery(
-                                {
-                                    query: GetRepostsDocument,
-                                    variables:
-                                        {
-                                            postId: id,
-                                            limit: 3,
-                                        },
-                                    data: {
-                                        getReposts:
-                                            {
-                                                reposts:
-                                                    [
-                                                        createRepostData.createRepost,
-                                                    ],
-                                                totalCount:
-                                                    oldCount +
-                                                    1,
-                                                hasMore,
-                                            },
-                                    },
-                                }
-                            );
-
-                            cache.writeQuery<IsRepostedByUserQuery>(
-                                {
-                                    query: IsRepostedByUserDocument,
-                                    data: {
-                                        isRepostedByUser:
+                            cache.writeQuery({
+                                query: GetRepostsDocument,
+                                variables: {
+                                    postId: id,
+                                    limit: 3,
+                                },
+                                data: {
+                                    getReposts: {
+                                        reposts: [
                                             createRepostData.createRepost,
+                                        ],
+                                        totalCount: oldCount + 1,
+                                        hasMore,
                                     },
-                                    variables:
-                                        {
-                                            postId: id,
-                                            userId: me.id,
-                                        },
-                                }
-                            );
+                                },
+                            });
+
+                            cache.writeQuery<IsRepostedByUserQuery>({
+                                query: IsRepostedByUserDocument,
+                                data: {
+                                    isRepostedByUser:
+                                        createRepostData.createRepost,
+                                },
+                                variables: {
+                                    postId: id,
+                                    userId: me.id,
+                                },
+                            });
                         }
                     },
                 });
 
-                return createRepostResponse.data && createRepostResponse.data.createRepost;
+                return (
+                    createRepostResponse.data &&
+                    createRepostResponse.data.createRepost
+                );
             }
         } catch (error) {
             console.error(error);
 
             return false;
         }
-    }
+    };
 
-    const handleBookmark = async (itemId: string, type: string, id: number, origin: string, bookmarked: boolean) => {
+    const handleBookmark = async (
+        itemId: string,
+        type: string,
+        id: number,
+        origin: string,
+        bookmarked: boolean
+    ) => {
         try {
             if (bookmarked) {
                 const removeBookmarkResponse = await removeBookmark({
@@ -493,31 +473,29 @@ export function usePostMutations() {
                         itemId,
                         type,
                     },
-                    update: (
-                        cache,
-                        { data: removeBookmarkData }
-                    ) => {
+                    update: (cache, { data: removeBookmarkData }) => {
                         if (
                             removeBookmarkData &&
                             removeBookmarkData.removeBookmark
                         ) {
-                            cache.writeQuery<IsBookmarkedQuery>(
-                                {
-                                    query: IsBookmarkedDocument,
-                                    data: {
-                                        isBookmarked: null,
-                                    },
-                                    variables: {
-                                        itemId: id,
-                                        type,
-                                    },
-                                }
-                            );
+                            cache.writeQuery<IsBookmarkedQuery>({
+                                query: IsBookmarkedDocument,
+                                data: {
+                                    isBookmarked: null,
+                                },
+                                variables: {
+                                    itemId: id,
+                                    type,
+                                },
+                            });
                         }
                     },
                 });
 
-                return removeBookmarkResponse.data && removeBookmarkResponse.data.removeBookmark;
+                return (
+                    removeBookmarkResponse.data &&
+                    removeBookmarkResponse.data.removeBookmark
+                );
             } else {
                 const createBookmarkResponse = await createBookmark({
                     variables: {
@@ -525,41 +503,44 @@ export function usePostMutations() {
                         type,
                         origin,
                     },
-                    update: (
-                        cache,
-                        { data: createBookmarkData }
-                    ) => {
+                    update: (cache, { data: createBookmarkData }) => {
                         if (
                             createBookmarkData &&
                             createBookmarkData.createBookmark
                         ) {
-                            cache.writeQuery<IsBookmarkedQuery>(
-                                {
-                                    query: IsBookmarkedDocument,
-                                    data: {
-                                        isBookmarked:
-                                            createBookmarkData.createBookmark,
-                                    },
-                                    variables: {
-                                        itemId: id,
-                                        type,
-                                    },
-                                }
-                            );
+                            cache.writeQuery<IsBookmarkedQuery>({
+                                query: IsBookmarkedDocument,
+                                data: {
+                                    isBookmarked:
+                                        createBookmarkData.createBookmark,
+                                },
+                                variables: {
+                                    itemId: id,
+                                    type,
+                                },
+                            });
                         }
                     },
                 });
 
-                return createBookmarkResponse.data && createBookmarkResponse.data.createBookmark;
+                return (
+                    createBookmarkResponse.data &&
+                    createBookmarkResponse.data.createBookmark
+                );
             }
         } catch (error) {
             console.error(error);
 
             return false;
         }
-    }
+    };
 
-    const handleViewFeedItem = (itemId: string, type: string, itemOpened: boolean, origin: string) => {
+    const handleViewFeedItem = (
+        itemId: string,
+        type: string,
+        itemOpened: boolean,
+        origin: string
+    ) => {
         const response = viewFeedItem({
             variables: {
                 itemId,
@@ -569,21 +550,15 @@ export function usePostMutations() {
             },
             update: (cache, { data }) => {
                 if (data && data.viewFeedItem) {
-                    const existing =
-                        cache.readQuery(
-                            {
-                                query: GetFeedItemStatsDocument,
-                                variables:
-                                    {
-                                        itemId,
-                                        type,
-                                    },
-                            }
-                        );
+                    const existing = cache.readQuery({
+                        query: GetFeedItemStatsDocument,
+                        variables: {
+                            itemId,
+                            type,
+                        },
+                    });
 
-                    const {
-                        views
-                    } = (
+                    const { views } = (
                         existing as {
                             getFeedItemStats: {
                                 views: number;
@@ -591,28 +566,24 @@ export function usePostMutations() {
                         }
                     ).getFeedItemStats;
 
-                    cache.writeQuery(
-                        {
-                            query: GetFeedItemStatsDocument,
-                            variables:
-                                {
-                                    itemId,
-                                    type,
-                                },
-                            data: {
-                                getFeedItemStats:
-                                    {
-                                        views: views + 1,
-                                    },
+                    cache.writeQuery({
+                        query: GetFeedItemStatsDocument,
+                        variables: {
+                            itemId,
+                            type,
+                        },
+                        data: {
+                            getFeedItemStats: {
+                                views: views + 1,
                             },
-                        }
-                    );
+                        },
+                    });
                 }
             },
         });
 
         return response;
-    }
+    };
 
     const handleRevokeMention = async (itemId: string) => {
         try {
@@ -621,21 +592,20 @@ export function usePostMutations() {
                     postId: itemId,
                 },
                 update: (cache, { data }) => {
-                    if (data && data.revokeMention && data.revokeMention.ok && me) {
-                        const existing =
-                            cache.readQuery(
-                                {
-                                    query: GetPostMentionsDocument,
-                                    variables:
-                                        {
-                                            postId: itemId,
-                                        },
-                                }
-                            );
+                    if (
+                        data &&
+                        data.revokeMention &&
+                        data.revokeMention.ok &&
+                        me
+                    ) {
+                        const existing = cache.readQuery({
+                            query: GetPostMentionsDocument,
+                            variables: {
+                                postId: itemId,
+                            },
+                        });
 
-                        const {
-                            mentions
-                        } = (
+                        const { mentions } = (
                             existing as {
                                 getPostMentions: {
                                     mentions: string[];
@@ -643,21 +613,19 @@ export function usePostMutations() {
                             }
                         ).getPostMentions;
 
-                        cache.writeQuery(
-                            {
-                                query: GetPostMentionsDocument,
-                                variables:
-                                    {
-                                        postId: itemId
-                                    },
-                                data: {
-                                    getPostMentions:
-                                        {
-                                            mentions: mentions.filter((mention) => mention !== me.username),
-                                        },
+                        cache.writeQuery({
+                            query: GetPostMentionsDocument,
+                            variables: {
+                                postId: itemId,
+                            },
+                            data: {
+                                getPostMentions: {
+                                    mentions: mentions.filter(
+                                        (mention) => mention !== me.username
+                                    ),
                                 },
-                            }
-                        );
+                            },
+                        });
                     }
                 },
             });
@@ -672,7 +640,14 @@ export function usePostMutations() {
 
             return "Unexpected error while trying to remove your mention.";
         }
-    }
+    };
 
-    return { handleDeletePost, handleLikePost, handleRepost, handleBookmark, handleViewFeedItem, handleRevokeMention };
+    return {
+        handleDeletePost,
+        handleLikePost,
+        handleRepost,
+        handleBookmark,
+        handleViewFeedItem,
+        handleRevokeMention,
+    };
 }

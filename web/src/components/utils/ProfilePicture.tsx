@@ -12,7 +12,7 @@ interface ProfilePictureProps {
 }
 
 const ProfilePictureContainer = styled.div.attrs(
-    (props: { size: number, type: string }) => props
+    (props: { size: number; type: string }) => props
 )`
     display: flex;
     align-items: center;
@@ -20,7 +20,9 @@ const ProfilePictureContainer = styled.div.attrs(
     width: ${(props) => `${props.size}px`};
     height: ${(props) => `${props.size}px`};
     border-radius: ${(props) =>
-        props.type === USER_TYPES.ORGANIZATION ? `${props.size / 8}px` : "9999px"};
+        props.type === USER_TYPES.ORGANIZATION
+            ? `${props.size / 8}px`
+            : "9999px"};
 
     img {
         width: inherit;
@@ -31,15 +33,18 @@ const ProfilePictureContainer = styled.div.attrs(
     }
 `;
 
-
-const ProfilePicture: FunctionComponent<ProfilePictureProps> = ({ type, loading, pictureUrl, title, size }) => {
+const ProfilePicture: FunctionComponent<ProfilePictureProps> = ({
+    type,
+    loading,
+    pictureUrl,
+    title,
+    size,
+}) => {
     return (
         <ProfilePictureContainer type={type} size={size}>
             <img
                 src={
-                    loading ||
-                    pictureUrl.length ===
-                        0
+                    loading || pictureUrl.length === 0
                         ? profilePicture
                         : pictureUrl
                 }
@@ -47,7 +52,7 @@ const ProfilePicture: FunctionComponent<ProfilePictureProps> = ({ type, loading,
                 alt={title}
             />
         </ProfilePictureContainer>
-    )
-}
+    );
+};
 
 export default ProfilePicture;

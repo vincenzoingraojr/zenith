@@ -3,7 +3,7 @@
 html {
     font-family: "Inter", sans-serif;
     font-size: 18px;
-    color: #FFFFFF;
+    color: #ffffff;
     background-color: #141313;
 }
 
@@ -32,11 +32,12 @@ body {
 a {
     font-weight: 400;
     font-size: inherit;
-    color: #386BD9;
+    color: #386bd9;
     text-decoration: none;
 }
 
-a:hover, a:active {
+a:hover,
+a:active {
     text-decoration: underline;
 }
 
@@ -57,7 +58,8 @@ header.page-header a {
     text-decoration: none;
 }
 
-header.page-header a:hover, header.page-header a:active {
+header.page-header a:hover,
+header.page-header a:active {
     text-decoration: none;
 }
 

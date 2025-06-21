@@ -1,4 +1,10 @@
-import { createUnionType, Field, Int, ObjectType, registerEnumType } from "type-graphql";
+import {
+    createUnionType,
+    Field,
+    Int,
+    ObjectType,
+    registerEnumType,
+} from "type-graphql";
 import { Column, Entity, ManyToOne, OneToMany } from "typeorm";
 import { MessageStatus } from "../helpers/enums";
 import { BaseItem } from "./BaseItem";
@@ -36,11 +42,17 @@ export class Chat extends BaseItem {
     users: ChatUser[];
 
     @Field(() => [Message], { nullable: true, defaultValue: [] })
-    @OneToMany(() => Message, (message) => message.chat, { nullable: true, cascade: true })
+    @OneToMany(() => Message, (message) => message.chat, {
+        nullable: true,
+        cascade: true,
+    })
     messages: Message[];
 
     @Field(() => [Event], { nullable: true, defaultValue: [] })
-    @OneToMany(() => Event, (event) => event.chat, { nullable: true, cascade: true })
+    @OneToMany(() => Event, (event) => event.chat, {
+        nullable: true,
+        cascade: true,
+    })
     events: Message[];
 }
 
@@ -86,7 +98,7 @@ export class ChatUser extends BaseItem {
     joinedChat: Date;
 
     @Field(() => String, { nullable: true, defaultValue: null })
-    @Column({  nullable: true, default: null })
+    @Column({ nullable: true, default: null })
     lastExit: Date;
 
     @Field(() => Boolean)
@@ -139,7 +151,7 @@ export class Message extends ChatItem {
     @Field(() => MessageItem)
     @Column(() => MessageItem)
     messageItem: MessageItem;
-    
+
     @Field(() => [String], { nullable: true, defaultValue: [] })
     @Column({ type: "text", array: true, nullable: true, default: [] })
     mentions: string[];
@@ -179,7 +191,7 @@ export class Event extends ChatItem {
     @Field(() => Int, { nullable: true, defaultValue: null })
     @Column({ nullable: true, default: null })
     resourceId: number;
-    
+
     @Field(() => String)
     @Column()
     eventMessage: string;
@@ -190,10 +202,10 @@ export const MessageOrEvent = createUnionType({
     description: "Message or Event type",
     types: () => [Message, Event] as const,
     resolveType: (value) => {
-        if (value && ("content" in value)) {
+        if (value && "content" in value) {
             return Message;
         }
-        if (value && ("eventMessage" in value)) {
+        if (value && "eventMessage" in value) {
             return Event;
         }
 

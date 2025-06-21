@@ -1,4 +1,11 @@
-import { Affiliation, Block, Follow, Session, User, UserDeviceToken } from "../entities/User";
+import {
+    Affiliation,
+    Block,
+    Follow,
+    Session,
+    User,
+    UserDeviceToken,
+} from "../entities/User";
 import {
     Arg,
     Ctx,
@@ -109,7 +116,8 @@ export class UserResolver {
         this.notificationService = new NotificationService();
         this.followRepository = appDataSource.getRepository(Follow);
         this.blockRepository = appDataSource.getRepository(Block);
-        this.userDeviceTokenRepository = appDataSource.getRepository(UserDeviceToken);
+        this.userDeviceTokenRepository =
+            appDataSource.getRepository(UserDeviceToken);
         this.topicRepository = appDataSource.getRepository(Topic);
         this.articleRepository = appDataSource.getRepository(Article);
         this.mediaItemRepository = appDataSource.getRepository(MediaItem);
@@ -117,14 +125,20 @@ export class UserResolver {
     }
 
     @Query(() => User, { nullable: true })
-    async findUser(@Arg("username") username: string, @Arg("deleted", { nullable: true }) deleted: boolean = false): Promise<User | null> {
+    async findUser(
+        @Arg("username") username: string,
+        @Arg("deleted", { nullable: true }) deleted: boolean = false
+    ): Promise<User | null> {
         const response = await this.userService.findUser(username, deleted);
 
         return response;
     }
 
     @Query(() => User, { nullable: true })
-    async findUserById(@Arg("id", () => Int, { nullable: true }) id: number, @Arg("deleted", { nullable: true }) deleted: boolean = false): Promise<User | null> {
+    async findUserById(
+        @Arg("id", () => Int, { nullable: true }) id: number,
+        @Arg("deleted", { nullable: true }) deleted: boolean = false
+    ): Promise<User | null> {
         const response = await this.userService.findUserById(id, deleted);
 
         return response;
@@ -148,11 +162,13 @@ export class UserResolver {
             );
 
             if (!payload) {
-                logger.warn("Couldn't retrieve the payload from the authorization token.");
+                logger.warn(
+                    "Couldn't retrieve the payload from the authorization token."
+                );
 
                 return null;
             }
-            
+
             return this.findUserById(payload.id);
         } catch (error) {
             logger.error(error);
@@ -163,7 +179,9 @@ export class UserResolver {
 
     @Query(() => Session, { nullable: true })
     @UseMiddleware(isAuth)
-    async currentSession(@Ctx() { payload }: AuthContext): Promise<Session | null> {
+    async currentSession(
+        @Ctx() { payload }: AuthContext
+    ): Promise<Session | null> {
         if (!payload) {
             logger.warn("Payload not provided.");
 
@@ -172,7 +190,7 @@ export class UserResolver {
 
         try {
             const currentSession = await this.sessionRepository.findOne({
-                where: { 
+                where: {
                     sessionId: payload.sessionId,
                     user: {
                         id: payload.id,
@@ -181,7 +199,9 @@ export class UserResolver {
             });
 
             if (!currentSession) {
-                logger.warn(`Current session for user with id "${payload.id}" not found.`);
+                logger.warn(
+                    `Current session for user with id "${payload.id}" not found.`
+                );
 
                 return null;
             }
@@ -196,7 +216,9 @@ export class UserResolver {
 
     @Query(() => [Session], { nullable: true })
     @UseMiddleware(isAuth)
-    async otherSessions(@Ctx() { payload }: AuthContext): Promise<Session[] | null> {
+    async otherSessions(
+        @Ctx() { payload }: AuthContext
+    ): Promise<Session[] | null> {
         if (!payload) {
             logger.warn("Payload not provided.");
 
@@ -205,7 +227,7 @@ export class UserResolver {
 
         try {
             const sessions = await this.sessionRepository.find({
-                where: { 
+                where: {
                     user: {
                         id: payload.id,
                     },
@@ -226,7 +248,10 @@ export class UserResolver {
 
     @Query(() => Session, { nullable: true })
     @UseMiddleware(isAuth)
-    async findSession(@Arg("sessionId") sessionId: string, @Ctx() { payload }: AuthContext): Promise<Session | null> {
+    async findSession(
+        @Arg("sessionId") sessionId: string,
+        @Ctx() { payload }: AuthContext
+    ): Promise<Session | null> {
         if (!payload) {
             logger.warn("Payload not provided.");
 
@@ -242,10 +267,15 @@ export class UserResolver {
         }
 
         try {
-            const session = await this.sessionRepository.findOne({ where: { sessionId, user: { id: payload.id } }, relations: ["user"] });
+            const session = await this.sessionRepository.findOne({
+                where: { sessionId, user: { id: payload.id } },
+                relations: ["user"],
+            });
 
             if (!session) {
-                logger.warn(`Session for user with id "${payload.id}" not found.`);
+                logger.warn(
+                    `Session for user with id "${payload.id}" not found.`
+                );
 
                 return null;
             }
@@ -273,7 +303,7 @@ export class UserResolver {
 
     @Mutation(() => UserResponse)
     async findUserBeforeLogIn(
-        @Arg("input") input: string,
+        @Arg("input") input: string
     ): Promise<UserResponse> {
         let status = "";
         let ok = false;
@@ -348,17 +378,30 @@ export class UserResolver {
                 user = await this.findUser(input, true);
             }
 
-            if (!user || (user && user.deletedAt !== null && processDays(user.deletedAt) > 90)) {
+            if (
+                !user ||
+                (user &&
+                    user.deletedAt !== null &&
+                    processDays(user.deletedAt) > 90)
+            ) {
                 status = "Sorry, but we can't find your account.";
-    
-                if (user && user.deletedAt !== null && processDays(user.deletedAt) > 90) {
+
+                if (
+                    user &&
+                    user.deletedAt !== null &&
+                    processDays(user.deletedAt) > 90
+                ) {
                     await this.deleteAccountData(user.id);
                 }
-            } else if (user && user.deletedAt !== null && processDays(user.deletedAt) <= 90) {
+            } else if (
+                user &&
+                user.deletedAt !== null &&
+                processDays(user.deletedAt) <= 90
+            ) {
                 status = "account_deactivated";
             } else {
                 const valid = await argon2.verify(user.password, password);
-    
+
                 if (!valid) {
                     errors.push({
                         field: "password",
@@ -368,24 +411,30 @@ export class UserResolver {
                     if (user.emailVerified) {
                         if (!user.userSettings.twoFactorAuth) {
                             try {
-                                let session = await this.sessionRepository.create({
-                                    user,
-                                    sessionId: uuidv4(),
-                                    clientOS,
-                                    clientType,
-                                    clientName,
-                                    deviceLocation,
-                                    country,
-                                }).save();
-            
-                                sendRefreshToken(res, createRefreshToken(user, session));
+                                let session = await this.sessionRepository
+                                    .create({
+                                        user,
+                                        sessionId: uuidv4(),
+                                        clientOS,
+                                        clientType,
+                                        clientName,
+                                        deviceLocation,
+                                        country,
+                                    })
+                                    .save();
+
+                                sendRefreshToken(
+                                    res,
+                                    createRefreshToken(user, session)
+                                );
                                 accessToken = createAccessToken(user, session);
-            
+
                                 status = "You are now logged in.";
-        
+
                                 ok = true;
                             } catch (error) {
-                                status = "Failed to create a new session, please try again later.";
+                                status =
+                                    "Failed to create a new session, please try again later.";
 
                                 logger.error(error);
                             }
@@ -395,9 +444,12 @@ export class UserResolver {
                             const OTP = totp.generate(decryptedSecretKey);
                             const email = user.email;
                             const username = user.username;
-    
+
                             const data = await ejs.renderFile(
-                                path.join(__dirname, "../helpers/templates/OTPEmail.ejs"),
+                                path.join(
+                                    __dirname,
+                                    "../helpers/templates/OTPEmail.ejs"
+                                ),
                                 { otp: OTP, username }
                             );
 
@@ -426,12 +478,17 @@ export class UserResolver {
                         }
                     } else {
                         const verifyToken = createAccessToken(user);
-                        const emailStatus = await sendVerificationEmail(user.email, verifyToken);
+                        const emailStatus = await sendVerificationEmail(
+                            user.email,
+                            verifyToken
+                        );
 
                         if (emailStatus) {
-                            status = "Your email address is not verified. We just sent you an email containing the instructions for verification.";
+                            status =
+                                "Your email address is not verified. We just sent you an email containing the instructions for verification.";
                         } else {
-                            status = "An error has occurred while trying to send the verification email. Please try again later.";
+                            status =
+                                "An error has occurred while trying to send the verification email. Please try again later.";
                         }
                     }
                 }
@@ -499,7 +556,8 @@ export class UserResolver {
         if (age < 13) {
             errors.push({
                 field: "birthDate",
-                message: "Users under the age of 13 cannot sign up to the platform",
+                message:
+                    "Users under the age of 13 cannot sign up to the platform",
             });
         }
 
@@ -526,27 +584,34 @@ export class UserResolver {
             }
 
             if (errors.length === 0) {
-                const user = await this.userRepository.create({
-                    username,
-                    email,
-                    password: hashedPassword,
-                    name,
-                    gender,
-                    birthDate: {
-                        date: birthDate,
-                    },
-                    secretKey: encriptedSecretKey,
-                }).save();
+                const user = await this.userRepository
+                    .create({
+                        username,
+                        email,
+                        password: hashedPassword,
+                        name,
+                        gender,
+                        birthDate: {
+                            date: birthDate,
+                        },
+                        secretKey: encriptedSecretKey,
+                    })
+                    .save();
 
                 const token = createAccessToken(user);
-                const emailStatus = await sendVerificationEmail(user.email, token);
+                const emailStatus = await sendVerificationEmail(
+                    user.email,
+                    token
+                );
 
                 if (emailStatus) {
-                    status = "Check your inbox, we just sent you an email with the instructions to verify your account.";
+                    status =
+                        "Check your inbox, we just sent you an email with the instructions to verify your account.";
                 } else {
-                    status = "An error has occurred while trying to send the verification email. Please try again later.";
+                    status =
+                        "An error has occurred while trying to send the verification email. Please try again later.";
                 }
-                
+
                 ok = true;
             }
         } catch (error) {
@@ -557,13 +622,17 @@ export class UserResolver {
                     field: "username",
                     message: "Username already taken",
                 });
-            } else if (error.detail.includes("email") && error.code === "23505") {
+            } else if (
+                error.detail.includes("email") &&
+                error.code === "23505"
+            ) {
                 errors.push({
                     field: "email",
                     message: "A user using this email already exists",
                 });
             } else {
-                status = "An unknown error has occurred, please try again later.";
+                status =
+                    "An unknown error has occurred, please try again later.";
             }
         }
 
@@ -599,25 +668,33 @@ export class UserResolver {
             } else {
                 user = await this.findUser(input, true);
             }
-    
+
             if (user) {
                 const valid = await argon2.verify(user.password, password);
-    
+
                 if (!valid) {
                     errors.push({
                         field: "password",
                         message: "Incorrect password",
                     });
                 }
-                
+
                 if (errors.length === 0) {
-                    if (user.deletedAt !== null && processDays(user.deletedAt) <= 90) {
+                    if (
+                        user.deletedAt !== null &&
+                        processDays(user.deletedAt) <= 90
+                    ) {
                         await this.userRepository.restore({ id: user.id });
 
-                        status = "Your account has been restored. Now you can log in.";
+                        status =
+                            "Your account has been restored. Now you can log in.";
                         ok = true;
-                    } else if (user.deletedAt !== null && processDays(user.deletedAt) > 90) {
-                        status = "Sorry, but you can't reactivate your account. It has been deactivated for more than 90 days.";
+                    } else if (
+                        user.deletedAt !== null &&
+                        processDays(user.deletedAt) > 90
+                    ) {
+                        status =
+                            "Sorry, but you can't reactivate your account. It has been deactivated for more than 90 days.";
 
                         await this.deleteAccountData(user.id);
                     } else {
@@ -630,14 +707,15 @@ export class UserResolver {
         } catch (error) {
             logger.error(error);
 
-            status = "An error has occurred while trying to restore your account. Please try again later.";
+            status =
+                "An error has occurred while trying to restore your account. Please try again later.";
         }
 
         return {
             errors,
             status,
             ok,
-        }
+        };
     }
 
     @Mutation(() => Boolean)
@@ -654,97 +732,145 @@ export class UserResolver {
             const user = await this.findUserById(id, true);
 
             if (user) {
-                await this.userRepository.delete({ id: user.id }).then(async () => {
-                    if (user.profile.profilePicture.length > 0) {
-                        const existingProfilePictureKey =
-                            user.profile.profilePicture.replace(
-                                `https://img.zncdn.net/`, ""
-                            );
-
-                        try {
-                            const profilePictureUrl = await getPresignedUrlForDeleteCommand(existingProfilePictureKey, "image");
-        
-                            await axios.delete(profilePictureUrl).then(() => {
-                                logger.info("Profile picture successfully deleted.");
-                            })
-                            .catch((error) => {
-                                logger.warn(`An error occurred while deleting the profile picture. Error code: ${error.code}.`);
-                            });
-                        } catch (error) {
-                            logger.error(error);
-                        }
-                    }
-
-                    if (user.profile.profileBanner.length > 0) {
-                        const existingProfileBannerKey =
-                            user.profile.profileBanner.replace(
-                                `https://img.zncdn.net/`, ""
-                            );
-        
-                        try {
-                            const profileBannerUrl = await getPresignedUrlForDeleteCommand(existingProfileBannerKey, "image");
-        
-                            await axios.delete(profileBannerUrl).then(() => {
-                                logger.info("Profile banner successfully deleted.");
-                            })
-                            .catch((error) => {
-                                logger.warn(`An error occurred while deleting the profile banner. Error code: ${error.code}.`);
-                            });
-                        } catch (error) {
-                            logger.error(error);
-                        }
-                    }
-                });
-
-                try {
-                    await this.postRepository.delete({ authorId: user.id }).then(async () => {
-                        const items = await this.mediaItemRepository.find({
-                            order: {
-                                createdAt: "ASC",
-                            },
-                            where: {
-                                post: {
-                                    authorId: user.id,
-                                },
-                            },
-                            relations: ["post"],
-                        });
-        
-                        for (const item of items) {
-                            const existingKey =
-                                item.src.replace(
-                                    `https://${item.type.includes("image") ? "img" : "vid"}.zncdn.net/`, ""
+                await this.userRepository
+                    .delete({ id: user.id })
+                    .then(async () => {
+                        if (user.profile.profilePicture.length > 0) {
+                            const existingProfilePictureKey =
+                                user.profile.profilePicture.replace(
+                                    `https://img.zncdn.net/`,
+                                    ""
                                 );
-        
+
                             try {
-                                const url = await getPresignedUrlForDeleteCommand(existingKey, item.type);
-        
-                                await axios.delete(url).then(() => {
-                                    logger.info("Media item successfully deleted.");
-                                })
-                                .catch((error) => {
-                                    logger.warn(`An error occurred while deleting the media item. Error code: ${error.code}.`);
-                                });
-            
-                                await this.mediaItemRepository.delete({ id: item.id });
+                                const profilePictureUrl =
+                                    await getPresignedUrlForDeleteCommand(
+                                        existingProfilePictureKey,
+                                        "image"
+                                    );
+
+                                await axios
+                                    .delete(profilePictureUrl)
+                                    .then(() => {
+                                        logger.info(
+                                            "Profile picture successfully deleted."
+                                        );
+                                    })
+                                    .catch((error) => {
+                                        logger.warn(
+                                            `An error occurred while deleting the profile picture. Error code: ${error.code}.`
+                                        );
+                                    });
+                            } catch (error) {
+                                logger.error(error);
+                            }
+                        }
+
+                        if (user.profile.profileBanner.length > 0) {
+                            const existingProfileBannerKey =
+                                user.profile.profileBanner.replace(
+                                    `https://img.zncdn.net/`,
+                                    ""
+                                );
+
+                            try {
+                                const profileBannerUrl =
+                                    await getPresignedUrlForDeleteCommand(
+                                        existingProfileBannerKey,
+                                        "image"
+                                    );
+
+                                await axios
+                                    .delete(profileBannerUrl)
+                                    .then(() => {
+                                        logger.info(
+                                            "Profile banner successfully deleted."
+                                        );
+                                    })
+                                    .catch((error) => {
+                                        logger.warn(
+                                            `An error occurred while deleting the profile banner. Error code: ${error.code}.`
+                                        );
+                                    });
                             } catch (error) {
                                 logger.error(error);
                             }
                         }
                     });
+
+                try {
+                    await this.postRepository
+                        .delete({ authorId: user.id })
+                        .then(async () => {
+                            const items = await this.mediaItemRepository.find({
+                                order: {
+                                    createdAt: "ASC",
+                                },
+                                where: {
+                                    post: {
+                                        authorId: user.id,
+                                    },
+                                },
+                                relations: ["post"],
+                            });
+
+                            for (const item of items) {
+                                const existingKey = item.src.replace(
+                                    `https://${
+                                        item.type.includes("image")
+                                            ? "img"
+                                            : "vid"
+                                    }.zncdn.net/`,
+                                    ""
+                                );
+
+                                try {
+                                    const url =
+                                        await getPresignedUrlForDeleteCommand(
+                                            existingKey,
+                                            item.type
+                                        );
+
+                                    await axios
+                                        .delete(url)
+                                        .then(() => {
+                                            logger.info(
+                                                "Media item successfully deleted."
+                                            );
+                                        })
+                                        .catch((error) => {
+                                            logger.warn(
+                                                `An error occurred while deleting the media item. Error code: ${error.code}.`
+                                            );
+                                        });
+
+                                    await this.mediaItemRepository.delete({
+                                        id: item.id,
+                                    });
+                                } catch (error) {
+                                    logger.error(error);
+                                }
+                            }
+                        });
                 } catch (error) {
-                    logger.warn(`Encountered an error while trying to delete posts with authorId "${id}". Error message: ${error.message}`);
+                    logger.warn(
+                        `Encountered an error while trying to delete posts with authorId "${id}". Error message: ${error.message}`
+                    );
                 }
 
                 try {
                     await this.articleRepository.delete({ authorId: user.id });
                 } catch (error) {
-                    logger.warn(`Error encountered while trying to delete articles with authorId "${id}". Error message: ${error.message}`);
+                    logger.warn(
+                        `Error encountered while trying to delete articles with authorId "${id}". Error message: ${error.message}`
+                    );
                 }
 
                 return true;
             } else {
-                logger.warn(`Error encountered while trying to delete account data: user with id "${id}" not found.`);
+                logger.warn(
+                    `Error encountered while trying to delete account data: user with id "${id}" not found.`
+                );
 
                 return false;
             }
@@ -792,25 +918,33 @@ export class UserResolver {
             if (me) {
                 const decryptedSecretKey = decrypt(me.secretKey);
                 const valid = await argon2.verify(me.password, password);
-                
-                if ((!me.userSettings.twoFactorAuth && payload) || (me.userSettings.twoFactorAuth && valid && isLogin)) {
+
+                if (
+                    (!me.userSettings.twoFactorAuth && payload) ||
+                    (me.userSettings.twoFactorAuth && valid && isLogin)
+                ) {
                     const isValid = totp.check(otp, decryptedSecretKey);
 
                     if (isValid) {
                         if (isLogin) {
-                            let session = await this.sessionRepository.create({
-                                user: me,
-                                sessionId: uuidv4(),
-                                clientOS,
-                                clientType,
-                                clientName,
-                                deviceLocation,
-                                country,
-                            }).save();
-        
-                            sendRefreshToken(res, createRefreshToken(me, session));
+                            let session = await this.sessionRepository
+                                .create({
+                                    user: me,
+                                    sessionId: uuidv4(),
+                                    clientOS,
+                                    clientType,
+                                    clientName,
+                                    deviceLocation,
+                                    country,
+                                })
+                                .save();
+
+                            sendRefreshToken(
+                                res,
+                                createRefreshToken(me, session)
+                            );
                             accessToken = createAccessToken(me, session);
-        
+
                             status = "You are now logged in.";
 
                             ok = true;
@@ -818,14 +952,17 @@ export class UserResolver {
                             me.userSettings.twoFactorAuth = true;
                             await me.save();
 
-                            status = "The two-factor authentication is now enabled.";
+                            status =
+                                "The two-factor authentication is now enabled.";
 
                             ok = true;
                         } else {
-                            status = "An error has occurred. Please request a new OTP.";
+                            status =
+                                "An error has occurred. Please request a new OTP.";
                         }
                     } else {
-                        status = "This OTP is invalid. Please request a new OTP.";
+                        status =
+                            "This OTP is invalid. Please request a new OTP.";
                     }
                 }
             } else {
@@ -834,7 +971,8 @@ export class UserResolver {
         } catch (error) {
             logger.error(error);
 
-            status = "An error has occurred during the OTP verification. Please request a new OTP.";
+            status =
+                "An error has occurred during the OTP verification. Please request a new OTP.";
         }
 
         return {
@@ -842,7 +980,7 @@ export class UserResolver {
             accessToken,
             user: me,
             ok,
-        }
+        };
     }
 
     @Mutation(() => Boolean)
@@ -850,7 +988,7 @@ export class UserResolver {
     async resendOTP(
         @Arg("input") input: string,
         @Arg("password") password: string,
-        @Ctx() { payload }: AuthContext,
+        @Ctx() { payload }: AuthContext
     ) {
         let me: User | null = null;
 
@@ -877,8 +1015,11 @@ export class UserResolver {
 
             if (me) {
                 const valid = await argon2.verify(me.password, password);
-    
-                if ((!me.userSettings.twoFactorAuth && payload) || (me.userSettings.twoFactorAuth && valid)) {
+
+                if (
+                    (!me.userSettings.twoFactorAuth && payload) ||
+                    (me.userSettings.twoFactorAuth && valid)
+                ) {
                     const decryptedSecretKey = decrypt(me.secretKey);
                     totp.options = { window: 1, step: 180 };
                     const OTP = totp.generate(decryptedSecretKey);
@@ -886,7 +1027,10 @@ export class UserResolver {
                     const username = me.username;
 
                     const data = await ejs.renderFile(
-                        path.join(__dirname, "../helpers/templates/ResendOTPEmail.ejs"),
+                        path.join(
+                            __dirname,
+                            "../helpers/templates/ResendOTPEmail.ejs"
+                        ),
                         { otp: OTP, username }
                     );
 
@@ -910,7 +1054,7 @@ export class UserResolver {
                     const otpSESCommand = new SendEmailCommand(params);
 
                     await mailHelper.send(otpSESCommand);
-    
+
                     return true;
                 } else {
                     return false;
@@ -935,13 +1079,20 @@ export class UserResolver {
         }
 
         try {
-            const existingToken = await this.findUserDeviceTokenBySessionId(payload.sessionId, payload.id);
+            const existingToken = await this.findUserDeviceTokenBySessionId(
+                payload.sessionId,
+                payload.id
+            );
 
             if (existingToken) {
-                await this.deleteDeviceToken(existingToken.id, { payload } as AuthContext);
+                await this.deleteDeviceToken(existingToken.id, {
+                    payload,
+                } as AuthContext);
             }
 
-            await this.sessionRepository.delete({ sessionId: payload.sessionId });
+            await this.sessionRepository.delete({
+                sessionId: payload.sessionId,
+            });
 
             sendRefreshToken(res, "");
 
@@ -975,7 +1126,7 @@ export class UserResolver {
                     }
                 );
                 status = "Your email address is now verified.";
-    
+
                 ok = true;
             } else {
                 logger.warn("Invalid token.");
@@ -989,9 +1140,9 @@ export class UserResolver {
                 "An error has occurred. Please repeat the email address verification.";
         }
 
-        return { 
-            status, 
-            ok 
+        return {
+            status,
+            ok,
         };
     }
 
@@ -1021,19 +1172,27 @@ export class UserResolver {
                     });
                 } else if (!user.emailVerified) {
                     const verifyToken = createAccessToken(user);
-                    const emailStatus = await sendVerificationEmail(user.email, verifyToken);
+                    const emailStatus = await sendVerificationEmail(
+                        user.email,
+                        verifyToken
+                    );
 
                     if (emailStatus) {
-                        status = "Your email address is not verified. We just sent you an email containing the instructions for verification.";
+                        status =
+                            "Your email address is not verified. We just sent you an email containing the instructions for verification.";
                     } else {
-                        status = "An error has occurred while trying to send the verification email. Please try again later.";
+                        status =
+                            "An error has occurred while trying to send the verification email. Please try again later.";
                     }
                 } else {
                     const token = createAccessToken(user);
                     const link = `${process.env.CLIENT_ORIGIN}/modify_password/${token}`;
 
                     const data = await ejs.renderFile(
-                        path.join(__dirname, "../helpers/templates/RecoveryEmail.ejs"),
+                        path.join(
+                            __dirname,
+                            "../helpers/templates/RecoveryEmail.ejs"
+                        ),
                         { link }
                     );
 
@@ -1054,11 +1213,12 @@ export class UserResolver {
                         },
                         Source: "noreply@zenith.to",
                     };
-            
+
                     const sesCommand = new SendEmailCommand(params);
                     await mailHelper.send(sesCommand);
 
-                    status = "Check your inbox, we just sent you an email with the instructions to recover your account password.";
+                    status =
+                        "Check your inbox, we just sent you an email with the instructions to recover your account password.";
 
                     ok = true;
                 }
@@ -1130,9 +1290,10 @@ export class UserResolver {
                             password: await argon2.hash(password),
                         }
                     );
-    
-                    status = "The password has been changed, now you can log in.";
-    
+
+                    status =
+                        "The password has been changed, now you can log in.";
+
                     ok = true;
                 } else {
                     logger.warn("Invalid token.");
@@ -1191,9 +1352,9 @@ export class UserResolver {
                                 bio,
                                 website,
                             },
-                        },
+                        }
                     );
-    
+
                     user = await this.findUserById(payload.id);
                     status = "Your profile has been updated.";
 
@@ -1220,7 +1381,7 @@ export class UserResolver {
     async followUser(
         @Arg("userId", () => Int, { nullable: true }) userId: number,
         @Arg("origin") origin: string,
-        @Ctx() { payload }: AuthContext,
+        @Ctx() { payload }: AuthContext
     ): Promise<Follow | null> {
         if (!payload) {
             logger.warn("Payload not provided.");
@@ -1237,35 +1398,81 @@ export class UserResolver {
         try {
             const user = await this.findUserById(userId);
             const follower = await this.findUserById(payload.id);
-            const existingFollow = await this.followRepository.findOne({ where: { user: { id: userId }, follower: { id: payload.id } }, relations: ["user", "follower"] });
-            const isBlockedByMe = await this.userService.whoHasBlockedWho(userId, payload.id);
-            const hasBlockedMe = await this.userService.whoHasBlockedWho(payload.id, userId);
+            const existingFollow = await this.followRepository.findOne({
+                where: { user: { id: userId }, follower: { id: payload.id } },
+                relations: ["user", "follower"],
+            });
+            const isBlockedByMe = await this.userService.whoHasBlockedWho(
+                userId,
+                payload.id
+            );
+            const hasBlockedMe = await this.userService.whoHasBlockedWho(
+                payload.id,
+                userId
+            );
 
-            if (user && follower && !existingFollow && !isBlockedByMe && !hasBlockedMe) {
-                const follow = await this.followRepository.create({
-                    user,
-                    follower,
-                    origin,
-                }).save();
+            if (
+                user &&
+                follower &&
+                !existingFollow &&
+                !isBlockedByMe &&
+                !hasBlockedMe
+            ) {
+                const follow = await this.followRepository
+                    .create({
+                        user,
+                        follower,
+                        origin,
+                    })
+                    .save();
 
-                const notification = await this.notificationService.createNotification(follower.id, user.id, follower.id, USER_TYPES.USER, NOTIFICATION_TYPES.FOLLOW, `${follower.name} (@${follower.username}) started following you.`);
+                const notification =
+                    await this.notificationService.createNotification(
+                        follower.id,
+                        user.id,
+                        follower.id,
+                        USER_TYPES.USER,
+                        NOTIFICATION_TYPES.FOLLOW,
+                        `${follower.name} (@${follower.username}) started following you.`
+                    );
 
                 if (notification) {
                     pubSub.publish("NEW_NOTIFICATION", notification);
-                
-                    const tokens = await this.findUserDeviceTokensByUserId(user.id);
+
+                    const tokens = await this.findUserDeviceTokensByUserId(
+                        user.id
+                    );
                     const pushNotification: FirebaseNotification = {
                         title: `New follower on Zenith (for @${user.username})`,
                         body: notification.content,
-                        imageUrl: follower.profile.profilePicture.length > 0 ? follower.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
+                        imageUrl:
+                            follower.profile.profilePicture.length > 0
+                                ? follower.profile.profilePicture
+                                : "https://img.zncdn.net/static/profile-picture.png",
                     };
                     const link = `${process.env.CLIENT_ORIGIN}/${follower.username}?n_id=${notification.notificationId}`;
-                    await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: user.username, type: notification.notificationType });
+                    await sendPushNotifications(
+                        tokens as UserDeviceToken[],
+                        pushNotification,
+                        link,
+                        {
+                            username: user.username,
+                            type: notification.notificationType,
+                        }
+                    );
                 }
 
                 return follow;
             } else {
-                logger.warn(`followUserData: [{ userId: ${user ? user.id : undefined} }, { followerId: ${follower ? follower.id : undefined} }, { existingFollowId: ${existingFollow ? existingFollow.id : undefined} }]`);
+                logger.warn(
+                    `followUserData: [{ userId: ${
+                        user ? user.id : undefined
+                    } }, { followerId: ${
+                        follower ? follower.id : undefined
+                    } }, { existingFollowId: ${
+                        existingFollow ? existingFollow.id : undefined
+                    } }]`
+                );
 
                 return null;
             }
@@ -1280,7 +1487,7 @@ export class UserResolver {
     @UseMiddleware(isAuth)
     async unfollowUser(
         @Arg("userId", () => Int, { nullable: true }) userId: number,
-        @Ctx() { payload }: AuthContext,
+        @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
             logger.warn("Payload not provided.");
@@ -1295,16 +1502,28 @@ export class UserResolver {
         }
 
         try {
-            await this.followRepository.delete({ user: { id: userId }, follower: { id: payload.id } });
+            await this.followRepository.delete({
+                user: { id: userId },
+                follower: { id: payload.id },
+            });
 
-            const notification = await this.notificationService.findNotification(payload.id, userId, payload.id, USER_TYPES.USER, NOTIFICATION_TYPES.FOLLOW);
-    
+            const notification =
+                await this.notificationService.findNotification(
+                    payload.id,
+                    userId,
+                    payload.id,
+                    USER_TYPES.USER,
+                    NOTIFICATION_TYPES.FOLLOW
+                );
+
             if (notification) {
                 pubSub.publish("DELETED_NOTIFICATION", notification);
 
-                await this.notificationService.deleteNotification(notification.notificationId); 
+                await this.notificationService.deleteNotification(
+                    notification.notificationId
+                );
             }
-    
+
             return true;
         } catch (error) {
             logger.error(error);
@@ -1317,7 +1536,7 @@ export class UserResolver {
     async getFollowers(
         @Arg("id", () => Int, { nullable: true }) id: number,
         @Arg("limit", () => Int) limit: number,
-        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null
     ): Promise<PaginatedFollowRelations> {
         if (!id) {
             logger.warn("User id not provided.");
@@ -1326,25 +1545,31 @@ export class UserResolver {
                 followRelations: [],
                 hasMore: false,
                 totalCount: 0,
-            }
+            };
         }
 
         try {
             const [followRelations, totalCount] = await Promise.all([
-                this.followRepository.find({ 
-                    where: { 
+                this.followRepository.find({
+                    where: {
                         user: { id },
-                        ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
-                    }, 
-                    relations: ["follower", "user"], 
+                        ...(cursor
+                            ? {
+                                  createdAt: LessThan(
+                                      new Date(parseInt(cursor))
+                                  ),
+                              }
+                            : {}),
+                    },
+                    relations: ["follower", "user"],
                     take: limit + 1,
-                    order: { createdAt: "DESC" } 
+                    order: { createdAt: "DESC" },
                 }),
                 this.followRepository.count({
                     where: {
-                        user: { id }
+                        user: { id },
                     },
-                    relations: ["user"], 
+                    relations: ["user"],
                 }),
             ]);
 
@@ -1352,7 +1577,7 @@ export class UserResolver {
                 followRelations: followRelations.slice(0, limit),
                 hasMore: followRelations.length === limit + 1,
                 totalCount,
-            }
+            };
         } catch (error) {
             logger.error(error);
 
@@ -1368,7 +1593,7 @@ export class UserResolver {
     async getFollowing(
         @Arg("id", () => Int, { nullable: true }) id: number,
         @Arg("limit", () => Int) limit: number,
-        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null
     ): Promise<PaginatedFollowRelations> {
         if (!id) {
             logger.warn("User id not provided.");
@@ -1383,27 +1608,33 @@ export class UserResolver {
         try {
             const [followRelations, totalCount] = await Promise.all([
                 this.followRepository.find({
-                    where: { 
+                    where: {
                         follower: { id },
-                        ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
+                        ...(cursor
+                            ? {
+                                  createdAt: LessThan(
+                                      new Date(parseInt(cursor))
+                                  ),
+                              }
+                            : {}),
                     },
                     relations: ["user", "follower"],
                     take: limit + 1,
                     order: { createdAt: "DESC" },
                 }),
                 this.followRepository.count({
-                    where: { 
+                    where: {
                         follower: { id },
                     },
                     relations: ["follower"],
-                })
+                }),
             ]);
 
             return {
                 followRelations: followRelations.slice(0, limit),
                 hasMore: followRelations.length === limit + 1,
                 totalCount,
-            }
+            };
         } catch (error) {
             logger.error(error);
 
@@ -1434,7 +1665,10 @@ export class UserResolver {
         }
 
         try {
-            const follow = await this.followRepository.findOne({ where: { follower: { id: payload.id }, user: { id } }, relations: ["user", "follower"] });
+            const follow = await this.followRepository.findOne({
+                where: { follower: { id: payload.id }, user: { id } },
+                relations: ["user", "follower"],
+            });
 
             return follow;
         } catch (error) {
@@ -1463,7 +1697,10 @@ export class UserResolver {
         }
 
         try {
-            const follow = await this.followRepository.findOne({ where: { follower: { id }, user: { id: payload.id } }, relations: ["user", "follower"] });
+            const follow = await this.followRepository.findOne({
+                where: { follower: { id }, user: { id: payload.id } },
+                relations: ["user", "follower"],
+            });
 
             return follow;
         } catch (error) {
@@ -1483,7 +1720,7 @@ export class UserResolver {
         let user;
         let status;
         let ok = false;
-        
+
         if (!payload) {
             status = "You're not authenticated.";
         } else {
@@ -1494,13 +1731,21 @@ export class UserResolver {
                 });
             } else {
                 try {
-                    const existingUserWithUsername = await this.findUser(username);
-                    const authenticatedUser = await this.findUserById(payload.id);
-                    
-                    if (authenticatedUser && username === authenticatedUser.username) {
+                    const existingUserWithUsername = await this.findUser(
+                        username
+                    );
+                    const authenticatedUser = await this.findUserById(
+                        payload.id
+                    );
+
+                    if (
+                        authenticatedUser &&
+                        username === authenticatedUser.username
+                    ) {
                         errors.push({
                             field: "username",
-                            message: "The username you entered is the one you are already using",
+                            message:
+                                "The username you entered is the one you are already using",
                         });
                     } else if (existingUserWithUsername) {
                         errors.push({
@@ -1513,20 +1758,21 @@ export class UserResolver {
                                 id: payload.id,
                             },
                             {
-                                username
-                            },
+                                username,
+                            }
                         );
-    
+
                         user = await this.findUserById(payload.id);
-    
+
                         status = "Your username has been changed.";
-    
+
                         ok = true;
                     }
                 } catch (error) {
                     logger.error(error);
-    
-                    status = "An error has occurred. Please try again later to change your username.";
+
+                    status =
+                        "An error has occurred. Please try again later to change your username.";
                 }
             }
         }
@@ -1536,7 +1782,7 @@ export class UserResolver {
             user,
             status,
             ok,
-        }
+        };
     }
 
     @Mutation(() => UserResponse)
@@ -1567,7 +1813,7 @@ export class UserResolver {
                     message: "Invalid confirmation email",
                 });
             }
-    
+
             if (email !== confirmEmail) {
                 errors.push(
                     {
@@ -1584,17 +1830,18 @@ export class UserResolver {
             if (errors.length === 0) {
                 try {
                     user = await this.findUserById(payload.id);
-        
+
                     if (user) {
                         if (user.email === email && user.emailVerified) {
                             errors.push({
                                 field: "email",
-                                message: "The email address you entered is the one you are already using",
+                                message:
+                                    "The email address you entered is the one you are already using",
                             });
                         } else {
                             const token = createAccessToken(user);
                             const link = `${process.env.CLIENT_ORIGIN}/settings/account/verify-email/${token}`;
-                
+
                             await this.userRepository.update(
                                 {
                                     id: payload.id,
@@ -1602,14 +1849,17 @@ export class UserResolver {
                                 {
                                     email,
                                     emailVerified: false,
-                                },
+                                }
                             );
-                            
+
                             const data = await ejs.renderFile(
-                                path.join(__dirname, "../helpers/templates/VerifyNewEmail.ejs"),
+                                path.join(
+                                    __dirname,
+                                    "../helpers/templates/VerifyNewEmail.ejs"
+                                ),
                                 { link }
                             );
-    
+
                             const params: SendEmailCommandInput = {
                                 Destination: {
                                     ToAddresses: [email],
@@ -1627,13 +1877,14 @@ export class UserResolver {
                                 },
                                 Source: "noreply@zenith.to",
                             };
-        
+
                             const sesCommand = new SendEmailCommand(params);
-    
+
                             await mailHelper.send(sesCommand);
-    
-                            status = "Check your inbox, we just sent you an email with the instructions to verify your new email address.";
-                        
+
+                            status =
+                                "Check your inbox, we just sent you an email with the instructions to verify your new email address.";
+
                             ok = true;
                         }
                     } else {
@@ -1641,14 +1892,15 @@ export class UserResolver {
                     }
                 } catch (error) {
                     logger.error(error);
-    
+
                     if (error.code === "23505") {
-                        status = "A user using this email address already exists.";
+                        status =
+                            "A user using this email address already exists.";
                     } else {
-                        status = "An error has occurred. Please try again later to edit your email address.";
+                        status =
+                            "An error has occurred. Please try again later to edit your email address.";
                     }
                 }
-                
             }
         }
 
@@ -1673,11 +1925,11 @@ export class UserResolver {
         } else {
             try {
                 const user = await this.findUserById(payload.id);
-                
+
                 if (user) {
                     const token = createAccessToken(user);
                     const link = `${process.env.CLIENT_ORIGIN}/settings/account/verify-email/${token}`;
-        
+
                     const data = await ejs.renderFile(
                         path.join(
                             __dirname,
@@ -1708,7 +1960,8 @@ export class UserResolver {
 
                     await mailHelper.send(sesCommand);
 
-                    status = "Check your inbox, we just sent you an email with the instructions to verify your email address.";
+                    status =
+                        "Check your inbox, we just sent you an email with the instructions to verify your email address.";
 
                     ok = true;
                 } else {
@@ -1743,28 +1996,35 @@ export class UserResolver {
         if (!payload) {
             status = "You are not authenticated.";
         } else {
-            if (!isValidUserInput(currentPassword) || currentPassword.length <= 2) {
+            if (
+                !isValidUserInput(currentPassword) ||
+                currentPassword.length <= 2
+            ) {
                 errors.push({
                     field: "currentPassword",
-                    message: "The current password length must be greater than 2",
+                    message:
+                        "The current password length must be greater than 2",
                 });
             }
-    
+
             if (!isValidUserInput(password) || password.length <= 2) {
                 errors.push({
                     field: "password",
                     message: "The password length must be greater than 2",
                 });
             }
-    
-            if (!isValidUserInput(confirmPassword) || confirmPassword.length <= 2) {
+
+            if (
+                !isValidUserInput(confirmPassword) ||
+                confirmPassword.length <= 2
+            ) {
                 errors.push({
                     field: "confirmPassword",
                     message:
                         "The confirmation password length must be greater than 2",
                 });
             }
-    
+
             if (password !== confirmPassword) {
                 errors.push(
                     {
@@ -1777,13 +2037,16 @@ export class UserResolver {
                     }
                 );
             }
-            
+
             try {
                 const user = await this.findUserById(payload.id);
-        
+
                 if (user) {
-                    const valid = await argon2.verify(user.password, currentPassword);
-                
+                    const valid = await argon2.verify(
+                        user.password,
+                        currentPassword
+                    );
+
                     if (!valid) {
                         errors.push({
                             field: "currentPassword",
@@ -1798,7 +2061,7 @@ export class UserResolver {
                                 password: await argon2.hash(password),
                             }
                         );
-        
+
                         status = "The password has been changed.";
 
                         ok = true;
@@ -1808,7 +2071,7 @@ export class UserResolver {
                 }
             } catch (error) {
                 logger.error(error);
-            
+
                 status =
                     "An error has occurred. Please try again later to change your account password.";
             }
@@ -1850,18 +2113,19 @@ export class UserResolver {
                             type: Not(USER_TYPES.ORGANIZATION),
                         },
                         {
-                            gender
-                        },
+                            gender,
+                        }
                     );
-        
+
                     status = "Your gender has been updated.";
                     ok = true;
                 } catch (error) {
                     logger.error(error);
-    
+
                     errors.push({
                         field: "gender",
-                        message: "An error has occurred. Please try again later to update your gender",
+                        message:
+                            "An error has occurred. Please try again later to update your gender",
                     });
                 }
             }
@@ -1871,7 +2135,7 @@ export class UserResolver {
             errors,
             status,
             ok,
-        }
+        };
     }
 
     @Mutation(() => UserResponse)
@@ -1892,10 +2156,11 @@ export class UserResolver {
             if (monthAndDayVisibility === "") {
                 errors.push({
                     field: "monthAndDayVisibility",
-                    message: "The month and day visibility field cannot take this value",
+                    message:
+                        "The month and day visibility field cannot take this value",
                 });
             }
-    
+
             if (yearVisibility === "") {
                 errors.push({
                     field: "yearVisibility",
@@ -1906,7 +2171,7 @@ export class UserResolver {
             if (errors.length === 0) {
                 try {
                     const user = await this.findUserById(payload.id);
-    
+
                     if (user) {
                         if (user.type !== USER_TYPES.ORGANIZATION) {
                             let age = processBirthDate(birthDate);
@@ -1914,13 +2179,15 @@ export class UserResolver {
                             if (age < 13) {
                                 errors.push({
                                     field: "birthDate",
-                                    message: "Users under the age of 13 cannot sign up to the platform",
+                                    message:
+                                        "Users under the age of 13 cannot sign up to the platform",
                                 });
                             }
                         }
 
                         user.birthDate.date = birthDate;
-                        user.birthDate.monthAndDayVisibility = monthAndDayVisibility;
+                        user.birthDate.monthAndDayVisibility =
+                            monthAndDayVisibility;
                         user.birthDate.yearVisibility = yearVisibility;
 
                         await user.save();
@@ -1933,7 +2200,8 @@ export class UserResolver {
                 } catch (error) {
                     logger.error(error);
 
-                    status = "An error has occurred. Please try again later to update your birth date.";
+                    status =
+                        "An error has occurred. Please try again later to update your birth date.";
                 }
             }
         }
@@ -1942,7 +2210,7 @@ export class UserResolver {
             errors,
             status,
             ok,
-        }
+        };
     }
 
     @Mutation(() => Boolean)
@@ -1964,7 +2232,10 @@ export class UserResolver {
         }
 
         try {
-            await this.sessionRepository.delete({ sessionId, user: { id: payload.id } });
+            await this.sessionRepository.delete({
+                sessionId,
+                user: { id: payload.id },
+            });
 
             return true;
         } catch (error) {
@@ -1976,9 +2247,7 @@ export class UserResolver {
 
     @Mutation(() => Boolean)
     @UseMiddleware(isAuth)
-    async deleteOtherSessions(
-        @Ctx() { payload }: AuthContext
-    ) {
+    async deleteOtherSessions(@Ctx() { payload }: AuthContext) {
         if (!payload) {
             logger.warn("Payload not provided.");
 
@@ -1986,7 +2255,10 @@ export class UserResolver {
         }
 
         try {
-            await this.sessionRepository.delete({ sessionId: Not(payload.sessionId), user: { id: payload.id } });
+            await this.sessionRepository.delete({
+                sessionId: Not(payload.sessionId),
+                user: { id: payload.id },
+            });
 
             return true;
         } catch (error) {
@@ -2012,7 +2284,8 @@ export class UserResolver {
             if (incomingMessages === "") {
                 errors.push({
                     field: "incomingMessages",
-                    message: "You cannot set the incoming messages field to this value",
+                    message:
+                        "You cannot set the incoming messages field to this value",
                 });
             } else {
                 try {
@@ -2024,18 +2297,19 @@ export class UserResolver {
                             userSettings: {
                                 incomingMessages,
                             },
-                        },
+                        }
                     );
-        
+
                     status = "Your changes have been saved.";
 
                     ok = true;
                 } catch (error) {
                     logger.error(error);
-    
+
                     errors.push({
                         field: "incomingMessages",
-                        message: "An error has occurred. Please try again later to update your message settings",
+                        message:
+                            "An error has occurred. Please try again later to update your message settings",
                     });
                 }
             }
@@ -2045,13 +2319,13 @@ export class UserResolver {
             errors,
             status,
             ok,
-        }
+        };
     }
 
     @Mutation(() => UserResponse)
     @UseMiddleware(isAuth)
     async editTwoFactorAuth(
-        @Ctx() { payload }: AuthContext,
+        @Ctx() { payload }: AuthContext
     ): Promise<UserResponse> {
         let me;
         let status = "";
@@ -2060,13 +2334,13 @@ export class UserResolver {
         if (payload) {
             try {
                 me = await this.findUserById(payload.id);
-        
+
                 if (me) {
                     if (me.userSettings.twoFactorAuth) {
                         me.userSettings.twoFactorAuth = false;
-        
+
                         await me.save();
-        
+
                         status = "Two-factor authentication disabled.";
 
                         ok = true;
@@ -2076,9 +2350,12 @@ export class UserResolver {
                         const OTP = totp.generate(decryptedSecretKey);
                         const email = me.email;
                         const username = me.username;
-        
+
                         const data = await ejs.renderFile(
-                            path.join(__dirname, "../helpers/templates/EnableTFA.ejs"),
+                            path.join(
+                                __dirname,
+                                "../helpers/templates/EnableTFA.ejs"
+                            ),
                             { otp: OTP, username }
                         );
 
@@ -2098,17 +2375,18 @@ export class UserResolver {
                             },
                             Source: "noreply@zenith.to",
                         };
-        
+
                         const otpSESCommand = new SendEmailCommand(params);
-                        
+
                         await mailHelper.send(otpSESCommand);
-        
+
                         me = undefined;
 
                         ok = true;
                     }
                 } else {
-                    status = "An error has occurred while trying to fetch user data. Please try again later.";
+                    status =
+                        "An error has occurred while trying to fetch user data. Please try again later.";
                 }
             } catch (error) {
                 logger.error(error);
@@ -2123,14 +2401,12 @@ export class UserResolver {
             user: me,
             status,
             ok,
-        }
+        };
     }
- 
+
     @Mutation(() => Boolean)
     @UseMiddleware(isAuth)
-    async deactivateAccount(
-        @Ctx() { res, payload }: AuthContext
-    ) {
+    async deactivateAccount(@Ctx() { res, payload }: AuthContext) {
         if (!payload) {
             logger.warn("Payload not provided.");
 
@@ -2138,17 +2414,20 @@ export class UserResolver {
         }
 
         try {
-            const me = await this.userRepository.findOne({ where: { id: payload.id }, relations: ["sessions"] });
+            const me = await this.userRepository.findOne({
+                where: { id: payload.id },
+                relations: ["sessions"],
+            });
 
             if (!me) {
                 return false;
             } else {
                 await this.userRepository.softDelete({ id: me.id });
-    
+
                 await this.sessionRepository.delete({ user: { id: me.id } });
 
                 sendRefreshToken(res, "");
-    
+
                 return true;
             }
         } catch (error) {
@@ -2170,9 +2449,10 @@ export class UserResolver {
         } else {
             try {
                 const me = await this.findUserById(payload.id);
-                
+
                 if (me) {
-                    me.searchSettings.hideSensitiveContent = !me.searchSettings.hideSensitiveContent;
+                    me.searchSettings.hideSensitiveContent =
+                        !me.searchSettings.hideSensitiveContent;
 
                     await me.save();
 
@@ -2202,14 +2482,15 @@ export class UserResolver {
                 const me = await this.findUserById(payload.id);
 
                 if (me) {
-                    me.searchSettings.hideBlockedAccounts = !me.searchSettings.hideBlockedAccounts;
-                    
+                    me.searchSettings.hideBlockedAccounts =
+                        !me.searchSettings.hideBlockedAccounts;
+
                     await me.save();
 
                     return me.searchSettings.hideBlockedAccounts;
                 } else {
                     return null;
-                }    
+                }
             } catch (error) {
                 logger.error(error);
 
@@ -2237,31 +2518,59 @@ export class UserResolver {
                     const user = await this.findUserById(userId);
 
                     if (user) {
-                        const isAffiliatedToMe = await this.hasThisUserAsAffiliate(userId, payload.id);
-                        const isAnAffiliate = await this.hasThisUserAsAffiliate(payload.id, userId);
+                        const isAffiliatedToMe =
+                            await this.hasThisUserAsAffiliate(
+                                userId,
+                                payload.id
+                            );
+                        const isAnAffiliate = await this.hasThisUserAsAffiliate(
+                            payload.id,
+                            userId
+                        );
 
                         if (isAffiliatedToMe || isAnAffiliate) {
-                            logger.warn("Can't block someone when there is an affiliation.");
+                            logger.warn(
+                                "Can't block someone when there is an affiliation."
+                            );
 
                             return null;
                         }
 
-                        const block = await this.blockRepository.create({
-                            blockedId: user.id,
-                            userId: me.id,
-                            origin,
-                        }).save();
+                        const block = await this.blockRepository
+                            .create({
+                                blockedId: user.id,
+                                userId: me.id,
+                                origin,
+                            })
+                            .save();
 
-                        await this.unfollowUser(user.id, { payload } as  AuthContext);
+                        await this.unfollowUser(user.id, {
+                            payload,
+                        } as AuthContext);
 
-                        await this.followRepository.delete({ user: { id: me.id }, follower: { id: user.id } });
+                        await this.followRepository.delete({
+                            user: { id: me.id },
+                            follower: { id: user.id },
+                        });
 
-                        const notification = await this.notificationService.findNotification(user.id, me.id, user.id, USER_TYPES.USER, NOTIFICATION_TYPES.FOLLOW);
-                
+                        const notification =
+                            await this.notificationService.findNotification(
+                                user.id,
+                                me.id,
+                                user.id,
+                                USER_TYPES.USER,
+                                NOTIFICATION_TYPES.FOLLOW
+                            );
+
                         if (notification) {
-                            pubSub.publish("DELETED_NOTIFICATION", notification);
+                            pubSub.publish(
+                                "DELETED_NOTIFICATION",
+                                notification
+                            );
 
-                            await this.notificationService.deleteNotification(notification.notificationId);
+                            await this.notificationService.deleteNotification(
+                                notification.notificationId
+                            );
                         }
 
                         return block;
@@ -2292,7 +2601,10 @@ export class UserResolver {
         }
 
         try {
-            await this.blockRepository.delete({ blockedId, userId: payload.id });
+            await this.blockRepository.delete({
+                blockedId,
+                userId: payload.id,
+            });
 
             return true;
         } catch (error) {
@@ -2307,7 +2619,7 @@ export class UserResolver {
     async blockedUsers(
         @Ctx() { payload }: AuthContext,
         @Arg("limit", () => Int) limit: number,
-        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null
     ): Promise<PaginatedBlockActions> {
         if (!payload) {
             logger.warn("Payload not provided.");
@@ -2323,19 +2635,25 @@ export class UserResolver {
 
                 if (me) {
                     const [blockActions, totalCount] = await Promise.all([
-                        this.blockRepository.find({ 
-                            where: { 
+                        this.blockRepository.find({
+                            where: {
                                 userId: payload.id,
-                                ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
-                            }, 
+                                ...(cursor
+                                    ? {
+                                          createdAt: LessThan(
+                                              new Date(parseInt(cursor))
+                                          ),
+                                      }
+                                    : {}),
+                            },
                             take: limit + 1,
-                            order: { createdAt: "DESC" } 
+                            order: { createdAt: "DESC" },
                         }),
                         this.blockRepository.count({
                             where: {
                                 userId: payload.id,
-                            }
-                        })
+                            },
+                        }),
                     ]);
 
                     return {
@@ -2381,7 +2699,10 @@ export class UserResolver {
         }
 
         try {
-            const block = await this.userService.whoHasBlockedWho(id, payload.id);
+            const block = await this.userService.whoHasBlockedWho(
+                id,
+                payload.id
+            );
 
             return block;
         } catch (error) {
@@ -2410,8 +2731,11 @@ export class UserResolver {
         }
 
         try {
-            const block = await this.userService.whoHasBlockedWho(payload.id, id);
-            
+            const block = await this.userService.whoHasBlockedWho(
+                payload.id,
+                id
+            );
+
             return block;
         } catch (error) {
             logger.error(error);
@@ -2421,7 +2745,10 @@ export class UserResolver {
     }
 
     @Query(() => UserDeviceToken, { nullable: true })
-    async findUserDeviceTokenById(@Arg("id", () => Int, { nullable: true }) id: number, @Arg("userId", () => Int, { nullable: true }) userId: number): Promise<UserDeviceToken | null> {
+    async findUserDeviceTokenById(
+        @Arg("id", () => Int, { nullable: true }) id: number,
+        @Arg("userId", () => Int, { nullable: true }) userId: number
+    ): Promise<UserDeviceToken | null> {
         if (!id) {
             logger.warn("Id not provided.");
 
@@ -2435,7 +2762,9 @@ export class UserResolver {
         }
 
         try {
-            const userToken = await this.userDeviceTokenRepository.findOne({ where: { id, userId } });
+            const userToken = await this.userDeviceTokenRepository.findOne({
+                where: { id, userId },
+            });
 
             if (!userToken) {
                 logger.warn(`Token with id "${id}" not found.`);
@@ -2450,9 +2779,11 @@ export class UserResolver {
             return null;
         }
     }
-    
+
     @Query(() => [UserDeviceToken], { nullable: true })
-    async findUserDeviceTokensByUserId(@Arg("userId", () => Int, { nullable: true }) userId: number): Promise<UserDeviceToken[] | null> {
+    async findUserDeviceTokensByUserId(
+        @Arg("userId", () => Int, { nullable: true }) userId: number
+    ): Promise<UserDeviceToken[] | null> {
         if (!userId) {
             logger.warn("User id not provided.");
 
@@ -2460,7 +2791,9 @@ export class UserResolver {
         }
 
         try {
-            const tokens = await this.userDeviceTokenRepository.find({ where: { userId } });
+            const tokens = await this.userDeviceTokenRepository.find({
+                where: { userId },
+            });
 
             return tokens;
         } catch (error) {
@@ -2471,7 +2804,10 @@ export class UserResolver {
     }
 
     @Query(() => UserDeviceToken, { nullable: true })
-    async findUserDeviceTokenByToken(@Arg("token") token: string, @Arg("userId", () => Int, { nullable: true }) userId: number): Promise<UserDeviceToken | null> {
+    async findUserDeviceTokenByToken(
+        @Arg("token") token: string,
+        @Arg("userId", () => Int, { nullable: true }) userId: number
+    ): Promise<UserDeviceToken | null> {
         if (token.length === 0) {
             logger.warn("Token not provided.");
 
@@ -2485,7 +2821,9 @@ export class UserResolver {
         }
 
         try {
-            const userToken = await this.userDeviceTokenRepository.findOne({ where: { token, userId } });
+            const userToken = await this.userDeviceTokenRepository.findOne({
+                where: { token, userId },
+            });
 
             if (!userToken) {
                 logger.warn(`Token with token "${token}" not found.`);
@@ -2502,7 +2840,10 @@ export class UserResolver {
     }
 
     @Query(() => UserDeviceToken, { nullable: true })
-    async findUserDeviceTokenBySessionId(@Arg("sessionId") sessionId: string, @Arg("userId", () => Int, { nullable: true }) userId: number): Promise<UserDeviceToken | null> {
+    async findUserDeviceTokenBySessionId(
+        @Arg("sessionId") sessionId: string,
+        @Arg("userId", () => Int, { nullable: true }) userId: number
+    ): Promise<UserDeviceToken | null> {
         if (!isUUID(sessionId)) {
             logger.warn("Session id not provided.");
 
@@ -2516,10 +2857,14 @@ export class UserResolver {
         }
 
         try {
-            const token = await this.userDeviceTokenRepository.findOne({ where: { sessionId, userId } });
+            const token = await this.userDeviceTokenRepository.findOne({
+                where: { sessionId, userId },
+            });
 
             if (!token) {
-                logger.warn(`Token for session with id "${sessionId}" not found.`);
+                logger.warn(
+                    `Token for session with id "${sessionId}" not found.`
+                );
 
                 return null;
             }
@@ -2529,7 +2874,7 @@ export class UserResolver {
             logger.error(error);
 
             return null;
-        }        
+        }
     }
 
     @Mutation(() => Boolean)
@@ -2545,18 +2890,25 @@ export class UserResolver {
         }
 
         try {
-            const existingToken = await this.findUserDeviceTokenBySessionId(payload.sessionId, payload.id);
+            const existingToken = await this.findUserDeviceTokenBySessionId(
+                payload.sessionId,
+                payload.id
+            );
 
             if (existingToken) {
-                await this.deleteDeviceToken(existingToken.id, { payload } as AuthContext);
+                await this.deleteDeviceToken(existingToken.id, {
+                    payload,
+                } as AuthContext);
             }
 
             if (token.length > 0) {
-                await this.userDeviceTokenRepository.create({
-                    token,
-                    userId: payload.id,
-                    sessionId: payload.sessionId,
-                }).save();
+                await this.userDeviceTokenRepository
+                    .create({
+                        token,
+                        userId: payload.id,
+                        sessionId: payload.sessionId,
+                    })
+                    .save();
 
                 return true;
             } else {
@@ -2590,7 +2942,10 @@ export class UserResolver {
         }
 
         try {
-            await this.userDeviceTokenRepository.delete({ id, userId: payload.id });
+            await this.userDeviceTokenRepository.delete({
+                id,
+                userId: payload.id,
+            });
 
             return true;
         } catch (error) {
@@ -2602,9 +2957,7 @@ export class UserResolver {
 
     @Mutation(() => Boolean)
     @UseMiddleware(isAuth)
-    async deleteDeviceTokens(
-        @Ctx() { payload }: AuthContext
-    ) {
+    async deleteDeviceTokens(@Ctx() { payload }: AuthContext) {
         if (!payload) {
             logger.warn("Payload not provided.");
 
@@ -2613,7 +2966,7 @@ export class UserResolver {
 
         try {
             await this.userDeviceTokenRepository.delete({ userId: payload.id });
-    
+
             return true;
         } catch (error) {
             logger.error(error);
@@ -2668,16 +3021,16 @@ export class UserResolver {
             try {
                 const hashedPassword = await argon2.hash(password);
                 const encriptedSecretKey = encrypt(uuidv4());
-    
+
                 const existingOrg = await this.userRepository.findOne({
                     where: {
                         email,
                         username,
-                        type: USER_TYPES.ORGANIZATION
+                        type: USER_TYPES.ORGANIZATION,
                     },
                     withDeleted: true,
                 });
-    
+
                 if (existingOrg && existingOrg.deletedAt !== null) {
                     if (processDays(existingOrg.deletedAt) <= 90) {
                         status = "account_deactivated";
@@ -2685,53 +3038,69 @@ export class UserResolver {
                         await this.deleteAccountData(existingOrg.id);
                     }
                 }
-    
-                if (errors.length === 0) {
-                    const organization = await this.userRepository.create({
-                        username,
-                        email,
-                        password: hashedPassword,
-                        name,
-                        type: USER_TYPES.ORGANIZATION,
-                        birthDate: {
-                            date: birthDate,
-                        },
-                        secretKey: encriptedSecretKey,
-                    }).save();
 
-                    await this.affiliationRepository.create({
-                        affiliationId: uuidv4(),
-                        organizationId: organization.id,
-                        userId: payload.id,
-                        status: true,
-                    }).save();
-    
+                if (errors.length === 0) {
+                    const organization = await this.userRepository
+                        .create({
+                            username,
+                            email,
+                            password: hashedPassword,
+                            name,
+                            type: USER_TYPES.ORGANIZATION,
+                            birthDate: {
+                                date: birthDate,
+                            },
+                            secretKey: encriptedSecretKey,
+                        })
+                        .save();
+
+                    await this.affiliationRepository
+                        .create({
+                            affiliationId: uuidv4(),
+                            organizationId: organization.id,
+                            userId: payload.id,
+                            status: true,
+                        })
+                        .save();
+
                     const token = createAccessToken(organization);
-                    const emailStatus = await sendVerificationEmail(organization.email, token);
-    
+                    const emailStatus = await sendVerificationEmail(
+                        organization.email,
+                        token
+                    );
+
                     if (emailStatus) {
-                        status = "Check your inbox, we just sent you an email with the instructions to verify your organization account.";
+                        status =
+                            "Check your inbox, we just sent you an email with the instructions to verify your organization account.";
                     } else {
-                        status = "An error has occurred while trying to send the verification email. Please try again later.";
+                        status =
+                            "An error has occurred while trying to send the verification email. Please try again later.";
                     }
-                    
+
                     ok = true;
                 }
             } catch (error) {
                 logger.error(error);
-    
-                if (error.detail.includes("username") && error.code === "23505") {
+
+                if (
+                    error.detail.includes("username") &&
+                    error.code === "23505"
+                ) {
                     errors.push({
                         field: "username",
                         message: "Username already taken",
                     });
-                } else if (error.detail.includes("email") && error.code === "23505") {
+                } else if (
+                    error.detail.includes("email") &&
+                    error.code === "23505"
+                ) {
                     errors.push({
                         field: "email",
                         message: "A user using this email already exists",
                     });
                 } else {
-                    status = "An unknown error has occurred, please try again later.";
+                    status =
+                        "An unknown error has occurred, please try again later.";
                 }
             }
         }
@@ -2745,13 +3114,16 @@ export class UserResolver {
 
     @Query(() => Affiliation, { nullable: true })
     @UseMiddleware(isAuth)
-    async findAffiliationRequest(@Arg("affiliationId") affiliationId: string, @Ctx() { payload }: AuthContext): Promise<Affiliation | null> {
+    async findAffiliationRequest(
+        @Arg("affiliationId") affiliationId: string,
+        @Ctx() { payload }: AuthContext
+    ): Promise<Affiliation | null> {
         if (!isUUID(affiliationId)) {
             logger.warn("Affiliation id not provided.");
 
             return null;
         }
-    
+
         if (!payload) {
             logger.warn("Payload not provided.");
 
@@ -2759,50 +3131,60 @@ export class UserResolver {
         }
 
         try {
-            const affiliation = await this.affiliationRepository.findOne({ where: { affiliationId, userId: payload.id } });
-            
+            const affiliation = await this.affiliationRepository.findOne({
+                where: { affiliationId, userId: payload.id },
+            });
+
             if (!affiliation) {
-                logger.warn(`Affiliation with affiliationId "${affiliationId}" not found.`);
+                logger.warn(
+                    `Affiliation with affiliationId "${affiliationId}" not found.`
+                );
 
                 return null;
             }
-    
+
             return affiliation;
         } catch (error) {
             logger.error(error);
 
             return null;
-        }    
+        }
     }
 
     @Query(() => Affiliation, { nullable: true })
-    async findAffiliationByUserId(@Arg("userId", () => Int, { nullable: true }) userId: number): Promise<Affiliation | null> {
+    async findAffiliationByUserId(
+        @Arg("userId", () => Int, { nullable: true }) userId: number
+    ): Promise<Affiliation | null> {
         if (!userId) {
             logger.warn("User id not provided.");
 
             return null;
         }
-    
+
         try {
-            const affiliation = await this.affiliationRepository.findOne({ where: { userId } });
-            
+            const affiliation = await this.affiliationRepository.findOne({
+                where: { userId },
+            });
+
             if (!affiliation) {
-                logger.warn(`Affiliation of user with id "${userId}" not found.`);
+                logger.warn(
+                    `Affiliation of user with id "${userId}" not found.`
+                );
 
                 return null;
             }
-    
+
             return affiliation;
         } catch (error) {
             logger.error(error);
 
             return null;
-        }    
+        }
     }
 
     @Query(() => User, { nullable: true })
     async isAffiliatedTo(
-        @Arg("id", () => Int, { nullable: true }) id: number,
+        @Arg("id", () => Int, { nullable: true }) id: number
     ): Promise<User | null> {
         if (!id) {
             logger.warn("User id not provided.");
@@ -2819,10 +3201,18 @@ export class UserResolver {
                 return null;
             }
 
-            const organization = await this.findUserById(affiliation.organizationId, false);
+            const organization = await this.findUserById(
+                affiliation.organizationId,
+                false
+            );
 
-            if (!organization || organization.type !== USER_TYPES.ORGANIZATION) {
-                logger.warn(`Organization with id "${affiliation.organizationId}" not found.`);
+            if (
+                !organization ||
+                organization.type !== USER_TYPES.ORGANIZATION
+            ) {
+                logger.warn(
+                    `Organization with id "${affiliation.organizationId}" not found.`
+                );
 
                 return null;
             }
@@ -2838,7 +3228,7 @@ export class UserResolver {
     @Query(() => Boolean)
     async hasThisUserAsAffiliate(
         @Arg("id", () => Int, { nullable: true }) id: number,
-        @Arg("userId", () => Int, { nullable: true }) userId: number,
+        @Arg("userId", () => Int, { nullable: true }) userId: number
     ) {
         if (!id) {
             logger.warn("Organization id not provided.");
@@ -2855,7 +3245,10 @@ export class UserResolver {
         try {
             const organization = await this.findUserById(id, false);
 
-            if (!organization || (organization && organization.type !== USER_TYPES.ORGANIZATION)) {
+            if (
+                !organization ||
+                (organization && organization.type !== USER_TYPES.ORGANIZATION)
+            ) {
                 logger.warn("Organization not found.");
 
                 return false;
@@ -2886,7 +3279,7 @@ export class UserResolver {
     async affiliates(
         @Arg("id", () => Int, { nullable: true }) id: number,
         @Arg("limit", () => Int) limit: number,
-        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null
     ): Promise<PaginatedAffiliations> {
         if (!id) {
             logger.warn("User id not provided.");
@@ -2900,18 +3293,27 @@ export class UserResolver {
             try {
                 const organization = await this.findUserById(id, false);
 
-                if (organization && organization.type === USER_TYPES.ORGANIZATION) {
+                if (
+                    organization &&
+                    organization.type === USER_TYPES.ORGANIZATION
+                ) {
                     const [affiliations, totalCount] = await Promise.all([
-                        this.affiliationRepository.find({ 
-                            where: { 
+                        this.affiliationRepository.find({
+                            where: {
                                 organizationId: organization.id,
-                                ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
-                            }, 
-                            take: limit + 1, 
-                            order: { createdAt: "DESC" } 
+                                ...(cursor
+                                    ? {
+                                          createdAt: LessThan(
+                                              new Date(parseInt(cursor))
+                                          ),
+                                      }
+                                    : {}),
+                            },
+                            take: limit + 1,
+                            order: { createdAt: "DESC" },
                         }),
                         this.affiliationRepository.count({
-                            where: { organizationId: organization.id }, 
+                            where: { organizationId: organization.id },
                         }),
                     ]);
 
@@ -2942,8 +3344,8 @@ export class UserResolver {
     @Mutation(() => Affiliation, { nullable: true })
     @UseMiddleware(isAuth)
     async createAffiliation(
-        @Arg("userId", () => Int,  { nullable: true }) userId: number,
-        @Ctx() { payload }: AuthContext,
+        @Arg("userId", () => Int, { nullable: true }) userId: number,
+        @Ctx() { payload }: AuthContext
     ): Promise<Affiliation | null> {
         if (!payload) {
             logger.warn("Payload not provided.");
@@ -2960,29 +3362,59 @@ export class UserResolver {
         try {
             const user = await this.findUserById(userId);
             const organization = await this.findUserById(payload.id, false);
-            const existingAffiliation = await this.findAffiliationByUserId(userId);
+            const existingAffiliation = await this.findAffiliationByUserId(
+                userId
+            );
 
-            if (user && organization && organization.type === USER_TYPES.ORGANIZATION && !existingAffiliation) {
-                const affiliation = await this.affiliationRepository.create({
-                    affiliationId: uuidv4(),
-                    organizationId: organization.id,
-                    userId: user.id,
-                    status: false,
-                }).save();
+            if (
+                user &&
+                organization &&
+                organization.type === USER_TYPES.ORGANIZATION &&
+                !existingAffiliation
+            ) {
+                const affiliation = await this.affiliationRepository
+                    .create({
+                        affiliationId: uuidv4(),
+                        organizationId: organization.id,
+                        userId: user.id,
+                        status: false,
+                    })
+                    .save();
 
-                const notification = await this.notificationService.createNotification(organization.id, user.id, affiliation.id, "affiliation", NOTIFICATION_TYPES.AFFILIATION, `${organization.name} (@${organization.username}) wants you to become an affiliated account.`);
+                const notification =
+                    await this.notificationService.createNotification(
+                        organization.id,
+                        user.id,
+                        affiliation.id,
+                        "affiliation",
+                        NOTIFICATION_TYPES.AFFILIATION,
+                        `${organization.name} (@${organization.username}) wants you to become an affiliated account.`
+                    );
 
                 if (notification) {
                     pubSub.publish("NEW_NOTIFICATION", notification);
-                    
-                    const tokens = await this.findUserDeviceTokensByUserId(user.id);
+
+                    const tokens = await this.findUserDeviceTokensByUserId(
+                        user.id
+                    );
                     const pushNotification: FirebaseNotification = {
                         title: `New affiliation request on Zenith (for @${user.username})`,
                         body: notification.content,
-                        imageUrl: organization.profile.profilePicture.length > 0 ? organization.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png",
+                        imageUrl:
+                            organization.profile.profilePicture.length > 0
+                                ? organization.profile.profilePicture
+                                : "https://img.zncdn.net/static/profile-picture.png",
                     };
                     const link = `${process.env.CLIENT_ORIGIN}/affiliation/${affiliation.affiliationId}?n_id=${notification.notificationId}`;
-                    await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: user.username, type: notification.notificationType });
+                    await sendPushNotifications(
+                        tokens as UserDeviceToken[],
+                        pushNotification,
+                        link,
+                        {
+                            username: user.username,
+                            type: notification.notificationType,
+                        }
+                    );
                 }
                 return affiliation;
             } else {
@@ -3000,7 +3432,7 @@ export class UserResolver {
     async manageAffiliation(
         @Arg("affiliationId") affiliationId: string,
         @Arg("accepted", { nullable: true }) accepted: boolean,
-        @Ctx() { payload }: AuthContext,
+        @Ctx() { payload }: AuthContext
     ): Promise<Affiliation | null> {
         if (!payload) {
             logger.warn("Payload not provided.");
@@ -3020,7 +3452,10 @@ export class UserResolver {
 
         try {
             const me = await this.findUserById(payload.id);
-            const affiliation = await this.findAffiliationRequest(affiliationId, { payload } as AuthContext);
+            const affiliation = await this.findAffiliationRequest(
+                affiliationId,
+                { payload } as AuthContext
+            );
 
             if (me && affiliation) {
                 if (accepted) {
@@ -3030,7 +3465,9 @@ export class UserResolver {
 
                     return affiliation;
                 } else {
-                    await this.affiliationRepository.delete({ affiliationId: affiliationId });
+                    await this.affiliationRepository.delete({
+                        affiliationId: affiliationId,
+                    });
 
                     return null;
                 }
@@ -3048,7 +3485,7 @@ export class UserResolver {
     @UseMiddleware(isAuth)
     async removeAffiliation(
         @Arg("affiliationId") affiliationId: string,
-        @Ctx() { payload }: AuthContext,
+        @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
             logger.warn("Payload not provided.");
@@ -3063,17 +3500,32 @@ export class UserResolver {
         }
 
         try {
-            const affiliation = await this.findAffiliationRequest(affiliationId, { payload } as AuthContext);
+            const affiliation = await this.findAffiliationRequest(
+                affiliationId,
+                { payload } as AuthContext
+            );
 
             if (affiliation) {
-                await this.affiliationRepository.delete({ affiliationId, userId: payload.id });
+                await this.affiliationRepository.delete({
+                    affiliationId,
+                    userId: payload.id,
+                });
 
-                const notification = await this.notificationService.findNotification(affiliation.organizationId, payload.id, affiliation.id, "affiliation", NOTIFICATION_TYPES.AFFILIATION);
-                
+                const notification =
+                    await this.notificationService.findNotification(
+                        affiliation.organizationId,
+                        payload.id,
+                        affiliation.id,
+                        "affiliation",
+                        NOTIFICATION_TYPES.AFFILIATION
+                    );
+
                 if (notification) {
                     pubSub.publish("DELETED_NOTIFICATION", notification);
 
-                    await this.notificationService.deleteNotification(notification.notificationId);
+                    await this.notificationService.deleteNotification(
+                        notification.notificationId
+                    );
                 }
 
                 return true;
@@ -3106,45 +3558,74 @@ export class UserResolver {
                 user = await this.findUserById(payload.id);
 
                 if (user) {
-                    const identityVerified = user.identity.verified === VerificationStatus.VERIFIED;
+                    const identityVerified =
+                        user.identity.verified === VerificationStatus.VERIFIED;
 
                     if (!user.emailVerified) {
                         status = "Your email address is not verified.";
                     } else {
-                        const affiliatedOrganization = await this.isAffiliatedTo(user.id);
+                        const affiliatedOrganization =
+                            await this.isAffiliatedTo(user.id);
 
-                        if (identityVerified || affiliatedOrganization) {                   
-                            if (identityVerified && user.verification.verified === VerificationStatus.VERIFIED) {
+                        if (identityVerified || affiliatedOrganization) {
+                            if (
+                                identityVerified &&
+                                user.verification.verified ===
+                                    VerificationStatus.VERIFIED
+                            ) {
                                 status = "You're already verified.";
-                            } else if (identityVerified && user.verification.verified === VerificationStatus.UNDER_REVIEW) {
-                                status = "You've already submitted a verification request for your account.";
-                            } else if (identityVerified && documentsArray && documentsArray.length > 0) {
+                            } else if (
+                                identityVerified &&
+                                user.verification.verified ===
+                                    VerificationStatus.UNDER_REVIEW
+                            ) {
+                                status =
+                                    "You've already submitted a verification request for your account.";
+                            } else if (
+                                identityVerified &&
+                                documentsArray &&
+                                documentsArray.length > 0
+                            ) {
                                 user.verification.outcome = "";
                                 user.verification.documents = documentsArray;
-                                user.verification.verified = VerificationStatus.UNDER_REVIEW;
+                                user.verification.verified =
+                                    VerificationStatus.UNDER_REVIEW;
 
                                 await user.save();
-                                
+
                                 status = "Verification request submitted.";
-                            } else if ((identityVerified || user.type === USER_TYPES.ORGANIZATION) && affiliatedOrganization) {
-                                const isOrganizationVerified = affiliatedOrganization.verification.verified === VerificationStatus.VERIFIED;
+                            } else if (
+                                (identityVerified ||
+                                    user.type === USER_TYPES.ORGANIZATION) &&
+                                affiliatedOrganization
+                            ) {
+                                const isOrganizationVerified =
+                                    affiliatedOrganization.verification
+                                        .verified ===
+                                    VerificationStatus.VERIFIED;
 
                                 if (isOrganizationVerified) {
-                                    user.verification.verified = VerificationStatus.VERIFIED;
-                                    user.verification.verifiedSince = new Date(),
-                                    user.verification.outcome = "Verified through organization.";
+                                    user.verification.verified =
+                                        VerificationStatus.VERIFIED;
+                                    (user.verification.verifiedSince =
+                                        new Date()),
+                                        (user.verification.outcome =
+                                            "Verified through organization.");
 
                                     await user.save();
                                 } else {
-                                    status = "The organization you're affiliated to is not verified.";
+                                    status =
+                                        "The organization you're affiliated to is not verified.";
                                 }
                             } else {
-                                status = "You need to upload the requested documents to verify your account on Zenith.";
+                                status =
+                                    "You need to upload the requested documents to verify your account on Zenith.";
                             }
-                            
+
                             ok = true;
                         } else {
-                            status = "You need to verify your identity on Zenith before submitting a verification request for your account.";
+                            status =
+                                "You need to verify your identity on Zenith before submitting a verification request for your account.";
                         }
                     }
                 } else {
@@ -3153,8 +3634,7 @@ export class UserResolver {
             } catch (error) {
                 logger.error(error);
 
-                status =
-                    "An error has occurred. Please try again later.";
+                status = "An error has occurred. Please try again later.";
             }
         }
 
@@ -3219,29 +3699,44 @@ export class UserResolver {
             if (errors.length === 0) {
                 try {
                     user = await this.findUserById(payload.id);
-    
-                    if (user) {    
+
+                    if (user) {
                         if (!user.emailVerified) {
                             status = "Your email address is not verified.";
                         } else {
-                            if (user.identity.verified === VerificationStatus.VERIFIED) {
+                            if (
+                                user.identity.verified ===
+                                VerificationStatus.VERIFIED
+                            ) {
                                 status = "You're already verified.";
-                            } else if (user.identity.verified === VerificationStatus.UNDER_REVIEW) {
-                                status = "You've already submitted an identity verification request for your account.";
-                            } else if (documentsArray && documentsArray.length > 0) {
+                            } else if (
+                                user.identity.verified ===
+                                VerificationStatus.UNDER_REVIEW
+                            ) {
+                                status =
+                                    "You've already submitted an identity verification request for your account.";
+                            } else if (
+                                documentsArray &&
+                                documentsArray.length > 0
+                            ) {
                                 user.identity.documents = documentsArray;
                                 user.identity.outcome = "";
                                 user.identity.country = country;
                                 user.identity.fullName = fullName;
-                                user.identity.entityIdentifier = entityIdentifier;
-                                user.identity.birthOrCreationDate = birthOrCreationDate;
-                                user.identity.verified = VerificationStatus.UNDER_REVIEW;
+                                user.identity.entityIdentifier =
+                                    entityIdentifier;
+                                user.identity.birthOrCreationDate =
+                                    birthOrCreationDate;
+                                user.identity.verified =
+                                    VerificationStatus.UNDER_REVIEW;
 
                                 await user.save();
 
-                                status = "Identity verification request submitted.";
+                                status =
+                                    "Identity verification request submitted.";
                             } else {
-                                status = "You need to upload the requested documents to verify your identity on Zenith.";
+                                status =
+                                    "You need to upload the requested documents to verify your identity on Zenith.";
                             }
 
                             ok = true;
@@ -3251,9 +3746,8 @@ export class UserResolver {
                     }
                 } catch (error) {
                     logger.error(error);
-    
-                    status =
-                        "An error has occurred. Please try again later.";
+
+                    status = "An error has occurred. Please try again later.";
                 }
             }
         }
@@ -3271,7 +3765,7 @@ export class UserResolver {
     async usersToMention(
         @Arg("query", () => String) query: string,
         @Ctx() { payload }: AuthContext,
-        @Arg("limit", () => Int) limit: number,
+        @Arg("limit", () => Int) limit: number
     ): Promise<User[] | null> {
         const sanitizedQuery = query.replace(/[@#$]/g, "").trim();
         const likeQuery = `%${sanitizedQuery}%`;
@@ -3285,16 +3779,37 @@ export class UserResolver {
         try {
             const users = await this.userRepository
                 .createQueryBuilder("user")
-                .leftJoin(Follow, "follow", "follow.followerId = :userId AND follow.userId = user.id", { userId: payload.id })
-                .leftJoin(Block, "block1", "block1.userId = :userId AND block1.blockedId = user.id", { userId: payload.id })
-                .leftJoin(Block, "block2", "block2.blockedId = :userId AND block2.userId = user.id", { userId: payload.id })
+                .leftJoin(
+                    Follow,
+                    "follow",
+                    "follow.followerId = :userId AND follow.userId = user.id",
+                    { userId: payload.id }
+                )
+                .leftJoin(
+                    Block,
+                    "block1",
+                    "block1.userId = :userId AND block1.blockedId = user.id",
+                    { userId: payload.id }
+                )
+                .leftJoin(
+                    Block,
+                    "block2",
+                    "block2.blockedId = :userId AND block2.userId = user.id",
+                    { userId: payload.id }
+                )
                 .where("block1.id IS NULL AND block2.id IS NULL")
                 .andWhere("user.id != :userId", { userId: payload.id })
-                .andWhere(new Brackets(qb => {
-                    qb.where("user.name ILIKE :query", { query: `%${sanitizedQuery}%` })
-                    .orWhere("user.username ILIKE :query", { query: `%${sanitizedQuery}%` });
-                }))
-                .addSelect(`
+                .andWhere(
+                    new Brackets((qb) => {
+                        qb.where("user.name ILIKE :query", {
+                            query: `%${sanitizedQuery}%`,
+                        }).orWhere("user.username ILIKE :query", {
+                            query: `%${sanitizedQuery}%`,
+                        });
+                    })
+                )
+                .addSelect(
+                    `
                     CASE
                         WHEN user.username ILIKE :exactQuery THEN 100
                         WHEN user.name ILIKE :exactQuery THEN 90
@@ -3310,12 +3825,14 @@ export class UserResolver {
                         WHEN user.verification.verified = 'VERIFIED' THEN 5
                         ELSE 0
                     END
-                `, "score")
+                `,
+                    "score"
+                )
                 .orderBy("score", "DESC")
                 .limit(limit)
                 .setParameters({ exactQuery: sanitizedQuery, query: likeQuery })
                 .getMany();
-            
+
             return users;
         } catch (error) {
             logger.error(error);

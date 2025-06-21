@@ -200,59 +200,64 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({
     const observerRef = useRef<IntersectionObserver | null>(null);
     const viewedRef = useRef(false);
 
-    const setNotificationRef = useCallback((node: HTMLDivElement | null) => {
-        if (observerRef.current) {
-            observerRef.current.disconnect();
-        }
+    const setNotificationRef = useCallback(
+        (node: HTMLDivElement | null) => {
+            if (observerRef.current) {
+                observerRef.current.disconnect();
+            }
 
-        const options = {
-            root: null,
-            rootMargin: "0px",
-            threshold: 0.5,
-        };
+            const options = {
+                root: null,
+                rootMargin: "0px",
+                threshold: 0.5,
+            };
 
-        if (node) {
-            observerRef.current = new IntersectionObserver(([entry]) => {
-                if (entry.isIntersecting && !viewedRef.current) {
-                    viewedRef.current = true;
-                    
-                    viewNotification({
-                        variables: {
-                            notificationId: notification.notificationId,
-                        },
-                        update: (cache, { data: viewNotificationData }) => {
-                            if (
-                                viewNotificationData &&
-                                viewNotificationData.viewNotification
-                            ) {
-                                const existing =
-                                    cache.readQuery<UnseenNotificationsQuery>({
+            if (node) {
+                observerRef.current = new IntersectionObserver(([entry]) => {
+                    if (entry.isIntersecting && !viewedRef.current) {
+                        viewedRef.current = true;
+
+                        viewNotification({
+                            variables: {
+                                notificationId: notification.notificationId,
+                            },
+                            update: (cache, { data: viewNotificationData }) => {
+                                if (
+                                    viewNotificationData &&
+                                    viewNotificationData.viewNotification
+                                ) {
+                                    const existing =
+                                        cache.readQuery<UnseenNotificationsQuery>(
+                                            {
+                                                query: UnseenNotificationsDocument,
+                                            }
+                                        );
+
+                                    const existingUnseenNotifications =
+                                        existing?.unseenNotifications ?? [];
+
+                                    cache.writeQuery({
                                         query: UnseenNotificationsDocument,
+                                        data: {
+                                            unseenNotifications:
+                                                existingUnseenNotifications.filter(
+                                                    (n: any) =>
+                                                        n.notificationId !==
+                                                        notification.notificationId
+                                                ),
+                                        },
                                     });
+                                }
+                            },
+                        });
+                    }
+                }, options);
 
-                                const existingUnseenNotifications =
-                                    existing?.unseenNotifications ?? [];
-
-                                cache.writeQuery({
-                                    query: UnseenNotificationsDocument,
-                                    data: {
-                                        unseenNotifications:
-                                            existingUnseenNotifications.filter(
-                                                (n: any) =>
-                                                    n.notificationId !==
-                                                    notification.notificationId
-                                            ),
-                                    },
-                                });
-                            }
-                        },
-                    });
-                }
-            }, options);
-
-            observerRef.current.observe(node);
-        }
-    }, [viewNotification, notification]);
+                observerRef.current.observe(node);
+            }
+        },
+        [viewNotification, notification]
+    );
 
     const loading = userLoading || postLoading;
 
@@ -287,7 +292,9 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({
                         >
                             <ProfilePicture
                                 loading={userLoading}
-                                pictureUrl={user ? user.profile.profilePicture : ""}
+                                pictureUrl={
+                                    user ? user.profile.profilePicture : ""
+                                }
                                 type={user ? user.type : USER_TYPES.USER}
                                 size={32}
                                 title={user ? user.name : ""}

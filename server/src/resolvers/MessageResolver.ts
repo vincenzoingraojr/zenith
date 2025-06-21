@@ -1,7 +1,26 @@
 import { AuthContext } from "../types";
-import { Chat, ChatUser, Event, Message, MessageOrEvent, MessageViewLog } from "../entities/Message";
+import {
+    Chat,
+    ChatUser,
+    Event,
+    Message,
+    MessageOrEvent,
+    MessageViewLog,
+} from "../entities/Message";
 import { isAuth } from "../middleware/isAuth";
-import { Arg, Ctx, Field, Int, Mutation, ObjectType, Query, Resolver, Root, Subscription, UseMiddleware } from "type-graphql";
+import {
+    Arg,
+    Ctx,
+    Field,
+    Int,
+    Mutation,
+    ObjectType,
+    Query,
+    Resolver,
+    Root,
+    Subscription,
+    UseMiddleware,
+} from "type-graphql";
 import { FeedWrapper, FieldError } from "./common";
 import { v4 as uuidv4 } from "uuid";
 import { Block, Follow, User, UserDeviceToken } from "../entities/User";
@@ -18,7 +37,12 @@ import { logger } from "../helpers/logger";
 import { UserService } from "./UserService";
 import { NotificationService } from "./NotificationService";
 import { isUUID } from "class-validator";
-import { CHAT_TYPES, CHAT_USER_ROLES, EVENT_TYPES, MESSAGE_TYPES } from "../helpers/message/chatTypes";
+import {
+    CHAT_TYPES,
+    CHAT_USER_ROLES,
+    EVENT_TYPES,
+    MESSAGE_TYPES,
+} from "../helpers/message/chatTypes";
 import { EMPTY_CONTENT_REGEXP } from "../helpers/textConstants";
 import { MESSAGE_NOTIFICATION_TYPES } from "../helpers/notification/notificationTypes";
 import { getPresignedUrlForDeleteCommand } from "../helpers/getPresignedUrls";
@@ -44,7 +68,7 @@ export class ChatResponse {
 @ObjectType()
 export class PaginatedChatItems extends FeedWrapper {
     @Field(() => [MessageOrEvent])
-    chatItems: typeof MessageOrEvent[];
+    chatItems: (typeof MessageOrEvent)[];
 }
 
 @Resolver(Chat)
@@ -67,15 +91,14 @@ export class ChatResolver {
         this.messageRepository = appDataSource.getRepository(Message);
         this.eventRepository = appDataSource.getRepository(Event);
         this.chatUserRepository = appDataSource.getRepository(ChatUser);
-        this.messageNotificationRepository = appDataSource.getRepository(MessageNotification);
+        this.messageNotificationRepository =
+            appDataSource.getRepository(MessageNotification);
         this.blockRepository = appDataSource.getRepository(Block);
     }
 
     @Query(() => [Chat], { nullable: true })
     @UseMiddleware(isAuth)
-    async chats(
-        @Ctx() { payload }: AuthContext
-    ): Promise<Chat[] | null> {
+    async chats(@Ctx() { payload }: AuthContext): Promise<Chat[] | null> {
         if (!payload) {
             logger.warn("User not authenticated.");
 
@@ -90,12 +113,21 @@ export class ChatResolver {
     @Subscription(() => Chat, {
         topics: "NEW_CHAT",
         filter: ({ payload, args }) => {
-            const me = payload.users.find((user: ChatUser) => user.userId === args.userId);
+            const me = payload.users.find(
+                (user: ChatUser) => user.userId === args.userId
+            );
 
-            return payload.users.some((obj: ChatUser) => obj.userId === args.userId) && me.inside;
+            return (
+                payload.users.some(
+                    (obj: ChatUser) => obj.userId === args.userId
+                ) && me.inside
+            );
         },
     })
-    newChat(@Arg("userId", () => Int, { nullable: true }) _userId: number, @Root() chat: Chat): Chat {
+    newChat(
+        @Arg("userId", () => Int, { nullable: true }) _userId: number,
+        @Root() chat: Chat
+    ): Chat {
         return chat;
     }
 
@@ -103,16 +135,27 @@ export class ChatResolver {
         topics: "EDITED_CHAT_INFO",
         filter: async ({ payload, args }) => {
             const chatRepository = appDataSource.getRepository(Chat);
-            const chat = await chatRepository.findOne({ where: { chatId: args.chatId }, relations: ["users"] });
+            const chat = await chatRepository.findOne({
+                where: { chatId: args.chatId },
+                relations: ["users"],
+            });
 
             if (chat) {
-                return chat.users.some((obj: ChatUser) => obj.userId === args.userId) && payload.chatId === args.chatId;
+                return (
+                    chat.users.some(
+                        (obj: ChatUser) => obj.userId === args.userId
+                    ) && payload.chatId === args.chatId
+                );
             } else {
                 return false;
             }
         },
     })
-    editedChat(@Arg("userId", () => Int, { nullable: true }) _userId: number, @Arg("chatId", { nullable: true }) _chatId: string, @Root() chat: Chat): Chat {
+    editedChat(
+        @Arg("userId", () => Int, { nullable: true }) _userId: number,
+        @Arg("chatId", { nullable: true }) _chatId: string,
+        @Root() chat: Chat
+    ): Chat {
         return chat;
     }
 
@@ -133,16 +176,21 @@ export class ChatResolver {
 
             return null;
         }
-        
+
         try {
-            const chat = await this.chatRepository.findOne({ where: { chatId }, relations: ["users"] });
-            
+            const chat = await this.chatRepository.findOne({
+                where: { chatId },
+                relations: ["users"],
+            });
+
             if (!chat) {
                 logger.warn("Chat not found.");
 
                 return null;
             } else {
-                const isIdInArray = chat.users.some(obj => obj.userId === payload.id && obj.inside);
+                const isIdInArray = chat.users.some(
+                    (obj) => obj.userId === payload.id && obj.inside
+                );
 
                 if (isIdInArray) {
                     return chat;
@@ -162,7 +210,7 @@ export class ChatResolver {
     async usersToMessage(
         @Ctx() { payload }: AuthContext,
         @Arg("limit", () => Int) limit: number,
-        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null
     ): Promise<PaginatedUsers> {
         if (!payload) {
             logger.warn("User not authenticated.");
@@ -174,45 +222,74 @@ export class ChatResolver {
         }
 
         try {
-            const followRelations = await this.followRepository.find({ 
-                where: { 
+            const followRelations = await this.followRepository.find({
+                where: {
                     user: { id: payload.id },
-                }, 
-                relations: ["follower", "user"], 
+                },
+                relations: ["follower", "user"],
             });
 
-            const followers = followRelations.map(follow => follow.follower);
+            const followers = followRelations.map((follow) => follow.follower);
 
-            const everyoneUsers = await this.userRepository.find({ where: { deletedAt: IsNull(), userSettings: { incomingMessages: "everyone" } } });
+            const everyoneUsers = await this.userRepository.find({
+                where: {
+                    deletedAt: IsNull(),
+                    userSettings: { incomingMessages: "everyone" },
+                },
+            });
 
             const userIds: number[] = [];
 
             if (followers && followers.length > 0) {
-                const followerIds = followers.filter((follower) => follower.deletedAt === null).map((follower) => follower.id);   
-                userIds.push(...mergeAndDeduplicateArrays(everyoneUsers.filter((user) => user.id !== payload.id).map((user) => user.id), followerIds));
+                const followerIds = followers
+                    .filter((follower) => follower.deletedAt === null)
+                    .map((follower) => follower.id);
+                userIds.push(
+                    ...mergeAndDeduplicateArrays(
+                        everyoneUsers
+                            .filter((user) => user.id !== payload.id)
+                            .map((user) => user.id),
+                        followerIds
+                    )
+                );
             } else {
-                userIds.push(...everyoneUsers.filter((user) => user.id !== payload.id).map((user) => user.id));
+                userIds.push(
+                    ...everyoneUsers
+                        .filter((user) => user.id !== payload.id)
+                        .map((user) => user.id)
+                );
             }
 
-            const blockActions = await this.blockRepository.find({ where: { userId: payload.id } });
-            const blockedMeActions = await this.blockRepository.find({ where: { blockedId: payload.id } });
+            const blockActions = await this.blockRepository.find({
+                where: { userId: payload.id },
+            });
+            const blockedMeActions = await this.blockRepository.find({
+                where: { blockedId: payload.id },
+            });
 
             const blockedAccounts = blockActions.map((item) => item.blockedId);
-            const blockedMeAccounts = blockedMeActions.map((item) => item.userId);
+            const blockedMeAccounts = blockedMeActions.map(
+                (item) => item.userId
+            );
 
-            const blockArray = mergeAndDeduplicateArrays(blockedAccounts, blockedMeAccounts);
+            const blockArray = mergeAndDeduplicateArrays(
+                blockedAccounts,
+                blockedMeAccounts
+            );
             userIds.filter((item) => !blockArray.includes(item));
 
-            const users = await this.userRepository.find({ 
-                where: { 
-                    id: In(userIds), 
+            const users = await this.userRepository.find({
+                where: {
+                    id: In(userIds),
                     deletedAt: IsNull(),
-                    ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
-                }, 
+                    ...(cursor
+                        ? { createdAt: LessThan(new Date(parseInt(cursor))) }
+                        : {}),
+                },
                 order: { createdAt: "DESC" },
                 take: limit + 1,
             });
-        
+
             return {
                 users: users.slice(0, limit),
                 hasMore: users.length === limit + 1,
@@ -246,8 +323,10 @@ export class ChatResolver {
         }
 
         try {
-            const chat = await this.findChat(chatId, { payload } as AuthContext);
-            
+            const chat = await this.findChat(chatId, {
+                payload,
+            } as AuthContext);
+
             let result = null;
 
             if (!chat) {
@@ -256,7 +335,9 @@ export class ChatResolver {
                 return null;
             }
 
-            const me = chat.users.find(chatUser => chatUser.userId === payload.id);
+            const me = chat.users.find(
+                (chatUser) => chatUser.userId === payload.id
+            );
 
             if (!me) {
                 logger.warn("User not found in chat.");
@@ -264,13 +345,23 @@ export class ChatResolver {
                 return null;
             }
 
-            const messages = await this.messageRepository.find({ where: { chat: { chatId } }, relations: ["chat"], order: { createdAt: "ASC" } });
-            const visibleMessages = messages.filter((message) => !me.hiddenMessagesIds.includes(message.id));
-            const events = await this.eventRepository.find({ where: { chat: { chatId } }, relations: ["chat"], order: { createdAt: "ASC" } });
+            const messages = await this.messageRepository.find({
+                where: { chat: { chatId } },
+                relations: ["chat"],
+                order: { createdAt: "ASC" },
+            });
+            const visibleMessages = messages.filter(
+                (message) => !me.hiddenMessagesIds.includes(message.id)
+            );
+            const events = await this.eventRepository.find({
+                where: { chat: { chatId } },
+                relations: ["chat"],
+                order: { createdAt: "ASC" },
+            });
             const results = [...events, ...visibleMessages];
 
             let filteredResults = [];
-    
+
             for (const result of results) {
                 if (me.inside) {
                     if (result.createdAt >= me.joinedChat) {
@@ -283,8 +374,10 @@ export class ChatResolver {
                 }
             }
 
-            filteredResults.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-            
+            filteredResults.sort(
+                (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+            );
+
             result = filteredResults[filteredResults.length - 1];
 
             return result;
@@ -302,7 +395,7 @@ export class ChatResolver {
         @Arg("userIds", () => [Int]) userIds: number[],
         @Ctx() { payload }: AuthContext,
         @Arg("chatImage", () => String, { nullable: true }) chatImage?: string,
-        @Arg("chatTitle", () => String, { nullable: true }) chatTitle?: string,
+        @Arg("chatTitle", () => String, { nullable: true }) chatTitle?: string
     ): Promise<ChatResponse> {
         let status = "";
         let chat;
@@ -312,16 +405,24 @@ export class ChatResolver {
             status = "You're not authenticated.";
         } else {
             try {
-                const existingChats = await this.chatRepository.find({ where: { type }, relations: ["users"] });
+                const existingChats = await this.chatRepository.find({
+                    where: { type },
+                    relations: ["users"],
+                });
 
                 let existingChatId = undefined;
 
                 if (type === CHAT_TYPES.CHAT) {
                     for (const parent of existingChats) {
-                        const childIds = parent.users.map((child: ChatUser) => child.userId);
+                        const childIds = parent.users.map(
+                            (child: ChatUser) => child.userId
+                        );
                         const id = userIds[0];
 
-                        if (childIds.includes(payload.id) && childIds.includes(id)) {
+                        if (
+                            childIds.includes(payload.id) &&
+                            childIds.includes(id)
+                        ) {
                             existingChatId = parent.id;
                         }
                     }
@@ -332,15 +433,19 @@ export class ChatResolver {
 
                     await Promise.all(
                         userIds.map(async (id) => {
-                            const user = await this.userService.findUserById(id);
-                            
+                            const user = await this.userService.findUserById(
+                                id
+                            );
+
                             if (user) {
-                                const chatUser = await this.chatUserRepository.create({
-                                    role: CHAT_USER_ROLES.MEMBER,
-                                    userId: user.id,
-                                    joinedChat: new Date(),
-                                    inside: true,
-                                }).save();
+                                const chatUser = await this.chatUserRepository
+                                    .create({
+                                        role: CHAT_USER_ROLES.MEMBER,
+                                        userId: user.id,
+                                        joinedChat: new Date(),
+                                        inside: true,
+                                    })
+                                    .save();
 
                                 users.push(chatUser);
                             }
@@ -350,63 +455,96 @@ export class ChatResolver {
                     const me = await this.userService.findUserById(payload.id);
 
                     if (me) {
-                        const meChatUser = await this.chatUserRepository.create({
-                            role: type === CHAT_TYPES.CHAT ? CHAT_USER_ROLES.MEMBER : CHAT_USER_ROLES.ADMIN,
-                            userId: me.id,
-                            joinedChat: new Date(),
-                            inside: true,
-                        }).save();
+                        const meChatUser = await this.chatUserRepository
+                            .create({
+                                role:
+                                    type === CHAT_TYPES.CHAT
+                                        ? CHAT_USER_ROLES.MEMBER
+                                        : CHAT_USER_ROLES.ADMIN,
+                                userId: me.id,
+                                joinedChat: new Date(),
+                                inside: true,
+                            })
+                            .save();
 
                         users.push(meChatUser);
                     }
 
                     if (type === CHAT_TYPES.CHAT) {
-                        chat = await this.chatRepository.create({
-                            chatId: uuidv4(),
-                            creatorId: payload.id,
-                            type,
-                            users,
-                        }).save();
-                    } else if (type === CHAT_TYPES.GROUP && (users.length > 2 && users.length <= 100)) {
-                        chat = await this.chatRepository.create({
-                            chatId: uuidv4(),
-                            creatorId: payload.id,
-                            type,
-                            chatImage,
-                            chatTitle,
-                            users,
-                        }).save();
+                        chat = await this.chatRepository
+                            .create({
+                                chatId: uuidv4(),
+                                creatorId: payload.id,
+                                type,
+                                users,
+                            })
+                            .save();
+                    } else if (
+                        type === CHAT_TYPES.GROUP &&
+                        users.length > 2 &&
+                        users.length <= 100
+                    ) {
+                        chat = await this.chatRepository
+                            .create({
+                                chatId: uuidv4(),
+                                creatorId: payload.id,
+                                type,
+                                chatImage,
+                                chatTitle,
+                                users,
+                            })
+                            .save();
 
                         if (chat) {
                             pubSub.publish("NEW_CHAT", chat);
                         }
 
                         if (me) {
-                            const chatUsers = users.filter(user => user.userId !== me.id);
+                            const chatUsers = users.filter(
+                                (user) => user.userId !== me.id
+                            );
 
                             for (const chatUser of chatUsers) {
-                                const user = await this.userRepository.findOne({ where: { id: chatUser.userId } });
-                                
+                                const user = await this.userRepository.findOne({
+                                    where: { id: chatUser.userId },
+                                });
+
                                 if (user) {
-                                    const event = await this.eventRepository.create({
-                                        itemId: uuidv4(),
-                                        authorId: user.id,
-                                        type: EVENT_TYPES.CHAT,
-                                        resourceId: chat.id,
-                                        eventMessage: `${me.name} added ${user.name} to the group.`,
-                                        chat: await this.chatRepository.findOne({ where: { chatId: chat.chatId } }) as Chat,
-                                    }).save();
-                
-                                    pubSub.publish("NEW_MESSAGE_OR_EVENT", event);
+                                    const event = await this.eventRepository
+                                        .create({
+                                            itemId: uuidv4(),
+                                            authorId: user.id,
+                                            type: EVENT_TYPES.CHAT,
+                                            resourceId: chat.id,
+                                            eventMessage: `${me.name} added ${user.name} to the group.`,
+                                            chat: (await this.chatRepository.findOne(
+                                                {
+                                                    where: {
+                                                        chatId: chat.chatId,
+                                                    },
+                                                }
+                                            )) as Chat,
+                                        })
+                                        .save();
+
+                                    pubSub.publish(
+                                        "NEW_MESSAGE_OR_EVENT",
+                                        event
+                                    );
                                 }
                             }
                         }
                     }
                 } else {
-                    chat = await this.chatRepository.findOne({ where: { id: existingChatId, type }, relations: ["users"] });
-                    
+                    chat = await this.chatRepository.findOne({
+                        where: { id: existingChatId, type },
+                        relations: ["users"],
+                    });
+
                     if (chat) {
-                        const tempMe = chat.users.find(user => user.userId === payload.id);
+                        const tempMe = chat.users.find(
+                            (user) => user.userId === payload.id
+                        );
 
                         if (tempMe) {
                             if (!tempMe.inside) {
@@ -422,7 +560,7 @@ export class ChatResolver {
                 ok = true;
             } catch (error) {
                 logger.error(error);
-                
+
                 status = "An error occurred while creating the chat.";
             }
         }
@@ -439,7 +577,7 @@ export class ChatResolver {
     async addNewUsersToGroup(
         @Arg("chatId") chatId: string,
         @Arg("userIds", () => [Int]) userIds: number[],
-        @Ctx() { payload }: AuthContext,
+        @Ctx() { payload }: AuthContext
     ): Promise<ChatResponse> {
         let status = "";
         let ok = false;
@@ -452,7 +590,9 @@ export class ChatResolver {
             status = "You're not authenticated.";
         } else {
             try {
-                const existingChat = await this.findChat(chatId, { payload } as AuthContext);
+                const existingChat = await this.findChat(chatId, {
+                    payload,
+                } as AuthContext);
 
                 if (existingChat && existingChat.type === CHAT_TYPES.GROUP) {
                     let users: ChatUser[] = [];
@@ -460,18 +600,25 @@ export class ChatResolver {
 
                     await Promise.all(
                         userIds.map(async (id) => {
-                            const user = await this.userRepository.findOne({ where: { id, deletedAt: IsNull() } });
-                            const existingChatUser = existingChat.users.find((chatUser) => chatUser.userId === id);
-                            
+                            const user = await this.userRepository.findOne({
+                                where: { id, deletedAt: IsNull() },
+                            });
+                            const existingChatUser = existingChat.users.find(
+                                (chatUser) => chatUser.userId === id
+                            );
+
                             if (user) {
                                 if (!existingChatUser) {
-                                    const chatUser = await this.chatUserRepository.create({
-                                        role: CHAT_USER_ROLES.MEMBER,
-                                        userId: user.id,
-                                        joinedChat: new Date(),
-                                        inside: true,
-                                    }).save();
-        
+                                    const chatUser =
+                                        await this.chatUserRepository
+                                            .create({
+                                                role: CHAT_USER_ROLES.MEMBER,
+                                                userId: user.id,
+                                                joinedChat: new Date(),
+                                                inside: true,
+                                            })
+                                            .save();
+
                                     users.push(chatUser);
                                 } else {
                                     existingChatUser.inside = true;
@@ -491,23 +638,30 @@ export class ChatResolver {
                     pubSub.publish("ADDED_CHAT_USERS", actualUsers);
 
                     const me = await this.userService.findUserById(payload.id);
-                    
+
                     if (me) {
-                        for (const chatUser of actualUsers) {                    
-                            const event = await this.eventRepository.create({
-                                itemId: uuidv4(),
-                                authorId: chatUser.id,
-                                type: EVENT_TYPES.CHAT,
-                                resourceId: existingChat.id,
-                                eventMessage: `${me.name} added ${chatUser.name} to the group.`,
-                                chat: await this.chatRepository.findOne({ where: { chatId } }) as  Chat,
-                            }).save();
-        
+                        for (const chatUser of actualUsers) {
+                            const event = await this.eventRepository
+                                .create({
+                                    itemId: uuidv4(),
+                                    authorId: chatUser.id,
+                                    type: EVENT_TYPES.CHAT,
+                                    resourceId: existingChat.id,
+                                    eventMessage: `${me.name} added ${chatUser.name} to the group.`,
+                                    chat: (await this.chatRepository.findOne({
+                                        where: { chatId },
+                                    })) as Chat,
+                                })
+                                .save();
+
                             pubSub.publish("NEW_MESSAGE_OR_EVENT", event);
                         }
                     }
 
-                    const publishedChat = await this.chatRepository.findOne({ where: { chatId }, relations: ["users"] });
+                    const publishedChat = await this.chatRepository.findOne({
+                        where: { chatId },
+                        relations: ["users"],
+                    });
 
                     if (publishedChat) {
                         pubSub.publish("NEW_CHAT", publishedChat);
@@ -537,7 +691,7 @@ export class ChatResolver {
     async deleteOrAbandonChatOrGroup(
         @Arg("type") type: string,
         @Arg("chatId") chatId: string,
-        @Ctx() { payload }: AuthContext,
+        @Ctx() { payload }: AuthContext
     ): Promise<Boolean> {
         if (!payload) {
             logger.warn("User not authenticated.");
@@ -546,7 +700,10 @@ export class ChatResolver {
         }
 
         try {
-            const chat = await this.chatRepository.findOne({ where: { chatId, type }, relations: ["users"] });
+            const chat = await this.chatRepository.findOne({
+                where: { chatId, type },
+                relations: ["users"],
+            });
             const user = await this.userService.findUserById(payload.id);
 
             if (!chat || !user) {
@@ -554,33 +711,57 @@ export class ChatResolver {
 
                 return false;
             } else {
-                const me = chat.users.find(chatUser => chatUser.userId === user.id);
-                const otherChatUserIds = chat.users.filter(chatUser => chatUser.userId !== user.id).map(chatUser => chatUser.userId);
+                const me = chat.users.find(
+                    (chatUser) => chatUser.userId === user.id
+                );
+                const otherChatUserIds = chat.users
+                    .filter((chatUser) => chatUser.userId !== user.id)
+                    .map((chatUser) => chatUser.userId);
                 const ids = Array.from(new Set(otherChatUserIds));
 
-                const otherChatUsers = await this.userService.findUsersById(ids);
+                const otherChatUsers = await this.userService.findUsersById(
+                    ids
+                );
 
                 const chatUsers = [];
 
                 if (otherChatUsers && otherChatUsers.length > 0) {
-                    const otherChatUserIdsSet = new Set(otherChatUsers.map(user => user.id));
-                    chatUsers.push(...chat.users.filter((chatUser) => otherChatUserIdsSet.has(chatUser.userId)));
+                    const otherChatUserIdsSet = new Set(
+                        otherChatUsers.map((user) => user.id)
+                    );
+                    chatUsers.push(
+                        ...chat.users.filter((chatUser) =>
+                            otherChatUserIdsSet.has(chatUser.userId)
+                        )
+                    );
                 }
 
-                if (me && (me.role === CHAT_USER_ROLES.MEMBER || (me.role === CHAT_USER_ROLES.ADMIN && (chatUsers.every((user) => user.inside === false) || chatUsers.some(obj => obj.role === CHAT_USER_ROLES.ADMIN))))) {
+                if (
+                    me &&
+                    (me.role === CHAT_USER_ROLES.MEMBER ||
+                        (me.role === CHAT_USER_ROLES.ADMIN &&
+                            (chatUsers.every((user) => user.inside === false) ||
+                                chatUsers.some(
+                                    (obj) => obj.role === CHAT_USER_ROLES.ADMIN
+                                ))))
+                ) {
                     me.inside = false;
                     me.role = CHAT_USER_ROLES.MEMBER;
                     await me.save();
 
                     if (chat.type === CHAT_TYPES.GROUP) {
-                        const event = await this.eventRepository.create({
-                            itemId: uuidv4(),
-                            authorId: user.id,
-                            type: EVENT_TYPES.CHAT,
-                            resourceId: chat.id,
-                            eventMessage: `${user.name} left the group.`,
-                            chat: await this.chatRepository.findOne({ where: { chatId } }) as Chat,
-                        }).save();
+                        const event = await this.eventRepository
+                            .create({
+                                itemId: uuidv4(),
+                                authorId: user.id,
+                                type: EVENT_TYPES.CHAT,
+                                resourceId: chat.id,
+                                eventMessage: `${user.name} left the group.`,
+                                chat: (await this.chatRepository.findOne({
+                                    where: { chatId },
+                                })) as Chat,
+                            })
+                            .save();
 
                         me.lastExit = event.createdAt;
                         await me.save();
@@ -591,12 +772,20 @@ export class ChatResolver {
                     }
 
                     if (chat.users.every((user) => user.inside === false)) {
-                        const chatToDelete = await this.chatRepository.findOne({ where: { chatId } });
-                        
+                        const chatToDelete = await this.chatRepository.findOne({
+                            where: { chatId },
+                        });
+
                         if (chatToDelete) {
-                            await this.chatUserRepository.delete({ chat: chatToDelete });
-                            await this.messageRepository.delete({ chat: chatToDelete });
-                            await this.eventRepository.delete({ chat: chatToDelete });
+                            await this.chatUserRepository.delete({
+                                chat: chatToDelete,
+                            });
+                            await this.messageRepository.delete({
+                                chat: chatToDelete,
+                            });
+                            await this.eventRepository.delete({
+                                chat: chatToDelete,
+                            });
                             await this.chatRepository.delete({ chatId, type });
                         }
 
@@ -606,7 +795,8 @@ export class ChatResolver {
                     }
 
                     return true;
-                } {
+                }
+                {
                     return false;
                 }
             }
@@ -622,7 +812,7 @@ export class ChatResolver {
     async removeUserFromGroup(
         @Arg("chatId") chatId: string,
         @Arg("userId", () => Int) userId: number,
-        @Ctx() { payload }: AuthContext,
+        @Ctx() { payload }: AuthContext
     ): Promise<Boolean> {
         if (!payload) {
             logger.warn("User not authenticated.");
@@ -637,7 +827,10 @@ export class ChatResolver {
         }
 
         try {
-            const chat = await this.chatRepository.findOne({ where: { chatId, type: CHAT_TYPES.GROUP }, relations: ["users"] });
+            const chat = await this.chatRepository.findOne({
+                where: { chatId, type: CHAT_TYPES.GROUP },
+                relations: ["users"],
+            });
             const user = await this.userService.findUserById(userId);
 
             if (!chat || !user) {
@@ -645,25 +838,35 @@ export class ChatResolver {
 
                 return false;
             } else {
-                const me = chat.users.find(chatUser => chatUser.userId === payload.id);
-                const chatUser = chat.users.find(chatUser => chatUser.userId === user.id);
+                const me = chat.users.find(
+                    (chatUser) => chatUser.userId === payload.id
+                );
+                const chatUser = chat.users.find(
+                    (chatUser) => chatUser.userId === user.id
+                );
 
                 if (me && me.role === CHAT_USER_ROLES.ADMIN && chatUser) {
                     chatUser.inside = false;
                     chatUser.role = CHAT_USER_ROLES.MEMBER;
                     await chatUser.save();
-                    
-                    const meUser = await this.userService.findUserById(payload.id);
+
+                    const meUser = await this.userService.findUserById(
+                        payload.id
+                    );
 
                     if (meUser) {
-                        const event = await this.eventRepository.create({
-                            itemId: uuidv4(),
-                            authorId: user.id,
-                            type: EVENT_TYPES.CHAT,
-                            resourceId: chat.id,
-                            eventMessage: `${user.name} has been removed from the group by ${meUser.name}.`,
-                            chat: await this.chatRepository.findOne({ where: { chatId } }) as Chat,
-                        }).save();
+                        const event = await this.eventRepository
+                            .create({
+                                itemId: uuidv4(),
+                                authorId: user.id,
+                                type: EVENT_TYPES.CHAT,
+                                resourceId: chat.id,
+                                eventMessage: `${user.name} has been removed from the group by ${meUser.name}.`,
+                                chat: (await this.chatRepository.findOne({
+                                    where: { chatId },
+                                })) as Chat,
+                            })
+                            .save();
 
                         chatUser.lastExit = event.createdAt;
                         await chatUser.save();
@@ -676,7 +879,8 @@ export class ChatResolver {
                     } else {
                         return false;
                     }
-                } {
+                }
+                {
                     return false;
                 }
             }
@@ -693,7 +897,7 @@ export class ChatResolver {
         @Arg("chatId") chatId: string,
         @Arg("userId", () => Int) userId: number,
         @Arg("role", { nullable: true }) role: string,
-        @Ctx() { payload }: AuthContext,
+        @Ctx() { payload }: AuthContext
     ): Promise<Boolean> {
         if (!isUUID(chatId)) {
             logger.warn("Invalid chatId provided.");
@@ -703,19 +907,26 @@ export class ChatResolver {
 
         if (!payload) {
             logger.warn("User not authenticated.");
-            
+
             return false;
         }
-        
+
         try {
-            const chat = await this.chatRepository.findOne({ where: { chatId, type: CHAT_TYPES.GROUP }, relations: ["users"] });
+            const chat = await this.chatRepository.findOne({
+                where: { chatId, type: CHAT_TYPES.GROUP },
+                relations: ["users"],
+            });
             const user = await this.userService.findUserById(userId);
 
             if (!chat || !user || role === "" || role === "Role") {
                 return false;
             } else {
-                const me = chat.users.find(chatUser => chatUser.userId === payload.id);
-                const chatUser = chat.users.find(chatUser => chatUser.userId === user.id);
+                const me = chat.users.find(
+                    (chatUser) => chatUser.userId === payload.id
+                );
+                const chatUser = chat.users.find(
+                    (chatUser) => chatUser.userId === user.id
+                );
 
                 if (me && me.role === CHAT_USER_ROLES.ADMIN && chatUser) {
                     chatUser.role = role;
@@ -724,7 +935,8 @@ export class ChatResolver {
                     pubSub.publish("EDITED_CHAT_USER", chatUser);
 
                     return true;
-                } {
+                }
+                {
                     return false;
                 }
             }
@@ -739,7 +951,7 @@ export class ChatResolver {
     @UseMiddleware(isAuth)
     async deleteMeFromGroup(
         @Arg("chatId") chatId: string,
-        @Ctx() { payload }: AuthContext,
+        @Ctx() { payload }: AuthContext
     ): Promise<Boolean> {
         if (!payload) {
             logger.warn("User not authenticated.");
@@ -754,7 +966,10 @@ export class ChatResolver {
         }
 
         try {
-            const chat = await this.chatRepository.findOne({ where: { chatId, type: CHAT_TYPES.GROUP }, relations: ["users"] });
+            const chat = await this.chatRepository.findOne({
+                where: { chatId, type: CHAT_TYPES.GROUP },
+                relations: ["users"],
+            });
             const user = await this.userService.findUserById(payload.id);
 
             if (!chat || !user) {
@@ -762,13 +977,16 @@ export class ChatResolver {
 
                 return false;
             } else {
-                const me = chat.users.find(chatUser => chatUser.userId === user.id);
+                const me = chat.users.find(
+                    (chatUser) => chatUser.userId === user.id
+                );
 
                 if (me && !me.inside) {
                     await me.remove();
 
                     return true;
-                } {
+                }
+                {
                     return false;
                 }
             }
@@ -785,7 +1003,7 @@ export class ChatResolver {
         @Arg("chatId") chatId: string,
         @Arg("chatTitle") chatTitle: string,
         @Arg("chatImage") chatImage: string,
-        @Ctx() { payload }: AuthContext,
+        @Ctx() { payload }: AuthContext
     ): Promise<ChatResponse> {
         let status = "";
         let ok = false;
@@ -798,7 +1016,10 @@ export class ChatResolver {
             status = "You're not authenticated.";
         } else {
             try {
-                const chat = await this.chatRepository.findOne({ where: { chatId, type: CHAT_TYPES.GROUP }, relations: ["users"] });
+                const chat = await this.chatRepository.findOne({
+                    where: { chatId, type: CHAT_TYPES.GROUP },
+                    relations: ["users"],
+                });
                 const user = await this.userService.findUserById(payload.id);
 
                 if (!chat || !user) {
@@ -809,20 +1030,24 @@ export class ChatResolver {
 
                     await chat.save();
 
-                    const event = await this.eventRepository.create({
-                        itemId: uuidv4(),
-                        authorId: user.id,
-                        type: EVENT_TYPES.CHAT,
-                        resourceId: chat.id,
-                        eventMessage: `${user.name} edited the group information.`,
-                        chat: await this.chatRepository.findOne({ where: { chatId } }) as Chat,
-                    }).save();
+                    const event = await this.eventRepository
+                        .create({
+                            itemId: uuidv4(),
+                            authorId: user.id,
+                            type: EVENT_TYPES.CHAT,
+                            resourceId: chat.id,
+                            eventMessage: `${user.name} edited the group information.`,
+                            chat: (await this.chatRepository.findOne({
+                                where: { chatId },
+                            })) as Chat,
+                        })
+                        .save();
 
                     pubSub.publish("NEW_MESSAGE_OR_EVENT", event);
                     pubSub.publish("EDITED_CHAT_INFO", chat);
 
                     status = "The group information has been updated.";
-                    
+
                     ok = true;
                 }
             } catch (error) {
@@ -842,7 +1067,7 @@ export class ChatResolver {
     @UseMiddleware(isAuth)
     async chatUsers(
         @Arg("chatId", { nullable: true }) chatId: string,
-        @Ctx() { payload }: AuthContext,
+        @Ctx() { payload }: AuthContext
     ): Promise<User[] | null> {
         if (!payload) {
             logger.warn("User not authenticated.");
@@ -857,7 +1082,9 @@ export class ChatResolver {
         }
 
         try {
-            const chat = await this.findChat(chatId, { payload } as AuthContext);
+            const chat = await this.findChat(chatId, {
+                payload,
+            } as AuthContext);
             const user = await this.userService.findUserById(payload.id);
 
             if (!chat || !user) {
@@ -866,13 +1093,20 @@ export class ChatResolver {
                 return null;
             }
 
-            const me = chat.users.find(chatUser => chatUser.userId === user.id && chatUser.inside);
-            
+            const me = chat.users.find(
+                (chatUser) => chatUser.userId === user.id && chatUser.inside
+            );
+
             if (!me) {
                 return null;
             }
 
-            const otherChatUserIds = chat.users.filter(chatUser => chatUser.userId !== me.userId && chatUser.inside).map(chatUser => chatUser.userId);
+            const otherChatUserIds = chat.users
+                .filter(
+                    (chatUser) =>
+                        chatUser.userId !== me.userId && chatUser.inside
+                )
+                .map((chatUser) => chatUser.userId);
             const ids = Array.from(new Set(otherChatUserIds));
 
             const otherChatUsers = await this.userService.findUsersById(ids);
@@ -889,19 +1123,25 @@ export class ChatResolver {
         topics: "ADDED_CHAT_USERS",
         filter: async ({ payload, args }) => {
             const chatRepository = appDataSource.getRepository(Chat);
-            const chat = await chatRepository.findOne({ where: { chatId: args.chatId }, relations: ["users"] });
+            const chat = await chatRepository.findOne({
+                where: { chatId: args.chatId },
+                relations: ["users"],
+            });
 
             if (chat) {
-                const users = chat.users.map(chatUser => chatUser.userId);
+                const users = chat.users.map((chatUser) => chatUser.userId);
                 const addedUsers = payload.map((user: User) => user.id);
 
-                return addedUsers.every((id: number) => users.includes(id));               
+                return addedUsers.every((id: number) => users.includes(id));
             } else {
                 return false;
             }
         },
     })
-    addedChatUsers(@Arg("chatId", { nullable: true }) _chatId: string, @Root() chatUsers: User[]): User[] {
+    addedChatUsers(
+        @Arg("chatId", { nullable: true }) _chatId: string,
+        @Root() chatUsers: User[]
+    ): User[] {
         return chatUsers;
     }
 
@@ -911,7 +1151,10 @@ export class ChatResolver {
             return payload.userId === args.userId;
         },
     })
-    editedChatUser(@Arg("userId", () => Int, { nullable: true }) _userId: number, @Root() chatUser: ChatUser): ChatUser {
+    editedChatUser(
+        @Arg("userId", () => Int, { nullable: true }) _userId: number,
+        @Root() chatUser: ChatUser
+    ): ChatUser {
         return chatUser;
     }
 
@@ -919,17 +1162,23 @@ export class ChatResolver {
         topics: "DELETED_CHAT_USER",
         filter: async ({ payload, args }) => {
             const chatRepository = appDataSource.getRepository(Chat);
-            const chat = await chatRepository.findOne({ where: { chatId: args.chatId }, relations: ["users"] });
-            
+            const chat = await chatRepository.findOne({
+                where: { chatId: args.chatId },
+                relations: ["users"],
+            });
+
             if (chat) {
-                const users = chat.users.map(chatUser => chatUser.userId);
+                const users = chat.users.map((chatUser) => chatUser.userId);
                 return users.includes(payload.id);
             } else {
                 return false;
             }
         },
     })
-    deletedChatUser(@Arg("chatId", { nullable: true }) _chatId: string, @Root() chatUser: User): User {
+    deletedChatUser(
+        @Arg("chatId", { nullable: true }) _chatId: string,
+        @Root() chatUser: User
+    ): User {
         return chatUser;
     }
 }
@@ -954,9 +1203,12 @@ export class MessageResolver {
         this.chatRepository = appDataSource.getRepository(Chat);
         this.messageRepository = appDataSource.getRepository(Message);
         this.eventRepository = appDataSource.getRepository(Event);
-        this.messageViewLogRepository = appDataSource.getRepository(MessageViewLog);
-        this.messageNotificationRepository = appDataSource.getRepository(MessageNotification);
-        this.userDeviceTokenRepository = appDataSource.getRepository(UserDeviceToken);
+        this.messageViewLogRepository =
+            appDataSource.getRepository(MessageViewLog);
+        this.messageNotificationRepository =
+            appDataSource.getRepository(MessageNotification);
+        this.userDeviceTokenRepository =
+            appDataSource.getRepository(UserDeviceToken);
         this.blockRepository = appDataSource.getRepository(Block);
     }
 
@@ -971,7 +1223,7 @@ export class MessageResolver {
         @Arg("chatId", { nullable: true }) chatId?: string,
         @Arg("userId", { nullable: true }) userId?: number,
         @Arg("media", { nullable: true }) media?: string,
-        @Arg("item", { nullable: true }) item?: string,
+        @Arg("item", { nullable: true }) item?: string
     ) {
         let mediaObject = null;
         let itemObject = null;
@@ -988,10 +1240,14 @@ export class MessageResolver {
             logger.warn("User not authenticated.");
 
             return null;
-        } 
-        
+        }
+
         try {
-            if (EMPTY_CONTENT_REGEXP.test(content) && !mediaObject && !itemObject) {
+            if (
+                EMPTY_CONTENT_REGEXP.test(content) &&
+                !mediaObject &&
+                !itemObject
+            ) {
                 logger.warn("Empty content provided.");
 
                 return null;
@@ -1000,13 +1256,20 @@ export class MessageResolver {
             let chat = null;
 
             if (chatPreview && !chatId && userId) {
-                const chatResponse = await this.chatResolver.createChatOrGroup("chat", [userId], { payload } as AuthContext);
-            
+                const chatResponse = await this.chatResolver.createChatOrGroup(
+                    "chat",
+                    [userId],
+                    { payload } as AuthContext
+                );
+
                 if (chatResponse.ok) {
                     chat = chatResponse.chat;
                 }
             } else {
-                chat = await this.chatRepository.findOne({ where: { chatId }, relations: ["users", "messages"] });
+                chat = await this.chatRepository.findOne({
+                    where: { chatId },
+                    relations: ["users", "messages"],
+                });
             }
 
             if (!chat) {
@@ -1015,24 +1278,28 @@ export class MessageResolver {
                 return null;
             }
 
-            const message = await this.messageRepository.create({
-                itemId: uuidv4(),
-                authorId: payload.id,
-                type,
-                content,
-                media: {
-                    src: mediaObject.src,
-                    type: mediaObject.type,
-                },
-                messageItem: {
-                    type: itemObject.type,
-                    id: itemObject.id,
-                },
-                mentions: lumen.extractMentions(content),
-                hashtags: lumen.extractHashtags(content),
-                chat: await this.chatRepository.findOne({ where: { chatId } }) as Chat,
-                isReplyToId,
-            }).save();
+            const message = await this.messageRepository
+                .create({
+                    itemId: uuidv4(),
+                    authorId: payload.id,
+                    type,
+                    content,
+                    media: {
+                        src: mediaObject.src,
+                        type: mediaObject.type,
+                    },
+                    messageItem: {
+                        type: itemObject.type,
+                        id: itemObject.id,
+                    },
+                    mentions: lumen.extractMentions(content),
+                    hashtags: lumen.extractHashtags(content),
+                    chat: (await this.chatRepository.findOne({
+                        where: { chatId },
+                    })) as Chat,
+                    isReplyToId,
+                })
+                .save();
 
             if (message) {
                 chat.messages.push(message);
@@ -1040,22 +1307,36 @@ export class MessageResolver {
                 await chat.save();
 
                 let chatTypeBlocked = false;
-                
+
                 if (chat.type === CHAT_TYPES.CHAT) {
-                    const users = chat.users.filter(chatUser => chatUser.inside === false);
+                    const users = chat.users.filter(
+                        (chatUser) => chatUser.inside === false
+                    );
 
                     for (const user of users) {
                         user.inside = true;
                         user.joinedChat = message.createdAt;
-                        
+
                         await user.save();
                     }
 
-                    const otherChatUsers = chat.users.filter(chatUser => chatUser.userId !== payload.id);
+                    const otherChatUsers = chat.users.filter(
+                        (chatUser) => chatUser.userId !== payload.id
+                    );
 
-                    const userBlockedByMe = await this.blockRepository.findOne({ where: { blockedId: otherChatUsers[0].userId, userId: payload.id } });
-                    const userBlockedMe = await this.blockRepository.findOne({ where: { blockedId: payload.id, userId: otherChatUsers[0].userId } });
-    
+                    const userBlockedByMe = await this.blockRepository.findOne({
+                        where: {
+                            blockedId: otherChatUsers[0].userId,
+                            userId: payload.id,
+                        },
+                    });
+                    const userBlockedMe = await this.blockRepository.findOne({
+                        where: {
+                            blockedId: payload.id,
+                            userId: otherChatUsers[0].userId,
+                        },
+                    });
+
                     if (userBlockedByMe || userBlockedMe) {
                         otherChatUsers[0].hiddenMessagesIds.push(message.id);
 
@@ -1069,28 +1350,70 @@ export class MessageResolver {
                     pubSub.publish("NEW_CHAT", chat);
                     pubSub.publish("NEW_MESSAGE_OR_EVENT", message);
 
-                    const insideUsers = chat.users.filter((user) => user.inside && user.userId !== payload.id).map((user) => user.userId);
+                    const insideUsers = chat.users
+                        .filter(
+                            (user) => user.inside && user.userId !== payload.id
+                        )
+                        .map((user) => user.userId);
 
                     const me = await this.userService.findUserById(payload.id);
 
-                    const chatUsers = await this.userService.findUsersById(insideUsers);
+                    const chatUsers = await this.userService.findUsersById(
+                        insideUsers
+                    );
 
                     if (chatUsers && me && chatUsers.length > 0) {
                         for (const chatUser of chatUsers) {
-                            const notificationContent = message.content.length > 0 ? message.content : (message.media.src.length > 0 ? `Sent a ${message.media.type}` : (message.messageItem.type.length > 0 ? `Sent a ${message.messageItem.type}` : "Sent a message"));
-                            const notification = await this.notificationService.createMessageNotification(payload.id, chatUser.id, message.id, message.type, MESSAGE_NOTIFICATION_TYPES.MESSAGE, notificationContent, chat.chatId);
+                            const notificationContent =
+                                message.content.length > 0
+                                    ? message.content
+                                    : message.media.src.length > 0
+                                    ? `Sent a ${message.media.type}`
+                                    : message.messageItem.type.length > 0
+                                    ? `Sent a ${message.messageItem.type}`
+                                    : "Sent a message";
+                            const notification =
+                                await this.notificationService.createMessageNotification(
+                                    payload.id,
+                                    chatUser.id,
+                                    message.id,
+                                    message.type,
+                                    MESSAGE_NOTIFICATION_TYPES.MESSAGE,
+                                    notificationContent,
+                                    chat.chatId
+                                );
 
                             if (notification) {
-                                pubSub.publish("NEW_CHAT_NOTIFICATION", notification);
+                                pubSub.publish(
+                                    "NEW_CHAT_NOTIFICATION",
+                                    notification
+                                );
 
-                                const tokens = await this.userDeviceTokenRepository.find({ where: { userId: chatUser.id } });
+                                const tokens =
+                                    await this.userDeviceTokenRepository.find({
+                                        where: { userId: chatUser.id },
+                                    });
                                 const pushNotification: FirebaseNotification = {
                                     title: `${me.name} (@${me.username})`,
                                     body: notificationContent,
-                                    imageUrl: (message.type === MESSAGE_TYPES.IMAGE ? message.media.src : (me.profile.profilePicture.length > 0 ? me.profile.profilePicture : "https://img.zncdn.net/static/profile-picture.png")),
+                                    imageUrl:
+                                        message.type === MESSAGE_TYPES.IMAGE
+                                            ? message.media.src
+                                            : me.profile.profilePicture.length >
+                                              0
+                                            ? me.profile.profilePicture
+                                            : "https://img.zncdn.net/static/profile-picture.png",
                                 };
                                 const link = `${process.env.CLIENT_ORIGIN}/messages/${chat.chatId}`;
-                                await sendPushNotifications(tokens as UserDeviceToken[], pushNotification, link, { username: chatUser.username, type: notification.notificationType });
+                                await sendPushNotifications(
+                                    tokens as UserDeviceToken[],
+                                    pushNotification,
+                                    link,
+                                    {
+                                        username: chatUser.username,
+                                        type: notification.notificationType,
+                                    }
+                                );
                             }
                         }
                     }
@@ -1115,7 +1438,7 @@ export class MessageResolver {
         @Arg("chatId") chatId: string,
         @Arg("deleteMedia", { nullable: true }) deleteMedia: boolean = false,
         @Ctx() { payload }: AuthContext,
-        @Arg("media", { nullable: true }) media?: string,
+        @Arg("media", { nullable: true }) media?: string
     ) {
         if (!isUUID(messageId) || !isUUID(chatId)) {
             logger.warn("Invalid messageId or chatId provided.");
@@ -1133,16 +1456,18 @@ export class MessageResolver {
             logger.warn("User not authenticated.");
 
             return false;
-        } 
+        }
 
         try {
             if (EMPTY_CONTENT_REGEXP.test(content) && !mediaObject) {
                 logger.warn("Empty content provided.");
 
                 return false;
-            } 
-            
-            const chat = await this.chatRepository.findOne({ where: { chatId } });
+            }
+
+            const chat = await this.chatRepository.findOne({
+                where: { chatId },
+            });
 
             if (!chat) {
                 logger.warn("Chat not found.");
@@ -1164,23 +1489,34 @@ export class MessageResolver {
                 }
             );
 
-            const message = await this.findMessage(chat.chatId, messageId, { payload } as AuthContext);
+            const message = await this.findMessage(chat.chatId, messageId, {
+                payload,
+            } as AuthContext);
 
             if (message) {
                 if (message.media.src.length > 0 && deleteMedia) {
-                    const existingKey =
-                        message.media.src.replace(
-                            `https://${message.media.type.includes("image") ? "img" : "vid"}.zncdn.net/`, ""
-                        );
+                    const existingKey = message.media.src.replace(
+                        `https://${
+                            message.media.type.includes("image") ? "img" : "vid"
+                        }.zncdn.net/`,
+                        ""
+                    );
 
-                    const url = await getPresignedUrlForDeleteCommand(existingKey, message.media.type);
+                    const url = await getPresignedUrlForDeleteCommand(
+                        existingKey,
+                        message.media.type
+                    );
 
-                    await axios.delete(url).then(() => {
-                        logger.error("Message media successfully deleted.");
-                    })
-                    .catch((error) => {
-                        logger.error(`An error occurred while deleting the message media. Error code: ${error.code}.`);
-                    });
+                    await axios
+                        .delete(url)
+                        .then(() => {
+                            logger.error("Message media successfully deleted.");
+                        })
+                        .catch((error) => {
+                            logger.error(
+                                `An error occurred while deleting the message media. Error code: ${error.code}.`
+                            );
+                        });
 
                     message.media.src = "";
                     message.media.type = "";
@@ -1194,7 +1530,7 @@ export class MessageResolver {
 
                     await message.save();
                 }
-                
+
                 pubSub.publish("EDITED_MESSAGE", message);
             }
 
@@ -1215,7 +1551,7 @@ export class MessageResolver {
     ) {
         if (!payload) {
             return null;
-        } 
+        }
 
         if (!isUUID(chatId) || !isUUID(messageId)) {
             logger.warn("Invalid chatId or messageId provided.");
@@ -1224,14 +1560,19 @@ export class MessageResolver {
         }
 
         try {
-            const chat = await this.chatResolver.findChat(chatId, { payload } as AuthContext);
-            
+            const chat = await this.chatResolver.findChat(chatId, {
+                payload,
+            } as AuthContext);
+
             if (!chat) {
                 logger.warn("Chat not found.");
 
                 return null;
             } else {
-                const message = await this.messageRepository.findOne({ where: { itemId: messageId, chat: { chatId } }, relations: ["chat"] });
+                const message = await this.messageRepository.findOne({
+                    where: { itemId: messageId, chat: { chatId } },
+                    relations: ["chat"],
+                });
 
                 if (message) {
                     return message;
@@ -1251,7 +1592,7 @@ export class MessageResolver {
     async findMessageById(
         @Arg("chatId") chatId: string,
         @Arg("id", () => Int, { nullable: true }) id: number,
-        @Ctx() { payload }: AuthContext,
+        @Ctx() { payload }: AuthContext
     ) {
         if (!isUUID(chatId)) {
             logger.warn("Invalid chatId provided.");
@@ -1261,17 +1602,22 @@ export class MessageResolver {
 
         if (!payload) {
             return null;
-        } 
-        
+        }
+
         try {
-            const chat = await this.chatResolver.findChat(chatId, { payload } as AuthContext);
-            
+            const chat = await this.chatResolver.findChat(chatId, {
+                payload,
+            } as AuthContext);
+
             if (!chat) {
                 logger.warn("Chat not found.");
 
                 return null;
             } else {
-                const message = await this.messageRepository.findOne({ where: { id, chat: { chatId } }, relations: ["chat"] });
+                const message = await this.messageRepository.findOne({
+                    where: { id, chat: { chatId } },
+                    relations: ["chat"],
+                });
 
                 if (message) {
                     return message;
@@ -1306,8 +1652,12 @@ export class MessageResolver {
         }
 
         try {
-            const chat = await this.chatResolver.findChat(chatId, { payload } as AuthContext);
-            const message = await this.findMessage(chatId, messageId, { payload } as AuthContext);
+            const chat = await this.chatResolver.findChat(chatId, {
+                payload,
+            } as AuthContext);
+            const message = await this.findMessage(chatId, messageId, {
+                payload,
+            } as AuthContext);
 
             if (!chat || !message) {
                 logger.warn("Chat or message not found.");
@@ -1315,7 +1665,9 @@ export class MessageResolver {
                 return false;
             }
 
-            const me = chat.users.find(chatUser => chatUser.userId === payload.id);
+            const me = chat.users.find(
+                (chatUser) => chatUser.userId === payload.id
+            );
 
             if (me) {
                 me.hiddenMessagesIds.push(message.id);
@@ -1325,30 +1677,48 @@ export class MessageResolver {
                 return false;
             }
 
-            if (chat.users.every((user) => user.hiddenMessagesIds.includes(message.id))) {
-                chat.messages = chat.messages.filter((item) => item.id !== message.id);
+            if (
+                chat.users.every((user) =>
+                    user.hiddenMessagesIds.includes(message.id)
+                )
+            ) {
+                chat.messages = chat.messages.filter(
+                    (item) => item.id !== message.id
+                );
 
                 await chat.save();
 
                 if (message.media.src.length > 0) {
-                    const existingKey =
-                        message.media.src.replace(
-                            `https://${message.media.type.includes("image") ? "img" : "vid"}.zncdn.net/`, ""
-                        );
+                    const existingKey = message.media.src.replace(
+                        `https://${
+                            message.media.type.includes("image") ? "img" : "vid"
+                        }.zncdn.net/`,
+                        ""
+                    );
 
-                    const url = await getPresignedUrlForDeleteCommand(existingKey, message.media.type);
+                    const url = await getPresignedUrlForDeleteCommand(
+                        existingKey,
+                        message.media.type
+                    );
 
-                    await axios.delete(url).then(() => {
-                        logger.error("Message media successfully deleted.");
-                    })
-                    .catch((error) => {
-                        logger.error(`An error occurred while deleting the message media. Error code: ${error.code}.`);
-                    });
+                    await axios
+                        .delete(url)
+                        .then(() => {
+                            logger.error("Message media successfully deleted.");
+                        })
+                        .catch((error) => {
+                            logger.error(
+                                `An error occurred while deleting the message media. Error code: ${error.code}.`
+                            );
+                        });
                 }
 
                 await this.messageRepository.delete({ itemId: messageId });
 
-                await this.messageNotificationRepository.delete({ resourceId: message.id, resourceType: MESSAGE_NOTIFICATION_TYPES.MESSAGE });
+                await this.messageNotificationRepository.delete({
+                    resourceId: message.id,
+                    resourceType: MESSAGE_NOTIFICATION_TYPES.MESSAGE,
+                });
             }
 
             return true;
@@ -1364,7 +1734,7 @@ export class MessageResolver {
     async deleteMessageForEveryone(
         @Arg("chatId") chatId: string,
         @Arg("messageId") messageId: string,
-        @Ctx() { payload }: AuthContext,
+        @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
             logger.warn("User not authenticated.");
@@ -1379,8 +1749,13 @@ export class MessageResolver {
         }
 
         try {
-            const chat = await this.chatResolver.findChat(chatId, { payload } as AuthContext);
-            const message = await this.messageRepository.findOne({ where: { itemId: messageId, authorId: payload.id }, relations: ["chat"] });
+            const chat = await this.chatResolver.findChat(chatId, {
+                payload,
+            } as AuthContext);
+            const message = await this.messageRepository.findOne({
+                where: { itemId: messageId, authorId: payload.id },
+                relations: ["chat"],
+            });
 
             if (!chat || !message) {
                 logger.warn("Chat or message not found.");
@@ -1388,59 +1763,86 @@ export class MessageResolver {
                 return false;
             }
 
-            await this.messageRepository.delete({ itemId: messageId, chat: { chatId: chat.chatId }, authorId: payload.id });
+            await this.messageRepository.delete({
+                itemId: messageId,
+                chat: { chatId: chat.chatId },
+                authorId: payload.id,
+            });
 
             pubSub.publish("DELETED_MESSAGE_OR_EVENT", message);
 
-            chat.messages = chat.messages.filter((item) => item.id !== message.id);
+            chat.messages = chat.messages.filter(
+                (item) => item.id !== message.id
+            );
 
             await chat.save();
 
             if (message.media.src.length > 0) {
-                const existingKey =
-                    message.media.src.replace(
-                        `https://${message.media.type.includes("image") ? "img" : "vid"}.zncdn.net/`, ""
-                    );
+                const existingKey = message.media.src.replace(
+                    `https://${
+                        message.media.type.includes("image") ? "img" : "vid"
+                    }.zncdn.net/`,
+                    ""
+                );
 
-                const url = await getPresignedUrlForDeleteCommand(existingKey, message.media.type);
+                const url = await getPresignedUrlForDeleteCommand(
+                    existingKey,
+                    message.media.type
+                );
 
-                await axios.delete(url).then(() => {
-                    logger.error("Message media successfully deleted.");
-                })
-                .catch((error) => {
-                    logger.error(`An error occurred while deleting the message media. Error code: ${error.code}.`);
-                });
+                await axios
+                    .delete(url)
+                    .then(() => {
+                        logger.error("Message media successfully deleted.");
+                    })
+                    .catch((error) => {
+                        logger.error(
+                            `An error occurred while deleting the message media. Error code: ${error.code}.`
+                        );
+                    });
             }
 
-            const event = await this.eventRepository.create({
-                itemId: uuidv4(),
-                authorId: payload.id,
-                resourceId: message.id,
-                type: EVENT_TYPES.MESSAGE,
-                eventMessage: "This message has been deleted.",
-                chat: await this.chatRepository.findOne({ where: { chatId } }) as Chat,
-                createdAt: message.createdAt,
-            }).save();
+            const event = await this.eventRepository
+                .create({
+                    itemId: uuidv4(),
+                    authorId: payload.id,
+                    resourceId: message.id,
+                    type: EVENT_TYPES.MESSAGE,
+                    eventMessage: "This message has been deleted.",
+                    chat: (await this.chatRepository.findOne({
+                        where: { chatId },
+                    })) as Chat,
+                    createdAt: message.createdAt,
+                })
+                .save();
 
             pubSub.publish("NEW_MESSAGE_OR_EVENT", event);
 
-            const deletedNotifications = await this.messageNotificationRepository.find({
-                where: {
-                    chatId,
-                    resourceId: message.id,
-                    resourceType: MESSAGE_NOTIFICATION_TYPES.MESSAGE,
-                    creatorId: payload.id,
-                }
-            });
+            const deletedNotifications =
+                await this.messageNotificationRepository.find({
+                    where: {
+                        chatId,
+                        resourceId: message.id,
+                        resourceType: MESSAGE_NOTIFICATION_TYPES.MESSAGE,
+                        creatorId: payload.id,
+                    },
+                });
 
             if (deletedNotifications.length > 0) {
                 for (const deletedNotification of deletedNotifications) {
-                    await this.messageNotificationRepository.delete({ resourceId: message.id, creatorId: payload.id, notificationId: deletedNotification.notificationId });
+                    await this.messageNotificationRepository.delete({
+                        resourceId: message.id,
+                        creatorId: payload.id,
+                        notificationId: deletedNotification.notificationId,
+                    });
 
-                    pubSub.publish("DELETED_CHAT_NOTIFICATION", deletedNotification);
+                    pubSub.publish(
+                        "DELETED_CHAT_NOTIFICATION",
+                        deletedNotification
+                    );
                 }
             }
-            
+
             return true;
         } catch (error) {
             logger.error(error);
@@ -1455,7 +1857,7 @@ export class MessageResolver {
         @Arg("chatId", { nullable: true }) chatId: string,
         @Arg("limit", () => Int) limit: number,
         @Ctx() { payload }: AuthContext,
-        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null
     ): Promise<PaginatedChatItems> {
         if (!payload) {
             logger.warn("User not authenticated.");
@@ -1467,7 +1869,9 @@ export class MessageResolver {
         }
 
         try {
-            const chat = await this.chatResolver.findChat(chatId, { payload } as AuthContext);
+            const chat = await this.chatResolver.findChat(chatId, {
+                payload,
+            } as AuthContext);
 
             if (!chat) {
                 logger.warn("Chat not found.");
@@ -1478,7 +1882,9 @@ export class MessageResolver {
                 };
             }
 
-            const me = chat.users.find(chatUser => chatUser.userId === payload.id);
+            const me = chat.users.find(
+                (chatUser) => chatUser.userId === payload.id
+            );
 
             if (!me) {
                 logger.warn("User not found in the chat.");
@@ -1489,28 +1895,34 @@ export class MessageResolver {
                 };
             }
 
-            const messages = await this.messageRepository.find({ 
-                where: { 
+            const messages = await this.messageRepository.find({
+                where: {
                     chat: { chatId },
-                    ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
-                }, 
-                relations: ["chat"], 
+                    ...(cursor
+                        ? { createdAt: LessThan(new Date(parseInt(cursor))) }
+                        : {}),
+                },
+                relations: ["chat"],
                 take: limit * 2,
-                order: { createdAt: "ASC" } 
+                order: { createdAt: "ASC" },
             });
-            const visibleMessages = messages.filter((message) => !me.hiddenMessagesIds.includes(message.id));
-            const events = await this.eventRepository.find({ 
-                where: { 
+            const visibleMessages = messages.filter(
+                (message) => !me.hiddenMessagesIds.includes(message.id)
+            );
+            const events = await this.eventRepository.find({
+                where: {
                     chat: { chatId },
-                    ...(cursor ? { createdAt: LessThan(new Date(parseInt(cursor))) } : {}),
-                }, 
-                relations: ["chat"], 
+                    ...(cursor
+                        ? { createdAt: LessThan(new Date(parseInt(cursor))) }
+                        : {}),
+                },
+                relations: ["chat"],
                 take: limit * 2,
-                order: { createdAt: "ASC" } 
+                order: { createdAt: "ASC" },
             });
             const results = [...events, ...visibleMessages];
 
-            const filteredResults = results.filter(result => {
+            const filteredResults = results.filter((result) => {
                 if (me.inside) {
                     return result.createdAt >= me.joinedChat;
                 } else {
@@ -1518,7 +1930,9 @@ export class MessageResolver {
                 }
             });
 
-            const sortedResults = filteredResults.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+            const sortedResults = filteredResults.sort(
+                (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+            );
 
             return {
                 chatItems: sortedResults.slice(0, limit),
@@ -1538,10 +1952,15 @@ export class MessageResolver {
         topics: "NEW_MESSAGE_OR_EVENT",
         filter: async ({ payload, args }) => {
             const chatRepository = appDataSource.getRepository(Chat);
-            const chat = await chatRepository.findOne({ where: { chatId: args.chatId }, relations: ["users"] });
-            
+            const chat = await chatRepository.findOne({
+                where: { chatId: args.chatId },
+                relations: ["users"],
+            });
+
             if (chat) {
-                const me = chat.users.find((user) => user.userId === args.userId);
+                const me = chat.users.find(
+                    (user) => user.userId === args.userId
+                );
 
                 if (me && me.inside) {
                     return payload.chat.chatId === args.chatId;
@@ -1553,7 +1972,11 @@ export class MessageResolver {
             }
         },
     })
-    newMessageOrEvent(@Arg("chatId", { nullable: true }) _chatId: string, @Arg("userId", () => Int, { nullable: true }) _userId: number, @Root() messageOrEvent: typeof MessageOrEvent): typeof MessageOrEvent {
+    newMessageOrEvent(
+        @Arg("chatId", { nullable: true }) _chatId: string,
+        @Arg("userId", () => Int, { nullable: true }) _userId: number,
+        @Root() messageOrEvent: typeof MessageOrEvent
+    ): typeof MessageOrEvent {
         return messageOrEvent;
     }
 
@@ -1561,10 +1984,15 @@ export class MessageResolver {
         topics: "DELETED_MESSAGE_OR_EVENT",
         filter: async ({ payload, args }) => {
             const chatRepository = appDataSource.getRepository(Chat);
-            const chat = await chatRepository.findOne({ where: { chatId: args.chatId }, relations: ["users"] });
-            
+            const chat = await chatRepository.findOne({
+                where: { chatId: args.chatId },
+                relations: ["users"],
+            });
+
             if (chat) {
-                const me = chat.users.find((user) => user.userId === args.userId);
+                const me = chat.users.find(
+                    (user) => user.userId === args.userId
+                );
 
                 if (me && me.inside) {
                     return payload.chat.chatId === args.chatId;
@@ -1576,7 +2004,11 @@ export class MessageResolver {
             }
         },
     })
-    deletedMessageOrEvent(@Arg("chatId", { nullable: true }) _chatId: string, @Arg("userId", () => Int, { nullable: true }) _userId: number, @Root() messageOrEvent: typeof MessageOrEvent): typeof MessageOrEvent {
+    deletedMessageOrEvent(
+        @Arg("chatId", { nullable: true }) _chatId: string,
+        @Arg("userId", () => Int, { nullable: true }) _userId: number,
+        @Root() messageOrEvent: typeof MessageOrEvent
+    ): typeof MessageOrEvent {
         return messageOrEvent;
     }
 
@@ -1585,7 +2017,7 @@ export class MessageResolver {
     async viewMessage(
         @Arg("messageId") messageId: string,
         @Arg("chatId") chatId: string,
-        @Ctx() { payload }: AuthContext,
+        @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
             logger.warn("User not authenticated.");
@@ -1600,15 +2032,21 @@ export class MessageResolver {
         }
 
         try {
-            const message = await this.findMessage(chatId, messageId, { payload } as AuthContext);
+            const message = await this.findMessage(chatId, messageId, {
+                payload,
+            } as AuthContext);
 
-            const messageViewLog = await this.messageViewLogRepository.findOne({ where: { messageId, userId: payload.id } });
-            
+            const messageViewLog = await this.messageViewLogRepository.findOne({
+                where: { messageId, userId: payload.id },
+            });
+
             if (!messageViewLog) {
-                await this.messageViewLogRepository.create({
-                    messageId,
-                    userId: payload.id,
-                }).save();
+                await this.messageViewLogRepository
+                    .create({
+                        messageId,
+                        userId: payload.id,
+                    })
+                    .save();
             }
 
             if (!message) {
@@ -1617,14 +2055,22 @@ export class MessageResolver {
                 return null;
             }
 
-            const chat = await this.chatResolver.findChat(chatId, { payload } as AuthContext);
+            const chat = await this.chatResolver.findChat(chatId, {
+                payload,
+            } as AuthContext);
 
-            const messageViewLogs = await this.messageViewLogRepository.find({ where: { messageId } });
+            const messageViewLogs = await this.messageViewLogRepository.find({
+                where: { messageId },
+            });
 
             if (message.status === MessageStatus.SENT && chat) {
-                const chatUserIds = chat.users.filter((user) => user.inside).map((user) => user.userId);
-                const usersViewedIds = messageViewLogs.map((view) => view.userId);
-            
+                const chatUserIds = chat.users
+                    .filter((user) => user.inside)
+                    .map((user) => user.userId);
+                const usersViewedIds = messageViewLogs.map(
+                    (view) => view.userId
+                );
+
                 if (chatUserIds.every((id) => usersViewedIds.includes(id))) {
                     message.status = MessageStatus.VIEWED;
                     await message.save();
@@ -1647,7 +2093,10 @@ export class MessageResolver {
             return payload.messageId === args.messageId;
         },
     })
-    editedMessage(@Arg("messageId", { nullable: true }) _messageId: string, @Root() message: Message): Message {
+    editedMessage(
+        @Arg("messageId", { nullable: true }) _messageId: string,
+        @Root() message: Message
+    ): Message {
         return message;
     }
 }

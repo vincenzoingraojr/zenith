@@ -85,7 +85,8 @@ export const useIsAffiliatedTo = (userId?: number) => {
     });
 
     return {
-        isAffiliatedData: data && data.isAffiliatedTo ? data.isAffiliatedTo : null,
+        isAffiliatedData:
+            data && data.isAffiliatedTo ? data.isAffiliatedTo : null,
         loading,
         error,
     };
@@ -101,4 +102,4 @@ export const useHasThisUserAsAffiliate = (id?: number, userId?: number) => {
     });
 
     return data?.hasThisUserAsAffiliate || false;
-}
+};

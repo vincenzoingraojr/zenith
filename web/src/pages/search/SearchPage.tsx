@@ -50,7 +50,7 @@ function SearchPage() {
                                 toggleOptions={() => handleOptionsClick(0)}
                                 children={
                                     <>
-                                        <OptionComponent 
+                                        <OptionComponent
                                             title="Advanced search"
                                             onClick={() => {}}
                                             icon={
@@ -61,7 +61,7 @@ function SearchPage() {
                                             }
                                             text="Advanced search"
                                         />
-                                        <OptionComponent 
+                                        <OptionComponent
                                             title="Search settings"
                                             onClick={() => {}}
                                             icon={

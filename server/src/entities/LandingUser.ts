@@ -1,8 +1,5 @@
 import { Field, ObjectType } from "type-graphql";
-import {
-    Entity,
-    Column,
-} from "typeorm";
+import { Entity, Column } from "typeorm";
 import { BaseItem } from "./BaseItem";
 
 @ObjectType()

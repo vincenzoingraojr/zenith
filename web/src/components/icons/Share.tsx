@@ -13,6 +13,6 @@ const Share: FunctionComponent<IconSizeProps> = ({ size }) => {
             </svg>
         </DynamicSizeIcon>
     );
-}
+};
 
 export default Share;

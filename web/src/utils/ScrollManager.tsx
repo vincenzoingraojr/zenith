@@ -16,7 +16,7 @@ const scrollPositions = new Map<string, number>();
 function useFeedScroll(feedKey: string | null, debounceMs = 200) {
     useEffect(() => {
         if (!feedKey) return;
-        
+
         const saved = scrollPositions.get(`scroll-${feedKey}`);
         if (saved !== undefined) {
             window.scrollTo(0, saved);
@@ -27,18 +27,18 @@ function useFeedScroll(feedKey: string | null, debounceMs = 200) {
 
     useEffect(() => {
         if (!feedKey) return;
-        
+
         const handleScroll = debounce(() => {
             scrollPositions.set(`scroll-${feedKey}`, window.scrollY);
         }, debounceMs);
 
         window.addEventListener("scroll", handleScroll);
-        
+
         return () => {
             window.removeEventListener("scroll", handleScroll);
 
-            if (handleScroll.cancel) { 
-                handleScroll.cancel(); 
+            if (handleScroll.cancel) {
+                handleScroll.cancel();
             }
         };
     }, [feedKey, debounceMs]);
@@ -60,9 +60,8 @@ const ScrollManager = () => {
     const isPop = navigationType === "POP";
 
     const feedPaths = ["/home", "/notifications"];
-    const matchingFeed = feedPaths.find((path) =>
-        location.pathname.startsWith(path)
-    ) || null;
+    const matchingFeed =
+        feedPaths.find((path) => location.pathname.startsWith(path)) || null;
 
     useFeedScroll(matchingFeed);
 

@@ -62,7 +62,7 @@ const cache = new InMemoryCache({
                         if (!args?.cursor) {
                             return incoming;
                         }
-                        
+
                         return {
                             likes: [
                                 ...(existing?.likes || []),

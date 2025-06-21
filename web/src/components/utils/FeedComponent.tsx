@@ -1,6 +1,11 @@
 import { ApolloError } from "@apollo/client";
 import { FunctionComponent, useEffect, useRef } from "react";
-import { EndContainer, FeedLoading, NoElementsAlert, PageBlock } from "../../styles/global";
+import {
+    EndContainer,
+    FeedLoading,
+    NoElementsAlert,
+    PageBlock,
+} from "../../styles/global";
 import LoadingComponent from "./LoadingComponent";
 import ErrorOrItemNotFound from "./ErrorOrItemNotFound";
 import { ERROR_SOMETHING_WENT_WRONG } from "../../utils/constants";
@@ -14,7 +19,14 @@ interface FeedComponentProps {
     isFeedEmpty: boolean;
 }
 
-const FeedComponent: FunctionComponent<FeedComponentProps> = ({ feedContent, loading, error, loadMore, noElementsText, isFeedEmpty }) => {
+const FeedComponent: FunctionComponent<FeedComponentProps> = ({
+    feedContent,
+    loading,
+    error,
+    loadMore,
+    noElementsText,
+    isFeedEmpty,
+}) => {
     const endContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -46,12 +58,10 @@ const FeedComponent: FunctionComponent<FeedComponentProps> = ({ feedContent, loa
         };
     }, [loadMore, endContainerRef, loading]);
 
-    return (            
+    return (
         <>
             {isFeedEmpty ? (
-                <NoElementsAlert>
-                    {noElementsText}
-                </NoElementsAlert>
+                <NoElementsAlert>{noElementsText}</NoElementsAlert>
             ) : (
                 <>
                     {feedContent}
@@ -60,12 +70,8 @@ const FeedComponent: FunctionComponent<FeedComponentProps> = ({ feedContent, loa
                             {error ? (
                                 <ErrorOrItemNotFound
                                     isError={true}
-                                    title={
-                                        ERROR_SOMETHING_WENT_WRONG.title
-                                    }
-                                    content={
-                                        ERROR_SOMETHING_WENT_WRONG.message
-                                    }
+                                    title={ERROR_SOMETHING_WENT_WRONG.title}
+                                    content={ERROR_SOMETHING_WENT_WRONG.message}
                                 />
                             ) : (
                                 <FeedLoading>
@@ -74,20 +80,14 @@ const FeedComponent: FunctionComponent<FeedComponentProps> = ({ feedContent, loa
                             )}
                         </>
                     ) : (
-                        <PageBlock
-                            ref={
-                                endContainerRef
-                            }
-                        >
-                            <EndContainer>
-                                ⋅
-                            </EndContainer>
+                        <PageBlock ref={endContainerRef}>
+                            <EndContainer>⋅</EndContainer>
                         </PageBlock>
                     )}
                 </>
             )}
         </>
     );
-}
+};
 
 export default FeedComponent;

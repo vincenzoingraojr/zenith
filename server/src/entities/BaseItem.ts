@@ -1,5 +1,10 @@
 import { Field, Int, ObjectType } from "type-graphql";
-import { BaseEntity, CreateDateColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import {
+    BaseEntity,
+    CreateDateColumn,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
+} from "typeorm";
 
 @ObjectType()
 export class BaseItem extends BaseEntity {

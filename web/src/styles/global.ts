@@ -1065,7 +1065,7 @@ export const SvgIcon = styled.div`
 `;
 
 export const ControlContainer = styled.div.attrs(
-    (props: { size?: number, isDisabled?: boolean }) => props
+    (props: { size?: number; isDisabled?: boolean }) => props
 )`
     display: flex;
     align-items: center;

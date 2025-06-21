@@ -303,10 +303,14 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({
                                     },
                                 });
 
-                                const { posts: existingPosts, totalCount: oldCount, hasMore } = (
+                                const {
+                                    posts: existingPosts,
+                                    totalCount: oldCount,
+                                    hasMore,
+                                } = (
                                     existing as {
                                         postComments: {
-                                            posts: Post[],
+                                            posts: Post[];
                                             totalCount: number;
                                             hasMore: boolean;
                                         };

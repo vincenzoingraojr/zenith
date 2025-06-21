@@ -2,7 +2,11 @@ import * as crypto from "crypto";
 import { SecretKey } from "../entities/User";
 
 const algorithm = "aes-256-cbc";
-const key = crypto.createHash("sha256").update(String(process.env.SECRET_KEY)).digest("base64").substring(0, 32);
+const key = crypto
+    .createHash("sha256")
+    .update(String(process.env.SECRET_KEY))
+    .digest("base64")
+    .substring(0, 32);
 
 export function encrypt(text: string): SecretKey {
     const iv = crypto.randomBytes(16);

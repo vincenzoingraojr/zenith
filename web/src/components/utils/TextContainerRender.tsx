@@ -29,10 +29,10 @@ const TextContainerRender: FunctionComponent<TextContainerRenderProps> = ({
     const options = {
         replace: (domNode: any) => {
             if (domNode.name === "a" && domNode.attribs.class) {
-                if (
-                    domNode.attribs.class.includes("username")
-                ) {
-                    if (mentions.includes(domNode.attribs["data-screen-name"])) {
+                if (domNode.attribs.class.includes("username")) {
+                    if (
+                        mentions.includes(domNode.attribs["data-screen-name"])
+                    ) {
                         return (
                             <Link
                                 to={domNode.attribs.href}
@@ -47,9 +47,7 @@ const TextContainerRender: FunctionComponent<TextContainerRenderProps> = ({
                             </Link>
                         );
                     } else {
-                        return (
-                            <>{domNode.children[0].data}</>
-                        )
+                        return <>{domNode.children[0].data}</>;
                     }
                 } else if (domNode.attribs.class.includes("hashtag")) {
                     return (

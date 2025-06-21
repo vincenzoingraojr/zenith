@@ -1,6 +1,7 @@
 export const BAD_REQUEST_MESSAGE = "Bad request. Please try again.";
 
-export const STANDARD_ERROR_MESSAGE = "An unknown error has occurred. Please try again.";
+export const STANDARD_ERROR_MESSAGE =
+    "An unknown error has occurred. Please try again.";
 
 export const ERROR_SOMETHING_WENT_WRONG: { title: string; message: string } = {
     title: "Something went wrong",

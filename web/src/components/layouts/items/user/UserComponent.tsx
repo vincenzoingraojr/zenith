@@ -1,8 +1,23 @@
 import { FunctionComponent, useMemo } from "react";
-import { useFindUserById, useFollowData, useHasBlockedMeData, useIsUserBlockedData, useMeData } from "../../../../utils/userQueries";
+import {
+    useFindUserById,
+    useFollowData,
+    useHasBlockedMeData,
+    useIsUserBlockedData,
+    useMeData,
+} from "../../../../utils/userQueries";
 import { useUserMutations } from "../../../../utils/userMutations";
 import styled from "styled-components";
-import { ItemLoading, PageBlock, RightContainer, SmallButton, UserFullName, UserFullNameContainer, UserInfo, UsernameContainer } from "../../../../styles/global";
+import {
+    ItemLoading,
+    PageBlock,
+    RightContainer,
+    SmallButton,
+    UserFullName,
+    UserFullNameContainer,
+    UserInfo,
+    UsernameContainer,
+} from "../../../../styles/global";
 import ProfilePicture from "../../../utils/ProfilePicture";
 import VerificationBadge from "../../../utils/VerificationBadge";
 import AffiliationIcon from "../../../utils/AffiliationIcon";
@@ -44,30 +59,35 @@ const UserInfoContainer = styled.div`
     overflow: hidden;
 `;
 
-const FollowButton = styled(SmallButton).attrs((props: { dark: boolean }) => props)`
+const FollowButton = styled(SmallButton).attrs(
+    (props: { dark: boolean }) => props
+)`
     border: none;
     background-color: ${({ theme }) => theme.color};
     color: ${(props) => (props.dark ? COLORS.black : COLORS.white)};
-    
+
     &:hover,
     &:focus {
         background-color: ${({ theme }) => theme.color};
     }
 `;
 
-const UserComponent: FunctionComponent<UserComponentProps> = ({ id, origin }) => {
+const UserComponent: FunctionComponent<UserComponentProps> = ({
+    id,
+    origin,
+}) => {
     const { user, loading } = useFindUserById(id);
     const { me } = useMeData();
     const { isDarkMode } = useThemeContext();
 
     const { handleFollowUser } = useUserMutations();
-    
+
     const isFollowedByMe = useFollowData(user?.id);
-    
+
     const follow = useMemo(() => isFollowedByMe, [isFollowedByMe]);
-    
+
     const isBlockedByMe = useIsUserBlockedData(user?.id);
-    
+
     const blockedByMe = useMemo(() => isBlockedByMe, [isBlockedByMe]);
 
     const hasBlockedMe = useHasBlockedMeData(user?.id);
@@ -93,7 +113,9 @@ const UserComponent: FunctionComponent<UserComponentProps> = ({ id, origin }) =>
                     onClick={() => {
                         navigate(`/${user.username}`);
                     }}
-                    onKeyDown={(e) => e.key === "Enter" && navigate(`/${user.username}`)}
+                    onKeyDown={(e) =>
+                        e.key === "Enter" && navigate(`/${user.username}`)
+                    }
                 >
                     <UserInfoContainer>
                         <ProfilePicture
@@ -105,63 +127,54 @@ const UserComponent: FunctionComponent<UserComponentProps> = ({ id, origin }) =>
                         />
                         <UserInfo>
                             <UserFullNameContainer>
-                                <UserFullName>
-                                    {user.name}
-                                </UserFullName>
-                                {user.verification.verified ===
-                                    "VERIFIED" && (
+                                <UserFullName>{user.name}</UserFullName>
+                                {user.verification.verified === "VERIFIED" && (
                                     <VerificationBadge
                                         type={user.type}
                                         verifiedSince={
-                                            user.verification
-                                                .verifiedSince
+                                            user.verification.verifiedSince
                                                 ? new Date(
-                                                        parseInt(
-                                                            user.verification.verifiedSince
-                                                        )
-                                                    ).toLocaleString("en-us", {
-                                                        month: "long",
-                                                        year: "numeric",
-                                                    })
+                                                      parseInt(
+                                                          user.verification
+                                                              .verifiedSince
+                                                      )
+                                                  ).toLocaleString("en-us", {
+                                                      month: "long",
+                                                      year: "numeric",
+                                                  })
                                                 : undefined
                                         }
                                         size={18}
                                     />
                                 )}
-                                <AffiliationIcon
-                                    userId={user.id}
-                                    size={18}
-                                />
+                                <AffiliationIcon userId={user.id} size={18} />
                             </UserFullNameContainer>
                             <UsernameContainer>
                                 @{user.username}
                             </UsernameContainer>
                         </UserInfo>
                     </UserInfoContainer>
-                    {(me && me.id !== user.id && !blockedByMe && !blockedMe) && (
+                    {me && me.id !== user.id && !blockedByMe && !blockedMe && (
                         <RightContainer>
                             <FollowButton
                                 dark={isDarkMode}
                                 type="button"
-                                title={`${follow
-                                        ? "Unfollow"
-                                        : "Follow"} 
+                                title={`${follow ? "Unfollow" : "Follow"} 
                                     @
-                                    ${
-                                        user.username
-                                    }`}
-                                aria-label={`${follow
-                                        ? "Unfollow"
-                                        : "Follow"} 
+                                    ${user.username}`}
+                                aria-label={`${follow ? "Unfollow" : "Follow"} 
                                     @
-                                    ${
-                                        user.username
-                                    }`}
+                                    ${user.username}`}
                                 onClick={async (e) => {
                                     e.stopPropagation();
-                                    
-                                    const response = await handleFollowUser(user.id, user.username, origin, follow ? true : false)
-                                                                                                
+
+                                    const response = await handleFollowUser(
+                                        user.id,
+                                        user.username,
+                                        origin,
+                                        follow ? true : false
+                                    );
+
                                     addToast(response);
                                 }}
                             >
@@ -173,6 +186,6 @@ const UserComponent: FunctionComponent<UserComponentProps> = ({ id, origin }) =>
             )}
         </PageBlock>
     );
-}
+};
 
 export default UserComponent;

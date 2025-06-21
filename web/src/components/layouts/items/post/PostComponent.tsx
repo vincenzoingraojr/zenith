@@ -1,7 +1,11 @@
-import { FunctionComponent, useCallback, useEffect, useMemo, useRef } from "react";
 import {
-    Post,
-} from "../../../../generated/graphql";
+    FunctionComponent,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+} from "react";
+import { Post } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -30,7 +34,13 @@ import {
     processDate,
 } from "../../../../utils/processDate";
 import Pen from "../../../icons/Pen";
-import { useHasThisUserAsAffiliate, useFollowData, useHasBlockedMeData, useIsUserBlockedData, useMeData } from "../../../../utils/userQueries";
+import {
+    useHasThisUserAsAffiliate,
+    useFollowData,
+    useHasBlockedMeData,
+    useIsUserBlockedData,
+    useMeData,
+} from "../../../../utils/userQueries";
 import Bin from "../../../icons/Bin";
 import FollowIcon from "../../../icons/FollowIcon";
 import Chain from "../../../icons/Chain";
@@ -258,35 +268,50 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
 
     const location = useLocation();
 
-    const { handleDeletePost, handleLikePost, handleRepost, handleBookmark, handleViewFeedItem, handleRevokeMention } = usePostMutations();
+    const {
+        handleDeletePost,
+        handleLikePost,
+        handleRepost,
+        handleBookmark,
+        handleViewFeedItem,
+        handleRevokeMention,
+    } = usePostMutations();
 
     const observerRef = useRef<IntersectionObserver | null>(null);
     const viewedRef = useRef(false);
 
-    const setPostRef = useCallback((node: HTMLDivElement | null) => {
-        if (observerRef.current) {
-            observerRef.current.disconnect();
-            observerRef.current = null;
-        }
+    const setPostRef = useCallback(
+        (node: HTMLDivElement | null) => {
+            if (observerRef.current) {
+                observerRef.current.disconnect();
+                observerRef.current = null;
+            }
 
-        const options = {
-            root: null,
-            rootMargin: "0px",
-            threshold: 0.5,
-        };
+            const options = {
+                root: null,
+                rootMargin: "0px",
+                threshold: 0.5,
+            };
 
-        if (node) {
-            observerRef.current = new IntersectionObserver(([entry]) => {
-                if (entry.isIntersecting && !viewedRef.current) {
-                    viewedRef.current = true;
+            if (node) {
+                observerRef.current = new IntersectionObserver(([entry]) => {
+                    if (entry.isIntersecting && !viewedRef.current) {
+                        viewedRef.current = true;
 
-                    handleViewFeedItem(post.itemId, post.type, false, origin);
-                }
-            }, options);
+                        handleViewFeedItem(
+                            post.itemId,
+                            post.type,
+                            false,
+                            origin
+                        );
+                    }
+                }, options);
 
-            observerRef.current.observe(node);
-        }
-    }, [handleViewFeedItem, post.itemId, post.type, origin]);
+                observerRef.current.observe(node);
+            }
+        },
+        [handleViewFeedItem, post.itemId, post.type, origin]
+    );
 
     useEffect(() => {
         return () => {
@@ -340,7 +365,10 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
     const blockedMe = useMemo(() => hasBlockedMe, [hasBlockedMe]);
 
     const isAffiliatedToMe = useHasThisUserAsAffiliate(me?.id, post.authorId);
-    const isAffiliatedToAuthor = useHasThisUserAsAffiliate(post.authorId, me?.id);
+    const isAffiliatedToAuthor = useHasThisUserAsAffiliate(
+        post.authorId,
+        me?.id
+    );
 
     const affiliation = useMemo(() => {
         return isAffiliatedToMe || isAffiliatedToAuthor;
@@ -353,7 +381,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
     const views = postStats?.views || 0;
 
     const postMentions = useGetPostMentions(post.itemId);
-    
+
     const mentions = postMentions?.mentions || [];
 
     return (
@@ -396,9 +424,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                         />
                         <UserInfo>
                             <UserFullNameContainer>
-                                <UserFullName>
-                                    {post.author.name}
-                                </UserFullName>
+                                <UserFullName>{post.author.name}</UserFullName>
                                 {post.author.verification.verified ===
                                     "VERIFIED" && (
                                     <VerificationBadge
@@ -494,9 +520,19 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                     <OptionComponent
                                                         title="Delete this post"
                                                         onClick={async () => {
-                                                            const response = await handleDeletePost(post.itemId, post.id, post.type === POST_TYPES.COMMENT, post.isReplyToId, post.isReplyToType);
+                                                            const response =
+                                                                await handleDeletePost(
+                                                                    post.itemId,
+                                                                    post.id,
+                                                                    post.type ===
+                                                                        POST_TYPES.COMMENT,
+                                                                    post.isReplyToId,
+                                                                    post.isReplyToType
+                                                                );
 
-                                                            addToast(response.status);
+                                                            addToast(
+                                                                response.status
+                                                            );
                                                         }}
                                                         icon={
                                                             <Bin
@@ -511,58 +547,107 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                                 </>
                                             ) : (
                                                 <>
-                                                    {(!blockedByMe && !blockedMe) && (
-                                                        <OptionComponent
-                                                            title={`${
-                                                                follow
-                                                                    ? "Unfollow"
-                                                                    : "Follow"
-                                                            } @${
-                                                                post.author.username
-                                                            }`}
-                                                            onClick={async () => {
-                                                                const response = await handleFollowUser(post.authorId, post.author.username, origin, follow ? true : false)
-                                                            
-                                                                addToast(response);
-                                                            }}
-                                                            icon={
-                                                                <FollowIcon
-                                                                    isActive={
-                                                                        follow
-                                                                            ? true
-                                                                            : false
-                                                                    }
-                                                                />
-                                                            }
-                                                            text={`${follow
-                                                                    ? "Unfollow"
-                                                                    : "Follow"} 
+                                                    {!blockedByMe &&
+                                                        !blockedMe && (
+                                                            <OptionComponent
+                                                                title={`${
+                                                                    follow
+                                                                        ? "Unfollow"
+                                                                        : "Follow"
+                                                                } @${
+                                                                    post.author
+                                                                        .username
+                                                                }`}
+                                                                onClick={async () => {
+                                                                    const response =
+                                                                        await handleFollowUser(
+                                                                            post.authorId,
+                                                                            post
+                                                                                .author
+                                                                                .username,
+                                                                            origin,
+                                                                            follow
+                                                                                ? true
+                                                                                : false
+                                                                        );
+
+                                                                    addToast(
+                                                                        response
+                                                                    );
+                                                                }}
+                                                                icon={
+                                                                    <FollowIcon
+                                                                        isActive={
+                                                                            follow
+                                                                                ? true
+                                                                                : false
+                                                                        }
+                                                                    />
+                                                                }
+                                                                text={`${
+                                                                    follow
+                                                                        ? "Unfollow"
+                                                                        : "Follow"
+                                                                } 
                                                                 @
                                                                 ${
                                                                     post.author
                                                                         .username
                                                                 }`}
-                                                        />
-                                                    )}
+                                                            />
+                                                        )}
                                                     {!affiliation && (
                                                         <OptionComponent
-                                                            title={`${blockedByMe ? "Unblock" : "Block"} ${post.author.username}`}
+                                                            title={`${
+                                                                blockedByMe
+                                                                    ? "Unblock"
+                                                                    : "Block"
+                                                            } ${
+                                                                post.author
+                                                                    .username
+                                                            }`}
                                                             onClick={async () => {
-                                                                const response = await handleBlockUser(post.authorId, post.author.username, origin, blockedByMe ? true : false)
-                                                            
-                                                                addToast(response);
+                                                                const response =
+                                                                    await handleBlockUser(
+                                                                        post.authorId,
+                                                                        post
+                                                                            .author
+                                                                            .username,
+                                                                        origin,
+                                                                        blockedByMe
+                                                                            ? true
+                                                                            : false
+                                                                    );
+
+                                                                addToast(
+                                                                    response
+                                                                );
                                                             }}
                                                             icon={<Block />}
-                                                            text={`${blockedByMe ? "Unblock" : "Block"} @${post.author.username}`}
+                                                            text={`${
+                                                                blockedByMe
+                                                                    ? "Unblock"
+                                                                    : "Block"
+                                                            } @${
+                                                                post.author
+                                                                    .username
+                                                            }`}
                                                         />
                                                     )}
-                                                    {mentions.includes(me.username) && (
+                                                    {mentions.includes(
+                                                        me.username
+                                                    ) && (
                                                         <OptionComponent
                                                             title="Unmention yourself"
                                                             onClick={async () => {
-                                                                const response = await handleRevokeMention(post.itemId);
+                                                                const response =
+                                                                    await handleRevokeMention(
+                                                                        post.itemId
+                                                                    );
 
-                                                                addToast(response);
+                                                                addToast(
+                                                                    response
+                                                                );
                                                             }}
                                                             icon={<Unmention />}
                                                             text="Unmention yourself"
@@ -642,15 +727,27 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                             post.author.username
                         }'s post`}
                         color={COLORS.red}
-                        disabled={(blockedMe && !like) ? true : false}
+                        disabled={blockedMe && !like ? true : false}
                         onClick={async (e) => {
                             e.stopPropagation();
 
                             if (me) {
-                                const response = await handleLikePost(post.itemId, post.type, like ? true : false, origin, false);
+                                const response = await handleLikePost(
+                                    post.itemId,
+                                    post.type,
+                                    like ? true : false,
+                                    origin,
+                                    false
+                                );
 
                                 if (!response) {
-                                    addToast(`An error occurred while trying to ${like ? "remove the like from" : "like"} this post.`);
+                                    addToast(
+                                        `An error occurred while trying to ${
+                                            like
+                                                ? "remove the like from"
+                                                : "like"
+                                        } this post.`
+                                    );
                                 }
                             } else {
                                 addToast("You're not authenticated.");
@@ -674,7 +771,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                             e.stopPropagation();
                         }}
                         isActive={repost ? true : false}
-                        disabled={(blockedMe && !repost) ? true : false}
+                        disabled={blockedMe && !repost ? true : false}
                     >
                         <Options
                             key={`repost-options-${post.id}`}
@@ -709,17 +806,34 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                             }
 
                                             if (me) {
-                                                const response = await handleRepost(post.itemId, post.id, repost);
+                                                const response =
+                                                    await handleRepost(
+                                                        post.itemId,
+                                                        post.id,
+                                                        repost
+                                                    );
 
                                                 if (!response) {
-                                                    addToast(`An error occurred while trying to ${repost ? "remove the repost from" : "repost"} this post.`);
+                                                    addToast(
+                                                        `An error occurred while trying to ${
+                                                            repost
+                                                                ? "remove the repost from"
+                                                                : "repost"
+                                                        } this post.`
+                                                    );
                                                 }
                                             } else {
-                                                addToast("You're not authenticated.");
+                                                addToast(
+                                                    "You're not authenticated."
+                                                );
                                             }
                                         }}
                                         icon={<RepostIcon size={24} />}
-                                        text={repost ? "Remove repost" : "Repost this post"}
+                                        text={
+                                            repost
+                                                ? "Remove repost"
+                                                : "Repost this post"
+                                        }
                                     />
                                     {!blockedMe && (
                                         <OptionComponent
@@ -755,11 +869,14 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                             e.stopPropagation();
 
                             if (me) {
-                                navigate(`/create_post/reply/post/${post.itemId}`, {
-                                    state: {
-                                        backgroundLocation: location,
-                                    },
-                                });
+                                navigate(
+                                    `/create_post/reply/post/${post.itemId}`,
+                                    {
+                                        state: {
+                                            backgroundLocation: location,
+                                        },
+                                    }
+                                );
                             } else {
                                 addToast("You're not authenticated.");
                             }
@@ -801,19 +918,31 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                     ? "Remove the bookmark from this post"
                                     : "Bookmark this post"
                             }
-                            disabled={(blockedMe && !bookmark) ? true : false}
+                            disabled={blockedMe && !bookmark ? true : false}
                             onClick={async (e) => {
                                 e.stopPropagation();
 
                                 if (me) {
-                                    const response = await handleBookmark(post.itemId, post.type, post.id, origin, bookmark ? true : false);
+                                    const response = await handleBookmark(
+                                        post.itemId,
+                                        post.type,
+                                        post.id,
+                                        origin,
+                                        bookmark ? true : false
+                                    );
 
                                     if (!response) {
-                                        addToast(`An error occurred while trying to ${bookmark ? "remove the bookmark from" : "bookmark"} this post.`);
+                                        addToast(
+                                            `An error occurred while trying to ${
+                                                bookmark
+                                                    ? "remove the bookmark from"
+                                                    : "bookmark"
+                                            } this post.`
+                                        );
                                     }
                                 } else {
                                     addToast("You're not authenticated.");
-                                }                                
+                                }
                             }}
                         >
                             <ControlContainer size={32}>

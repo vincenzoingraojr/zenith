@@ -1,6 +1,10 @@
 import { FunctionComponent } from "react";
 import styled from "styled-components";
-import { OptionBaseIcon, OptionBaseItem, PageText } from "../../../styles/global";
+import {
+    OptionBaseIcon,
+    OptionBaseItem,
+    PageText,
+} from "../../../styles/global";
 import { COLORS } from "../../../styles/colors";
 
 interface OptionComponentProps {
@@ -25,7 +29,13 @@ const OptionItemText = styled(PageText).attrs(
     color: ${({ theme, isRed }) => (isRed ? COLORS.red : theme.color)};
 `;
 
-const OptionComponent: FunctionComponent<OptionComponentProps> = ({ title, onClick, icon, text, isRed }) => {
+const OptionComponent: FunctionComponent<OptionComponentProps> = ({
+    title,
+    onClick,
+    icon,
+    text,
+    isRed,
+}) => {
     return (
         <OptionItem
             role="menuitem"
@@ -33,16 +43,10 @@ const OptionComponent: FunctionComponent<OptionComponentProps> = ({ title, onCli
             aria-label={title}
             onClick={onClick}
         >
-            <OptionBaseIcon>
-                {icon}
-            </OptionBaseIcon>
-            <OptionItemText
-                isRed={isRed}
-            >
-                {text}
-            </OptionItemText>
+            <OptionBaseIcon>{icon}</OptionBaseIcon>
+            <OptionItemText isRed={isRed}>{text}</OptionItemText>
         </OptionItem>
     );
-}
+};
 
 export default OptionComponent;

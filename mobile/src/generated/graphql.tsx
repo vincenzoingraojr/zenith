@@ -1133,7 +1133,11 @@ export type QueryReportOptionsArgs = {
 
 export type QuerySearchArgs = {
   keyword: Scalars['String']['input'];
+  postsLimit?: Scalars['Int']['input'];
+  postsOffset?: Scalars['Int']['input'];
   type: Scalars['String']['input'];
+  usersLimit?: Scalars['Int']['input'];
+  usersOffset?: Scalars['Int']['input'];
 };
 
 
@@ -1221,6 +1225,8 @@ export type Repost = {
 
 export type SearchResult = {
   __typename?: 'SearchResult';
+  hasMorePosts: Scalars['Boolean']['output'];
+  hasMoreUsers: Scalars['Boolean']['output'];
   posts?: Maybe<Array<Post>>;
   users?: Maybe<Array<User>>;
 };
@@ -1686,6 +1692,18 @@ export type ReportOptionsQueryVariables = Exact<{
 
 
 export type ReportOptionsQuery = { __typename?: 'Query', reportOptions?: Array<{ __typename?: 'ReportOption', id: number, title: string, description: string, subcategories?: Array<{ __typename?: 'SubCategoryOption', categoryId: number, id: number, title: string, description?: string | null }> | null }> | null };
+
+export type SearchQueryVariables = Exact<{
+  keyword: Scalars['String']['input'];
+  type: Scalars['String']['input'];
+  postsLimit: Scalars['Int']['input'];
+  postsOffset: Scalars['Int']['input'];
+  usersLimit: Scalars['Int']['input'];
+  usersOffset: Scalars['Int']['input'];
+}>;
+
+
+export type SearchQuery = { __typename?: 'Query', search: { __typename?: 'SearchResult', hasMorePosts: boolean, hasMoreUsers: boolean, posts?: Array<{ __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null }> | null, users?: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }> | null } };
 
 export type BlockUserMutationVariables = Exact<{
   userId?: InputMaybe<Scalars['Int']['input']>;
@@ -3670,6 +3688,159 @@ export type ReportOptionsQueryHookResult = ReturnType<typeof useReportOptionsQue
 export type ReportOptionsLazyQueryHookResult = ReturnType<typeof useReportOptionsLazyQuery>;
 export type ReportOptionsSuspenseQueryHookResult = ReturnType<typeof useReportOptionsSuspenseQuery>;
 export type ReportOptionsQueryResult = Apollo.QueryResult<ReportOptionsQuery, ReportOptionsQueryVariables>;
+export const SearchDocument = gql`
+    query Search($keyword: String!, $type: String!, $postsLimit: Int!, $postsOffset: Int!, $usersLimit: Int!, $usersOffset: Int!) {
+  search(
+    keyword: $keyword
+    type: $type
+    postsLimit: $postsLimit
+    postsOffset: $postsOffset
+    usersLimit: $usersLimit
+    usersOffset: $usersOffset
+  ) {
+    posts {
+      id
+      itemId
+      authorId
+      type
+      content
+      isEdited
+      lang
+      topics
+      author {
+        id
+        name
+        username
+        email
+        type
+        gender
+        birthDate {
+          date
+          monthAndDayVisibility
+          yearVisibility
+        }
+        emailVerified
+        profile {
+          profilePicture
+          profileBanner
+          bio
+          website
+        }
+        userSettings {
+          incomingMessages
+          twoFactorAuth
+        }
+        searchSettings {
+          hideSensitiveContent
+          hideBlockedAccounts
+        }
+        createdAt
+        updatedAt
+        hiddenPosts
+        identity {
+          verified
+          verifiedSince
+        }
+        verification {
+          verified
+          verifiedSince
+        }
+      }
+      isReplyToId
+      isReplyToType
+      quotedPostId
+      media {
+        id
+        type
+        src
+        alt
+      }
+      hashtags
+      createdAt
+      updatedAt
+    }
+    users {
+      id
+      name
+      username
+      email
+      type
+      gender
+      birthDate {
+        date
+        monthAndDayVisibility
+        yearVisibility
+      }
+      emailVerified
+      profile {
+        profilePicture
+        profileBanner
+        bio
+        website
+      }
+      userSettings {
+        incomingMessages
+        twoFactorAuth
+      }
+      searchSettings {
+        hideSensitiveContent
+        hideBlockedAccounts
+      }
+      createdAt
+      updatedAt
+      hiddenPosts
+      identity {
+        verified
+        verifiedSince
+      }
+      verification {
+        verified
+        verifiedSince
+      }
+    }
+    hasMorePosts
+    hasMoreUsers
+  }
+}
+    `;
+
+/**
+ * __useSearchQuery__
+ *
+ * To run a query within a React component, call `useSearchQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchQuery({
+ *   variables: {
+ *      keyword: // value for 'keyword'
+ *      type: // value for 'type'
+ *      postsLimit: // value for 'postsLimit'
+ *      postsOffset: // value for 'postsOffset'
+ *      usersLimit: // value for 'usersLimit'
+ *      usersOffset: // value for 'usersOffset'
+ *   },
+ * });
+ */
+export function useSearchQuery(baseOptions: ApolloReactHooks.QueryHookOptions<SearchQuery, SearchQueryVariables> & ({ variables: SearchQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<SearchQuery, SearchQueryVariables>(SearchDocument, options);
+      }
+export function useSearchLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<SearchQuery, SearchQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<SearchQuery, SearchQueryVariables>(SearchDocument, options);
+        }
+export function useSearchSuspenseQuery(baseOptions?: ApolloReactHooks.SuspenseQueryHookOptions<SearchQuery, SearchQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useSuspenseQuery<SearchQuery, SearchQueryVariables>(SearchDocument, options);
+        }
+export type SearchQueryHookResult = ReturnType<typeof useSearchQuery>;
+export type SearchLazyQueryHookResult = ReturnType<typeof useSearchLazyQuery>;
+export type SearchSuspenseQueryHookResult = ReturnType<typeof useSearchSuspenseQuery>;
+export type SearchQueryResult = Apollo.QueryResult<SearchQuery, SearchQueryVariables>;
 export const BlockUserDocument = gql`
     mutation BlockUser($userId: Int, $origin: String!) {
   blockUser(userId: $userId, origin: $origin) {

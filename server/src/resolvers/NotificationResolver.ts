@@ -1,6 +1,18 @@
 import { isAuth } from "../middleware/isAuth";
 import { MessageNotification, Notification } from "../entities/Notification";
-import { Arg, Ctx, Field, Int, Mutation, ObjectType, Query, Resolver, Root, Subscription, UseMiddleware } from "type-graphql";
+import {
+    Arg,
+    Ctx,
+    Field,
+    Int,
+    Mutation,
+    ObjectType,
+    Query,
+    Resolver,
+    Root,
+    Subscription,
+    UseMiddleware,
+} from "type-graphql";
 import { AuthContext } from "../types";
 import { In, LessThan, Repository } from "typeorm";
 import appDataSource from "../dataSource";
@@ -49,7 +61,7 @@ export class NotificationResolver {
 
             if (cursor && cursor.length > 0) {
                 const parsedDate = Date.parse(cursor);
-                
+
                 if (!isNaN(parsedDate)) {
                     dateCursor = new Date(parsedDate);
                 }
@@ -66,19 +78,32 @@ export class NotificationResolver {
                 take: limit,
             });
 
-            const ids = Array.from(new Set(notifications.map((notification) => notification.creatorId)));
+            const ids = Array.from(
+                new Set(
+                    notifications.map((notification) => notification.creatorId)
+                )
+            );
             const creators = await this.userService.findUsersById(ids);
-            
+
             const feed: Notification[] = [];
 
             if (creators && creators.length > 0) {
-                const creatorIdsSet = new Set(creators.map(creator => creator.id));
-                feed.push(...notifications.filter((notification) => creatorIdsSet.has(notification.creatorId)));
+                const creatorIdsSet = new Set(
+                    creators.map((creator) => creator.id)
+                );
+                feed.push(
+                    ...notifications.filter((notification) =>
+                        creatorIdsSet.has(notification.creatorId)
+                    )
+                );
             }
 
-            const nextCursor = notifications.length === limit
-                ? notifications[notifications.length - 1].createdAt.toISOString()
-                : null;
+            const nextCursor =
+                notifications.length === limit
+                    ? notifications[
+                          notifications.length - 1
+                      ].createdAt.toISOString()
+                    : null;
 
             return { notifications: feed, nextCursor };
         } catch (error) {
@@ -108,14 +133,26 @@ export class NotificationResolver {
                 },
             });
 
-            const ids = Array.from(new Set(unseenNotifications.map((notification) => notification.creatorId)));
+            const ids = Array.from(
+                new Set(
+                    unseenNotifications.map(
+                        (notification) => notification.creatorId
+                    )
+                )
+            );
             const creators = await this.userService.findUsersById(ids);
-            
+
             const unseenFeed: Notification[] = [];
 
             if (creators && creators.length > 0) {
-                const creatorIdsSet = new Set(creators.map(creator => creator.id));
-                unseenFeed.push(...unseenNotifications.filter((notification) => creatorIdsSet.has(notification.creatorId)));
+                const creatorIdsSet = new Set(
+                    creators.map((creator) => creator.id)
+                );
+                unseenFeed.push(
+                    ...unseenNotifications.filter((notification) =>
+                        creatorIdsSet.has(notification.creatorId)
+                    )
+                );
             }
 
             return unseenFeed;
@@ -130,7 +167,7 @@ export class NotificationResolver {
     @UseMiddleware(isAuth)
     async viewNotification(
         @Arg("notificationId") notificationId: string,
-        @Ctx() { payload }: AuthContext,
+        @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
             logger.warn("No payload found in context. Returning false.");
@@ -152,16 +189,18 @@ export class NotificationResolver {
                     viewed: false,
                 },
             });
-    
+
             if (!newNotification) {
-                logger.warn("Notification not found or already viewed. Returning false.");
+                logger.warn(
+                    "Notification not found or already viewed. Returning false."
+                );
 
                 return false;
             }
-    
+
             newNotification.viewed = true;
             await newNotification.save();
-    
+
             return true;
         } catch (error) {
             logger.error(error);
@@ -176,7 +215,10 @@ export class NotificationResolver {
             return payload.recipientId === args.userId;
         },
     })
-    newNotification(@Arg("userId", () => Int, { nullable: true }) _userId: number, @Root() notification: Notification): Notification {
+    newNotification(
+        @Arg("userId", () => Int, { nullable: true }) _userId: number,
+        @Root() notification: Notification
+    ): Notification {
         return notification;
     }
 
@@ -186,7 +228,10 @@ export class NotificationResolver {
             return payload.recipientId === args.userId;
         },
     })
-    deletedNotification(@Arg("userId", () => Int, { nullable: true }) _userId: number, @Root() notification: Notification): Notification {
+    deletedNotification(
+        @Arg("userId", () => Int, { nullable: true }) _userId: number,
+        @Root() notification: Notification
+    ): Notification {
         return notification;
     }
 }
@@ -197,7 +242,8 @@ export class MessageNotificationResolver {
     private readonly userService: UserService;
 
     constructor() {
-        this.messageNotificationRepository = appDataSource.getRepository(MessageNotification);
+        this.messageNotificationRepository =
+            appDataSource.getRepository(MessageNotification);
         this.userService = new UserService();
     }
 
@@ -219,27 +265,39 @@ export class MessageNotificationResolver {
             return null;
         }
 
-
         try {
-            const messageNotifications = await this.messageNotificationRepository.find({
-                order: {
-                    createdAt: "DESC",
-                },
-                where: {
-                    chatId,
-                    recipientId: payload.id,
-                    viewed: false,
-                },
-            });
+            const messageNotifications =
+                await this.messageNotificationRepository.find({
+                    order: {
+                        createdAt: "DESC",
+                    },
+                    where: {
+                        chatId,
+                        recipientId: payload.id,
+                        viewed: false,
+                    },
+                });
 
-            const ids = Array.from(new Set(messageNotifications.map((notification) => notification.creatorId)));
+            const ids = Array.from(
+                new Set(
+                    messageNotifications.map(
+                        (notification) => notification.creatorId
+                    )
+                )
+            );
             const creators = await this.userService.findUsersById(ids);
-            
+
             const unseenFeed: MessageNotification[] = [];
 
             if (creators && creators.length > 0) {
-                const creatorIdsSet = new Set(creators.map(creator => creator.id));
-                unseenFeed.push(...messageNotifications.filter((notification) => creatorIdsSet.has(notification.creatorId)));
+                const creatorIdsSet = new Set(
+                    creators.map((creator) => creator.id)
+                );
+                unseenFeed.push(
+                    ...messageNotifications.filter((notification) =>
+                        creatorIdsSet.has(notification.creatorId)
+                    )
+                );
             }
 
             return unseenFeed;
@@ -268,27 +326,40 @@ export class MessageNotificationResolver {
                 return null;
             }
 
-            const chatIds = chats.map(chat => chat.chatId);
+            const chatIds = chats.map((chat) => chat.chatId);
 
-            const messageNotifications = await this.messageNotificationRepository.find({
-                order: {
-                    createdAt: "DESC",
-                },
-                where: {
-                    chatId: In(chatIds),
-                    recipientId: payload.id,
-                    viewed: false,
-                },
-            });
+            const messageNotifications =
+                await this.messageNotificationRepository.find({
+                    order: {
+                        createdAt: "DESC",
+                    },
+                    where: {
+                        chatId: In(chatIds),
+                        recipientId: payload.id,
+                        viewed: false,
+                    },
+                });
 
-            const ids = Array.from(new Set(messageNotifications.map((notification) => notification.creatorId)));
+            const ids = Array.from(
+                new Set(
+                    messageNotifications.map(
+                        (notification) => notification.creatorId
+                    )
+                )
+            );
             const creators = await this.userService.findUsersById(ids);
-            
+
             const unseenFeed: MessageNotification[] = [];
 
             if (creators && creators.length > 0) {
-                const creatorIdsSet = new Set(creators.map(creator => creator.id));
-                unseenFeed.push(...messageNotifications.filter((notification) => creatorIdsSet.has(notification.creatorId)));
+                const creatorIdsSet = new Set(
+                    creators.map((creator) => creator.id)
+                );
+                unseenFeed.push(
+                    ...messageNotifications.filter((notification) =>
+                        creatorIdsSet.has(notification.creatorId)
+                    )
+                );
             }
 
             return unseenFeed;
@@ -308,16 +379,26 @@ export class MessageNotificationResolver {
                 return false;
             }
 
-            const chatIds = chats.map(chat => chat.chatId);
+            const chatIds = chats.map((chat) => chat.chatId);
 
             if (args.chatId !== null) {
-                return payload.chatId === args.chatId && payload.recipientId === args.userId;
+                return (
+                    payload.chatId === args.chatId &&
+                    payload.recipientId === args.userId
+                );
             } else {
-                return chatIds.includes(payload.chatId) && payload.recipientId === args.userId;
+                return (
+                    chatIds.includes(payload.chatId) &&
+                    payload.recipientId === args.userId
+                );
             }
         },
     })
-    newMessageNotification(@Arg("chatId", { nullable: true }) _chatId: string, @Arg("userId", () => Int, { nullable: true }) _userId: number, @Root() notification: MessageNotification): MessageNotification {
+    newMessageNotification(
+        @Arg("chatId", { nullable: true }) _chatId: string,
+        @Arg("userId", () => Int, { nullable: true }) _userId: number,
+        @Root() notification: MessageNotification
+    ): MessageNotification {
         return notification;
     }
 
@@ -330,16 +411,26 @@ export class MessageNotificationResolver {
                 return false;
             }
 
-            const chatIds = chats.map(chat => chat.chatId);
+            const chatIds = chats.map((chat) => chat.chatId);
 
             if (args.chatId !== null) {
-                return payload.chatId === args.chatId && payload.recipientId === args.userId;
+                return (
+                    payload.chatId === args.chatId &&
+                    payload.recipientId === args.userId
+                );
             } else {
-                return chatIds.includes(payload.chatId) && payload.recipientId === args.userId;
+                return (
+                    chatIds.includes(payload.chatId) &&
+                    payload.recipientId === args.userId
+                );
             }
         },
     })
-    deletedMessageNotification(@Arg("chatId", { nullable: true }) _chatId: string, @Arg("userId", () => Int, { nullable: true }) _userId: number, @Root() notification: MessageNotification): MessageNotification {
+    deletedMessageNotification(
+        @Arg("chatId", { nullable: true }) _chatId: string,
+        @Arg("userId", () => Int, { nullable: true }) _userId: number,
+        @Root() notification: MessageNotification
+    ): MessageNotification {
         return notification;
     }
 
@@ -347,7 +438,7 @@ export class MessageNotificationResolver {
     @UseMiddleware(isAuth)
     async viewMessageNotifications(
         @Arg("chatId") chatId: string,
-        @Ctx() { payload }: AuthContext,
+        @Ctx() { payload }: AuthContext
     ) {
         if (!payload) {
             logger.warn("No payload found in context. Returning false.");
@@ -356,26 +447,29 @@ export class MessageNotificationResolver {
         }
 
         try {
-            const newNotifications = await this.messageNotificationRepository.find({
-                where: {
-                    chatId,
-                    recipientId: payload.id,
-                    viewed: false,
-                },
-            });
-    
+            const newNotifications =
+                await this.messageNotificationRepository.find({
+                    where: {
+                        chatId,
+                        recipientId: payload.id,
+                        viewed: false,
+                    },
+                });
+
             if (newNotifications.length === 0) {
                 return false;
             }
-    
+
             await this.messageNotificationRepository
                 .createQueryBuilder()
                 .update(MessageNotification)
                 .set({ viewed: true })
-                .whereInIds(newNotifications.map((notification) => notification.id))
+                .whereInIds(
+                    newNotifications.map((notification) => notification.id)
+                )
                 .execute();
-    
-            return true;   
+
+            return true;
         } catch (error) {
             logger.error(error);
 

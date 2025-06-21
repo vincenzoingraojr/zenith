@@ -1,11 +1,25 @@
 import { isAuth } from "../middleware/isAuth";
 import { Report } from "../entities/Report";
-import { Arg, Ctx, Field, Int, Mutation, ObjectType, Query, Resolver, UseMiddleware } from "type-graphql";
+import {
+    Arg,
+    Ctx,
+    Field,
+    Int,
+    Mutation,
+    ObjectType,
+    Query,
+    Resolver,
+    UseMiddleware,
+} from "type-graphql";
 import { AuthContext } from "../types";
 import { Repository } from "typeorm";
 import appDataSource from "../dataSource";
 import { v4 as uuidv4 } from "uuid";
-import { altReportOptions, ReportOption, reportOptions } from "../helpers/reportData";
+import {
+    altReportOptions,
+    ReportOption,
+    reportOptions,
+} from "../helpers/reportData";
 import { logger } from "../helpers/logger";
 
 @ObjectType()
@@ -33,29 +47,34 @@ export class ReportResolver {
     async createReport(
         @Arg("contentId") contentId: string,
         @Arg("contentType") contentType: string,
-        @Arg("categoryId", () => Int) categoryId: number, 
-        @Arg("subCategoryId", () => Int, { nullable: true }) subCategoryId: number,
+        @Arg("categoryId", () => Int) categoryId: number,
+        @Arg("subCategoryId", () => Int, { nullable: true })
+        subCategoryId: number,
         @Ctx() { payload, req }: AuthContext,
-        @Arg("additionalContentIds", () => [Int], { nullable: true }) additionalContentIds?: number[],
-        @Arg("additionalContentType", { nullable: true }) additionalContentType?: string,
+        @Arg("additionalContentIds", () => [Int], { nullable: true })
+        additionalContentIds?: number[],
+        @Arg("additionalContentType", { nullable: true })
+        additionalContentType?: string
     ): Promise<ReportResponse> {
         let status = "";
         let ok = false;
 
         const uniqueIdentifier = req.cookies["uid"];
-        
+
         try {
-            await this.reportRepository.create({
-                reportId: uuidv4(),
-                authorId: payload && payload.id,
-                uniqueIdentifier,
-                contentId,
-                contentType,
-                categoryId,
-                subCategoryId,
-                additionalContentIds,
-                additionalContentType,
-            }).save();
+            await this.reportRepository
+                .create({
+                    reportId: uuidv4(),
+                    authorId: payload && payload.id,
+                    uniqueIdentifier,
+                    contentId,
+                    contentType,
+                    categoryId,
+                    subCategoryId,
+                    additionalContentIds,
+                    additionalContentType,
+                })
+                .save();
 
             status = "Your report has been submitted.";
 
@@ -73,9 +92,7 @@ export class ReportResolver {
     }
 
     @Query(() => [ReportOption], { nullable: true })
-    reportOptions(
-        @Arg("type") type: string,
-    ): ReportOption[] | null {
+    reportOptions(@Arg("type") type: string): ReportOption[] | null {
         if (type === "user" || type === "post") {
             return reportOptions;
         } else {

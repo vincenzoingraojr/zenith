@@ -1,11 +1,14 @@
-import { BatchResponse, MulticastMessage } from "firebase-admin/lib/messaging/messaging-api";
+import {
+    BatchResponse,
+    MulticastMessage,
+} from "firebase-admin/lib/messaging/messaging-api";
 import * as admin from "firebase-admin";
 import { UserDeviceToken } from "../entities/User";
 import { Notification } from "firebase-admin/messaging";
 import { logger } from "./logger";
 
 const sendMulticastPushNotifications = async (
-    message: MulticastMessage,
+    message: MulticastMessage
 ): Promise<BatchResponse | undefined> => {
     try {
         const response = await admin.messaging().sendEachForMulticast(message);
@@ -16,14 +19,14 @@ const sendMulticastPushNotifications = async (
 
         return undefined;
     }
-}
+};
 
 export const sendPushNotifications = async (
     tokens: UserDeviceToken[],
     notification: Notification,
     link: string,
-    data?: { [key: string]: string },
-) => {    
+    data?: { [key: string]: string }
+) => {
     if (tokens.length === 0) {
         return;
     }
@@ -37,7 +40,7 @@ export const sendPushNotifications = async (
             link,
             ...data,
         },
-    }
+    };
 
     return sendMulticastPushNotifications(message);
-}
+};

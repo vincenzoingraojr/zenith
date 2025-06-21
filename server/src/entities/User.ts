@@ -160,15 +160,24 @@ export class User extends BaseItem {
     profile: Profile;
 
     @Field(() => [Session], { nullable: true, defaultValue: [] })
-    @OneToMany(() => Session, (session) => session.user, { nullable: true, cascade: true })
+    @OneToMany(() => Session, (session) => session.user, {
+        nullable: true,
+        cascade: true,
+    })
     sessions: Session[];
 
     @Field(() => [Follow], { nullable: true, defaultValue: [] })
-    @OneToMany(() => Follow, (follow) => follow.user, { nullable: true, cascade: true })
+    @OneToMany(() => Follow, (follow) => follow.user, {
+        nullable: true,
+        cascade: true,
+    })
     followers: Follow[];
 
     @Field(() => [Follow], { nullable: true, defaultValue: [] })
-    @OneToMany(() => Follow, (follow) => follow.follower, { nullable: true, cascade: true })
+    @OneToMany(() => Follow, (follow) => follow.follower, {
+        nullable: true,
+        cascade: true,
+    })
     following: Follow[];
 
     @Field(() => [Post], { nullable: true, defaultValue: [] })

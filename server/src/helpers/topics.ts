@@ -24,12 +24,14 @@ export async function seedTopics() {
         "Literature",
         "Movies",
         "Gaming",
-        "Fashion"
+        "Fashion",
     ];
-    
+
     for (const topicName of initialTopics) {
         try {
-            let topic = await topicRepository.findOne({ where: { name: topicName } });
+            let topic = await topicRepository.findOne({
+                where: { name: topicName },
+            });
 
             if (!topic) {
                 topic = topicRepository.create({ name: topicName });

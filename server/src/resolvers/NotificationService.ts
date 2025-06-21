@@ -10,7 +10,8 @@ export class NotificationService {
 
     constructor() {
         this.notificationRepository = appDataSource.getRepository(Notification);
-        this.messageNotificationRepository = appDataSource.getRepository(MessageNotification);
+        this.messageNotificationRepository =
+            appDataSource.getRepository(MessageNotification);
     }
 
     async findNotification(
@@ -38,14 +39,14 @@ export class NotificationService {
             return null;
         }
     }
-    
+
     async createNotification(
         creatorId: number,
         recipientId: number,
         resourceId: number,
         resourceType: string,
         notificationType: string,
-        content: string,
+        content: string
     ): Promise<Notification | null> {
         try {
             const newNotification = this.notificationRepository.create({
@@ -68,9 +69,7 @@ export class NotificationService {
         }
     }
 
-    async deleteNotification(
-        notificationId: string,
-    ): Promise<boolean> {
+    async deleteNotification(notificationId: string): Promise<boolean> {
         try {
             const notification = await this.notificationRepository.findOne({
                 where: {
@@ -101,7 +100,7 @@ export class NotificationService {
         resourceType: string,
         notificationType: string,
         content: string,
-        chatId: string,
+        chatId: string
     ): Promise<MessageNotification | null> {
         try {
             const newNotification = this.messageNotificationRepository.create({
