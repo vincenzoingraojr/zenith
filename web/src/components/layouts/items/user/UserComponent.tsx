@@ -2,14 +2,15 @@ import { FunctionComponent, useMemo } from "react";
 import { useFindUserById, useFollowData, useHasBlockedMeData, useIsUserBlockedData, useMeData } from "../../../../utils/userQueries";
 import { useUserMutations } from "../../../../utils/userMutations";
 import styled from "styled-components";
-import { PageBlock, RightContainer, SmallButton, UserFullName, UserFullNameContainer, UserInfo, UsernameContainer } from "../../../../styles/global";
+import { ItemLoading, PageBlock, RightContainer, SmallButton, UserFullName, UserFullNameContainer, UserInfo, UsernameContainer } from "../../../../styles/global";
 import ProfilePicture from "../../../utils/ProfilePicture";
 import VerificationBadge from "../../../utils/VerificationBadge";
 import AffiliationIcon from "../../../utils/AffiliationIcon";
 import { useThemeContext } from "../../../../styles/ThemeContext";
 import { COLORS } from "../../../../styles/colors";
 import { useToasts } from "../../../utils/ToastProvider";
-import { USER_TYPES } from "../../../../utils/constants";
+import LoadingComponent from "../../../utils/LoadingComponent";
+import { useNavigate } from "react-router-dom";
 
 interface UserComponentProps {
     id: number;
@@ -55,7 +56,7 @@ const FollowButton = styled(SmallButton).attrs((props: { dark: boolean }) => pro
 `;
 
 const UserComponent: FunctionComponent<UserComponentProps> = ({ id, origin }) => {
-    const { user } = useFindUserById(id);
+    const { user, loading } = useFindUserById(id);
     const { me } = useMeData();
     const { isDarkMode } = useThemeContext();
 
@@ -75,82 +76,101 @@ const UserComponent: FunctionComponent<UserComponentProps> = ({ id, origin }) =>
 
     const { addToast } = useToasts();
 
+    const navigate = useNavigate();
+
     return (
         <PageBlock>
-            <UserContainer>
-                <UserInfoContainer>
-                    <ProfilePicture
-                        loading={false}
-                        pictureUrl={user?.profile.profilePicture || ""}
-                        type={user?.type || USER_TYPES.USER}
-                        size={40}
-                        title={user?.name || ""}
-                    />
-                    <UserInfo>
-                        <UserFullNameContainer>
-                            <UserFullName>
-                                {user?.name}
-                            </UserFullName>
-                            {user?.verification.verified ===
-                                "VERIFIED" && (
-                                <VerificationBadge
-                                    type={user?.type as string}
-                                    verifiedSince={
-                                        user?.verification
-                                            .verifiedSince
-                                            ? new Date(
-                                                    parseInt(
-                                                        user?.verification.verifiedSince
-                                                    )
-                                                ).toLocaleString("en-us", {
-                                                    month: "long",
-                                                    year: "numeric",
-                                                })
-                                            : undefined
-                                    }
+            {loading ? (
+                <ItemLoading>
+                    <LoadingComponent />
+                </ItemLoading>
+            ) : !user ? null : (
+                <UserContainer
+                    role="link"
+                    tabIndex={0}
+                    title="View user page"
+                    aria-label="View user page"
+                    onClick={() => {
+                        navigate(`/${user.username}`);
+                    }}
+                    onKeyDown={(e) => e.key === "Enter" && navigate(`/${user.username}`)}
+                >
+                    <UserInfoContainer>
+                        <ProfilePicture
+                            loading={false}
+                            pictureUrl={user.profile.profilePicture}
+                            type={user.type}
+                            size={40}
+                            title={user.name}
+                        />
+                        <UserInfo>
+                            <UserFullNameContainer>
+                                <UserFullName>
+                                    {user.name}
+                                </UserFullName>
+                                {user.verification.verified ===
+                                    "VERIFIED" && (
+                                    <VerificationBadge
+                                        type={user.type}
+                                        verifiedSince={
+                                            user.verification
+                                                .verifiedSince
+                                                ? new Date(
+                                                        parseInt(
+                                                            user.verification.verifiedSince
+                                                        )
+                                                    ).toLocaleString("en-us", {
+                                                        month: "long",
+                                                        year: "numeric",
+                                                    })
+                                                : undefined
+                                        }
+                                        size={18}
+                                    />
+                                )}
+                                <AffiliationIcon
+                                    userId={user.id}
                                     size={18}
                                 />
-                            )}
-                            <AffiliationIcon
-                                userId={user?.id}
-                                size={18}
-                            />
-                        </UserFullNameContainer>
-                        <UsernameContainer>
-                            @{user?.username}
-                        </UsernameContainer>
-                    </UserInfo>
-                </UserInfoContainer>
-                {(me && user && me.id !== user.id && !blockedByMe && !blockedMe) && (
-                    <RightContainer>
-                        <FollowButton
-                            dark={isDarkMode}
-                            type="button"
-                            title={`${follow
-                                    ? "Unfollow"
-                                    : "Follow"} 
-                                @
-                                ${
-                                    user?.username
-                                }`}
-                            aria-label={`${follow
-                                    ? "Unfollow"
-                                    : "Follow"} 
-                                @
-                                ${
-                                    user?.username
-                                }`}
-                            onClick={async () => {
-                                const response = await handleFollowUser(user?.id, user?.username, origin, follow ? true : false)
-                                                                                            
-                                addToast(response);
-                            }}
-                        >
-                            {follow ? "Unfollow" : "Follow"}
-                        </FollowButton>
-                    </RightContainer>
-                )}
-            </UserContainer>
+                            </UserFullNameContainer>
+                            <UsernameContainer>
+                                @{user.username}
+                            </UsernameContainer>
+                        </UserInfo>
+                    </UserInfoContainer>
+                    {(me && me.id !== user.id && !blockedByMe && !blockedMe) && (
+                        <RightContainer>
+                            <FollowButton
+                                dark={isDarkMode}
+                                type="button"
+                                title={`${follow
+                                        ? "Unfollow"
+                                        : "Follow"} 
+                                    @
+                                    ${
+                                        user.username
+                                    }`}
+                                aria-label={`${follow
+                                        ? "Unfollow"
+                                        : "Follow"} 
+                                    @
+                                    ${
+                                        user.username
+                                    }`}
+                                onClick={async (e) => {
+                                    e.stopPropagation();
+                                    
+                                    const response = await handleFollowUser(user.id, user.username, origin, follow ? true : false)
+                                                                                                
+                                    addToast(response);
+                                }}
+                            >
+                                {follow ? "Unfollow" : "Follow"}
+                            </FollowButton>
+                        </RightContainer>
+                    )}
+                </UserContainer>
+            )}
         </PageBlock>
     );
 }

@@ -2,7 +2,7 @@ import { FunctionComponent, useMemo } from "react";
 import { Post } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import { PageBlock, RightContainer, UserFullNameContainer, UserInfo, UsernameContainer } from "../../../../styles/global";
+import { PageBlock, RightContainer, UserFullName, UserFullNameContainer, UserInfo, UsernameContainer } from "../../../../styles/global";
 import {
     PostDate,
     PostMediaItem,
@@ -61,7 +61,7 @@ const QuotedPostAuthorContainer = styled.div`
     overflow: hidden;
 `;
 
-const QuotedAuthorFullName = styled(UserFullNameContainer)`
+const QuotedAuthorFullName = styled(UserFullName)`
     text-decoration: none;
 
     &:hover,
