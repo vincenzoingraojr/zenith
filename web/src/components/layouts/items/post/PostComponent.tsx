@@ -8,6 +8,11 @@ import {
     ControlContainer,
     PageBlock,
     PageText,
+    RightContainer,
+    UserFullName,
+    UserFullNameContainer,
+    UserInfo,
+    UsernameContainer,
 } from "../../../../styles/global";
 import TextContainerRender from "../../../utils/TextContainerRender";
 import LikeIcon from "../../../icons/Like";
@@ -108,58 +113,6 @@ export const PostAuthorContainer = styled(Link)`
     &:active {
         text-decoration: none;
     }
-`;
-
-export const AuthorInfo = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    width: auto;
-    flex: 1;
-    overflow: hidden;
-`;
-
-export const AuthorFullNameContainer = styled.div`
-    display: flex;
-    align-items: center;
-    width: auto;
-    flex: 1;
-    overflow: hidden;
-    text-overflow: clip;
-    gap: 8px;
-`;
-
-export const AuthorFullName = styled(PageText)`
-    font-weight: 700;
-    font-size: 16px;
-    width: auto;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    text-decoration: none;
-    color: ${({ theme }) => theme.color};
-
-    &:hover,
-    &:active {
-        text-decoration: underline;
-        text-decoration-color: ${({ theme }) => theme.color};
-    }
-`;
-
-export const AuthorUsername = styled(PageText)`
-    font-size: 14px;
-    width: auto;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: ${({ theme }) => theme.inputText};
-`;
-
-export const PostRightContainer = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 12px;
 `;
 
 export const PostDate = styled(PageText)`
@@ -441,11 +394,11 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                             size={40}
                             title={post.author.name}
                         />
-                        <AuthorInfo>
-                            <AuthorFullNameContainer>
-                                <AuthorFullName>
+                        <UserInfo>
+                            <UserFullNameContainer>
+                                <UserFullName>
                                     {post.author.name}
-                                </AuthorFullName>
+                                </UserFullName>
                                 {post.author.verification.verified ===
                                     "VERIFIED" && (
                                     <VerificationBadge
@@ -472,13 +425,13 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                     userId={post.authorId}
                                     size={18}
                                 />
-                            </AuthorFullNameContainer>
-                            <AuthorUsername>
+                            </UserFullNameContainer>
+                            <UsernameContainer>
                                 @{post.author.username}
-                            </AuthorUsername>
-                        </AuthorInfo>
+                            </UsernameContainer>
+                        </UserInfo>
                     </PostAuthorContainer>
-                    <PostRightContainer>
+                    <RightContainer>
                         <PostDate title={createdAt} aria-label={createdAt}>
                             <time dateTime={createdAt}>{date}</time>
                         </PostDate>
@@ -622,7 +575,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                 </>
                             }
                         />
-                    </PostRightContainer>
+                    </RightContainer>
                 </PostHeader>
                 <PostContentContainer>
                     <PostTextContainer>

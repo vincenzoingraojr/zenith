@@ -716,10 +716,45 @@ export type Notification = {
   viewed: Scalars['Boolean']['output'];
 };
 
+export type PaginatedAffiliations = {
+  __typename?: 'PaginatedAffiliations';
+  affiliations: Array<Affiliation>;
+  hasMore: Scalars['Boolean']['output'];
+  totalCount?: Maybe<Scalars['Int']['output']>;
+};
+
+export type PaginatedBlockActions = {
+  __typename?: 'PaginatedBlockActions';
+  blockActions: Array<Block>;
+  hasMore: Scalars['Boolean']['output'];
+  totalCount?: Maybe<Scalars['Int']['output']>;
+};
+
+export type PaginatedBookmarks = {
+  __typename?: 'PaginatedBookmarks';
+  bookmarks: Array<Bookmark>;
+  hasMore: Scalars['Boolean']['output'];
+  totalCount?: Maybe<Scalars['Int']['output']>;
+};
+
 export type PaginatedChatItems = {
   __typename?: 'PaginatedChatItems';
   chatItems: Array<MessageOrEvent>;
   hasMore: Scalars['Boolean']['output'];
+  totalCount?: Maybe<Scalars['Int']['output']>;
+};
+
+export type PaginatedFollowRelations = {
+  __typename?: 'PaginatedFollowRelations';
+  followRelations: Array<Follow>;
+  hasMore: Scalars['Boolean']['output'];
+  totalCount?: Maybe<Scalars['Int']['output']>;
+};
+
+export type PaginatedLikes = {
+  __typename?: 'PaginatedLikes';
+  hasMore: Scalars['Boolean']['output'];
+  likes: Array<Like>;
   totalCount?: Maybe<Scalars['Int']['output']>;
 };
 
@@ -797,9 +832,9 @@ export type Profile = {
 
 export type Query = {
   __typename?: 'Query';
-  affiliates: PaginatedUsers;
+  affiliates: PaginatedAffiliations;
   allUnseenMessageNotifications?: Maybe<Array<MessageNotification>>;
-  blockedUsers: PaginatedUsers;
+  blockedUsers: PaginatedBlockActions;
   chatUsers?: Maybe<Array<User>>;
   chats?: Maybe<Array<Chat>>;
   currentSession?: Maybe<Session>;
@@ -817,12 +852,12 @@ export type Query = {
   findUserDeviceTokenBySessionId?: Maybe<UserDeviceToken>;
   findUserDeviceTokenByToken?: Maybe<UserDeviceToken>;
   findUserDeviceTokensByUserId?: Maybe<Array<UserDeviceToken>>;
-  getBookmarks: PaginatedPosts;
+  getBookmarks: PaginatedBookmarks;
   getFeedItemStats?: Maybe<FeedItemStats>;
-  getFollowers: PaginatedUsers;
-  getFollowing: PaginatedUsers;
-  getLikedPosts: PaginatedPosts;
-  getPostLikes: PaginatedUsers;
+  getFollowers: PaginatedFollowRelations;
+  getFollowing: PaginatedFollowRelations;
+  getLikedPosts: PaginatedLikes;
+  getPostLikes: PaginatedLikes;
   getPostMentions?: Maybe<PostMentions>;
   getReposts: PaginatedReposts;
   hasThisUserAsAffiliate: Scalars['Boolean']['output'];
@@ -902,6 +937,7 @@ export type QueryFindMessageByIdArgs = {
 
 export type QueryFindPostArgs = {
   postId: Scalars['String']['input'];
+  username?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1499,6 +1535,7 @@ export type EditedPostSubscription = { __typename?: 'Subscription', editedPost: 
 
 export type FindPostQueryVariables = Exact<{
   postId: Scalars['String']['input'];
+  username?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
@@ -1527,7 +1564,7 @@ export type GetPostLikesQueryVariables = Exact<{
 }>;
 
 
-export type GetPostLikesQuery = { __typename?: 'Query', getPostLikes: { __typename?: 'PaginatedUsers', hasMore: boolean, totalCount?: number | null, users: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }> } };
+export type GetPostLikesQuery = { __typename?: 'Query', getPostLikes: { __typename?: 'PaginatedLikes', hasMore: boolean, totalCount?: number | null, likes: Array<{ __typename?: 'Like', id: number, userId: number, likedItemId: string, itemOpened: boolean, itemType: string, origin: string, createdAt: string, updatedAt: string }> } };
 
 export type GetPostMentionsQueryVariables = Exact<{
   postId: Scalars['String']['input'];
@@ -1693,7 +1730,7 @@ export type GetFollowersQueryVariables = Exact<{
 }>;
 
 
-export type GetFollowersQuery = { __typename?: 'Query', getFollowers: { __typename?: 'PaginatedUsers', hasMore: boolean, totalCount?: number | null, users: Array<{ __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }> } };
+export type GetFollowersQuery = { __typename?: 'Query', getFollowers: { __typename?: 'PaginatedFollowRelations', hasMore: boolean, totalCount?: number | null, followRelations: Array<{ __typename?: 'Follow', id: number, origin: string, createdAt: string, updatedAt: string, follower: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }, user: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } } }> } };
 
 export type HasThisUserAsAffiliateQueryVariables = Exact<{
   id?: InputMaybe<Scalars['Int']['input']>;
@@ -2611,8 +2648,8 @@ export function useEditedPostSubscription(baseOptions: Apollo.SubscriptionHookOp
 export type EditedPostSubscriptionHookResult = ReturnType<typeof useEditedPostSubscription>;
 export type EditedPostSubscriptionResult = Apollo.SubscriptionResult<EditedPostSubscription>;
 export const FindPostDocument = gql`
-    query FindPost($postId: String!) {
-  findPost(postId: $postId) {
+    query FindPost($postId: String!, $username: String) {
+  findPost(postId: $postId, username: $username) {
     id
     itemId
     authorId
@@ -2689,6 +2726,7 @@ export const FindPostDocument = gql`
  * const { data, loading, error } = useFindPostQuery({
  *   variables: {
  *      postId: // value for 'postId'
+ *      username: // value for 'username'
  *   },
  * });
  */
@@ -2850,44 +2888,15 @@ export type GetFeedItemStatsQueryResult = Apollo.QueryResult<GetFeedItemStatsQue
 export const GetPostLikesDocument = gql`
     query GetPostLikes($itemId: String!, $type: String!, $limit: Int!, $cursor: String) {
   getPostLikes(itemId: $itemId, type: $type, limit: $limit, cursor: $cursor) {
-    users {
+    likes {
       id
-      name
-      username
-      email
-      type
-      gender
-      birthDate {
-        date
-        monthAndDayVisibility
-        yearVisibility
-      }
-      emailVerified
-      profile {
-        profilePicture
-        profileBanner
-        bio
-        website
-      }
-      userSettings {
-        incomingMessages
-        twoFactorAuth
-      }
-      searchSettings {
-        hideSensitiveContent
-        hideBlockedAccounts
-      }
+      userId
+      likedItemId
+      itemOpened
+      itemType
+      origin
       createdAt
       updatedAt
-      hiddenPosts
-      identity {
-        verified
-        verifiedSince
-      }
-      verification {
-        verified
-        verifiedSince
-      }
     }
     hasMore
     totalCount
@@ -4046,44 +4055,89 @@ export type FollowUserMutationOptions = Apollo.BaseMutationOptions<FollowUserMut
 export const GetFollowersDocument = gql`
     query GetFollowers($id: Int, $limit: Int!, $cursor: String) {
   getFollowers(id: $id, limit: $limit, cursor: $cursor) {
-    users {
+    followRelations {
       id
-      name
-      username
-      email
-      type
-      gender
-      birthDate {
-        date
-        monthAndDayVisibility
-        yearVisibility
+      follower {
+        id
+        name
+        username
+        email
+        type
+        gender
+        birthDate {
+          date
+          monthAndDayVisibility
+          yearVisibility
+        }
+        emailVerified
+        profile {
+          profilePicture
+          profileBanner
+          bio
+          website
+        }
+        userSettings {
+          incomingMessages
+          twoFactorAuth
+        }
+        searchSettings {
+          hideSensitiveContent
+          hideBlockedAccounts
+        }
+        createdAt
+        updatedAt
+        hiddenPosts
+        identity {
+          verified
+          verifiedSince
+        }
+        verification {
+          verified
+          verifiedSince
+        }
       }
-      emailVerified
-      profile {
-        profilePicture
-        profileBanner
-        bio
-        website
+      user {
+        id
+        name
+        username
+        email
+        type
+        gender
+        birthDate {
+          date
+          monthAndDayVisibility
+          yearVisibility
+        }
+        emailVerified
+        profile {
+          profilePicture
+          profileBanner
+          bio
+          website
+        }
+        userSettings {
+          incomingMessages
+          twoFactorAuth
+        }
+        searchSettings {
+          hideSensitiveContent
+          hideBlockedAccounts
+        }
+        createdAt
+        updatedAt
+        hiddenPosts
+        identity {
+          verified
+          verifiedSince
+        }
+        verification {
+          verified
+          verifiedSince
+        }
       }
-      userSettings {
-        incomingMessages
-        twoFactorAuth
-      }
-      searchSettings {
-        hideSensitiveContent
-        hideBlockedAccounts
-      }
+      origin
       createdAt
       updatedAt
-      hiddenPosts
-      identity {
-        verified
-        verifiedSince
-      }
-      verification {
-        verified
-        verifiedSince
-      }
     }
     hasMore
     totalCount

@@ -64,9 +64,9 @@ const cache = new InMemoryCache({
                         }
                         
                         return {
-                            users: [
-                                ...(existing?.users || []),
-                                ...incoming.users,
+                            likes: [
+                                ...(existing?.likes || []),
+                                ...incoming.likes,
                             ],
                             hasMore: incoming.hasMore,
                             totalCount: incoming.totalCount,

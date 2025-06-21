@@ -68,6 +68,24 @@ export class PaginatedUsers extends FeedWrapper {
     users: User[];
 }
 
+@ObjectType()
+export class PaginatedFollowRelations extends FeedWrapper {
+    @Field(() => [Follow])
+    followRelations: Follow[];
+}
+
+@ObjectType()
+export class PaginatedBlockActions extends FeedWrapper {
+    @Field(() => [Block])
+    blockActions: Block[];
+}
+
+@ObjectType()
+export class PaginatedAffiliations extends FeedWrapper {
+    @Field(() => [Affiliation])
+    affiliations: Affiliation[];
+}
+
 @Resolver(User)
 export class UserResolver {
     private readonly userRepository: Repository<User>;
@@ -1295,17 +1313,17 @@ export class UserResolver {
         }
     }
 
-    @Query(() => PaginatedUsers)
+    @Query(() => PaginatedFollowRelations)
     async getFollowers(
         @Arg("id", () => Int, { nullable: true }) id: number,
         @Arg("limit", () => Int) limit: number,
         @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
-    ): Promise<PaginatedUsers> {
+    ): Promise<PaginatedFollowRelations> {
         if (!id) {
             logger.warn("User id not provided.");
 
             return {
-                users: [],
+                followRelations: [],
                 hasMore: false,
                 totalCount: 0,
             }
@@ -1330,10 +1348,8 @@ export class UserResolver {
                 }),
             ]);
 
-            const users = followRelations.map(follow => follow.follower);
-
             return {
-                users: users.slice(0, limit),
+                followRelations: followRelations.slice(0, limit),
                 hasMore: followRelations.length === limit + 1,
                 totalCount,
             }
@@ -1341,24 +1357,24 @@ export class UserResolver {
             logger.error(error);
 
             return {
-                users: [],
+                followRelations: [],
                 hasMore: false,
                 totalCount: 0,
             };
         }
     }
 
-    @Query(() => PaginatedUsers)
+    @Query(() => PaginatedFollowRelations)
     async getFollowing(
         @Arg("id", () => Int, { nullable: true }) id: number,
         @Arg("limit", () => Int) limit: number,
         @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
-    ): Promise<PaginatedUsers> {
+    ): Promise<PaginatedFollowRelations> {
         if (!id) {
             logger.warn("User id not provided.");
 
             return {
-                users: [],
+                followRelations: [],
                 hasMore: false,
                 totalCount: 0,
             };
@@ -1383,10 +1399,8 @@ export class UserResolver {
                 })
             ]);
 
-            const users = followRelations.map(follow => follow.user);
-
             return {
-                users: users.slice(0, limit),
+                followRelations: followRelations.slice(0, limit),
                 hasMore: followRelations.length === limit + 1,
                 totalCount,
             }
@@ -1394,7 +1408,7 @@ export class UserResolver {
             logger.error(error);
 
             return {
-                users: [],
+                followRelations: [],
                 hasMore: false,
                 totalCount: 0,
             };
@@ -2288,18 +2302,18 @@ export class UserResolver {
         }
     }
 
-    @Query(() => PaginatedUsers)
+    @Query(() => PaginatedBlockActions)
     @UseMiddleware(isAuth)
     async blockedUsers(
         @Ctx() { payload }: AuthContext,
         @Arg("limit", () => Int) limit: number,
         @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
-    ): Promise<PaginatedUsers> {
+    ): Promise<PaginatedBlockActions> {
         if (!payload) {
             logger.warn("Payload not provided.");
 
             return {
-                users: [],
+                blockActions: [],
                 hasMore: false,
                 totalCount: 0,
             };
@@ -2324,28 +2338,14 @@ export class UserResolver {
                         })
                     ]);
 
-                    const userIds = blockActions.map(block => block.blockedId);
-
-                    const users = await this.userService.findUsersById(userIds);
-
-                    if (!users) {
-                        logger.warn("No users found.");
-        
-                        return {
-                            users: [],
-                            hasMore: false,
-                            totalCount: 0,
-                        }
-                    }
-
                     return {
-                        users: users.slice(0, limit),
+                        blockActions: blockActions.slice(0, limit),
                         hasMore: blockActions.length === limit + 1,
                         totalCount,
                     };
                 } else {
                     return {
-                        users: [],
+                        blockActions: [],
                         hasMore: false,
                         totalCount: 0,
                     };
@@ -2354,7 +2354,7 @@ export class UserResolver {
                 logger.error(error);
 
                 return {
-                    users: [],
+                    blockActions: [],
                     hasMore: false,
                     totalCount: 0,
                 };
@@ -2882,17 +2882,17 @@ export class UserResolver {
         }
     }
 
-    @Query(() => PaginatedUsers)
+    @Query(() => PaginatedAffiliations)
     async affiliates(
         @Arg("id", () => Int, { nullable: true }) id: number,
         @Arg("limit", () => Int) limit: number,
         @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
-    ): Promise<PaginatedUsers> {
+    ): Promise<PaginatedAffiliations> {
         if (!id) {
             logger.warn("User id not provided.");
 
             return {
-                users: [],
+                affiliations: [],
                 hasMore: false,
                 totalCount: 0,
             };
@@ -2915,28 +2915,14 @@ export class UserResolver {
                         }),
                     ]);
 
-                    const userIds = affiliations.map(affiliation => affiliation.userId);
-
-                    const users = await this.userService.findUsersById(userIds);
-
-                    if (!users) {
-                        logger.warn("No users found.");
-
-                        return {
-                            users: [],
-                            hasMore: false,
-                            totalCount: 0,
-                        }
-                    }
-
                     return {
-                        users: users.slice(0, limit),
+                        affiliations: affiliations.slice(0, limit),
                         hasMore: affiliations.length === limit + 1,
                         totalCount,
                     };
                 } else {
                     return {
-                        users: [],
+                        affiliations: [],
                         hasMore: false,
                         totalCount: 0,
                     };
@@ -2945,7 +2931,7 @@ export class UserResolver {
                 logger.error(error);
 
                 return {
-                    users: [],
+                    affiliations: [],
                     hasMore: false,
                     totalCount: 0,
                 };

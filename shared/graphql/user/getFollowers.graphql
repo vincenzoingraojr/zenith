@@ -8,44 +8,89 @@ query GetFollowers(
         limit: $limit
         cursor: $cursor
     ) {
-        users {
+        followRelations {
             id
-            name
-            username
-            email
-            type
-            gender
-            birthDate {
-                date
-                monthAndDayVisibility
-                yearVisibility
+            follower {
+                id
+                name
+                username
+                email
+                type
+                gender
+                birthDate {
+                    date
+                    monthAndDayVisibility
+                    yearVisibility
+                }
+                emailVerified
+                profile {
+                    profilePicture
+                    profileBanner
+                    bio
+                    website
+                }
+                userSettings {
+                    incomingMessages
+                    twoFactorAuth
+                }
+                searchSettings {
+                    hideSensitiveContent
+                    hideBlockedAccounts
+                }
+                createdAt
+                updatedAt
+                hiddenPosts
+                identity {
+                    verified
+                    verifiedSince
+                }
+                verification {
+                    verified
+                    verifiedSince
+                }
             }
-            emailVerified
-            profile {
-                profilePicture
-                profileBanner
-                bio
-                website
+            user {
+                id
+                name
+                username
+                email
+                type
+                gender
+                birthDate {
+                    date
+                    monthAndDayVisibility
+                    yearVisibility
+                }
+                emailVerified
+                profile {
+                    profilePicture
+                    profileBanner
+                    bio
+                    website
+                }
+                userSettings {
+                    incomingMessages
+                    twoFactorAuth
+                }
+                searchSettings {
+                    hideSensitiveContent
+                    hideBlockedAccounts
+                }
+                createdAt
+                updatedAt
+                hiddenPosts
+                identity {
+                    verified
+                    verifiedSince
+                }
+                verification {
+                    verified
+                    verifiedSince
+                }
             }
-            userSettings {
-                incomingMessages
-                twoFactorAuth
-            }
-            searchSettings {
-                hideSensitiveContent
-                hideBlockedAccounts
-            }
+            origin
             createdAt
             updatedAt
-            hiddenPosts
-            identity {
-                verified
-                verifiedSince
-            }
-            verification {
-                verified
-                verifiedSince
-            }
         }
         hasMore
         totalCount

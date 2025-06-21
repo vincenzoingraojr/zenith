@@ -22,7 +22,6 @@ import { NotificationService } from "./NotificationService";
 import { POST_TYPES } from "../helpers/post/postTypes";
 import { NOTIFICATION_TYPES } from "../helpers/notification/notificationTypes";
 import { EMPTY_CONTENT_REGEXP } from "../helpers/textConstants";
-import { PaginatedUsers } from "./UserResolver";
 
 @ObjectType()
 export class PostResponse {
@@ -46,9 +45,21 @@ export class PaginatedPosts extends FeedWrapper {
 }
 
 @ObjectType()
+export class PaginatedLikes extends FeedWrapper {
+    @Field(() => [Like])
+    likes: Like[];
+}
+
+@ObjectType()
 export class PaginatedReposts extends FeedWrapper {
     @Field(() => [Repost])
     reposts: Repost[];
+}
+
+@ObjectType()
+export class PaginatedBookmarks extends FeedWrapper {
+    @Field(() => [Bookmark])
+    bookmarks: Bookmark[];
 }
 
 @Resolver(Post)
@@ -354,16 +365,22 @@ export class PostResolver {
     }
 
     @Query(() => Post, { nullable: true })
-    async findPost(@Arg("postId") postId: string): Promise<Post | null> {
+    async findPost(@Arg("postId") postId: string, @Arg("username", { nullable: true }) username?: string): Promise<Post | null> {
         if (!isUUID(postId)) {
             logger.warn("Invalid postId provided.");
 
             return null;
         }
 
+        if (username && username.length === 0) {
+            logger.warn("Invalid username provided.");
+
+            return null;
+        }
+
         try {
             const post = await this.postRepository.findOne({
-                where: { itemId: postId, author: { deletedAt: IsNull() } },
+                where: { itemId: postId, author: { username, deletedAt: IsNull() } },
                 relations: ["author", "media"],
             });
 
@@ -1173,17 +1190,17 @@ export class PostResolver {
         }
     }
 
-    @Query(() => PaginatedPosts)
+    @Query(() => PaginatedLikes)
     async getLikedPosts(
         @Arg("id", () => Int, { nullable: true }) id: number,
         @Arg("limit", () => Int) limit: number,
         @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
-    ): Promise<PaginatedPosts> {
+    ): Promise<PaginatedLikes> {
         if (!id) {
             logger.warn("User id not provied.");
 
             return {
-                posts: [],
+                likes: [],
                 hasMore: false,
                 totalCount: 0,
             };
@@ -1206,15 +1223,8 @@ export class PostResolver {
                 }),
             ]);
     
-            const likedPostIds = likes.filter(like => like.itemType !== POST_TYPES.ARTICLE).map(like => like.likedItemId);
-            
-            const posts = await this.postRepository.find({
-                where: { itemId: In(likedPostIds) },
-                relations: ["author", "media"],
-            });
-    
             return {
-                posts: posts.slice(0, limit),
+                likes: likes.slice(0, limit),
                 hasMore:  likes.length === limit + 1,
                 totalCount,
             };
@@ -1222,25 +1232,25 @@ export class PostResolver {
             logger.error(error);
 
             return {
-                posts: [],
+                likes: [],
                 hasMore: false,
                 totalCount: 0,
             };
         }
     }
 
-    @Query(() => PaginatedUsers)
+    @Query(() => PaginatedLikes)
     async getPostLikes(
         @Arg("itemId") itemId: string,
         @Arg("type") type: string,
         @Arg("limit", () => Int) limit: number,
         @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
-    ): Promise<PaginatedUsers> {
+    ): Promise<PaginatedLikes> {
         if (!isUUID(itemId)) {
             logger.warn("Invalid itemId provided.");
 
             return {
-                users: [],
+                likes: [],
                 hasMore: false,
                 totalCount: 0,
             };
@@ -1250,7 +1260,7 @@ export class PostResolver {
             logger.warn("Invalid type provided.");
 
             return {
-                users: [],
+                likes: [],
                 hasMore: false,
                 totalCount: 0,
             };
@@ -1275,22 +1285,8 @@ export class PostResolver {
                 }),
             ]);
 
-            const userIds = likes.map(like => like.userId);
-        
-            const users = await this.userService.findUsersById(userIds);
-
-            if (!users) {
-                logger.warn("No users found.");
-
-                return {
-                    users: [],
-                    hasMore: false,
-                    totalCount: 0,
-                }
-            }
-        
             return {
-                users: users.slice(0, limit),
+                likes: likes.slice(0, limit),
                 hasMore:  likes.length === limit + 1,
                 totalCount,
             };
@@ -1298,7 +1294,7 @@ export class PostResolver {
             logger.error(error);
 
             return {
-                users: [],
+                likes: [],
                 hasMore: false,
                 totalCount: 0,
             };
@@ -1641,19 +1637,18 @@ export class PostResolver {
         }
     }
 
-    // da sistemare per includere gli articoli, quando sarà il momento giusto.
-    @Query(() => PaginatedPosts)
+    @Query(() => PaginatedBookmarks)
     @UseMiddleware(isAuth)
     async getBookmarks(
         @Ctx() { payload }: AuthContext,
         @Arg("limit", () => Int) limit: number,
         @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
-    ): Promise<PaginatedPosts> {
+    ): Promise<PaginatedBookmarks> {
         if (!payload) {
             logger.warn("User not authenticated.");
 
             return {
-                posts: [],
+                bookmarks: [],
                 hasMore: false,
                 totalCount: 0,
             };
@@ -1676,15 +1671,8 @@ export class PostResolver {
                 })
             ]);
 
-            const savedPostIds = bookmarks.filter(bookmark => bookmark.itemType !== POST_TYPES.ARTICLE).map(bookmark => bookmark.itemId);
-            
-            const posts = await this.postRepository.find({
-                where: { id: In(savedPostIds) },
-                relations: ["author", "media"],
-            });
-    
             return {
-                posts: posts.slice(0, limit),
+                bookmarks: bookmarks.slice(0, limit),
                 hasMore: bookmarks.length === limit + 1,
                 totalCount,
             };
@@ -1692,7 +1680,7 @@ export class PostResolver {
             logger.error(error);
 
             return {
-                posts: [],
+                bookmarks: [],
                 hasMore: false,
                 totalCount: 0,
             };

@@ -8,7 +8,7 @@ import LoadingComponent from "../../components/utils/LoadingComponent";
 import ErrorOrItemNotFound from "../../components/utils/ErrorOrItemNotFound";
 import { ERROR_SOMETHING_WENT_WRONG, POST_TYPES } from "../../utils/constants";
 import styled from "styled-components";
-import PostComponent, { AuthorFullName, AuthorFullNameContainer, AuthorInfo, AuthorUsername, PostActionInfo, PostActionsContainer, PostActionsGroup, PostAuthorContainer, PostContentContainer, PostDate, PostHeader, PostMediaContainer, PostMediaItem, PostTextContainer, QuotedPostNotAvailable } from "../../components/layouts/items/post/PostComponent";
+import PostComponent, { PostActionInfo, PostActionsContainer, PostActionsGroup, PostAuthorContainer, PostContentContainer, PostDate, PostHeader, PostMediaContainer, PostMediaItem, PostTextContainer, QuotedPostNotAvailable } from "../../components/layouts/items/post/PostComponent";
 import ProfilePicture from "../../components/utils/ProfilePicture";
 import VerificationBadge from "../../components/utils/VerificationBadge";
 import AffiliationIcon from "../../components/utils/AffiliationIcon";
@@ -29,7 +29,7 @@ import FollowIcon from "../../components/icons/FollowIcon";
 import Block from "../../components/icons/Block";
 import Unmention from "../../components/icons/Unmention";
 import TextContainerRender from "../../components/utils/TextContainerRender";
-import { ButtonControlContainer, FeedWithLumenInput, FullWidthFeedContainer, OptionBaseIcon, PageBlock, PageText, SignUpOrLogInText, StandardButton } from "../../styles/global";
+import { ButtonControlContainer, FeedWithLumenInput, FullWidthFeedContainer, OptionBaseIcon, PageBlock, PageText, SignUpOrLogInText, StandardButton, UserFullName, UserFullNameContainer, UserInfo, UsernameContainer } from "../../styles/global";
 import QuotedPost from "../../components/layouts/items/post/QuotedPost";
 import { FindPostByIdDocument, FindPostByIdQuery, FindPostDocument, FindPostQuery, Post, useEditedPostSubscription } from "../../generated/graphql";
 import { formatter } from "../../utils/formatter";
@@ -180,7 +180,7 @@ const UpdateButton = styled(StandardButton)`
 function PostPage() {
     const params = useParams();
 
-    const { post, loading, error, client } = useFindPost(params.itemId as string);
+    const { post, loading, error, client } = useFindPost(params.itemId as string, params.username as string);
 
     const { activeOptions, handleOptionsClick } = useOptions();
 
@@ -371,7 +371,7 @@ function PostPage() {
                     loading
                         ? "Content not ready. Loading..."
                         : post
-                        ? `${post.author.name} on Zenith: ${post.content} | Zenith`
+                        ? `${post.author.name} on Zenith: ${post.content}`
                         : "Post not found."
                 }
                 image={
@@ -467,11 +467,11 @@ function PostPage() {
                                                                 size={40}
                                                                 title={post.author.name}
                                                             />
-                                                            <AuthorInfo>
-                                                                <AuthorFullNameContainer>
-                                                                    <AuthorFullName>
+                                                            <UserInfo>
+                                                                <UserFullNameContainer>
+                                                                    <UserFullName>
                                                                         {post.author.name}
-                                                                    </AuthorFullName>
+                                                                    </UserFullName>
                                                                     {post.author.verification.verified ===
                                                                         "VERIFIED" && (
                                                                         <VerificationBadge
@@ -498,11 +498,11 @@ function PostPage() {
                                                                         userId={post.authorId}
                                                                         size={18}
                                                                     />
-                                                                </AuthorFullNameContainer>
-                                                                <AuthorUsername>
+                                                                </UserFullNameContainer>
+                                                                <UsernameContainer>
                                                                     @{post.author.username}
-                                                                </AuthorUsername>
-                                                            </AuthorInfo>
+                                                                </UsernameContainer>
+                                                            </UserInfo>
                                                         </PostAuthorContainer>
                                                         <Options
                                                             key={post.id}

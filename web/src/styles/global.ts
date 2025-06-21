@@ -1413,3 +1413,60 @@ export const SignUpOrLogInText = styled(PageText)`
     padding-left: 16px;
     padding-right: 16px;
 `;
+
+export const UserInfo = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: auto;
+    flex: 1;
+    overflow: hidden;
+`;
+
+export const UserFullNameContainer = styled.div`
+    display: flex;
+    align-items: center;
+    width: auto;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: clip;
+    gap: 8px;
+`;
+
+export const UserFullName = styled(PageText)`
+    font-weight: 700;
+    font-size: 16px;
+    width: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-decoration: none;
+    color: ${({ theme }) => theme.color};
+
+    &:hover,
+    &:active {
+        text-decoration: underline;
+        text-decoration-color: ${({ theme }) => theme.color};
+    }
+`;
+
+export const UsernameContainer = styled(PageText)`
+    font-size: 14px;
+    width: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: ${({ theme }) => theme.inputText};
+`;
+
+export const RightContainer = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+`;
+
+export const ModalFeedContainer = styled.div`
+    display: block;
+    padding-bottom: 36px;
+`;

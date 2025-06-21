@@ -11,9 +11,9 @@ import {
     usePostCommentsQuery,
 } from "../generated/graphql";
 
-export const useFindPost = (postId: string) => {
+export const useFindPost = (postId: string, username?: string) => {
     const { data, loading, error, client } = useFindPostQuery({
-        variables: { postId },
+        variables: { postId, username },
         fetchPolicy: "cache-first",
     });
 

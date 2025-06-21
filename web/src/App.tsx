@@ -33,6 +33,8 @@ import PostPage from "./pages/post/PostPage";
 import NotificationSettings from "./pages/settings/notifications/NotificationSettings";
 import { NotificationsProvider } from "./utils/NotificationsProvider";
 import ScrollManager from "./utils/ScrollManager";
+import PostLikes from "./pages/post/PostLikes";
+import Reposts from "./pages/post/Reposts";
 
 function App() {
     const location = useLocation();
@@ -239,6 +241,28 @@ function App() {
                 />
                 <Route path="/:username/post/:itemId" element={<PostPage />} />
                 <Route
+                    path="/:username/post/:itemId/likes"
+                    element={
+                        <IsAuthenticated
+                            isAuth={isAuth}
+                            children={
+                                <PostLikes />
+                            }
+                        />
+                    }
+                />
+                <Route
+                    path="/:username/post/:itemId/reposts"
+                    element={
+                        <IsAuthenticated
+                            isAuth={isAuth}
+                            children={
+                                <Reposts />
+                            }
+                        />
+                    }
+                />
+                <Route
                     path="/settings/notifications"
                     element={
                         <IsAuthenticated
@@ -294,6 +318,28 @@ function App() {
                                         isBack={true}
                                         children={<EditPost />}
                                     />
+                                }
+                            />
+                        }
+                    />
+                    <Route
+                        path="/:username/post/:itemId/likes"
+                        element={
+                            <IsAuthenticated
+                                isAuth={isAuth}
+                                children={
+                                    <PostLikes />
+                                }
+                            />
+                        }
+                    />
+                    <Route
+                        path="/:username/post/:itemId/reposts"
+                        element={
+                            <IsAuthenticated
+                                isAuth={isAuth}
+                                children={
+                                    <Reposts />
                                 }
                             />
                         }

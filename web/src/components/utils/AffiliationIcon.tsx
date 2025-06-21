@@ -5,7 +5,7 @@ import { useIsAffiliatedTo } from "../../utils/userQueries";
 import ProfilePicture from "./ProfilePicture";
 
 interface AffiliationIconProps {
-    userId: number;
+    userId?: number;
     size: number;
     noAction?: boolean;
 }

@@ -1,8 +1,10 @@
 query FindPost(
     $postId: String!
+    $username: String
 ) {
     findPost(
         postId: $postId
+        username: $username
     ) {
         id
         itemId

@@ -160,13 +160,13 @@ export function usePostMutations() {
                                 });
 
                             const {
-                                users: oldUsers,
+                                likes: oldLikes,
                                 totalCount: oldCount,
                                 hasMore,
                             } = (
                                 existing as {
                                     getPostLikes: {
-                                        users: any[];
+                                        likes: any[];
                                         totalCount: number;
                                         hasMore: boolean;
                                     };
@@ -182,9 +182,9 @@ export function usePostMutations() {
                                 },
                                 data: {
                                     getPostLikes: {
-                                        users: oldUsers.filter(
-                                            (user) =>
-                                                user.id !==
+                                        likes: oldLikes.filter(
+                                            (like) =>
+                                                like.userId !==
                                                 me.id
                                         ),
                                         totalCount:
@@ -263,7 +263,7 @@ export function usePostMutations() {
                                 },
                                 data: {
                                     getPostLikes: {
-                                        users: [me],
+                                        likes: [likePostData.likePost],
                                         totalCount:
                                             oldCount + 1,
                                         hasMore,
@@ -322,7 +322,6 @@ export function usePostMutations() {
                                         variables:
                                             {
                                                 postId: id,
-                                                userId: me.id,
                                                 limit: 3,
                                             },
                                     }
@@ -350,7 +349,6 @@ export function usePostMutations() {
                                     variables:
                                         {
                                             postId: id,
-                                            userId: me.id,
                                             limit: 3,
                                         },
                                     data: {
@@ -418,7 +416,6 @@ export function usePostMutations() {
                                         variables:
                                             {
                                                 postId: id,
-                                                userId: me.id,
                                                 limit: 3,
                                             },
                                     }
@@ -443,7 +440,6 @@ export function usePostMutations() {
                                     variables:
                                         {
                                             postId: id,
-                                            userId: me.id,
                                             limit: 3,
                                         },
                                     data: {

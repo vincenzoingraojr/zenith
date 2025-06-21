@@ -7,7 +7,7 @@ import {
     ControlContainer,
     FullWidthFeedContainer,
 } from "../styles/global";
-import NotificationComponent from "../components/layouts/items/notifications/NotificationComponent";
+import NotificationComponent from "../components/layouts/items/notification/NotificationComponent";
 import { useNotificationsContext } from "../utils/NotificationsProvider";
 import FeedComponent from "../components/utils/FeedComponent";
 import { useMemo } from "react";

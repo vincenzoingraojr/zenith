@@ -2,14 +2,10 @@ import { FunctionComponent, useMemo } from "react";
 import { Post } from "../../../../generated/graphql";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import { PageBlock, PageText } from "../../../../styles/global";
+import { PageBlock, RightContainer, UserFullNameContainer, UserInfo, UsernameContainer } from "../../../../styles/global";
 import {
-    AuthorFullNameContainer,
-    AuthorInfo,
-    AuthorUsername,
     PostDate,
     PostMediaItem,
-    PostRightContainer,
 } from "./PostComponent";
 import VerificationBadge from "../../../utils/VerificationBadge";
 import Pen from "../../../icons/Pen";
@@ -65,14 +61,13 @@ const QuotedPostAuthorContainer = styled.div`
     overflow: hidden;
 `;
 
-const QuotedAuthorFullName = styled(PageText)`
-    font-weight: 700;
-    font-size: 16px;
-    width: auto;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: ${({ theme }) => theme.color};
+const QuotedAuthorFullName = styled(UserFullNameContainer)`
+    text-decoration: none;
+
+    &:hover,
+    &:active {
+        text-decoration: none;
+    }
 `;
 
 const QuotedPostContentContainer = styled.div`
@@ -135,8 +130,8 @@ const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin }) => {
                             size={40}
                             title={post.author.name}
                         />
-                        <AuthorInfo>
-                            <AuthorFullNameContainer>
+                        <UserInfo>
+                            <UserFullNameContainer>
                                 <QuotedAuthorFullName>
                                     {post.author.name}
                                 </QuotedAuthorFullName>
@@ -167,13 +162,13 @@ const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin }) => {
                                     size={18}
                                     noAction={true}
                                 />
-                            </AuthorFullNameContainer>
-                            <AuthorUsername>
+                            </UserFullNameContainer>
+                            <UsernameContainer>
                                 @{post.author.username}
-                            </AuthorUsername>
-                        </AuthorInfo>
+                            </UsernameContainer>
+                        </UserInfo>
                     </QuotedPostAuthorContainer>
-                    <PostRightContainer>
+                    <RightContainer>
                         <PostDate title={createdAt} aria-label={createdAt}>
                             <time dateTime={createdAt}>{date}</time>
                         </PostDate>
@@ -186,7 +181,7 @@ const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin }) => {
                                 <Pen color={COLORS.blue} />
                             </PageBlock>
                         )}
-                    </PostRightContainer>
+                    </RightContainer>
                 </QuotedPostHeader>
                 <QuotedPostContentContainer>
                     <QuotedPostTextContainer>
