@@ -26,6 +26,7 @@ import { ThemeProviderWrapper, useThemeContext } from "./styles/ThemeContext";
 import App from "./App";
 import { AuthProvider } from "./utils/AuthContext";
 import { ToastProvider } from "./components/utils/ToastProvider";
+import { persistCache, LocalStorageWrapper } from "apollo3-cache-persist";
 
 const cache = new InMemoryCache({
     typePolicies: {
@@ -196,87 +197,101 @@ const link = split(
     httpLink
 );
 
-const client = new ApolloClient({
-    link: ApolloLink.from([
-        new TokenRefreshLink({
-            accessTokenField: "accessToken",
-            isTokenValidOrUndefined: () => {
-                const token = getAccessToken();
+async function initApollo() {
+    try {
+        // Persist cache before app load
+        await persistCache({
+            cache,
+            storage: new LocalStorageWrapper(window.localStorage),
+        });
+    } catch (error) {
+        console.error("Error restoring Apollo cache", error);
+    }
 
-                if (!token) {
-                    return true;
-                }
+    const client = new ApolloClient({
+        link: ApolloLink.from([
+            new TokenRefreshLink({
+                accessTokenField: "accessToken",
+                isTokenValidOrUndefined: () => {
+                    const token = getAccessToken();
 
-                try {
-                    const { exp } = jwtDecode<JwtPayload>(token);
-                    if (exp && Date.now() >= exp * 1000) {
-                        return false;
-                    } else {
+                    if (!token) {
                         return true;
                     }
-                } catch {
-                    return false;
-                }
-            },
-            fetchAccessToken: () => {
-                return fetch(process.env.REACT_APP_SERVER_ORIGIN!, {
-                    method: "POST",
-                    credentials: "include",
-                });
-            },
-            handleResponse:
-                (_: any, accessTokenField: string) =>
-                async (response: Response) => {
-                    const result = await response.json();
 
-                    return {
-                        [accessTokenField]: result[accessTokenField],
-                    };
+                    try {
+                        const { exp } = jwtDecode<JwtPayload>(token);
+                        if (exp && Date.now() >= exp * 1000) {
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    } catch {
+                        return false;
+                    }
                 },
-            handleFetch: (accessToken) => {
-                setAccessToken(accessToken);
-            },
-            handleError: (err) => {
-                console.warn("Your refresh token is invalid. Try to relogin.");
-                console.error(err);
-            },
-        }),
-        onError(({ graphQLErrors, networkError }) => {
-            console.log(graphQLErrors);
-            console.log(networkError);
-        }) as any,
-        requestLink,
-        link,
-    ]),
-    cache,
-});
+                fetchAccessToken: () => {
+                    return fetch(process.env.REACT_APP_SERVER_ORIGIN!, {
+                        method: "POST",
+                        credentials: "include",
+                    });
+                },
+                handleResponse:
+                    (_: any, accessTokenField: string) =>
+                    async (response: Response) => {
+                        const result = await response.json();
 
-const ThemedApp = () => {
-    const { isDarkMode } = useThemeContext();
-    const theme = isDarkMode ? darkTheme : lightTheme;
+                        return {
+                            [accessTokenField]: result[accessTokenField],
+                        };
+                    },
+                handleFetch: (accessToken) => {
+                    setAccessToken(accessToken);
+                },
+                handleError: (err) => {
+                    console.warn("Your refresh token is invalid. Try to relogin.");
+                    console.error(err);
+                },
+            }),
+            onError(({ graphQLErrors, networkError }) => {
+                console.log(graphQLErrors);
+                console.log(networkError);
+            }) as any,
+            requestLink,
+            link,
+        ]),
+        cache,
+    });
 
-    return (
-        <ThemeProvider theme={theme}>
-            <ToastProvider>
-                <GlobalStyle />
-                <App />
-            </ToastProvider>
-        </ThemeProvider>
+    const ThemedApp = () => {
+        const { isDarkMode } = useThemeContext();
+        const theme = isDarkMode ? darkTheme : lightTheme;
+
+        return (
+            <ThemeProvider theme={theme}>
+                <ToastProvider>
+                    <GlobalStyle />
+                    <App />
+                </ToastProvider>
+            </ThemeProvider>
+        );
+    };
+
+    ReactDOM.render(
+        <ApolloProvider client={client}>
+            <BrowserRouter>
+                <AuthProvider>
+                    <ThemeProviderWrapper>
+                        <ThemedApp />
+                    </ThemeProviderWrapper>
+                </AuthProvider>
+            </BrowserRouter>
+        </ApolloProvider>,
+        document.getElementById("root")
     );
-};
+}
 
-ReactDOM.render(
-    <ApolloProvider client={client}>
-        <BrowserRouter>
-            <AuthProvider>
-                <ThemeProviderWrapper>
-                    <ThemedApp />
-                </ThemeProviderWrapper>
-            </AuthProvider>
-        </BrowserRouter>
-    </ApolloProvider>,
-    document.getElementById("root")
-);
+initApollo();
 
 serviceWorkerRegistration.register({
     bypassNodeEnvProduction:
