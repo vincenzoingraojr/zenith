@@ -11,7 +11,6 @@ import Toast from "react-native-root-toast";
 import { useAuth } from "../navigation/AuthContext";
 import { Layout } from "../components/Layout";
 import AuthLayout from "../components/layouts/AuthLayout";
-import { getUserLocationFromAPI } from "../utils/getLocation";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Link, RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import * as Device from "expo-device";
@@ -26,8 +25,6 @@ type RootStackParamList = {
         clientName: string,
         clientOS: string,
         clientType: string,
-        deviceLocation: string,
-        country: string,
     };
     RecoverPassword: undefined;
     ReactivateAccount: undefined;
@@ -49,18 +46,6 @@ const LogInScreen = () => {
     const { login } = useAuth();
     const color = textColorProp();
 
-    const [userLocation, setUserLocation] = useState("");
-    const [country, setCountry] = useState("");
-
-    useEffect(() => {
-        const response = getUserLocationFromAPI();
-
-        response.then((response) => {
-            setUserLocation(`${response.data.city}, ${response.data.country}`);
-            setCountry(response.data.country);
-        });
-    }, []);
-
     const [recovery, setRecovery] = useState(false);
 
     const handleLogin = async () => {
@@ -71,8 +56,6 @@ const LogInScreen = () => {
                 clientName: Device.modelName || "Unknown",
                 clientOS: Platform.OS,
                 clientType: Platform.OS === "web" ? "browser" : "native",
-                deviceLocation: userLocation,
-                country,
             },
             update: (store, { data }) => {
                 if (data && data.login && data.login.user) {
@@ -103,8 +86,6 @@ const LogInScreen = () => {
                     clientName: Device.modelName || "Unknown",
                     clientOS: Platform.OS,
                     clientType: Platform.OS === "web" ? "browser" : "native",
-                    deviceLocation: userLocation,
-                    country,
                 });
             } else if (response.data.login.user && response.data.login.status === "account_deactivated") {
                 setRecovery(true);

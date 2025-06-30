@@ -6,8 +6,6 @@ mutation VerifyOTP(
     $clientOS: String
     $clientType: String
     $clientName: String
-    $deviceLocation: String
-    $country: String
 ) {
     verifyOTP(
         otp: $otp
@@ -17,8 +15,6 @@ mutation VerifyOTP(
         clientOS: $clientOS
         clientType: $clientType
         clientName: $clientName
-        deviceLocation: $deviceLocation
-        country: $country
     ) {
         status
         accessToken

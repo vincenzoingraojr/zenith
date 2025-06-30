@@ -12,7 +12,7 @@ import {
 } from "../generated/graphql";
 
 export const useFindPost = (postId: string, username?: string) => {
-    const { data, loading, error, client } = useFindPostQuery({
+    const { data, loading, error } = useFindPostQuery({
         variables: { postId, username },
         fetchPolicy: "cache-first",
     });
@@ -21,7 +21,6 @@ export const useFindPost = (postId: string, username?: string) => {
         post: data && data?.findPost ? data.findPost : null,
         loading,
         error,
-        client,
     };
 };
 

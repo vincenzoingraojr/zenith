@@ -4,8 +4,6 @@ mutation Login(
     $clientOS: String!
     $clientType: String!
     $clientName: String!
-    $deviceLocation: String!
-    $country: String!
 ) {
     login(
         input: $input
@@ -13,8 +11,6 @@ mutation Login(
         clientOS: $clientOS
         clientType: $clientType
         clientName: $clientName
-        deviceLocation: $deviceLocation
-        country: $country
     ) {
         user {
             id

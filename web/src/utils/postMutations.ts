@@ -1,3 +1,4 @@
+import { client } from "..";
 import {
     GetPostLikesDocument,
     GetRepostsDocument,
@@ -29,7 +30,7 @@ import {
 import { useMeData } from "./userQueries";
 
 export function usePostMutations() {
-    const [deletePost, { client }] = useDeletePostMutation();
+    const [deletePost] = useDeletePostMutation();
     const [likePost] = useLikePostMutation();
     const [removeLike] = useRemoveLikeMutation();
     const { me } = useMeData();

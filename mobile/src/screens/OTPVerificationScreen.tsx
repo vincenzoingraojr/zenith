@@ -22,8 +22,6 @@ type RootStackParamList = {
         clientName?: string,
         clientOS?: string,
         clientType?: string,
-        deviceLocation?: string,
-        country?: string,
     };
     DrawerTabStack: undefined;
 };
@@ -78,8 +76,6 @@ const OTPVerificationScreen = () => {
                 clientOS: route.params.clientOS || "",
                 clientType: route.params.clientType || "",
                 clientName: route.params.clientName || "",
-                deviceLocation: route.params.deviceLocation || "",
-                country: route.params.country || "",
             },
             update: (store, { data }) => {
                 if (data && data.verifyOTP.user && data.verifyOTP.ok) {

@@ -27,21 +27,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             method: "POST",
             credentials: "include",
         })
-            .then(async (x) => {
-                const { accessToken } = await x.json();
-                setAccessToken(accessToken);
+        .then(async (x) => {
+            const { accessToken } = await x.json();
+            setAccessToken(accessToken);
 
-                if (accessToken && accessToken.length > 0) {
-                    setIsAuth(true);
-                } else {
-                    setIsAuth(false);
-                }
+            if (accessToken && accessToken.length > 0) {
+                setIsAuth(true);
+            } else {
+                setIsAuth(false);
+            }
 
-                setLoading(false);
-            })
-            .catch((error) => {
-                setError(error);
-            });
+            setLoading(false);
+        })
+        .catch((error) => {
+            setError(error);
+        });
     }, []);
 
     const logInAndSetToken = (token: string) => {

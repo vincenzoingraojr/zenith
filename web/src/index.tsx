@@ -197,6 +197,61 @@ const link = split(
     httpLink
 );
 
+export const client = new ApolloClient({
+    link: ApolloLink.from([
+        new TokenRefreshLink({
+            accessTokenField: "accessToken",
+            isTokenValidOrUndefined: () => {
+                const token = getAccessToken();
+
+                if (!token) {
+                    return true;
+                }
+
+                try {
+                    const { exp } = jwtDecode<JwtPayload>(token);
+                    if (exp && Date.now() >= exp * 1000) {
+                        return false;
+                    } else {
+                        return true;
+                    }
+                } catch {
+                    return false;
+                }
+            },
+            fetchAccessToken: () => {
+                return fetch(process.env.REACT_APP_SERVER_ORIGIN!, {
+                    method: "POST",
+                    credentials: "include",
+                });
+            },
+            handleResponse:
+                (_: any, accessTokenField: string) =>
+                async (response: Response) => {
+                    const result = await response.json();
+
+                    return {
+                        [accessTokenField]: result[accessTokenField],
+                    };
+                },
+            handleFetch: (accessToken) => {
+                setAccessToken(accessToken);
+            },
+            handleError: (err) => {
+                console.warn("Your refresh token is invalid. Try to relogin.");
+                console.error(err);
+            },
+        }),
+        onError(({ graphQLErrors, networkError }) => {
+            console.log(graphQLErrors);
+            console.log(networkError);
+        }) as any,
+        requestLink,
+        link,
+    ]),
+    cache,
+});
+
 async function initApollo() {
     try {
         // Persist cache before app load
@@ -207,61 +262,6 @@ async function initApollo() {
     } catch (error) {
         console.error("Error restoring Apollo cache", error);
     }
-
-    const client = new ApolloClient({
-        link: ApolloLink.from([
-            new TokenRefreshLink({
-                accessTokenField: "accessToken",
-                isTokenValidOrUndefined: () => {
-                    const token = getAccessToken();
-
-                    if (!token) {
-                        return true;
-                    }
-
-                    try {
-                        const { exp } = jwtDecode<JwtPayload>(token);
-                        if (exp && Date.now() >= exp * 1000) {
-                            return false;
-                        } else {
-                            return true;
-                        }
-                    } catch {
-                        return false;
-                    }
-                },
-                fetchAccessToken: () => {
-                    return fetch(process.env.REACT_APP_SERVER_ORIGIN!, {
-                        method: "POST",
-                        credentials: "include",
-                    });
-                },
-                handleResponse:
-                    (_: any, accessTokenField: string) =>
-                    async (response: Response) => {
-                        const result = await response.json();
-
-                        return {
-                            [accessTokenField]: result[accessTokenField],
-                        };
-                    },
-                handleFetch: (accessToken) => {
-                    setAccessToken(accessToken);
-                },
-                handleError: (err) => {
-                    console.warn("Your refresh token is invalid. Try to relogin.");
-                    console.error(err);
-                },
-            }),
-            onError(({ graphQLErrors, networkError }) => {
-                console.log(graphQLErrors);
-                console.log(networkError);
-            }) as any,
-            requestLink,
-            link,
-        ]),
-        cache,
-    });
 
     const ThemedApp = () => {
         const { isDarkMode } = useThemeContext();

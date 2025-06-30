@@ -11,7 +11,6 @@ import {
 } from "../../styles/global";
 import InputField from "../../components/input/InputField";
 import { useEffect, useState } from "react";
-import { getUserLocationFromAPI } from "../../utils/getLocation";
 import {
     browserName,
     isMobile,
@@ -45,18 +44,6 @@ function LogIn() {
         }
     }, []);
 
-    const [userLocation, setUserLocation] = useState("");
-    const [country, setCountry] = useState("");
-
-    useEffect(() => {
-        const response = getUserLocationFromAPI();
-
-        response.then((response) => {
-            setUserLocation(`${response.data.city}, ${response.data.country}`);
-            setCountry(response.data.country);
-        });
-    }, []);
-
     const [type, setType] = useState<string>("");
 
     useEffect(() => {
@@ -86,8 +73,6 @@ function LogIn() {
                                 clientOS: osName,
                                 clientType: type,
                                 clientName,
-                                deviceLocation: userLocation,
-                                country,
                             }}
                             onSubmit={async (
                                 values,
@@ -100,8 +85,6 @@ function LogIn() {
                                         clientOS: values.clientOS,
                                         clientType: values.clientType,
                                         clientName: values.clientName,
-                                        deviceLocation: values.deviceLocation,
-                                        country: values.country,
                                     },
                                     update: (store, { data }) => {
                                         if (
@@ -148,9 +131,6 @@ function LogIn() {
                                                 clientOS: values.clientOS,
                                                 clientType: values.clientType,
                                                 clientName: values.clientName,
-                                                deviceLocation:
-                                                    values.deviceLocation,
-                                                country: values.country,
                                             },
                                         });
                                     } else if (

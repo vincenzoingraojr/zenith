@@ -50,6 +50,7 @@ import { NOTIFICATION_TYPES } from "../helpers/notification/notificationTypes";
 import { VerificationStatus } from "../helpers/enums";
 import { NotificationService } from "./NotificationService";
 import { UserService } from "./UserService";
+import { WebServiceClient } from "@maxmind/geoip2-node";
 
 @ObjectType()
 export class UserResponse {
@@ -107,6 +108,7 @@ export class UserResolver {
     private readonly articleRepository: Repository<Article>;
     private readonly mediaItemRepository: Repository<MediaItem>;
     private readonly affiliationRepository: Repository<Affiliation>;
+    private readonly webServiceClient: WebServiceClient;
 
     constructor() {
         this.userRepository = appDataSource.getRepository(User);
@@ -122,6 +124,7 @@ export class UserResolver {
         this.articleRepository = appDataSource.getRepository(Article);
         this.mediaItemRepository = appDataSource.getRepository(MediaItem);
         this.affiliationRepository = appDataSource.getRepository(Affiliation);
+        this.webServiceClient = new WebServiceClient(process.env.MAXMIND_ACCOUNT_ID!, process.env.MAXMIND_LICENSE_KEY!, { host: process.env.NODE_ENV === "production" ? "geolite.info" : "sandbox.maxmind.com" });
     }
 
     @Query(() => User, { nullable: true })
@@ -345,6 +348,58 @@ export class UserResolver {
         };
     }
 
+    @Mutation(() => Session, { nullable: true })
+    async createSession(
+        @Arg("userId", () => Int) userId: number,
+        @Arg("clientOS") clientOS: string,
+        @Arg("clientType") clientType: string,
+        @Arg("clientName") clientName: string,
+        @Ctx() { req }: AuthContext
+    ): Promise<Session | null> {
+        const user = await this.findUserById(userId);
+        let ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+
+        if (!user || !ip) {
+            return null;
+        }
+
+        if (typeof ip === "string" && ip.includes(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+
+        if (Array.isArray(ip)) {
+            ip = ip[0];
+        }
+
+        try {
+            let countryCode = "";
+            let city = "";
+
+            const response = await this.webServiceClient.insights(ip);
+
+            countryCode = response.country?.isoCode || "";
+            city = response.city?.names.en || "";
+
+            const session = await this.sessionRepository
+                .create({
+                    user,
+                    sessionId: uuidv4(),
+                    clientOS,
+                    clientType,
+                    clientName,
+                    deviceLocation: city,
+                    country: countryCode,
+                })
+                .save();
+
+            return session;
+        } catch (error) {
+            logger.error(error);
+
+            return null;
+        }
+    }
+
     @Mutation(() => UserResponse)
     async login(
         @Arg("input") input: string,
@@ -352,9 +407,7 @@ export class UserResolver {
         @Arg("clientOS") clientOS: string,
         @Arg("clientType") clientType: string,
         @Arg("clientName") clientName: string,
-        @Arg("deviceLocation") deviceLocation: string,
-        @Arg("country") country: string,
-        @Ctx() { res }: AuthContext
+        @Ctx() { req, res }: AuthContext
     ): Promise<UserResponse> {
         let errors = [];
         let user: User | null = null;
@@ -411,30 +464,24 @@ export class UserResolver {
                     if (user.emailVerified) {
                         if (!user.userSettings.twoFactorAuth) {
                             try {
-                                let session = await this.sessionRepository
-                                    .create({
-                                        user,
-                                        sessionId: uuidv4(),
-                                        clientOS,
-                                        clientType,
-                                        clientName,
-                                        deviceLocation,
-                                        country,
-                                    })
-                                    .save();
+                                const session = await this.createSession(user.id, clientOS, clientType, clientName, { req } as AuthContext);
 
-                                sendRefreshToken(
-                                    res,
-                                    createRefreshToken(user, session)
-                                );
-                                accessToken = createAccessToken(user, session);
+                                if (session) {
+                                    sendRefreshToken(
+                                        res,
+                                        createRefreshToken(user, session)
+                                    );
+                                    accessToken = createAccessToken(user, session);
 
-                                status = "You are now logged in.";
+                                    status = "You are now logged in.";
 
-                                ok = true;
+                                    ok = true;
+                                } else {
+                                    status = "Failed to create a new session, please try again later.";
+                                }
                             } catch (error) {
                                 status =
-                                    "Failed to create a new session, please try again later.";
+                                    "An error occurred while trying to create a new session, please try again later.";
 
                                 logger.error(error);
                             }
@@ -891,9 +938,7 @@ export class UserResolver {
         @Arg("clientOS", { nullable: true }) clientOS: string,
         @Arg("clientType", { nullable: true }) clientType: string,
         @Arg("clientName", { nullable: true }) clientName: string,
-        @Arg("deviceLocation", { nullable: true }) deviceLocation: string,
-        @Arg("country", { nullable: true }) country: string,
-        @Ctx() { res, payload }: AuthContext
+        @Ctx() { req, res, payload }: AuthContext
     ): Promise<UserResponse> {
         let accessToken;
         let status;
@@ -927,27 +972,21 @@ export class UserResolver {
 
                     if (isValid) {
                         if (isLogin) {
-                            let session = await this.sessionRepository
-                                .create({
-                                    user: me,
-                                    sessionId: uuidv4(),
-                                    clientOS,
-                                    clientType,
-                                    clientName,
-                                    deviceLocation,
-                                    country,
-                                })
-                                .save();
+                            const session = await this.createSession(me.id, clientOS, clientType, clientName, { req } as AuthContext);
 
-                            sendRefreshToken(
-                                res,
-                                createRefreshToken(me, session)
-                            );
-                            accessToken = createAccessToken(me, session);
+                            if (session) {
+                                sendRefreshToken(
+                                    res,
+                                    createRefreshToken(me, session)
+                                );
+                                accessToken = createAccessToken(me, session);
 
-                            status = "You are now logged in.";
+                                status = "You are now logged in.";
 
-                            ok = true;
+                                ok = true;
+                            } else {
+                                status = "Failed to create a new session, please try again later.";
+                            }
                         } else if (payload) {
                             me.userSettings.twoFactorAuth = true;
                             await me.save();

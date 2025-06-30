@@ -103,8 +103,6 @@ function VerifyOTP() {
                             clientOS: location.state.clientOS || "",
                             clientType: location.state.clientType || "",
                             clientName: location.state.clientName || "",
-                            deviceLocation: location.state.deviceLocation || "",
-                            country: location.state.country || "",
                         }}
                         onSubmit={async (values, { setStatus }) => {
                             const response = await verifyOTP({

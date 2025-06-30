@@ -272,6 +272,7 @@ export type Mutation = {
   createPost: PostResponse;
   createReport: ReportResponse;
   createRepost?: Maybe<Repost>;
+  createSession?: Maybe<Session>;
   deactivateAccount: Scalars['Boolean']['output'];
   deleteAccountData: Scalars['Boolean']['output'];
   deleteDeviceToken: Scalars['Boolean']['output'];
@@ -422,6 +423,14 @@ export type MutationCreateRepostArgs = {
 };
 
 
+export type MutationCreateSessionArgs = {
+  clientName: Scalars['String']['input'];
+  clientOS: Scalars['String']['input'];
+  clientType: Scalars['String']['input'];
+  userId: Scalars['Int']['input'];
+};
+
+
 export type MutationDeleteAccountDataArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -544,8 +553,6 @@ export type MutationLoginArgs = {
   clientName: Scalars['String']['input'];
   clientOS: Scalars['String']['input'];
   clientType: Scalars['String']['input'];
-  country: Scalars['String']['input'];
-  deviceLocation: Scalars['String']['input'];
   input: Scalars['String']['input'];
   password: Scalars['String']['input'];
 };
@@ -670,8 +677,6 @@ export type MutationVerifyOtpArgs = {
   clientName?: InputMaybe<Scalars['String']['input']>;
   clientOS?: InputMaybe<Scalars['String']['input']>;
   clientType?: InputMaybe<Scalars['String']['input']>;
-  country?: InputMaybe<Scalars['String']['input']>;
-  deviceLocation?: InputMaybe<Scalars['String']['input']>;
   input?: InputMaybe<Scalars['String']['input']>;
   isLogin: Scalars['Boolean']['input'];
   otp: Scalars['String']['input'];
@@ -1793,8 +1798,6 @@ export type LoginMutationVariables = Exact<{
   clientOS: Scalars['String']['input'];
   clientType: Scalars['String']['input'];
   clientName: Scalars['String']['input'];
-  deviceLocation: Scalars['String']['input'];
-  country: Scalars['String']['input'];
 }>;
 
 
@@ -1891,8 +1894,6 @@ export type VerifyOtpMutationVariables = Exact<{
   clientOS?: InputMaybe<Scalars['String']['input']>;
   clientType?: InputMaybe<Scalars['String']['input']>;
   clientName?: InputMaybe<Scalars['String']['input']>;
-  deviceLocation?: InputMaybe<Scalars['String']['input']>;
-  country?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
@@ -4678,15 +4679,13 @@ export type IsUserBlockedByMeLazyQueryHookResult = ReturnType<typeof useIsUserBl
 export type IsUserBlockedByMeSuspenseQueryHookResult = ReturnType<typeof useIsUserBlockedByMeSuspenseQuery>;
 export type IsUserBlockedByMeQueryResult = Apollo.QueryResult<IsUserBlockedByMeQuery, IsUserBlockedByMeQueryVariables>;
 export const LoginDocument = gql`
-    mutation Login($input: String!, $password: String!, $clientOS: String!, $clientType: String!, $clientName: String!, $deviceLocation: String!, $country: String!) {
+    mutation Login($input: String!, $password: String!, $clientOS: String!, $clientType: String!, $clientName: String!) {
   login(
     input: $input
     password: $password
     clientOS: $clientOS
     clientType: $clientType
     clientName: $clientName
-    deviceLocation: $deviceLocation
-    country: $country
   ) {
     user {
       id
@@ -4757,8 +4756,6 @@ export type LoginMutationFn = Apollo.MutationFunction<LoginMutation, LoginMutati
  *      clientOS: // value for 'clientOS'
  *      clientType: // value for 'clientType'
  *      clientName: // value for 'clientName'
- *      deviceLocation: // value for 'deviceLocation'
- *      country: // value for 'country'
  *   },
  * });
  */
@@ -5251,7 +5248,7 @@ export type VerifyEmailAddressMutationHookResult = ReturnType<typeof useVerifyEm
 export type VerifyEmailAddressMutationResult = Apollo.MutationResult<VerifyEmailAddressMutation>;
 export type VerifyEmailAddressMutationOptions = Apollo.BaseMutationOptions<VerifyEmailAddressMutation, VerifyEmailAddressMutationVariables>;
 export const VerifyOtpDocument = gql`
-    mutation VerifyOTP($otp: String!, $input: String, $password: String, $isLogin: Boolean!, $clientOS: String, $clientType: String, $clientName: String, $deviceLocation: String, $country: String) {
+    mutation VerifyOTP($otp: String!, $input: String, $password: String, $isLogin: Boolean!, $clientOS: String, $clientType: String, $clientName: String) {
   verifyOTP(
     otp: $otp
     input: $input
@@ -5260,8 +5257,6 @@ export const VerifyOtpDocument = gql`
     clientOS: $clientOS
     clientType: $clientType
     clientName: $clientName
-    deviceLocation: $deviceLocation
-    country: $country
   ) {
     status
     accessToken
@@ -5330,8 +5325,6 @@ export type VerifyOtpMutationFn = Apollo.MutationFunction<VerifyOtpMutation, Ver
  *      clientOS: // value for 'clientOS'
  *      clientType: // value for 'clientType'
  *      clientName: // value for 'clientName'
- *      deviceLocation: // value for 'deviceLocation'
- *      country: // value for 'country'
  *   },
  * });
  */

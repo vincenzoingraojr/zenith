@@ -93,6 +93,7 @@ import LumenInput from "../../components/input/lumen/LumenInput";
 import FeedComponent from "../../components/utils/FeedComponent";
 import { getDateToLocaleString, processDate } from "../../utils/processDate";
 import { devices } from "../../styles/devices";
+import { client } from "../..";
 
 const PostPageWrapper = styled.div`
     display: flex;
@@ -230,7 +231,7 @@ const UpdateButton = styled(StandardButton)`
 function PostPage() {
     const params = useParams();
 
-    const { post, loading, error, client } = useFindPost(
+    const { post, loading, error } = useFindPost(
         params.itemId as string,
         params.username as string
     );
@@ -415,7 +416,7 @@ function PostPage() {
                 setUpdateAvailable(false);
             }
         },
-        [client, post]
+        [post]
     );
 
     useEffect(() => {
