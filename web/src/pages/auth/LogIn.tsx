@@ -29,7 +29,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toErrorMap } from "../../utils/toErrorMap";
 import { BAD_REQUEST_MESSAGE } from "../../utils/constants";
 import AuthLayout from "../../components/layouts/AuthLayout";
-import { useAuth } from "../../utils/AuthContext";
+import { useAuth } from "../../utils/AuthProvider";
 
 function LogIn() {
     const [clientName, setClientName] = useState<string>("");

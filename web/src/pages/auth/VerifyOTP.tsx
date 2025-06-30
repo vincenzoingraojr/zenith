@@ -23,7 +23,7 @@ import {
 import { BAD_REQUEST_MESSAGE } from "../../utils/constants";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
-import { useAuth } from "../../utils/AuthContext";
+import { useAuth } from "../../utils/AuthProvider";
 
 const ResendOTPContainer = styled.div`
     display: flex;

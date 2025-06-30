@@ -22,9 +22,9 @@ import reportWebVitals from "./reportWebVitals";
 import GlobalStyle from "./styles/global";
 import { ThemeProvider } from "styled-components";
 import { darkTheme, lightTheme } from "./styles/theme";
-import { ThemeProviderWrapper, useThemeContext } from "./styles/ThemeContext";
+import { ThemeProviderWrapper, useThemeContext } from "./styles/ThemeProvider";
 import App from "./App";
-import { AuthProvider } from "./utils/AuthContext";
+import { AuthProvider } from "./utils/AuthProvider";
 import { ToastProvider } from "./components/utils/ToastProvider";
 import { persistCache, LocalStorageWrapper } from "apollo3-cache-persist";
 
@@ -35,11 +35,24 @@ const cache = new InMemoryCache({
                 postFeed: {
                     keyArgs: false,
                     merge: (existing, incoming) => {
+                        const existingPosts = existing?.posts || [];
+                        const incomingPosts = incoming.posts;
+
+                        const merged = [...existingPosts, ...incomingPosts];
+
+                        const seen = new Set();
+                        const deduplicated = [];
+
+                        for (const post of merged) {
+                            const id = post.__ref || post.id;
+                            if (!seen.has(id)) {
+                                seen.add(id);
+                                deduplicated.push(post);
+                            }
+                        }
+
                         return {
-                            posts: [
-                                ...(existing?.posts || []),
-                                ...incoming.posts,
-                            ],
+                            posts: deduplicated,
                             hasMore: incoming.hasMore,
                             totalCount: incoming.totalCount,
                         };
@@ -48,11 +61,24 @@ const cache = new InMemoryCache({
                 notificationFeed: {
                     keyArgs: false,
                     merge: (existing, incoming) => {
+                        const existingNotifications = existing?.notifications || [];
+                        const incomingNotifications = incoming.notifications;
+
+                        const merged = [...existingNotifications, ...incomingNotifications];
+
+                        const seen = new Set();
+                        const deduplicated = [];
+
+                        for (const notif of merged) {
+                            const id = notif.__ref || notif.id;
+                            if (!seen.has(id)) {
+                                seen.add(id);
+                                deduplicated.push(notif);
+                            }
+                        }
+
                         return {
-                            notifications: [
-                                ...(existing?.notifications || []),
-                                ...incoming.notifications,
-                            ],
+                            notifications: deduplicated,
                             nextCursor: incoming.nextCursor,
                         };
                     },
@@ -64,11 +90,24 @@ const cache = new InMemoryCache({
                             return incoming;
                         }
 
+                        const existingLikes = existing?.likes || [];
+                        const incomingLikes = incoming.likes;
+
+                        const merged = [...existingLikes, ...incomingLikes];
+
+                        const seen = new Set();
+                        const deduplicated = [];
+
+                        for (const like of merged) {
+                            const id = like.__ref || like.id;
+                            if (!seen.has(id)) {
+                                seen.add(id);
+                                deduplicated.push(like);
+                            }
+                        }
+
                         return {
-                            likes: [
-                                ...(existing?.likes || []),
-                                ...incoming.likes,
-                            ],
+                            likes: deduplicated,
                             hasMore: incoming.hasMore,
                             totalCount: incoming.totalCount,
                         };
@@ -81,11 +120,24 @@ const cache = new InMemoryCache({
                             return incoming;
                         }
 
+                        const existingReposts = existing?.reposts || [];
+                        const incomingReposts = incoming.reposts;
+
+                        const merged = [...existingReposts, ...incomingReposts];
+
+                        const seen = new Set();
+                        const deduplicated = [];
+
+                        for (const repost of merged) {
+                            const id = repost.__ref || repost.id;
+                            if (!seen.has(id)) {
+                                seen.add(id);
+                                deduplicated.push(repost);
+                            }
+                        }
+
                         return {
-                            reposts: [
-                                ...(existing?.reposts || []),
-                                ...incoming.reposts,
-                            ],
+                            reposts: deduplicated,
                             hasMore: incoming.hasMore,
                             totalCount: incoming.totalCount,
                         };
@@ -98,11 +150,24 @@ const cache = new InMemoryCache({
                             return incoming;
                         }
 
+                        const existingPosts = existing?.posts || [];
+                        const incomingPosts = incoming.posts;
+
+                        const merged = [...existingPosts, ...incomingPosts];
+
+                        const seen = new Set();
+                        const deduplicated = [];
+
+                        for (const post of merged) {
+                            const id = post.__ref || post.id;
+                            if (!seen.has(id)) {
+                                seen.add(id);
+                                deduplicated.push(post);
+                            }
+                        }
+
                         return {
-                            posts: [
-                                ...(existing?.posts || []),
-                                ...incoming.posts,
-                            ],
+                            posts: deduplicated,
                             hasMore: incoming.hasMore,
                             totalCount: incoming.totalCount,
                         };

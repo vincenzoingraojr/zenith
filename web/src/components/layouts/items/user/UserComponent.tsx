@@ -21,7 +21,7 @@ import {
 import ProfilePicture from "../../../utils/ProfilePicture";
 import VerificationBadge from "../../../utils/VerificationBadge";
 import AffiliationIcon from "../../../utils/AffiliationIcon";
-import { useThemeContext } from "../../../../styles/ThemeContext";
+import { useThemeContext } from "../../../../styles/ThemeProvider";
 import { COLORS } from "../../../../styles/colors";
 import { useToasts } from "../../../utils/ToastProvider";
 import LoadingComponent from "../../../utils/LoadingComponent";

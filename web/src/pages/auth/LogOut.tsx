@@ -10,8 +10,9 @@ import {
     PageTextMB24,
 } from "../../styles/global";
 import { COLORS } from "../../styles/colors";
-import { useAuth } from "../../utils/AuthContext";
+import { useAuth } from "../../utils/AuthProvider";
 import { useMeData } from "../../utils/userQueries";
+import { client } from "../..";
 
 const LogoutButton = styled(Button)`
     background-color: ${COLORS.red};
@@ -20,7 +21,7 @@ const LogoutButton = styled(Button)`
 
 function LogOut() {
     const { logOutAndResetToken } = useAuth();
-    const [logout, { client }] = useLogoutMutation();
+    const [logout] = useLogoutMutation();
 
     const { me } = useMeData();
 
@@ -44,9 +45,9 @@ function LogOut() {
                                 onClick={async () => {
                                     await logout();
 
-                                    await client.resetStore();
-
                                     logOutAndResetToken();
+
+                                    await client.resetStore();
                                 }}
                             >
                                 Log out

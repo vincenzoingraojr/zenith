@@ -1,5 +1,5 @@
 import { COLORS } from "./colors";
-import { useThemeContext } from "./ThemeContext";
+import { useThemeContext } from "./ThemeProvider";
 
 export interface Theme {
     background: string;

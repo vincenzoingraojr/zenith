@@ -12,7 +12,7 @@ function HomePage() {
     const limit = 3;
 
     const { data, loading, error, fetchMore } = usePostFeedQuery({
-        fetchPolicy: "cache-first",
+        fetchPolicy: "cache-and-network",
         variables: {
             limit,
             cursor: null,

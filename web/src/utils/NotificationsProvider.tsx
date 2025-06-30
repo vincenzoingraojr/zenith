@@ -15,6 +15,7 @@ import {
     useUnseenNotificationsQuery,
 } from "../generated/graphql";
 import { ApolloError, gql } from "@apollo/client";
+import { client } from "..";
 
 interface NotificationsContextType {
     notificationFeed: PaginatedNotifications | undefined;
@@ -53,13 +54,13 @@ export const NotificationsProvider = ({
 
     const limit = 5;
 
-    const { data, loading, error, fetchMore, client } =
+    const { data, loading, error, fetchMore } =
         useNotificationFeedQuery({
             variables: {
                 limit,
                 cursor: null,
             },
-            fetchPolicy: "cache-first",
+            fetchPolicy: "cache-and-network",
             notifyOnNetworkStatusChange: true,
         });
 
@@ -129,7 +130,7 @@ export const NotificationsProvider = ({
                 },
             });
         },
-        [client]
+        []
     );
 
     useEffect(() => {
@@ -165,7 +166,7 @@ export const NotificationsProvider = ({
                 },
             });
         },
-        [client]
+        []
     );
 
     useEffect(() => {

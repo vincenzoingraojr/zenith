@@ -6,7 +6,7 @@ import styled from "styled-components";
 import { devices } from "../../styles/devices";
 import { ControlContainer, PageBlock, PageText } from "../../styles/global";
 import { LayoutProps } from "./common";
-import { useAuth } from "../../utils/AuthContext";
+import { useAuth } from "../../utils/AuthProvider";
 
 const AuthPage = styled.div`
     display: grid;

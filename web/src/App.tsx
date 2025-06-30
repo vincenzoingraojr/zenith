@@ -13,7 +13,7 @@ import VerifyAccount from "./pages/auth/VerifyAccount";
 import SignUp from "./pages/auth/SignUp";
 import ReactivateAccount from "./pages/auth/ReactivateAccount";
 import LogOut from "./pages/auth/LogOut";
-import { useAuth } from "./utils/AuthContext";
+import { useAuth } from "./utils/AuthProvider";
 import {
     AppErrorContainer,
     AppErrorWrapper,

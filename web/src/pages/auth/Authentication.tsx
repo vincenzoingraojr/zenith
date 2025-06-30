@@ -5,7 +5,7 @@ import { Button, PageBlock, PageText } from "../../styles/global";
 import Logo from "../../components/icons/Logo";
 import { useNavigate } from "react-router-dom";
 import { COLORS } from "../../styles/colors";
-import { useThemeContext } from "../../styles/ThemeContext";
+import { useThemeContext } from "../../styles/ThemeProvider";
 
 const PageWrapper = styled.div`
     display: flex;

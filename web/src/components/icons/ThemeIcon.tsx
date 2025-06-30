@@ -1,6 +1,6 @@
 import { DynamicSizeIcon, LinkIconProps } from "./common";
 import { useTheme } from "../../styles/theme";
-import { useThemeContext } from "../../styles/ThemeContext";
+import { useThemeContext } from "../../styles/ThemeProvider";
 import { FunctionComponent, useEffect, useState } from "react";
 
 const ThemeIcon: FunctionComponent<LinkIconProps> = ({ type }) => {

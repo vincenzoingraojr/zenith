@@ -124,7 +124,7 @@ export class UserResolver {
         this.articleRepository = appDataSource.getRepository(Article);
         this.mediaItemRepository = appDataSource.getRepository(MediaItem);
         this.affiliationRepository = appDataSource.getRepository(Affiliation);
-        this.webServiceClient = new WebServiceClient(process.env.MAXMIND_ACCOUNT_ID!, process.env.MAXMIND_LICENSE_KEY!, { host: process.env.NODE_ENV === "production" ? "geolite.info" : "sandbox.maxmind.com" });
+        this.webServiceClient = new WebServiceClient(process.env.MAXMIND_ACCOUNT_ID!, process.env.MAXMIND_LICENSE_KEY!, { host: "geolite.info" });
     }
 
     @Query(() => User, { nullable: true })
@@ -371,14 +371,19 @@ export class UserResolver {
             ip = ip[0];
         }
 
+        if (process.env.NODE_ENV === "development") {
+            ip = "8.8.8.8";
+        }
+
         try {
             let countryCode = "";
             let city = "";
 
-            const response = await this.webServiceClient.insights(ip);
+            const countryResponse = await this.webServiceClient.country(ip);
+            const cityResponse = await this.webServiceClient.city(ip)
 
-            countryCode = response.country?.isoCode || "";
-            city = response.city?.names.en || "";
+            countryCode = countryResponse.country?.isoCode || "";
+            city = cityResponse.city?.names.en || "";
 
             const session = await this.sessionRepository
                 .create({
@@ -395,6 +400,7 @@ export class UserResolver {
             return session;
         } catch (error) {
             logger.error(error);
+            console.error(error);
 
             return null;
         }

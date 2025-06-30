@@ -16,7 +16,7 @@ import Profile from "./icons/Profile";
 import Settings from "./icons/Settings";
 import Exit from "./icons/Exit";
 import { COLORS } from "../styles/colors";
-import { useThemeContext } from "../styles/ThemeContext";
+import { useThemeContext } from "../styles/ThemeProvider";
 import ThemeIcon from "./icons/ThemeIcon";
 import VerificationBadge from "./utils/VerificationBadge";
 import AffiliationIcon from "./utils/AffiliationIcon";

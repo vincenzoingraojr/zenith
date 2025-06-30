@@ -11,7 +11,7 @@ import {
 } from "../../styles/global";
 import { COLORS } from "../../styles/colors";
 import { useMeData } from "../../utils/userQueries";
-import { useThemeContext } from "../../styles/ThemeContext";
+import { useThemeContext } from "../../styles/ThemeProvider";
 import ThemeIcon from "../icons/ThemeIcon";
 
 interface NavOptionsProps {
