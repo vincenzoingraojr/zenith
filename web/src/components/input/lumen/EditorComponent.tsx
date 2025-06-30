@@ -1,4 +1,4 @@
-import { FunctionComponent, useEffect, useRef, useState } from "react";
+import { forwardRef, FunctionComponent, useEffect, useImperativeHandle, useRef, useState } from "react";
 import styled from "styled-components";
 import { useMeData } from "../../../utils/userQueries";
 import { Link, useLocation } from "react-router-dom";
@@ -37,23 +37,16 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 import MentionsPlugin from "./mentions/MentionsPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
-import { Field } from "formik";
+import { Field, FormikErrors } from "formik";
 import Close from "../../icons/Close";
 import { getExactSize } from "../../../utils/getExactSize";
 import { useToasts } from "../../utils/ToastProvider";
 import { FileWrapper, ProgressStatus } from "../commons";
 import ProfilePicture from "../../utils/ProfilePicture";
+import { useFormikContext } from "formik";
 
 interface EditorComponentProps {
-    field: any;
-    form: any;
     placeholder: string;
-    status?: boolean;
-    values: {
-        type: string;
-        content: string;
-        media: FileWrapper[];
-    };
     buttonText: string;
     progress: ProgressStatus[];
 }
@@ -240,14 +233,24 @@ const MediaAltContainer = styled.div`
     width: 100%;
 `;
 
+interface EditorFormValues {
+    content: string;
+    media: FileWrapper[];
+    [key: string]: any;
+}
+
 interface ShouldClearEditorProps {
     setMedia: (items: FileWrapper[]) => void;
     setContent: (content: string) => void;
+    setFieldValue: (field: string, value: any, shouldValidate?: boolean) => Promise<void | FormikErrors<EditorFormValues>>;
+    setClearEditor: (value: boolean) => void;
 }
 
 const ShouldClearEditorPlugin: FunctionComponent<ShouldClearEditorProps> = ({
     setMedia,
     setContent,
+    setFieldValue,
+    setClearEditor,
 }) => {
     const [editor] = useLexicalComposerContext();
 
@@ -256,21 +259,26 @@ const ShouldClearEditorPlugin: FunctionComponent<ShouldClearEditorProps> = ({
         editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
         setMedia([]);
         setContent("");
-    }, [editor, setMedia, setContent]);
+        setClearEditor(false);
+    }, [editor, setMedia, setContent, setClearEditor]);
+
+    useEffect(() => {
+        const unregister = editor.registerUpdateListener(({ editorState }) => {
+            editorState.read(() => {
+                const text = $getRoot().getTextContent();
+                setFieldValue("content", text);
+            });
+        });
+        return () => unregister();
+    }, [editor, setFieldValue]);
 
     return null;
 };
 
-const EditorComponent: FunctionComponent<EditorComponentProps> = ({
-    field,
-    form,
-    placeholder,
-    status,
-    values,
-    buttonText,
-    progress,
-}) => {
+const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
     const { me, loading } = useMeData();
+    const { placeholder, buttonText, progress } = props;
+    const { setFieldValue, values } = useFormikContext<EditorFormValues>();
     const [content, setContent] = useState(values.content || "");
     const [isEditorEmpty, setIsEditorEmpty] = useState(false);
     const { addToast } = useToasts();
@@ -346,8 +354,8 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({
     }, [content]);
 
     useEffect(() => {
-        form.setFieldValue("media", media);
-    }, [media]);
+        setFieldValue("media", media);
+    }, [media, setFieldValue]);
 
     useEffect(() => {
         if (
@@ -358,6 +366,14 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({
             uploadPostMediaRef.current.value = "";
         }
     }, [media]);
+
+    const [clearEditor, setClearEditor] = useState(false);
+
+    useImperativeHandle(ref, () => ({
+        clearEditor: () => {
+            setClearEditor(true);
+        },
+    }));
 
     return (
         <EditorComponentWrapper>
@@ -396,17 +412,19 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({
 
                                 setContent(editorContent);
 
-                                form.setFieldValue(field.name, editorContent);
+                                setFieldValue("content", editorContent);
                             }}
                         />
                         <HistoryPlugin />
                         <AutoLinkPlugin matchers={MATCHERS} />
                         <ClearEditorPlugin />
                         <HashtagPlugin />
-                        {status && (
+                        {clearEditor && (
                             <ShouldClearEditorPlugin
                                 setMedia={setMedia}
                                 setContent={setContent}
+                                setFieldValue={setFieldValue}
+                                setClearEditor={setClearEditor}
                             />
                         )}
                     </EditorContainer>
@@ -654,6 +672,6 @@ const EditorComponent: FunctionComponent<EditorComponentProps> = ({
             </EditorComponentContainer>
         </EditorComponentWrapper>
     );
-};
+});
 
 export default EditorComponent;

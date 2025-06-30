@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { LumenInputContainer, LumenModalContainer } from "../../styles/global";
+import { CustomFieldError, EditorFieldContainer, LumenInputContainer, LumenModalContainer } from "../../styles/global";
 import { useFindPost } from "../../utils/postQueries";
 import ModalLoading from "../../components/layouts/modal/ModalLoading";
 import ErrorOrItemNotFound from "../../components/utils/ErrorOrItemNotFound";
@@ -19,18 +19,24 @@ import { useMeData } from "../../utils/userQueries";
 import axios from "axios";
 import { useToasts } from "../../components/utils/ToastProvider";
 import { toErrorMap } from "../../utils/toErrorMap";
-import EditorField from "../../components/input/lumen/EditorField";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Head from "../../components/Head";
+import EditorComponent from "../../components/input/lumen/EditorComponent";
+import { client } from "../..";
 
 function EditPost() {
     const params = useParams();
 
     const { post, loading, error } = useFindPost(params.itemId as string);
 
-    const [editPost, { client }] = useEditPostMutation();
+    const [editPost] = useEditPostMutation();
 
     const { me } = useMeData();
+
+    type EditorComponentHandle = {
+            clearEditor: () => void;
+        };
+    const editorRef = useRef<EditorComponentHandle>(null);
 
     const folder =
         process.env.NODE_ENV === "development" ? "local-media" : "media";
@@ -79,7 +85,7 @@ function EditPost() {
                                     }}
                                     onSubmit={async (
                                         values,
-                                        { setErrors, setStatus }
+                                        { setErrors }
                                     ) => {
                                         let postMediaDirectory = "";
                                         let media = [...values.media];
@@ -250,12 +256,14 @@ function EditPost() {
                                                         )
                                                     );
 
-                                                    setStatus(false);
+                                                    
                                                 } else if (
                                                     response.data.editPost.ok &&
                                                     response.data.editPost.post
                                                 ) {
-                                                    setStatus(true);
+                                                    if (editorRef.current) {
+                                                        editorRef.current.clearEditor();
+                                                    }
 
                                                     client.cache.writeQuery<FindPostQuery>(
                                                         {
@@ -298,30 +306,27 @@ function EditPost() {
                                                 }
                                             } else {
                                                 addToast(BAD_REQUEST_MESSAGE);
-
-                                                setStatus(false);
                                             }
                                         } else {
                                             addToast("Post not found.");
-                                            setStatus(false);
                                         }
 
                                         setMediaUploadStatusArray([]);
                                     }}
                                 >
-                                    {({ errors, status, values }) => (
+                                    {({ errors }) => (
                                         <Form>
-                                            <EditorField
-                                                field="content"
-                                                placeholder={"Edit your post"}
-                                                errors={errors}
-                                                status={status}
-                                                values={values}
-                                                buttonText={"Edit post"}
-                                                progress={
-                                                    mediaUploadStatusArray
-                                                }
-                                            />
+                                            <EditorFieldContainer>
+                                                {errors && errors["content"] && (
+                                                    <CustomFieldError>{errors["content"]}</CustomFieldError>
+                                                )}
+                                                <EditorComponent
+                                                    ref={editorRef}
+                                                    placeholder={"Edit your post"}
+                                                    buttonText={"Edit post"}
+                                                    progress={mediaUploadStatusArray}
+                                                />
+                                            </EditorFieldContainer>
                                         </Form>
                                     )}
                                 </Formik>

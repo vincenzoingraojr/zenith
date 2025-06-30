@@ -1470,3 +1470,10 @@ export const ModalFeedContainer = styled.div`
     display: block;
     padding-bottom: 36px;
 `;
+
+export const EditorFieldContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+`;

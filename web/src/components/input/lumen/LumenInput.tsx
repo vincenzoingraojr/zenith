@@ -1,6 +1,5 @@
-import { FunctionComponent, useState } from "react";
+import { FunctionComponent, useRef, useState } from "react";
 import { Form, Formik } from "formik";
-import EditorField from "./EditorField";
 import { useMeData } from "../../../utils/userQueries";
 import axios from "axios";
 import { useToasts } from "../../utils/ToastProvider";
@@ -14,7 +13,9 @@ import { BAD_REQUEST_MESSAGE, POST_TYPES } from "../../../utils/constants";
 import { toErrorMap } from "../../../utils/toErrorMap";
 import { useNavigate } from "react-router-dom";
 import { gql } from "@apollo/client";
-import { LumenInputContainer } from "../../../styles/global";
+import { CustomFieldError, EditorFieldContainer, LumenInputContainer } from "../../../styles/global";
+import EditorComponent from "./EditorComponent";
+import { client } from "../../..";
 
 interface LumenInputProps {
     type: "post" | "comment";
@@ -40,9 +41,14 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({
 
     const { me } = useMeData();
 
+    type EditorComponentHandle = {
+        clearEditor: () => void;
+    };
+    const editorRef = useRef<EditorComponentHandle>(null);
+
     const { addToast } = useToasts();
 
-    const [createPost, { client }] = useCreatePostMutation();
+    const [createPost] = useCreatePostMutation();
 
     const navigate = useNavigate();
 
@@ -58,7 +64,7 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({
                     content: "",
                     media: [] as FileWrapper[],
                 }}
-                onSubmit={async (values, { setErrors, setStatus }) => {
+                onSubmit={async (values, { setErrors }) => {
                     let postMediaDirectory = "";
                     const mediaArray: {
                         src: string;
@@ -190,12 +196,13 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({
                             setErrors(
                                 toErrorMap(response.data.createPost.errors)
                             );
-                            setStatus(false);
                         } else if (
                             response.data.createPost.ok &&
                             response.data.createPost.post
                         ) {
-                            setStatus(true);
+                            if (editorRef.current) {
+                                editorRef.current.clearEditor();
+                            }
 
                             if (type === "post") {
                                 const newPost = response.data.createPost.post;
@@ -354,28 +361,27 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({
                             }
                         } else {
                             addToast(response.data.createPost.status as string);
-
-                            setStatus(false);
                         }
                     } else {
                         addToast(BAD_REQUEST_MESSAGE);
-                        setStatus(false);
                     }
 
                     setMediaUploadStatusArray([]);
                 }}
             >
-                {({ errors, status, values }) => (
+                {({ errors }) => (
                     <Form>
-                        <EditorField
-                            field="content"
-                            placeholder={placeholder}
-                            errors={errors}
-                            status={status}
-                            values={values}
-                            buttonText={buttonText}
-                            progress={mediaUploadStatusArray}
-                        />
+                        <EditorFieldContainer>
+                            {errors && errors["content"] && (
+                                <CustomFieldError>{errors["content"]}</CustomFieldError>
+                            )}
+                            <EditorComponent
+                                ref={editorRef}
+                                placeholder={placeholder}
+                                buttonText={buttonText}
+                                progress={mediaUploadStatusArray}
+                            />
+                        </EditorFieldContainer>
                     </Form>
                 )}
             </Formik>
