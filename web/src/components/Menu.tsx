@@ -1,4 +1,4 @@
-import { FunctionComponent, useState } from "react";
+import { FunctionComponent } from "react";
 import styled from "styled-components";
 import { mediaQuery } from "../utils/mediaQuery";
 import { devices } from "../styles/devices";
@@ -46,7 +46,7 @@ const MenuWrapper = styled.div`
     }
 `;
 
-const MenuOverlay = styled.div.attrs((props: { visible: boolean }) => props)`
+const MenuOverlay = styled.div`
     position: absolute;
     display: block;
     top: 0;
@@ -55,11 +55,9 @@ const MenuOverlay = styled.div.attrs((props: { visible: boolean }) => props)`
     bottom: 0;
     z-index: 100;
     background-color: ${({ theme }) => theme.overlayGrey};
-    opacity: ${(props) => (props.visible ? "1" : "0")};
-    transition: opacity ease 0.2s;
 `;
 
-const MenuContainer = styled.div.attrs((props: { visible: boolean }) => props)`
+const MenuContainer = styled.div`
     display: grid;
     grid-template-rows: 60px auto;
     grid-template-columns: auto;
@@ -69,7 +67,7 @@ const MenuContainer = styled.div.attrs((props: { visible: boolean }) => props)`
     background-color: ${({ theme }) => theme.background};
     width: 260px;
     height: 100vh;
-    animation: ${(props) => (props.visible ? `slideIn` : `slideOut`)} 0.2s;
+    animation: slideIn 0.2s;
 
     @media ${devices.mobileM} {
         width: 320px;
@@ -86,16 +84,6 @@ const MenuContainer = styled.div.attrs((props: { visible: boolean }) => props)`
 
         to {
             transform: translateX(0%);
-        }
-    }
-
-    @keyframes slideOut {
-        from {
-            transform: translateX(0%);
-        }
-
-        to {
-            transform: translateX(-100%);
         }
     }
 `;
@@ -234,7 +222,6 @@ const MenuNavEntryText = styled(PageText).attrs(
 `;
 
 const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
-    const [visible, setVisible] = useState(true);
     const { me, loading } = useMeData();
     const { toggleTheme, isDarkMode } = useThemeContext();
 
@@ -242,17 +229,13 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
         <MenuWrapper>
             <MenuOverlay
                 role="link"
-                visible={visible}
                 aria-label="Close menu"
                 title="Close menu"
                 onClick={() => {
-                    setVisible(false);
-                    setTimeout(() => {
-                        closeMenu();
-                    }, 200);
+                    closeMenu();
                 }}
             ></MenuOverlay>
-            <MenuContainer visible={visible}>
+            <MenuContainer>
                 <MenuHeader>
                     <MenuTitle>Account info</MenuTitle>
                     <ControlContainer
@@ -260,10 +243,7 @@ const Menu: FunctionComponent<MenuProps> = ({ closeMenu }) => {
                         role="button"
                         aria-label="Close menu"
                         onClick={() => {
-                            setVisible(false);
-                            setTimeout(() => {
-                                closeMenu();
-                            }, 200);
+                            closeMenu();
                         }}
                     >
                         <Close type="normal" />

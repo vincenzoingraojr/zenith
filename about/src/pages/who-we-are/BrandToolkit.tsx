@@ -35,7 +35,7 @@ function BrandToolkit() {
                             <PageBlock>
                                 <DownloadButton
                                     title="Download brand assets"
-                                    href="https://img.zncdn.net/brand-toolkit.zip"
+                                    href="https://assets.zncdn.net/brand-toolkit.zip"
                                     role="link"
                                     aria-label="Download brand assets"
                                 >

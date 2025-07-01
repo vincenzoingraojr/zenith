@@ -24,7 +24,7 @@ const Seo = ({ description, lang, meta, title, image }) => {
     if (image) {
         metaImage = site.siteMetadata.siteUrl + image;
     } else {
-        metaImage = "https://img.zncdn.net/brand/logo-alt.png";
+        metaImage = "https://assets.zncdn.net/brand/logo-alt.png";
     }
 
     return (

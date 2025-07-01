@@ -98,7 +98,7 @@ onBackgroundMessage(messaging, (payload) => {
     self.registration.showNotification(payload.data?.title as string, {
         body: payload.data?.body,
         icon: payload.data?.icon,
-        badge: "https://img.zncdn.net/brand/badge.png",
+        badge: "https://assets.zncdn.net/brand/badge.png",
         silent: false,
         data: {
             link: payload.data?.link,

@@ -30,7 +30,7 @@ export const SEO: FunctionComponent<SeoProps> = ({
                 content={
                     image
                         ? image
-                        : "https://img.zncdn.net/brand/logo-alt.png"
+                        : "https://assets.zncdn.net/brand/logo-alt.png"
                 }
             />
         </Helmet>

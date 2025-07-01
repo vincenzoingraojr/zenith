@@ -12,7 +12,7 @@ interface HeadProps {
 const Head: FunctionComponent<HeadProps> = ({ title, description, image }) => {
     const defaultDescription =
         "The everything app. Find out what's happening in the world in real time, chat and make video calls with whoever you want. Send and receive money.";
-    const defaultImage = "https://img.zncdn.net/brand/logo.png";
+    const defaultImage = "https://assets.zncdn.net/brand/logo.png";
     const theme = useTheme();
 
     const { notificationsCount } = useNotificationsContext();

@@ -357,18 +357,10 @@ export class UserResolver {
         @Ctx() { req }: AuthContext
     ): Promise<Session | null> {
         const user = await this.findUserById(userId);
-        let ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+        let ip = req.ip;
 
         if (!user || !ip) {
             return null;
-        }
-
-        if (typeof ip === "string" && ip.includes(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-
-        if (Array.isArray(ip)) {
-            ip = ip[0];
         }
 
         if (process.env.NODE_ENV === "development") {
@@ -1493,7 +1485,7 @@ export class UserResolver {
                         imageUrl:
                             follower.profile.profilePicture.length > 0
                                 ? follower.profile.profilePicture
-                                : "https://img.zncdn.net/static/profile-picture.png",
+                                : "https://assets.zncdn.net/static/profile-picture.png",
                     };
                     const link = `${process.env.CLIENT_ORIGIN}/${follower.username}?n_id=${notification.notificationId}`;
                     await sendPushNotifications(
@@ -3448,7 +3440,7 @@ export class UserResolver {
                         imageUrl:
                             organization.profile.profilePicture.length > 0
                                 ? organization.profile.profilePicture
-                                : "https://img.zncdn.net/static/profile-picture.png",
+                                : "https://assets.zncdn.net/static/profile-picture.png",
                     };
                     const link = `${process.env.CLIENT_ORIGIN}/affiliation/${affiliation.affiliationId}?n_id=${notification.notificationId}`;
                     await sendPushNotifications(

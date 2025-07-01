@@ -728,7 +728,7 @@ export class PostResolver {
                                                     0
                                                         ? post.author.profile
                                                               .profilePicture
-                                                        : "https://img.zncdn.net/static/profile-picture.png",
+                                                        : "https://assets.zncdn.net/static/profile-picture.png",
                                             };
                                         const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.itemId}?n_id=${notification.notificationId}`;
                                         await sendPushNotifications(
@@ -804,7 +804,7 @@ export class PostResolver {
                                         post.author.profile.profilePicture
                                             .length > 0
                                             ? post.author.profile.profilePicture
-                                            : "https://img.zncdn.net/static/profile-picture.png",
+                                            : "https://assets.zncdn.net/static/profile-picture.png",
                                 };
                                 const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.itemId}?n_id=${notification.notificationId}`;
                                 await sendPushNotifications(
@@ -855,7 +855,7 @@ export class PostResolver {
                                         post.author.profile.profilePicture
                                             .length > 0
                                             ? post.author.profile.profilePicture
-                                            : "https://img.zncdn.net/static/profile-picture.png",
+                                            : "https://assets.zncdn.net/static/profile-picture.png",
                                 };
                                 const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.itemId}?n_id=${notification.notificationId}`;
                                 await sendPushNotifications(
@@ -1178,7 +1178,7 @@ export class PostResolver {
                                                             ? post.author
                                                                   .profile
                                                                   .profilePicture
-                                                            : "https://img.zncdn.net/static/profile-picture.png",
+                                                            : "https://assets.zncdn.net/static/profile-picture.png",
                                                 };
                                             const link = `${process.env.CLIENT_ORIGIN}/${post.author.username}/post/${post.itemId}?n_id=${newNotification.notificationId}`;
                                             await sendPushNotifications(
@@ -1567,7 +1567,7 @@ export class PostResolver {
                             imageUrl:
                                 user.profile.profilePicture.length > 0
                                     ? user.profile.profilePicture
-                                    : "https://img.zncdn.net/static/profile-picture.png",
+                                    : "https://assets.zncdn.net/static/profile-picture.png",
                         };
                         const link = `${process.env.CLIENT_ORIGIN}/${author.username}/post/${item.itemId}?n_id=${notification.notificationId}`;
                         await sendPushNotifications(
@@ -2311,7 +2311,7 @@ export class PostResolver {
                         imageUrl:
                             me.profile.profilePicture.length > 0
                                 ? me.profile.profilePicture
-                                : "https://img.zncdn.net/static/profile-picture.png",
+                                : "https://assets.zncdn.net/static/profile-picture.png",
                     };
                     const link = `${process.env.CLIENT_ORIGIN}/${item.author.username}/post/${item.itemId}?n_id=${notification.notificationId}`;
                     await sendPushNotifications(

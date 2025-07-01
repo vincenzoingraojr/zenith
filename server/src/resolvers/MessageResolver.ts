@@ -1402,7 +1402,7 @@ export class MessageResolver {
                                             : me.profile.profilePicture.length >
                                               0
                                             ? me.profile.profilePicture
-                                            : "https://img.zncdn.net/static/profile-picture.png",
+                                            : "https://assets.zncdn.net/static/profile-picture.png",
                                 };
                                 const link = `${process.env.CLIENT_ORIGIN}/messages/${chat.chatId}`;
                                 await sendPushNotifications(

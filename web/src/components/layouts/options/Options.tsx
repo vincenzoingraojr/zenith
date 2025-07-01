@@ -59,6 +59,7 @@ const OptionsContainer = styled.div.attrs(
     width: 100%;
     padding-top: 24px;
     box-shadow: unset;
+    animation: slideInFromBottom 0.2s;
 
     @media ${devices.mobileL} {
         border-radius: 12px;
@@ -80,6 +81,17 @@ const OptionsContainer = styled.div.attrs(
                 !props.mirrored && `translateX(calc(-100% + ${props.size}px))`};
         padding-top: 0px;
         box-shadow: 0px 0px 2px ${({ theme }) => theme.overlayGrey};
+        animation: unset;
+    }
+
+    @keyframes slideInFromBottom {
+        from {
+            transform: translateY(100%);
+        }
+
+        to {
+            transform: translateY(0%);
+        }
     }
 `;
 

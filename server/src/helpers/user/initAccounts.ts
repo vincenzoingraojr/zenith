@@ -42,7 +42,7 @@ export async function initAccounts() {
                     },
                     profile: {
                         profilePicture:
-                            "https://img.zncdn.net/brand/logo-social.png",
+                            "https://assets.zncdn.net/brand/logo-social.png",
                         bio: "The everything app.",
                         website: "https://about.zenith.to",
                     },
@@ -163,7 +163,7 @@ export async function initAccounts() {
                     },
                     profile: {
                         profilePicture:
-                            "https://img.zncdn.net/brand/logo-social.png",
+                            "https://assets.zncdn.net/brand/logo-social.png",
                         bio: "We're here to help.",
                         website: "https://help.zenith.to",
                     },
