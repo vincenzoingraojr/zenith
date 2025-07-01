@@ -50,6 +50,7 @@ async function main() {
     const app = express();
 
     app.use(cookieParser());
+    app.set("trust proxy", true);
 
     const allowedOriginRegex = new RegExp(process.env.ORIGIN!);
 

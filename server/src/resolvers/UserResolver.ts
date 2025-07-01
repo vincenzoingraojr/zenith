@@ -357,10 +357,18 @@ export class UserResolver {
         @Ctx() { req }: AuthContext
     ): Promise<Session | null> {
         const user = await this.findUserById(userId);
-        let ip = req.ip;
+        let ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
 
         if (!user || !ip) {
             return null;
+        }
+
+        if (typeof ip === "string" && ip.includes(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+
+        if (Array.isArray(ip)) {
+            ip = ip[0];
         }
 
         if (process.env.NODE_ENV === "development") {
