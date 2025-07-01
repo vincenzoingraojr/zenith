@@ -474,6 +474,9 @@ export function usePostMutations() {
                         itemId,
                         type,
                     },
+                    optimisticResponse: {
+                       removeBookmark: true, 
+                    },
                     update: (cache, { data: removeBookmarkData }) => {
                         if (
                             removeBookmarkData &&
@@ -503,6 +506,18 @@ export function usePostMutations() {
                         itemId,
                         type,
                         origin,
+                    },
+                    optimisticResponse: {
+                        createBookmark: {
+                            __typename: "Bookmark",
+                            id: new Date().getTime(),
+                            itemId: id,
+                            itemType: type,
+                            authorId: me?.id || 0,
+                            origin,
+                            createdAt: new Date().getTime().toString(),
+                            updatedAt: "",
+                        },
                     },
                     update: (cache, { data: createBookmarkData }) => {
                         if (

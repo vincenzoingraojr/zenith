@@ -261,7 +261,7 @@ export default function MentionsPlugin(): JSX.Element | null {
 
     const { data } = useUsersToMentionQuery({
         variables: { query: queryString, limit: 5 },
-        fetchPolicy: "cache-and-network",
+        fetchPolicy: "cache-first",
     });
 
     useEffect(() => {
