@@ -26,6 +26,12 @@ import {
     FindPostByIdDocument,
     FindPostQuery,
     FindPostDocument,
+    PostCommentsQuery,
+    GetPostLikesQuery,
+    GetRepostsQuery,
+    Like,
+    GetFeedItemStatsQuery,
+    GetPostMentionsQuery,
 } from "../generated/graphql";
 import { useMeData } from "./userQueries";
 
@@ -51,13 +57,17 @@ export function usePostMutations() {
         try {
             const response = await deletePost({
                 variables: { postId: itemId },
+                optimisticResponse: {
+                    __typename: "Mutation",
+                    deletePost: true,
+                },
             });
 
             if (response.data && response.data.deletePost) {
                 const refId = `Post:${postId}`;
 
                 if (isComment && isReplyToId && isReplyToType) {
-                    const existing = client.cache.readQuery({
+                    const existing = client.cache.readQuery<PostCommentsQuery>({
                         query: PostCommentsDocument,
                         variables: {
                             id: isReplyToId,
@@ -80,7 +90,7 @@ export function usePostMutations() {
                         }
                     ).postComments;
 
-                    client.cache.writeQuery({
+                    client.cache.writeQuery<PostCommentsQuery>({
                         query: PostCommentsDocument,
                         variables: {
                             id: isReplyToId,
@@ -88,7 +98,9 @@ export function usePostMutations() {
                             limit: 3,
                         },
                         data: {
+                            __typename: "Query",
                             postComments: {
+                                __typename: "PaginatedPosts",
                                 posts: existingPosts.filter(
                                     (post) => post.id !== postId
                                 ),
@@ -184,9 +196,13 @@ export function usePostMutations() {
                         itemId,
                         itemType: type,
                     },
+                    optimisticResponse: {
+                        __typename: "Mutation",
+                        removeLike: true,
+                    },
                     update: (cache, { data: removeLikeData }) => {
                         if (removeLikeData && removeLikeData.removeLike && me) {
-                            const existing = cache.readQuery({
+                            const existing = cache.readQuery<GetPostLikesQuery>({
                                 query: GetPostLikesDocument,
                                 variables: {
                                     itemId,
@@ -202,14 +218,14 @@ export function usePostMutations() {
                             } = (
                                 existing as {
                                     getPostLikes: {
-                                        likes: any[];
+                                        likes: Like[];
                                         totalCount: number;
                                         hasMore: boolean;
                                     };
                                 }
                             ).getPostLikes;
 
-                            cache.writeQuery({
+                            cache.writeQuery<GetPostLikesQuery>({
                                 query: GetPostLikesDocument,
                                 variables: {
                                     itemId,
@@ -217,7 +233,9 @@ export function usePostMutations() {
                                     limit: 3,
                                 },
                                 data: {
+                                    __typename: "Query",
                                     getPostLikes: {
+                                        __typename: "PaginatedLikes",
                                         likes: oldLikes.filter(
                                             (like) => like.userId !== me.id
                                         ),
@@ -253,9 +271,23 @@ export function usePostMutations() {
                         itemOpened,
                         itemType: type,
                     },
+                    optimisticResponse: {
+                        __typename: "Mutation",
+                        likePost: {
+                            __typename: "Like",
+                            id: new Date().getTime(),
+                            itemOpened,
+                            itemType: type,
+                            origin,
+                            likedItemId: itemId,
+                            userId: me?.id || 0,
+                            createdAt: new Date().getTime().toString(),
+                            updatedAt: "",
+                        },
+                    },
                     update: (cache, { data: likePostData }) => {
                         if (likePostData && likePostData.likePost) {
-                            const existing = cache.readQuery({
+                            const existing = cache.readQuery<GetPostLikesQuery>({
                                 query: GetPostLikesDocument,
                                 variables: {
                                     itemId,
@@ -273,7 +305,7 @@ export function usePostMutations() {
                                 }
                             ).getPostLikes;
 
-                            cache.writeQuery({
+                            cache.writeQuery<GetPostLikesQuery>({
                                 query: GetPostLikesDocument,
                                 variables: {
                                     itemId,
@@ -281,7 +313,9 @@ export function usePostMutations() {
                                     limit: 3,
                                 },
                                 data: {
+                                    __typename: "Query",
                                     getPostLikes: {
+                                        __typename: "PaginatedLikes",
                                         likes: [likePostData.likePost],
                                         totalCount: oldCount + 1,
                                         hasMore,
@@ -323,6 +357,10 @@ export function usePostMutations() {
                     variables: {
                         postId: id,
                     },
+                    optimisticResponse: {
+                        __typename: "Mutation",
+                        deleteRepost: true,
+                    },
                     update: (cache, { data: deleteRepostData }) => {
                         if (
                             deleteRepostData &&
@@ -330,7 +368,7 @@ export function usePostMutations() {
                             repost &&
                             me
                         ) {
-                            const existing = cache.readQuery({
+                            const existing = cache.readQuery<GetRepostsQuery>({
                                 query: GetRepostsDocument,
                                 variables: {
                                     postId: id,
@@ -345,21 +383,23 @@ export function usePostMutations() {
                             } = (
                                 existing as {
                                     getReposts: {
-                                        reposts: any[];
+                                        reposts: Repost[];
                                         totalCount: number;
                                         hasMore: boolean;
                                     };
                                 }
                             ).getReposts;
 
-                            cache.writeQuery({
+                            cache.writeQuery<GetRepostsQuery>({
                                 query: GetRepostsDocument,
                                 variables: {
                                     postId: id,
                                     limit: 3,
                                 },
                                 data: {
+                                    __typename: "Query",
                                     getReposts: {
+                                        __typename: "PaginatedReposts",
                                         reposts: oldReposts.filter(
                                             (r) => r.id !== repost.id
                                         ),
@@ -392,6 +432,18 @@ export function usePostMutations() {
                     variables: {
                         postId: itemId,
                     },
+                    optimisticResponse: {
+                        __typename: "Mutation",
+                        createRepost: {
+                            __typename: "Repost",
+                            id: new Date().getTime(),
+                            authorId: me?.id || 0,
+                            postId: id,
+                            repostId: "",
+                            createdAt: new Date().getTime().toString(),
+                            updatedAt: "",
+                        },
+                    },
                     update: (cache, { data: createRepostData }) => {
                         if (
                             createRepostData &&
@@ -399,7 +451,7 @@ export function usePostMutations() {
                             !repost &&
                             me
                         ) {
-                            const existing = cache.readQuery({
+                            const existing = cache.readQuery<GetRepostsQuery>({
                                 query: GetRepostsDocument,
                                 variables: {
                                     postId: id,
@@ -416,14 +468,16 @@ export function usePostMutations() {
                                 }
                             ).getReposts;
 
-                            cache.writeQuery({
+                            cache.writeQuery<GetRepostsQuery>({
                                 query: GetRepostsDocument,
                                 variables: {
                                     postId: id,
                                     limit: 3,
                                 },
                                 data: {
+                                    __typename: "Query",
                                     getReposts: {
+                                        __typename: "PaginatedReposts",
                                         reposts: [
                                             createRepostData.createRepost,
                                         ],
@@ -475,6 +529,7 @@ export function usePostMutations() {
                         type,
                     },
                     optimisticResponse: {
+                        __typename: "Mutation",
                        removeBookmark: true, 
                     },
                     update: (cache, { data: removeBookmarkData }) => {
@@ -508,6 +563,7 @@ export function usePostMutations() {
                         origin,
                     },
                     optimisticResponse: {
+                        __typename: "Mutation",
                         createBookmark: {
                             __typename: "Bookmark",
                             id: new Date().getTime(),
@@ -566,7 +622,7 @@ export function usePostMutations() {
             },
             update: (cache, { data }) => {
                 if (data && data.viewFeedItem) {
-                    const existing = cache.readQuery({
+                    const existing = cache.readQuery<GetFeedItemStatsQuery>({
                         query: GetFeedItemStatsDocument,
                         variables: {
                             itemId,
@@ -582,14 +638,16 @@ export function usePostMutations() {
                         }
                     ).getFeedItemStats;
 
-                    cache.writeQuery({
+                    cache.writeQuery<GetFeedItemStatsQuery>({
                         query: GetFeedItemStatsDocument,
                         variables: {
                             itemId,
                             type,
                         },
                         data: {
+                            __typename: "Query",
                             getFeedItemStats: {
+                                __typename: "FeedItemStats",
                                 views: views + 1,
                             },
                         },
@@ -607,6 +665,14 @@ export function usePostMutations() {
                 variables: {
                     postId: itemId,
                 },
+                optimisticResponse: {
+                    __typename: "Mutation",
+                    revokeMention: {
+                        __typename: "PostResponse",
+                        ok: true,
+                        status: "Your mention has been removed from the post.",
+                    },
+                },
                 update: (cache, { data }) => {
                     if (
                         data &&
@@ -614,7 +680,7 @@ export function usePostMutations() {
                         data.revokeMention.ok &&
                         me
                     ) {
-                        const existing = cache.readQuery({
+                        const existing = cache.readQuery<GetPostMentionsQuery>({
                             query: GetPostMentionsDocument,
                             variables: {
                                 postId: itemId,
@@ -629,13 +695,15 @@ export function usePostMutations() {
                             }
                         ).getPostMentions;
 
-                        cache.writeQuery({
+                        cache.writeQuery<GetPostMentionsQuery>({
                             query: GetPostMentionsDocument,
                             variables: {
                                 postId: itemId,
                             },
                             data: {
+                                __typename: "Query",
                                 getPostMentions: {
+                                    __typename: "PostMentions",
                                     mentions: mentions.filter(
                                         (mention) => mention !== me.username
                                     ),

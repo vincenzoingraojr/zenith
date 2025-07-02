@@ -319,7 +319,15 @@ export const client = new ApolloClient({
 
 async function initApollo() {
     try {
-        // Persist cache before app load
+        const CURRENT_CACHE_VERSION = "v1";
+
+        const storedVersion = localStorage.getItem("cache-version");
+
+        if (storedVersion !== CURRENT_CACHE_VERSION) {
+            await cache.reset();
+            localStorage.setItem("cache-version", CURRENT_CACHE_VERSION);
+        }
+
         await persistCache({
             cache,
             storage: new LocalStorageWrapper(window.localStorage),

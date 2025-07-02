@@ -13,6 +13,8 @@ import { User, useUsersToMentionQuery } from "../../../../generated/graphql";
 import VerificationBadge from "../../../utils/VerificationBadge";
 import AffiliationIcon from "../../../utils/AffiliationIcon";
 import ProfilePicture from "../../../utils/ProfilePicture";
+import { useDebounce } from "../../../../utils/useDebounce";
+import { NoElementsAlert } from "../../../../styles/global";
 
 const MentionsMenuContainer = styled.div`
     display: block;
@@ -130,8 +132,6 @@ const AtSignMentionsRegexAliasRegex = new RegExp(
         "})" +
         ")$"
 );
-
-const SUGGESTION_LIST_LENGTH_LIMIT = 5;
 
 function checkForAtSignMentions(
     text: string,
@@ -259,8 +259,10 @@ export default function MentionsPlugin(): JSX.Element | null {
 
     const [mentionData, setMentionData] = useState<UserMention[]>([]);
 
+    const debouncedQuery = useDebounce(queryString, 300);
+
     const { data } = useUsersToMentionQuery({
-        variables: { query: queryString, limit: 5 },
+        variables: { query: debouncedQuery, limit: 5 },
         fetchPolicy: "cache-first",
     });
 
@@ -282,10 +284,6 @@ export default function MentionsPlugin(): JSX.Element | null {
 
             setMentionData(users);
         }
-
-        return () => {
-            setMentionData([]);
-        };
     }, [data]);
 
     const checkForSlashTriggerMatch = useBasicTypeaheadTriggerMatch("/", {
@@ -304,8 +302,7 @@ export default function MentionsPlugin(): JSX.Element | null {
                         type,
                         verified
                     );
-                })
-                .slice(0, SUGGESTION_LIST_LENGTH_LIMIT),
+                }),
         [mentionData]
     );
 
@@ -370,7 +367,11 @@ export default function MentionsPlugin(): JSX.Element | null {
                             ))}
                         </MentionsContainer>
                     </MentionsMenuContainer>
-                ) : null
+                ) : (
+                    <NoElementsAlert>
+                        No users found.
+                    </NoElementsAlert>
+                )
             }
         />
     );

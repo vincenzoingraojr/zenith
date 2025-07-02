@@ -169,8 +169,7 @@ const UserComponent: FunctionComponent<UserComponentProps> = ({
                                     e.stopPropagation();
 
                                     const response = await handleFollowUser(
-                                        user.id,
-                                        user.username,
+                                        user,
                                         origin,
                                         follow ? true : false
                                     );

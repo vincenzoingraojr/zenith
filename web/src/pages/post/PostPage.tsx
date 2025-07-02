@@ -753,10 +753,7 @@ function PostPage() {
                                                                                                 onClick={async () => {
                                                                                                     const response =
                                                                                                         await handleFollowUser(
-                                                                                                            post.authorId,
-                                                                                                            post
-                                                                                                                .author
-                                                                                                                .username,
+                                                                                                            post.author,
                                                                                                             origin,
                                                                                                             follow
                                                                                                                 ? true
