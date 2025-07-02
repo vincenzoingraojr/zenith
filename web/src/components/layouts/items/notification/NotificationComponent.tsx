@@ -23,6 +23,7 @@ import {
     OptionBaseIcon,
     PageText,
     ProfilePictureWrapper,
+    UserFullNameContainer,
 } from "../../../../styles/global";
 import { useFindPostById } from "../../../../utils/postQueries";
 import Bell from "../../../icons/Bell";
@@ -34,6 +35,8 @@ import Pen from "../../../icons/Pen";
 import RepostIcon from "../../../icons/Repost";
 import LoadingComponent from "../../../utils/LoadingComponent";
 import ProfilePicture from "../../../utils/ProfilePicture";
+import AffiliationIcon from "../../../utils/AffiliationIcon";
+import VerificationBadge from "../../../utils/VerificationBadge";
 
 interface NotificationComponentProps {
     notification: Notification;
@@ -99,6 +102,14 @@ const PostContent = styled(PageText)`
     color: ${({ theme }) => theme.inputText};
 `;
 
+const NameContainer = styled(UserFullNameContainer)`
+    display: inline-flex;
+    padding-right: 4px;
+    gap: 6px;
+    flex: unset;
+    overflow: unset;
+`;
+
 function transformSentence(sentence: string, user: User | null) {
     const match = sentence.match(/^(.+?) \(@(.+?)\)(.*)$/);
 
@@ -114,14 +125,43 @@ function transformSentence(sentence: string, user: User | null) {
 
     return (
         <>
-            <Link
-                to={`/${username}`}
-                title={name}
-                aria-label={name}
-                onClick={(e) => e.stopPropagation()}
-            >
-                {name}
-            </Link>
+            <NameContainer>
+                <Link
+                    to={`/${username}`}
+                    title={name}
+                    aria-label={name}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {name}
+                </Link>
+                {user.verification.verified ===
+                    "VERIFIED" && (
+                    <VerificationBadge
+                        type={user.type}
+                        verifiedSince={
+                            user.verification
+                                .verifiedSince
+                                ? new Date(
+                                        parseInt(
+                                            user
+                                                .verification
+                                                .verifiedSince
+                                        )
+                                    ).toLocaleString("en-us", {
+                                        month: "long",
+                                        year: "numeric",
+                                    })
+                                : undefined
+                        }
+                        size={20}
+                    />
+                )}
+                <AffiliationIcon
+                    userId={user.id}
+                    size={20}
+                    noAction={true}
+                />
+            </NameContainer>
             {rest}
         </>
     );
