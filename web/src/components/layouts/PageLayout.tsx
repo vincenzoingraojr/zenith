@@ -7,6 +7,9 @@ import { mediaQuery } from "../../utils/mediaQuery";
 
 interface PageLayoutProps extends LayoutProps {
     noNav?: boolean;
+    activityIcon?: JSX.Element;
+    activityType?: "reply" | "new_conversation" | "default";
+    activity?: () => void;
 }
 
 const PageLayoutWrapper = styled.div`
@@ -88,11 +91,14 @@ const PageContentLayoutContainer = styled.div.attrs(
 const PageLayout: FunctionComponent<PageLayoutProps> = ({
     children,
     noNav,
+    activity,
+    activityIcon,
+    activityType = "default"
 }) => {
     return (
         <PageLayoutWrapper>
             <PageLayoutContainer>
-                <Nav noNav={noNav} />
+                <Nav noNav={noNav} activityType={activityType} activityIcon={activityIcon} activity={activity} />
                 <PageContentLayoutContainer navHidden={noNav || false}>
                     {children}
                 </PageContentLayoutContainer>

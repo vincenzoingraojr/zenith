@@ -94,6 +94,7 @@ import FeedComponent from "../../components/utils/FeedComponent";
 import { getDateToLocaleString, processDate } from "../../utils/processDate";
 import { devices } from "../../styles/devices";
 import { client } from "../..";
+import Comment from "../../components/icons/Comment";
 
 const PostPageWrapper = styled.div`
     display: flex;
@@ -186,7 +187,7 @@ const PostPageDate = styled(PostDate)`
 const PostPageEditedStatus = styled.div`
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 `;
 
 const PostPageEditedStatusText = styled(PostPageInfoText)`
@@ -454,6 +455,17 @@ function PostPage() {
                 }
             />
             <PageLayout
+                activityType={post ? "reply" : "default"}
+                activityIcon={post ? <Comment size={24} /> : undefined}
+                activity={() => {
+                    if (post) {
+                        navigate(`/create_post/reply/post/${post.itemId}`, {
+                            state: {
+                                backgroundLocation: location,
+                            },
+                        });
+                    }
+                }}
                 children={
                     <PageContentLayout
                         title="Post"
@@ -1011,6 +1023,7 @@ function PostPage() {
                                                                                 color={
                                                                                     COLORS.blue
                                                                                 }
+                                                                                size={22}
                                                                             />
                                                                         </OptionBaseIcon>
                                                                         <PostPageEditedStatusText>

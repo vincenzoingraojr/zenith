@@ -467,7 +467,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                 title="Edited post"
                                 aria-label="Edited post"
                             >
-                                <Pen color={COLORS.blue} />
+                                <Pen color={COLORS.blue} size={22} />
                             </PageBlock>
                         )}
                         <Options

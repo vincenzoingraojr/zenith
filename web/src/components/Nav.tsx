@@ -26,6 +26,9 @@ import { scrollToTop } from "../utils/scrollToTop";
 
 interface NavProps {
     noNav?: boolean;
+    activityIcon?: JSX.Element;
+    activityType: "reply" | "new_conversation" | "default";
+    activity?: () => void;
 }
 
 const NavWrapper = styled.nav.attrs((props: { hidden: boolean }) => props)`
@@ -208,7 +211,7 @@ const NavIconWithBadge = styled(OptionBaseIcon)`
     position: relative;
 `;
 
-const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
+const Nav: FunctionComponent<NavProps> = ({ noNav, activityIcon, activityType, activity }) => {
     const { me } = useMeData();
     const { showOptions, toggleOptions, closeOptions } = useNavOptions();
     const {
@@ -256,8 +259,6 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
             navRefVar = null;
         };
     }, []);
-
-    const isMessagesPage = window.location.pathname.includes("messages");
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -336,30 +337,35 @@ const Nav: FunctionComponent<NavProps> = ({ noNav }) => {
                         <ActivityButtonContainer role="menuitem">
                             <ActivityButton
                                 title={
-                                    isMessagesPage
-                                        ? "Create a new chat or group"
-                                        : "Create a new post"
+                                    activityType === "new_conversation"
+                                        ? "Create a new chat or group" : (activityType === "reply" ? "Reply to this post"
+                                        : "Create a new post")
                                 }
                                 aria-label={
-                                    isMessagesPage
-                                        ? "Create a new chat or group"
-                                        : "Create a new post"
+                                    activityType === "new_conversation"
+                                        ? "Create a new chat or group" : (activityType === "reply" ? "Reply to this post"
+                                        : "Create a new post")
                                 }
                                 role="link"
                                 onClick={() => {
-                                    navigate(
-                                        isMessagesPage
-                                            ? "/messages/new_chat"
-                                            : "/create_post/new/post/from_modal",
-                                        {
+                                    if (activityType === "default") {
+                                        navigate("/create_post/new/post/from_modal", {
                                             state: {
                                                 backgroundLocation: location,
                                             },
-                                        }
-                                    );
+                                        });
+                                    } else {
+                                        activity && activity();
+                                    }
                                 }}
                             >
-                                <Add color={COLORS.white} />
+                                {activityIcon ? (
+                                    <>
+                                        {activityIcon}
+                                    </>
+                                ) : (
+                                    <Add color={COLORS.white} />
+                                )}
                             </ActivityButton>
                         </ActivityButtonContainer>
                         <NavItemLink role="menuitem">

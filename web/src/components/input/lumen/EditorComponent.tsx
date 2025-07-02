@@ -39,11 +39,11 @@ import MentionsPlugin from "./mentions/MentionsPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { Field, FormikErrors } from "formik";
 import Close from "../../icons/Close";
-import { getExactSize } from "../../../utils/getExactSize";
 import { useToasts } from "../../utils/ToastProvider";
 import { FileWrapper, ProgressStatus } from "../commons";
 import ProfilePicture from "../../utils/ProfilePicture";
 import { useFormikContext } from "formik";
+import CircularProgress, { ProgressContainer } from "../../utils/CircularProgress";
 
 interface EditorComponentProps {
     placeholder: string;
@@ -185,6 +185,7 @@ const MediaFileContainer = styled.div`
     width: 100%;
     height: auto;
     border-radius: 12px 12px 0px 0px;
+    position: relative;
 
     img,
     video {
@@ -501,6 +502,19 @@ const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
                                                         )}
                                                 </>
                                             )}
+                                            {progress.find(
+                                                (item) =>
+                                                    item.id ===
+                                                    mediaItem.id
+                                            ) && (
+                                                <ProgressContainer>
+                                                    <CircularProgress progress={progress.find(
+                                                        (item) =>
+                                                            item.id ===
+                                                            mediaItem.id
+                                                    )?.progress as number} />
+                                                </ProgressContainer>
+                                            )}
                                         </MediaFileContainer>
                                         <MediaFileInfo>
                                             <MediaAltContainer>
@@ -535,35 +549,10 @@ const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
                                                     }}
                                                 />
                                             </MediaAltContainer>
-                                            <MediaSmallInfo>
-                                                {mediaItem.status ===
-                                                "uploaded" ? (
-                                                    <>Already uploaded</>
-                                                ) : (
-                                                    <>
-                                                        Size:{" "}
-                                                        {getExactSize(
-                                                            mediaItem.file?.size
-                                                        )}
-                                                        {" | Type: "}
-                                                        {mediaItem.file?.type}
-                                                        {progress.find(
-                                                            (item) =>
-                                                                item.id ===
-                                                                mediaItem.id
-                                                        ) &&
-                                                            mediaItem.status ===
-                                                                "uploading" &&
-                                                            ` | Uploading: ${
-                                                                progress.find(
-                                                                    (item) =>
-                                                                        item.id ===
-                                                                        mediaItem.id
-                                                                )?.progress
-                                                            }%`}
-                                                    </>
+                                            {mediaItem.status ===
+                                                "uploaded" && (
+                                                    <MediaSmallInfo>Already uploaded</MediaSmallInfo>
                                                 )}
-                                            </MediaSmallInfo>
                                         </MediaFileInfo>
                                     </MediaMainContainer>
                                     <DeleteMediaButton

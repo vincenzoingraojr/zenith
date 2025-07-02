@@ -259,7 +259,7 @@ export default function MentionsPlugin(): JSX.Element | null {
 
     const [mentionData, setMentionData] = useState<UserMention[]>([]);
 
-    const debouncedQuery = useDebounce(queryString, 300);
+    const debouncedQuery = useDebounce(queryString, 100);
 
     const { data } = useUsersToMentionQuery({
         variables: { query: debouncedQuery, limit: 5 },
