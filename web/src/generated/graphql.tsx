@@ -1645,6 +1645,13 @@ export type PostFeedQueryVariables = Exact<{
 
 export type PostFeedQuery = { __typename?: 'Query', postFeed: { __typename?: 'PaginatedPosts', hasMore: boolean, totalCount?: number | null, posts: Array<{ __typename?: 'Post', id: number, itemId: string, authorId: number, type: string, content: string, isEdited: boolean, lang: string, topics?: Array<any> | null, isReplyToId?: number | null, isReplyToType?: string | null, quotedPostId?: number | null, hashtags: Array<string>, createdAt: string, updatedAt: string, author: { __typename?: 'User', id: number, name: string, username: string, email: string, type: string, gender: string, emailVerified: boolean, createdAt: string, updatedAt: string, hiddenPosts: Array<number>, birthDate: { __typename?: 'BirthDate', date: string, monthAndDayVisibility: string, yearVisibility: string }, profile: { __typename?: 'Profile', profilePicture: string, profileBanner: string, bio: string, website: string }, userSettings: { __typename?: 'Settings', incomingMessages: string, twoFactorAuth: boolean }, searchSettings: { __typename?: 'SearchSettings', hideSensitiveContent: boolean, hideBlockedAccounts: boolean }, identity: { __typename?: 'IdentityVerification', verified: VerificationStatus, verifiedSince?: string | null }, verification: { __typename?: 'Verification', verified: VerificationStatus, verifiedSince?: string | null } }, media?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string }> | null }> } };
 
+export type PostMediaQueryVariables = Exact<{
+  postId: Scalars['String']['input'];
+}>;
+
+
+export type PostMediaQuery = { __typename?: 'Query', postMedia?: Array<{ __typename?: 'MediaItem', id: number, type: string, src: string, alt: string, createdAt: string, updatedAt: string, post: { __typename?: 'Post', itemId: string, type: string, authorId: number } }> | null };
+
 export type RemoveBookmarkMutationVariables = Exact<{
   itemId: Scalars['String']['input'];
   type: Scalars['String']['input'];
@@ -3446,6 +3453,56 @@ export type PostFeedQueryHookResult = ReturnType<typeof usePostFeedQuery>;
 export type PostFeedLazyQueryHookResult = ReturnType<typeof usePostFeedLazyQuery>;
 export type PostFeedSuspenseQueryHookResult = ReturnType<typeof usePostFeedSuspenseQuery>;
 export type PostFeedQueryResult = Apollo.QueryResult<PostFeedQuery, PostFeedQueryVariables>;
+export const PostMediaDocument = gql`
+    query PostMedia($postId: String!) {
+  postMedia(postId: $postId) {
+    id
+    type
+    post {
+      itemId
+      type
+      authorId
+    }
+    src
+    alt
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __usePostMediaQuery__
+ *
+ * To run a query within a React component, call `usePostMediaQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePostMediaQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePostMediaQuery({
+ *   variables: {
+ *      postId: // value for 'postId'
+ *   },
+ * });
+ */
+export function usePostMediaQuery(baseOptions: Apollo.QueryHookOptions<PostMediaQuery, PostMediaQueryVariables> & ({ variables: PostMediaQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<PostMediaQuery, PostMediaQueryVariables>(PostMediaDocument, options);
+      }
+export function usePostMediaLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<PostMediaQuery, PostMediaQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<PostMediaQuery, PostMediaQueryVariables>(PostMediaDocument, options);
+        }
+export function usePostMediaSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<PostMediaQuery, PostMediaQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<PostMediaQuery, PostMediaQueryVariables>(PostMediaDocument, options);
+        }
+export type PostMediaQueryHookResult = ReturnType<typeof usePostMediaQuery>;
+export type PostMediaLazyQueryHookResult = ReturnType<typeof usePostMediaLazyQuery>;
+export type PostMediaSuspenseQueryHookResult = ReturnType<typeof usePostMediaSuspenseQuery>;
+export type PostMediaQueryResult = Apollo.QueryResult<PostMediaQuery, PostMediaQueryVariables>;
 export const RemoveBookmarkDocument = gql`
     mutation RemoveBookmark($itemId: String!, $type: String!) {
   removeBookmark(itemId: $itemId, type: $type)

@@ -1,7 +1,6 @@
 import { FunctionComponent, useRef, useState } from "react";
 import { Form, Formik } from "formik";
 import { useMeData } from "../../../utils/userQueries";
-import axios from "axios";
 import { useToasts } from "../../utils/ToastProvider";
 import { FileWrapper, ProgressStatus } from "../commons";
 import {
@@ -16,6 +15,7 @@ import { gql } from "@apollo/client";
 import { CustomFieldError, EditorFieldContainer, LumenInputContainer } from "../../../styles/global";
 import EditorComponent from "./EditorComponent";
 import { client } from "../../..";
+import { uploadAllMedia } from "./utils/uploadFile";
 
 interface LumenInputProps {
     type: "post" | "comment";
@@ -66,122 +66,18 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({
                 }}
                 onSubmit={async (values, { setErrors }) => {
                     let postMediaDirectory = "";
-                    const mediaArray: {
-                        src: string;
-                        alt: string;
-                        type: string;
-                    }[] = [];
-                    const media: FileWrapper[] = [...values.media];
+                    let media = [...values.media];
 
                     if (media.length > 0 && me) {
-                        postMediaDirectory = `${folder}/${new Date().getTime()}-${
-                            me.id
-                        }`;
-
-                        for (const item of media) {
-                            const file = item.file as File;
-                            const alt = item.alt as string;
-
-                            const postMediaKey = `${postMediaDirectory}/item-${
-                                item.id
-                            }.${file.name.split(".").pop()}`;
-
-                            const { url: postMediaUrl } = await fetch(
-                                `${process.env.REACT_APP_SERVER_ORIGIN}/presigned-url`,
-                                {
-                                    method: "POST",
-                                    headers: {
-                                        Accept: "application/json",
-                                        "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify({
-                                        type: "put",
-                                        key: postMediaKey,
-                                        itemType: file.type,
-                                    }),
-                                }
-                            ).then((res) => res.json());
-
-                            const postMediaConfig = {
-                                onUploadProgress: function (
-                                    progressEvent: any
-                                ) {
-                                    const progress = Math.round(
-                                        (progressEvent.loaded * 100) /
-                                            progressEvent.total
-                                    );
-
-                                    setMediaUploadStatusArray(
-                                        (mediaUploadStatusArray) =>
-                                            mediaUploadStatusArray.some(
-                                                (status) =>
-                                                    status.id === item.id
-                                            )
-                                                ? mediaUploadStatusArray.map(
-                                                      (status) =>
-                                                          status.id === item.id
-                                                              ? {
-                                                                    ...status,
-                                                                    progress,
-                                                                }
-                                                              : status
-                                                  )
-                                                : [
-                                                      ...mediaUploadStatusArray,
-                                                      {
-                                                          id: item.id,
-                                                          progress,
-                                                          status: "ok",
-                                                      } as ProgressStatus,
-                                                  ]
-                                    );
-                                },
-                                headers: {
-                                    "Content-Type": file.type,
-                                    "Access-Control-Allow-Origin": "*",
-                                },
-                            };
-
-                            await axios
-                                .put(postMediaUrl, file, postMediaConfig)
-                                .then(() => {
-                                    mediaArray.push({
-                                        src: `https://${
-                                            file.type.includes("image")
-                                                ? "img"
-                                                : "vid"
-                                        }.zncdn.net/${postMediaKey}`,
-                                        alt: alt as string,
-                                        type: file.type,
-                                    });
-                                })
-                                .catch((error) => {
-                                    addToast(
-                                        `An error occurred while uploading the media item (${item.id}). Error code: ${error.code}.`
-                                    );
-
-                                    setMediaUploadStatusArray(
-                                        (mediaUploadStatusArray) =>
-                                            mediaUploadStatusArray.map(
-                                                (status) =>
-                                                    status.id === item.id
-                                                        ? {
-                                                              ...status,
-                                                              progress: 0,
-                                                              status: "error",
-                                                          }
-                                                        : status
-                                            )
-                                    );
-                                });
-                        }
+                        postMediaDirectory = `${folder}/${new Date().getTime()}-${me.id}`;
+                        media = await uploadAllMedia(media, postMediaDirectory, setMediaUploadStatusArray, addToast);
                     }
 
                     const response = await createPost({
                         variables: {
                             type: values.type,
                             content: values.content,
-                            media: JSON.stringify(mediaArray),
+                            media: JSON.stringify(media),
                             isReplyToId,
                             isReplyToType,
                             quotedPostId,

@@ -2,7 +2,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Head from "../../components/Head";
 import PageLayout from "../../components/layouts/PageLayout";
 import PageContentLayout from "../../components/layouts/sublayouts/PageContentLayout";
-import { PageText } from "../../styles/global";
+import { ControlContainer, PageText } from "../../styles/global";
+import Settings from "../../components/icons/Settings";
 
 function Messages() {
     const navigate = useNavigate();
@@ -33,6 +34,18 @@ function Messages() {
                                     View your messages on Zenith.
                                 </PageText>
                             </>
+                        }
+                        headerIconsComponent={
+                            <ControlContainer
+                                role="link"
+                                title="Message settings"
+                                aria-label="Message settings"
+                                onClick={() => {
+                                    navigate("/settings/messages");
+                                }}
+                            >
+                                <Settings type="options" />
+                            </ControlContainer>
                         }
                     />
                 }

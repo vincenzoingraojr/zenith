@@ -195,6 +195,12 @@ const cache = new InMemoryCache({
                         return incoming;
                     },
                 },
+                postMedia: {
+                    keyArgs: ["postId"],
+                    merge: (_existing = [], incoming) => {
+                        return incoming;
+                    },
+                },
             },
         },
         Post: {

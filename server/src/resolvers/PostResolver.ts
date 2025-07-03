@@ -646,27 +646,26 @@ export class PostResolver {
                             })
                             .save();
 
-                        const mediaItems = [];
-
                         if (mediaArray && mediaArray.length > 0) {
                             for (const mediaItem of mediaArray) {
-                                const newMediaItem =
-                                    await this.mediaItemRepository
-                                        .create({
-                                            post,
-                                            type: mediaItem.type,
-                                            src: mediaItem.src,
-                                            alt: mediaItem.alt,
-                                        })
-                                        .save();
-
-                                mediaItems.push(newMediaItem);
+                                await this.mediaItemRepository
+                                    .create({
+                                        post,
+                                        type: mediaItem.type,
+                                        src: mediaItem.src,
+                                        alt: mediaItem.alt,
+                                    })
+                                    .save();
                             }
                         }
 
-                        post.media = mediaItems;
+                        const postMedia = await this.postMedia(post.itemId);
 
-                        await post.save();
+                        if (postMedia) {
+                            post.media = postMedia;
+
+                            await post.save();
+                        }
 
                         if (mentions.length > 0) {
                             const mentionedUsers =
@@ -1008,15 +1007,13 @@ export class PostResolver {
                             relations: ["author", "media"],
                         });
 
-                        const mediaToUpload = mediaArray.filter(
-                            (item: any) => item.status === "uploading"
-                        );
+                        if (post) {
+                            const mediaToUpload = mediaArray.filter(
+                                (item: any) => item.status === "uploading"
+                            );
 
-                        if (mediaToUpload && mediaToUpload.length > 0 && post) {
-                            const mediaItems = [];
-
-                            for (const mediaItem of mediaToUpload) {
-                                const newMediaItem =
+                            if (mediaToUpload && mediaToUpload.length > 0 && post) {
+                                for (const mediaItem of mediaToUpload) {
                                     await this.mediaItemRepository
                                         .create({
                                             post,
@@ -1025,82 +1022,76 @@ export class PostResolver {
                                             alt: mediaItem.alt,
                                         })
                                         .save();
-
-                                mediaItems.push(newMediaItem);
+                                }
                             }
 
-                            post.media.push(...mediaItems);
-                            await post.save();
-                        }
-
-                        const toBeDeletedMedia = mediaArray.filter(
-                            (item: any) => item.status === "to_be_deleted"
-                        );
-
-                        if (toBeDeletedMedia.length > 0) {
-                            const deletedMediaIdsArray = toBeDeletedMedia.map(
-                                (item: any) => item.id
+                            const toBeDeletedMedia = mediaArray.filter(
+                                (item: any) => item.status === "to_be_deleted"
                             );
-                            const mediaItems =
-                                await this.mediaItemRepository.find({
-                                    where: { id: In(deletedMediaIdsArray) },
-                                });
 
-                            await Promise.all(
-                                mediaItems.map(async (item) => {
-                                    const existingKey = item.src.replace(
-                                        `https://${
-                                            item.type.includes("image")
-                                                ? "img"
-                                                : "vid"
-                                        }.zncdn.net/`,
-                                        ""
-                                    );
+                            if (toBeDeletedMedia.length > 0) {
+                                const deletedMediaIdsArray = toBeDeletedMedia.map(
+                                    (item: any) => item.id
+                                );
+                                const toBeDeletedMediaItems =
+                                    await this.mediaItemRepository.find({
+                                        where: { id: In(deletedMediaIdsArray) },
+                                    });
 
-                                    const url =
-                                        await getPresignedUrlForDeleteCommand(
-                                            existingKey,
-                                            item.type
+                                await Promise.all(
+                                    toBeDeletedMediaItems.map(async (item) => {
+                                        const existingKey = item.src.replace(
+                                            `https://${
+                                                item.type.includes("image")
+                                                    ? "img"
+                                                    : "vid"
+                                            }.zncdn.net/`,
+                                            ""
                                         );
 
-                                    await axios
-                                        .delete(url)
-                                        .then(() => {
-                                            logger.warn(
-                                                `Media item with id ${item.id} successfully deleted.`
+                                        const url =
+                                            await getPresignedUrlForDeleteCommand(
+                                                existingKey,
+                                                item.type
                                             );
-                                        })
-                                        .catch((error) => {
-                                            logger.error(
-                                                `An error occurred while deleting the media item. Error code: ${error.code}.`
-                                            );
+
+                                        await axios
+                                            .delete(url)
+                                            .then(() => {
+                                                logger.warn(
+                                                    `Media item with id ${item.id} successfully deleted.`
+                                                );
+                                            })
+                                            .catch((error) => {
+                                                logger.error(
+                                                    `An error occurred while deleting the media item. Error code: ${error.code}.`
+                                                );
+                                            });
+
+                                        await this.mediaItemRepository.delete({
+                                            id: item.id,
                                         });
-
-                                    await this.mediaItemRepository.delete({
-                                        id: item.id,
-                                    });
-                                })
-                            );
-                        }
-
-                        const existingMedia = mediaArray.filter(
-                            (item: any) => item.status === "uploaded"
-                        );
-
-                        if (existingMedia && existingMedia.length > 0) {
-                            for (const item of existingMedia) {
-                                await this.mediaItemRepository.update(
-                                    {
-                                        id: item.id,
-                                    },
-                                    {
-                                        alt: item.alt,
-                                    }
+                                    })
                                 );
                             }
-                        }
 
-                        if (post) {
+                            const existingMedia = mediaArray.filter(
+                                (item: any) => item.status === "uploaded"
+                            );
+
+                            if (existingMedia && existingMedia.length > 0) {
+                                for (const item of existingMedia) {
+                                    await this.mediaItemRepository.update(
+                                        {
+                                            id: item.id,
+                                        },
+                                        {
+                                            alt: item.alt,
+                                        }
+                                    );
+                                }
+                            }
+
                             const postMedia = await this.postMedia(post.itemId);
 
                             if (postMedia) {

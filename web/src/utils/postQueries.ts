@@ -9,6 +9,7 @@ import {
     useIsPostLikedByMeQuery,
     useIsRepostedByUserQuery,
     usePostCommentsQuery,
+    usePostMediaQuery,
 } from "../generated/graphql";
 
 export const useFindPost = (postId: string, username?: string) => {
@@ -129,3 +130,16 @@ export const useGetPostMentions = (postId: string) => {
 
     return data && data.getPostMentions ? data.getPostMentions : null;
 };
+
+export const usePostMedia = (postId: string) => {
+    const { data, loading, error } = usePostMediaQuery({
+        variables: { postId },
+        fetchPolicy: "cache-and-network",
+    }); 
+
+    return {
+        postMedia: data && data.postMedia ? data.postMedia : null,
+        loading,
+        error,
+    }
+}

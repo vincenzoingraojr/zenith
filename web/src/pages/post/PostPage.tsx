@@ -53,7 +53,7 @@ import Bin from "../../components/icons/Bin";
 import { COLORS } from "../../styles/colors";
 import { usePostMutations } from "../../utils/postMutations";
 import { useUserMutations } from "../../utils/userMutations";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FollowIcon from "../../components/icons/FollowIcon";
 import Block from "../../components/icons/Block";
 import Unmention from "../../components/icons/Unmention";
@@ -256,11 +256,17 @@ function PostPage() {
         handleViewFeedItem,
     } = usePostMutations();
 
+    const itemId = post?.itemId;
+    const type = post?.type;
+
+    const viewedRef = useRef(false);
+
     useEffect(() => {
-        if (post) {
-            handleViewFeedItem(post.itemId, post.type, true, origin);
+        if (itemId && type && !viewedRef.current) {
+            handleViewFeedItem(itemId, type, true, origin);
+            viewedRef.current = true;
         }
-    }, [post, handleViewFeedItem]);
+    }, [itemId, type, handleViewFeedItem, origin]);
 
     const { handleFollowUser, handleBlockUser } = useUserMutations();
 
@@ -302,11 +308,11 @@ function PostPage() {
             : null
     );
 
-    const isPostLikedByMe = useLikeData(post?.itemId || "", post?.type || "");
+    const isPostLikedByMe = useLikeData(itemId || "", type || "");
 
     const like = useMemo(() => isPostLikedByMe, [isPostLikedByMe]);
 
-    const { postLikes } = usePostLikes(post?.itemId || "", post?.type || "");
+    const { postLikes } = usePostLikes(itemId || "", type || "");
 
     const likes = postLikes?.totalCount || 0;
 
@@ -318,7 +324,7 @@ function PostPage() {
 
     const reposts = userReposts?.totalCount || 0;
 
-    const isBookmarked = useBookmarkData(post?.type || "", post?.id);
+    const isBookmarked = useBookmarkData(type || "", post?.id);
 
     const bookmark = useMemo(() => isBookmarked, [isBookmarked]);
 
@@ -327,7 +333,7 @@ function PostPage() {
         loading: postCommentsLoading,
         error: postCommentsError,
         fetchMore,
-    } = useComments(post?.type || "", post?.id);
+    } = useComments(type || "", post?.id);
 
     const loadMore = useCallback(() => {
         if (
@@ -375,16 +381,16 @@ function PostPage() {
         [post?.updatedAt]
     );
 
-    const postStats = useFeedItemStats(post?.itemId || "", post?.type || "");
+    const postStats = useFeedItemStats(itemId || "", type || "");
 
     const views = postStats?.views || 0;
 
-    const postMentions = useGetPostMentions(post?.itemId || "");
+    const postMentions = useGetPostMentions(itemId || "");
 
     const mentions = postMentions?.mentions || [];
 
     const { data: editedPostData } = useEditedPostSubscription({
-        variables: { postId: post?.itemId || "" },
+        variables: { postId: itemId || "" },
         fetchPolicy: "no-cache",
         skip: !post,
     });

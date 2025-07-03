@@ -1,0 +1,15 @@
+query PostMedia($postId: String!) {
+    postMedia(postId: $postId) {
+        id
+        type
+        post {
+            itemId
+            type
+            authorId
+        }
+        src
+        alt
+        createdAt
+        updatedAt
+    }
+}
