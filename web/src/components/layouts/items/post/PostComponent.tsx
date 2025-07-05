@@ -4,6 +4,7 @@ import {
     useEffect,
     useMemo,
     useRef,
+    useState,
 } from "react";
 import { Post } from "../../../../generated/graphql";
 import styled from "styled-components";
@@ -280,6 +281,75 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
     const observerRef = useRef<IntersectionObserver | null>(null);
     const viewedRef = useRef(false);
 
+    const videoRefs = useRef<Map<number, HTMLVideoElement | null>>(new Map());
+    const [playingVideoId, setPlayingVideoId] = useState<number | null>(null);
+    const [userPausedVideos, setUserPausedVideos] = useState<Set<number>>(new Set());
+    const [isPostVisible, setIsPostVisible] = useState(false);
+
+    const handleVideoPlay = useCallback((videoId: number) => {
+        videoRefs.current.forEach((video, id) => {
+            if (id !== videoId && video && !video.paused) {
+                video.pause();
+            }
+        });
+        
+        setPlayingVideoId(videoId);
+
+        setUserPausedVideos(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(videoId);
+            return newSet;
+        });
+    }, []);
+
+    const handleVideoPause = useCallback((videoId: number) => {
+        if (videoId === playingVideoId) {
+            setUserPausedVideos(prev => new Set(prev).add(videoId));
+        }
+        
+        if (videoId === playingVideoId) {
+            setPlayingVideoId(null);
+        }
+    }, [playingVideoId]);
+
+    const handleAutoplay = useCallback(async () => {
+        if (!isPostVisible) return;
+        
+        const availableVideos = Array.from(videoRefs.current.entries())
+            .filter(([id, video]) => video && !userPausedVideos.has(id))
+            .sort(([a], [b]) => a - b);
+        
+        if (availableVideos.length === 0) return;
+        
+        const [videoId, video] = availableVideos[0];
+        
+        try {
+            if (video && video.readyState < 2) {
+                await new Promise((resolve) => {
+                    const handleCanPlay = () => {
+                        video.removeEventListener("canplay", handleCanPlay);
+                        resolve(void 0);
+                    };
+                    video.addEventListener("canplay", handleCanPlay);
+                });
+            }
+            
+            await video?.play();
+            setPlayingVideoId(videoId);
+        } catch (error) {
+            console.log("Autoplay failed for videoId:", videoId, error);
+        }
+    }, [isPostVisible, userPausedVideos]);
+
+    const pauseAllVideos = useCallback(() => {
+        videoRefs.current.forEach(video => {
+            if (video && !video.paused) {
+                video.pause();
+            }
+        });
+        setPlayingVideoId(null);
+    }, []);
+
     const setPostRef = useCallback(
         (node: HTMLDivElement | null) => {
             if (observerRef.current) {
@@ -295,23 +365,32 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
 
             if (node) {
                 observerRef.current = new IntersectionObserver(([entry]) => {
-                    if (entry.isIntersecting && !viewedRef.current) {
+                    const isVisible = entry.isIntersecting;
+                    setIsPostVisible(isVisible);
+                    
+                    if (isVisible && !viewedRef.current) {
                         viewedRef.current = true;
-
-                        handleViewFeedItem(
-                            post.itemId,
-                            post.type,
-                            false,
-                            origin
-                        );
+                        handleViewFeedItem(post.itemId, post.type, false, origin);
+                    }
+                    
+                    if (isVisible) {
+                        setTimeout(() => handleAutoplay(), 100);
+                    } else {
+                        pauseAllVideos();
                     }
                 }, options);
 
                 observerRef.current.observe(node);
             }
         },
-        [handleViewFeedItem, post.itemId, post.type, origin]
+        [handleViewFeedItem, post.itemId, post.type, origin, handleAutoplay, pauseAllVideos]
     );
+
+    useEffect(() => {
+        if (isPostVisible) {
+            handleAutoplay();
+        }
+    }, [isPostVisible, handleAutoplay]);
 
     useEffect(() => {
         return () => {
@@ -671,14 +750,26 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                             {post.media.map((media) => (
                                 <PostMediaItem key={media.id}>
                                     {media.type.includes("image") ? (
-                                        <img src={media.src} alt={media.alt} />
+                                        <img src={media.src} alt={media.alt} loading="lazy" />
                                     ) : (
-                                        <video controls>
-                                            <source
-                                                src={media.src}
-                                                type={media.type}
-                                            />
-                                        </video>
+                                        <video 
+                                            controls 
+                                            ref={(el) => {
+                                                if (el) {
+                                                    videoRefs.current.set(media.id, el);
+                                                } else {
+                                                    videoRefs.current.delete(media.id);
+                                                }
+                                            }}
+                                            src={media.src}
+                                            muted
+                                            playsInline
+                                            preload="metadata"
+                                            onPlay={() => handleVideoPlay(media.id)}
+                                            onPause={() => handleVideoPause(media.id)}
+                                            onEnded={() => handleVideoPause(media.id)}
+                                            onContextMenu={(e) => e.preventDefault()}
+                                        />
                                     )}
                                 </PostMediaItem>
                             ))}
