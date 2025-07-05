@@ -72,6 +72,7 @@ import { useUserMutations } from "../../../../utils/userMutations";
 import Unmention from "../../../icons/Unmention";
 import ProfilePicture from "../../../utils/ProfilePicture";
 import { POST_TYPES } from "../../../../utils/constants";
+import { useVideoManager } from "../../../../utils/VideoManagerProvider";
 
 interface PostComponentProps {
     post: Post;
@@ -280,75 +281,38 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
 
     const observerRef = useRef<IntersectionObserver | null>(null);
     const viewedRef = useRef(false);
-
-    const videoRefs = useRef<Map<number, HTMLVideoElement | null>>(new Map());
-    const [playingVideoId, setPlayingVideoId] = useState<number | null>(null);
-    const [userPausedVideos, setUserPausedVideos] = useState<Set<number>>(new Set());
     const [isPostVisible, setIsPostVisible] = useState(false);
 
-    const handleVideoPlay = useCallback((videoId: number) => {
-        videoRefs.current.forEach((video, id) => {
-            if (id !== videoId && video && !video.paused) {
-                video.pause();
-            }
-        });
-        
-        setPlayingVideoId(videoId);
-
-        setUserPausedVideos(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(videoId);
-            return newSet;
-        });
-    }, []);
-
-    const handleVideoPause = useCallback((videoId: number) => {
-        if (videoId === playingVideoId) {
-            setUserPausedVideos(prev => new Set(prev).add(videoId));
-        }
-        
-        if (videoId === playingVideoId) {
-            setPlayingVideoId(null);
-        }
-    }, [playingVideoId]);
+    const { playingVideoId, registerVideo, playVideo, pauseVideo } = useVideoManager();
 
     const handleAutoplay = useCallback(async () => {
-        if (!isPostVisible) return;
-        
-        const availableVideos = Array.from(videoRefs.current.entries())
-            .filter(([id, video]) => video && !userPausedVideos.has(id))
-            .sort(([a], [b]) => a - b);
-        
+        if (!isPostVisible || !post.media || playingVideoId !== null) return;
+
+        const availableVideos = post.media.filter(media => media.type.includes("video"));
+
         if (availableVideos.length === 0) return;
-        
-        const [videoId, video] = availableVideos[0];
-        
+
+        const videoId = availableVideos[0].id;
+        const videoElement = document.querySelector(`video[src="${availableVideos[0].src}"]`) as HTMLVideoElement | null;
+
+        if (!videoElement) return;
+
         try {
-            if (video && video.readyState < 2) {
+            if (videoElement.readyState < 2) {
                 await new Promise((resolve) => {
                     const handleCanPlay = () => {
-                        video.removeEventListener("canplay", handleCanPlay);
+                        videoElement.removeEventListener("canplay", handleCanPlay);
                         resolve(void 0);
                     };
-                    video.addEventListener("canplay", handleCanPlay);
+                    videoElement.addEventListener("canplay", handleCanPlay);
                 });
             }
-            
-            await video?.play();
-            setPlayingVideoId(videoId);
+
+            playVideo(videoId);
         } catch (error) {
             console.log("Autoplay failed for videoId:", videoId, error);
         }
-    }, [isPostVisible, userPausedVideos]);
-
-    const pauseAllVideos = useCallback(() => {
-        videoRefs.current.forEach(video => {
-            if (video && !video.paused) {
-                video.pause();
-            }
-        });
-        setPlayingVideoId(null);
-    }, []);
+    }, [isPostVisible, playVideo, post.media, playingVideoId]);
 
     const setPostRef = useCallback(
         (node: HTMLDivElement | null) => {
@@ -360,7 +324,7 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
             const options = {
                 root: null,
                 rootMargin: "0px",
-                threshold: 0.5,
+                threshold: 0.6,
             };
 
             if (node) {
@@ -376,21 +340,16 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                     if (isVisible) {
                         setTimeout(() => handleAutoplay(), 100);
                     } else {
-                        pauseAllVideos();
+                        post.media?.filter(media => media.type.includes("video"))
+                            .forEach(media => pauseVideo(media.id));
                     }
                 }, options);
 
                 observerRef.current.observe(node);
             }
         },
-        [handleViewFeedItem, post.itemId, post.type, origin, handleAutoplay, pauseAllVideos]
+        [handleViewFeedItem, post.itemId, post.type, origin, handleAutoplay, pauseVideo, post.media]
     );
-
-    useEffect(() => {
-        if (isPostVisible) {
-            handleAutoplay();
-        }
-    }, [isPostVisible, handleAutoplay]);
 
     useEffect(() => {
         return () => {
@@ -750,24 +709,18 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                             {post.media.map((media) => (
                                 <PostMediaItem key={media.id}>
                                     {media.type.includes("image") ? (
-                                        <img src={media.src} alt={media.alt} loading="lazy" />
+                                        <img src={media.src} alt={media.alt} loading="lazy" decoding="async" />
                                     ) : (
                                         <video 
                                             controls 
-                                            ref={(el) => {
-                                                if (el) {
-                                                    videoRefs.current.set(media.id, el);
-                                                } else {
-                                                    videoRefs.current.delete(media.id);
-                                                }
-                                            }}
+                                            ref={(el) => registerVideo(media.id, el)}
                                             src={media.src}
                                             muted
                                             playsInline
                                             preload="metadata"
-                                            onPlay={() => handleVideoPlay(media.id)}
-                                            onPause={() => handleVideoPause(media.id)}
-                                            onEnded={() => handleVideoPause(media.id)}
+                                            onPlay={() => playVideo(media.id)}
+                                            onPause={() => pauseVideo(media.id)}
+                                            onEnded={() => pauseVideo(media.id)}
                                             onContextMenu={(e) => e.preventDefault()}
                                         />
                                     )}
