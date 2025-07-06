@@ -19,14 +19,17 @@ export const useVideoControl = (videoId: number) => {
     });
 
     const {
-        activeVideoId,
         setActiveVideo,
         registerVideo,
         unregisterVideo,
+        getActiveVideoId,
+        playVideo,
+        pauseVideo,
     } = useVideoManager();
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const isVisible = useRef(false);
+    const activeVideoId = getActiveVideoId();
 
     useEffect(() => {
         if (videoRef.current) {
@@ -92,12 +95,12 @@ export const useVideoControl = (videoId: number) => {
         if (newUserWantsToPlay) {
             // L'utente vuole fare play
             setActiveVideo(videoId);
-            video.play().catch(console.error);
+            playVideo(videoId);
         } else {
             // L'utente vuole fare pause
-            video.pause();
+            pauseVideo(videoId);
         }
-    }, [videoId, setActiveVideo]);
+    }, [videoId, setActiveVideo, playVideo, pauseVideo]);
 
     const handleVisibilityChange = useCallback((visible: boolean) => {
         isVisible.current = visible;
@@ -110,26 +113,20 @@ export const useVideoControl = (videoId: number) => {
                 // L'utente ha interagito: riproduci solo se vuole che sia in play
                 if (videoState.userWantsToPlay && activeVideoId !== videoId) {
                     setActiveVideo(videoId);
-                    video.play().catch(console.error);
+                    playVideo(videoId);
                 }
             } else {
                 // L'utente non ha mai interagito: autoplay se nessun altro video è attivo
                 if (!activeVideoId || activeVideoId === videoId) {
                     setActiveVideo(videoId);
-                    video.play().catch(console.error);
+                    playVideo(videoId);
                 }
             }
         } else {
             // Il video non è più visibile
-            if (videoState.hasUserInteracted) {
-                // L'utente ha interagito: pausa sempre quando non visibile
-                video.pause();
-            } else {
-                // L'utente non ha interagito: pausa solo se era in autoplay
-                video.pause();
-            }
+            pauseVideo(videoId);
         }
-    }, [videoId, videoState.hasUserInteracted, videoState.userWantsToPlay, activeVideoId, setActiveVideo]);
+    }, [videoId, videoState.hasUserInteracted, videoState.userWantsToPlay, activeVideoId, setActiveVideo, playVideo, pauseVideo]);
 
     // Autoplay quando diventa visibile
     const handleAutoPlay = useCallback(() => {

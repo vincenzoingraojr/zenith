@@ -1,13 +1,13 @@
 import { createContext, useContext, useRef, useCallback, ReactNode, FunctionComponent } from "react";
 
 interface VideoManagerContextType {
-    activeVideoId: number | null;
     setActiveVideo: (videoId: number | null) => void;
     registerVideo: (videoId: number, element: HTMLVideoElement) => void;
     unregisterVideo: (videoId: number) => void;
     pauseAllVideos: () => void;
     playVideo: (videoId: number) => void;
     pauseVideo: (videoId: number) => void;
+    getActiveVideoId: () => number | null;
 }
 
 const VideoManagerContext = createContext<VideoManagerContextType | null>(null);
@@ -62,19 +62,23 @@ export const VideoManagerProvider: FunctionComponent<{ children: ReactNode }> = 
         }
     }, []);
 
+    const getActiveVideoId = useCallback(() => {
+        return activeVideoId.current;
+    }, []);
+
     return (
         <VideoManagerContext.Provider
             value={{
-                activeVideoId: activeVideoId.current,
                 setActiveVideo,
                 registerVideo,
                 unregisterVideo,
                 pauseAllVideos,
                 playVideo,
                 pauseVideo,
+                getActiveVideoId,
             }}
         >
-        {children}
+            {children}
         </VideoManagerContext.Provider>
     );
 };
