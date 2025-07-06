@@ -44,6 +44,7 @@ import { FileWrapper, ProgressStatus } from "../commons";
 import ProfilePicture from "../../utils/ProfilePicture";
 import { useFormikContext } from "formik";
 import CircularProgress, { ProgressContainer } from "../../utils/CircularProgress";
+import { VideoPlayer } from "../../utils/video/VideoPlayer";
 
 interface EditorComponentProps {
     placeholder: string;
@@ -456,18 +457,13 @@ const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
                                                             alt={mediaItem.alt}
                                                         />
                                                     ) : (
-                                                        <video controls>
-                                                            <source
-                                                                src={URL.createObjectURL(
-                                                                    mediaItem.file
-                                                                )}
-                                                                type={
-                                                                    mediaItem
-                                                                        .file
-                                                                        .type
-                                                                }
-                                                            />
-                                                        </video>
+                                                        <VideoPlayer
+                                                            videoId={mediaItem.id}
+                                                            src={URL.createObjectURL(
+                                                                mediaItem.file
+                                                            )}
+                                                            autoplay={false}
+                                                        />
                                                     )}
                                                 </>
                                             ) : (
@@ -488,15 +484,11 @@ const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
                                                                         }
                                                                     />
                                                                 ) : (
-                                                                    <video
-                                                                        controls
-                                                                    >
-                                                                        <source
-                                                                            src={
-                                                                                mediaItem.src
-                                                                            }
-                                                                        />
-                                                                    </video>
+                                                                    <VideoPlayer
+                                                                        videoId={mediaItem.id}
+                                                                        src={mediaItem.src}
+                                                                        autoplay={false}
+                                                                    />
                                                                 )}
                                                             </>
                                                         )}

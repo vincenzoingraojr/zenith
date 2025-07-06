@@ -4,7 +4,6 @@ import {
     useEffect,
     useMemo,
     useRef,
-    useState,
 } from "react";
 import { Post } from "../../../../generated/graphql";
 import styled from "styled-components";
@@ -72,7 +71,7 @@ import { useUserMutations } from "../../../../utils/userMutations";
 import Unmention from "../../../icons/Unmention";
 import ProfilePicture from "../../../utils/ProfilePicture";
 import { POST_TYPES } from "../../../../utils/constants";
-import { useVideoManager } from "../../../../utils/VideoManagerProvider";
+import { VideoPlayer } from "../../../utils/video/VideoPlayer";
 
 interface PostComponentProps {
     post: Post;
@@ -281,38 +280,6 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
 
     const observerRef = useRef<IntersectionObserver | null>(null);
     const viewedRef = useRef(false);
-    const [isPostVisible, setIsPostVisible] = useState(false);
-
-    const { playingVideoId, registerVideo, playVideo, pauseVideo } = useVideoManager();
-
-    const handleAutoplay = useCallback(async () => {
-        if (!isPostVisible || !post.media || playingVideoId !== null) return;
-
-        const availableVideos = post.media.filter(media => media.type.includes("video"));
-
-        if (availableVideos.length === 0) return;
-
-        const videoId = availableVideos[0].id;
-        const videoElement = document.querySelector(`video[src="${availableVideos[0].src}"]`) as HTMLVideoElement | null;
-
-        if (!videoElement) return;
-
-        try {
-            if (videoElement.readyState < 2) {
-                await new Promise((resolve) => {
-                    const handleCanPlay = () => {
-                        videoElement.removeEventListener("canplay", handleCanPlay);
-                        resolve(void 0);
-                    };
-                    videoElement.addEventListener("canplay", handleCanPlay);
-                });
-            }
-
-            playVideo(videoId);
-        } catch (error) {
-            console.log("Autoplay failed for videoId:", videoId, error);
-        }
-    }, [isPostVisible, playVideo, post.media, playingVideoId]);
 
     const setPostRef = useCallback(
         (node: HTMLDivElement | null) => {
@@ -330,25 +297,17 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
             if (node) {
                 observerRef.current = new IntersectionObserver(([entry]) => {
                     const isVisible = entry.isIntersecting;
-                    setIsPostVisible(isVisible);
                     
                     if (isVisible && !viewedRef.current) {
                         viewedRef.current = true;
                         handleViewFeedItem(post.itemId, post.type, false, origin);
-                    }
-                    
-                    if (isVisible) {
-                        setTimeout(() => handleAutoplay(), 100);
-                    } else {
-                        post.media?.filter(media => media.type.includes("video"))
-                            .forEach(media => pauseVideo(media.id));
                     }
                 }, options);
 
                 observerRef.current.observe(node);
             }
         },
-        [handleViewFeedItem, post.itemId, post.type, origin, handleAutoplay, pauseVideo, post.media]
+        [handleViewFeedItem, post.itemId, post.type, origin]
     );
 
     useEffect(() => {
@@ -711,17 +670,10 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                     {media.type.includes("image") ? (
                                         <img src={media.src} alt={media.alt} loading="lazy" decoding="async" />
                                     ) : (
-                                        <video 
-                                            controls 
-                                            ref={(el) => registerVideo(media.id, el)}
+                                        <VideoPlayer
+                                            key={media.id}
+                                            videoId={media.id}
                                             src={media.src}
-                                            muted
-                                            playsInline
-                                            preload="metadata"
-                                            onPlay={() => playVideo(media.id)}
-                                            onPause={() => pauseVideo(media.id)}
-                                            onEnded={() => pauseVideo(media.id)}
-                                            onContextMenu={(e) => e.preventDefault()}
                                         />
                                     )}
                                 </PostMediaItem>
