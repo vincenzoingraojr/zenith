@@ -95,7 +95,6 @@ import { getDateToLocaleString, processDate } from "../../utils/processDate";
 import { devices } from "../../styles/devices";
 import { client } from "../..";
 import Comment from "../../components/icons/Comment";
-import { VideoPlayer } from "../../components/utils/video/VideoPlayer";
 
 const PostPageWrapper = styled.div`
     display: flex;
@@ -914,10 +913,14 @@ function PostPage() {
                                                                                         decoding="async"
                                                                                     />
                                                                                 ) : (
-                                                                                    <VideoPlayer
-                                                                                        key={media.id}
-                                                                                        videoId={media.id}
-                                                                                        src={media.src}
+                                                                                    <video
+                                                                                        controls
+                                                                                        src={
+                                                                                            media.src
+                                                                                        }
+                                                                                        muted
+                                                                                        playsInline
+                                                                                        preload="metadata"
                                                                                     />
                                                                                 )}
                                                                             </PostMediaItem>

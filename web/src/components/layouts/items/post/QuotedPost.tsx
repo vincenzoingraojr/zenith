@@ -198,12 +198,15 @@ const QuotedPost: FunctionComponent<QuotedPostProps> = ({ post, origin }) => {
                                     {media.type.includes("image") ? (
                                         <img src={media.src} alt={media.alt} />
                                     ) : (
-                                        <video controls>
-                                            <source
-                                                src={media.src}
-                                                type={media.type}
-                                            />
-                                        </video>
+                                        <video
+                                            controls
+                                            src={
+                                                media.src
+                                            }
+                                            muted
+                                            playsInline
+                                            preload="metadata"
+                                        />
                                     )}
                                 </PostMediaItem>
                             ))}

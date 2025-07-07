@@ -105,7 +105,6 @@ const PostContent = styled(PageText)`
 const NameContainer = styled(UserFullNameContainer)`
     display: inline-flex;
     padding-right: 4px;
-    gap: 6px;
     flex: unset;
     overflow: unset;
 `;

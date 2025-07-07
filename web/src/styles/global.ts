@@ -1430,7 +1430,7 @@ export const UserFullNameContainer = styled.div`
     flex: 1;
     overflow: hidden;
     text-overflow: clip;
-    gap: 8px;
+    gap: 6px;
 `;
 
 export const UserFullName = styled(PageText)`

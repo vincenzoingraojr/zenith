@@ -44,7 +44,6 @@ import { FileWrapper, ProgressStatus } from "../commons";
 import ProfilePicture from "../../utils/ProfilePicture";
 import { useFormikContext } from "formik";
 import CircularProgress, { ProgressContainer } from "../../utils/CircularProgress";
-import { VideoPlayer } from "../../utils/video/VideoPlayer";
 
 interface EditorComponentProps {
     placeholder: string;
@@ -457,12 +456,14 @@ const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
                                                             alt={mediaItem.alt}
                                                         />
                                                     ) : (
-                                                        <VideoPlayer
-                                                            videoId={mediaItem.id}
+                                                        <video
+                                                            controls
                                                             src={URL.createObjectURL(
                                                                 mediaItem.file
                                                             )}
-                                                            autoplay={false}
+                                                            muted
+                                                            playsInline
+                                                            preload="metadata"
                                                         />
                                                     )}
                                                 </>
@@ -484,10 +485,14 @@ const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
                                                                         }
                                                                     />
                                                                 ) : (
-                                                                    <VideoPlayer
-                                                                        videoId={mediaItem.id}
-                                                                        src={mediaItem.src}
-                                                                        autoplay={false}
+                                                                    <video
+                                                                        controls
+                                                                        src={
+                                                                            mediaItem.src
+                                                                        }
+                                                                        muted
+                                                                        playsInline
+                                                                        preload="metadata"
                                                                     />
                                                                 )}
                                                             </>

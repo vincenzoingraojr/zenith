@@ -71,7 +71,6 @@ import { useUserMutations } from "../../../../utils/userMutations";
 import Unmention from "../../../icons/Unmention";
 import ProfilePicture from "../../../utils/ProfilePicture";
 import { POST_TYPES } from "../../../../utils/constants";
-import { VideoPlayer } from "../../../utils/video/VideoPlayer";
 
 interface PostComponentProps {
     post: Post;
@@ -670,10 +669,14 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
                                     {media.type.includes("image") ? (
                                         <img src={media.src} alt={media.alt} loading="lazy" decoding="async" />
                                     ) : (
-                                        <VideoPlayer
-                                            key={media.id}
-                                            videoId={media.id}
-                                            src={media.src}
+                                        <video
+                                            controls
+                                            src={
+                                                media.src
+                                            }
+                                            muted
+                                            playsInline
+                                            preload="metadata"
                                         />
                                     )}
                                 </PostMediaItem>

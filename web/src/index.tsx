@@ -27,7 +27,6 @@ import App from "./App";
 import { AuthProvider } from "./utils/AuthProvider";
 import { ToastProvider } from "./components/utils/ToastProvider";
 import { persistCache, LocalStorageWrapper } from "apollo3-cache-persist";
-import { VideoManagerProvider } from "./utils/VideoManagerProvider";
 
 const cache = new InMemoryCache({
     typePolicies: {
@@ -350,10 +349,8 @@ async function initApollo() {
         return (
             <ThemeProvider theme={theme}>
                 <ToastProvider>
-                    <VideoManagerProvider>
-                        <GlobalStyle />
-                        <App />
-                    </VideoManagerProvider>
+                    <GlobalStyle />
+                    <App />
                 </ToastProvider>
             </ThemeProvider>
         );
