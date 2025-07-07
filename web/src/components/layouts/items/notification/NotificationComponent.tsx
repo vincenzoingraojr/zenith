@@ -37,6 +37,7 @@ import LoadingComponent from "../../../utils/LoadingComponent";
 import ProfilePicture from "../../../utils/ProfilePicture";
 import AffiliationIcon from "../../../utils/AffiliationIcon";
 import VerificationBadge from "../../../utils/VerificationBadge";
+import globalObserver from "../../../utils/globalObserver";
 
 interface NotificationComponentProps {
     notification: Notification;
@@ -236,24 +237,15 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({
 
     const [viewNotification] = useViewNotificationMutation();
 
-    const observerRef = useRef<IntersectionObserver | null>(null);
     const viewedRef = useRef(false);
 
     const setNotificationRef = useCallback(
         (node: HTMLDivElement | null) => {
-            if (observerRef.current) {
-                observerRef.current.disconnect();
-            }
-
-            const options = {
-                root: null,
-                rootMargin: "0px",
-                threshold: 0.5,
-            };
-
             if (node) {
-                observerRef.current = new IntersectionObserver(([entry]) => {
-                    if (entry.isIntersecting && !viewedRef.current) {
+                const handleIntersect = (entries: IntersectionObserverEntry[]) => {
+                    const isVisible = entries[0].isIntersecting;
+                    
+                    if (isVisible && !viewedRef.current) {
                         viewedRef.current = true;
 
                         viewNotification({
@@ -290,10 +282,16 @@ const NotificationComponent: FunctionComponent<NotificationComponentProps> = ({
                             },
                         });
                     }
-                }, options);
+                };
 
-                observerRef.current.observe(node);
+                globalObserver.observe(node, handleIntersect);
             }
+
+            return () => {
+                if (node) {
+                    globalObserver.unobserve(node);
+                }
+            };
         },
         [viewNotification, notification]
     );

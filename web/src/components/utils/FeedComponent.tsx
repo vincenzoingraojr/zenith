@@ -9,6 +9,7 @@ import {
 import LoadingComponent from "./LoadingComponent";
 import ErrorOrItemNotFound from "./ErrorOrItemNotFound";
 import { ERROR_SOMETHING_WENT_WRONG } from "../../utils/constants";
+import globalObserver from "./globalObserver";
 
 interface FeedComponentProps {
     feedContent: JSX.Element;
@@ -30,33 +31,28 @@ const FeedComponent: FunctionComponent<FeedComponentProps> = ({
     const endContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const options = {
-            root: null,
-            rootMargin: "0px",
-            threshold: 0.5,
-        };
-
         const current = endContainerRef.current;
 
         if (!current) return;
 
-        const observer = new IntersectionObserver((entries) => {
-            const target = entries[0];
-            if (target.isIntersecting && !loading) {
+        const handleIntersect = (entries: IntersectionObserverEntry[]) => {
+            const isVisible = entries[0].isIntersecting;
+            
+            if (isVisible && !loading) {
                 loadMore();
             }
-        }, options);
+        };
 
         if (current) {
-            observer.observe(current);
+            globalObserver.observe(current, handleIntersect);
         }
 
         return () => {
             if (current) {
-                observer.unobserve(current);
+                globalObserver.unobserve(current);
             }
         };
-    }, [loadMore, endContainerRef, loading]);
+    }, [loadMore, loading]);
 
     return (
         <>

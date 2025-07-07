@@ -1,7 +1,6 @@
 import {
     FunctionComponent,
     useCallback,
-    useEffect,
     useMemo,
     useRef,
 } from "react";
@@ -71,6 +70,7 @@ import { useUserMutations } from "../../../../utils/userMutations";
 import Unmention from "../../../icons/Unmention";
 import ProfilePicture from "../../../utils/ProfilePicture";
 import { POST_TYPES } from "../../../../utils/constants";
+import globalObserver from "../../../utils/globalObserver";
 
 interface PostComponentProps {
     post: Post;
@@ -277,44 +277,31 @@ const PostComponent: FunctionComponent<PostComponentProps> = ({
         handleRevokeMention,
     } = usePostMutations();
 
-    const observerRef = useRef<IntersectionObserver | null>(null);
     const viewedRef = useRef(false);
 
     const setPostRef = useCallback(
         (node: HTMLDivElement | null) => {
-            if (observerRef.current) {
-                observerRef.current.disconnect();
-                observerRef.current = null;
-            }
-
-            const options = {
-                root: null,
-                rootMargin: "0px",
-                threshold: 0.6,
-            };
-
             if (node) {
-                observerRef.current = new IntersectionObserver(([entry]) => {
-                    const isVisible = entry.isIntersecting;
+                const handleIntersect = (entries: IntersectionObserverEntry[]) => {
+                    const isVisible = entries[0].isIntersecting;
                     
                     if (isVisible && !viewedRef.current) {
                         viewedRef.current = true;
                         handleViewFeedItem(post.itemId, post.type, false, origin);
                     }
-                }, options);
+                };
 
-                observerRef.current.observe(node);
+                globalObserver.observe(node, handleIntersect);
             }
+
+            return () => {
+                if (node) {
+                    globalObserver.unobserve(node);
+                }
+            };
         },
         [handleViewFeedItem, post.itemId, post.type, origin]
     );
-
-    useEffect(() => {
-        return () => {
-            observerRef.current?.disconnect();
-            observerRef.current = null;
-        };
-    }, []);
 
     const isPostLikedByMe = useLikeData(post.itemId, post.type);
 
