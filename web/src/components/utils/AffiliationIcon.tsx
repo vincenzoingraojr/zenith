@@ -1,7 +1,7 @@
 import { FunctionComponent } from "react";
 import { PageBlock, ProfilePictureWrapper } from "../../styles/global";
 import { useNavigate } from "react-router-dom";
-import { useIsAffiliatedTo } from "../../utils/userQueries";
+import { useIsAffiliatedTo } from "../../utils/user/userQueries";
 import ProfilePicture from "./ProfilePicture";
 
 interface AffiliationIconProps {

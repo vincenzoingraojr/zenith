@@ -1,4 +1,4 @@
-import { client } from "..";
+import { client } from "../..";
 import {
     GetPostLikesDocument,
     GetRepostsDocument,
@@ -32,8 +32,8 @@ import {
     Like,
     GetFeedItemStatsQuery,
     GetPostMentionsQuery,
-} from "../generated/graphql";
-import { useMeData } from "./userQueries";
+} from "../../generated/graphql";
+import { useMeData } from "../user/userQueries";
 
 export function usePostMutations() {
     const [deletePost] = useDeletePostMutation();

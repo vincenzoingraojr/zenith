@@ -11,7 +11,7 @@ import {
 } from "../../styles/global";
 import { COLORS } from "../../styles/colors";
 import { useAuth } from "../../utils/AuthProvider";
-import { useMeData } from "../../utils/userQueries";
+import { useMeData } from "../../utils/user/userQueries";
 import { client } from "../..";
 
 const LogoutButton = styled(Button)`

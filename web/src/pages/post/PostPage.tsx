@@ -11,7 +11,7 @@ import {
     usePostLikes,
     useRepostData,
     useReposts,
-} from "../../utils/postQueries";
+} from "../../utils/post/postQueries";
 import { truncateString } from "../../utils/truncateString";
 import PageLayout from "../../components/layouts/PageLayout";
 import PageContentLayout from "../../components/layouts/sublayouts/PageContentLayout";
@@ -44,15 +44,15 @@ import {
     useHasThisUserAsAffiliate,
     useIsUserBlockedData,
     useMeData,
-} from "../../utils/userQueries";
+} from "../../utils/user/userQueries";
 import OptionComponent from "../../components/layouts/options/OptionComponent";
 import Flag from "../../components/icons/Flag";
 import Pen from "../../components/icons/Pen";
 import { useToasts } from "../../components/utils/ToastProvider";
 import Bin from "../../components/icons/Bin";
 import { COLORS } from "../../styles/colors";
-import { usePostMutations } from "../../utils/postMutations";
-import { useUserMutations } from "../../utils/userMutations";
+import { usePostMutations } from "../../utils/post/postMutations";
+import { useUserMutations } from "../../utils/user/userMutations";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FollowIcon from "../../components/icons/FollowIcon";
 import Block from "../../components/icons/Block";

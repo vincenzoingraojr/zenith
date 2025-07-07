@@ -13,7 +13,7 @@ import {
     POST_TYPES,
     USER_TYPES,
 } from "../../../../utils/constants";
-import { useFindUserById } from "../../../../utils/userQueries";
+import { useFindUserById } from "../../../../utils/user/userQueries";
 import {
     getDateToLocaleString,
     processDate,
@@ -25,7 +25,7 @@ import {
     ProfilePictureWrapper,
     UserFullNameContainer,
 } from "../../../../styles/global";
-import { useFindPostById } from "../../../../utils/postQueries";
+import { useFindPostById } from "../../../../utils/post/postQueries";
 import Bell from "../../../icons/Bell";
 import Profile from "../../../icons/Profile";
 import LikeIcon from "../../../icons/Like";

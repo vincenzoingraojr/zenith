@@ -5,8 +5,8 @@ import {
     useHasBlockedMeData,
     useIsUserBlockedData,
     useMeData,
-} from "../../../../utils/userQueries";
-import { useUserMutations } from "../../../../utils/userMutations";
+} from "../../../../utils/user/userQueries";
+import { useUserMutations } from "../../../../utils/user/userMutations";
 import styled from "styled-components";
 import {
     ItemLoading,

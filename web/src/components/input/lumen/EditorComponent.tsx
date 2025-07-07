@@ -1,6 +1,6 @@
 import { forwardRef, FunctionComponent, useEffect, useImperativeHandle, useRef, useState } from "react";
 import styled from "styled-components";
-import { useMeData } from "../../../utils/userQueries";
+import { useMeData } from "../../../utils/user/userQueries";
 import { Link, useLocation } from "react-router-dom";
 import {
     Button,

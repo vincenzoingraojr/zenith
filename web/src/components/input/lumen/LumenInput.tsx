@@ -1,6 +1,6 @@
 import { FunctionComponent, useRef, useState } from "react";
 import { Form, Formik } from "formik";
-import { useMeData } from "../../../utils/userQueries";
+import { useMeData } from "../../../utils/user/userQueries";
 import { useToasts } from "../../utils/ToastProvider";
 import { FileWrapper, ProgressStatus } from "../commons";
 import {

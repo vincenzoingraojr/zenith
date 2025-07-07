@@ -6,7 +6,7 @@ import {
     useEffect,
     useMemo,
 } from "react";
-import { useMeData } from "./userQueries";
+import { useMeData } from "./user/userQueries";
 import {
     PaginatedNotifications,
     useDeletedNotificationSubscription,

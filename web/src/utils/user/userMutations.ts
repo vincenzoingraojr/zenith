@@ -8,8 +8,8 @@ import {
     User,
     useUnblockUserMutation,
     useUnfollowUserMutation,
-} from "../generated/graphql";
-import { STANDARD_ERROR_MESSAGE } from "./constants";
+} from "../../generated/graphql";
+import { STANDARD_ERROR_MESSAGE } from "../constants";
 import { useMeData } from "./userQueries";
 
 export function useUserMutations() {

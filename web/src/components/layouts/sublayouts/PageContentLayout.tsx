@@ -10,7 +10,7 @@ import {
 import Back from "../../icons/Back";
 import { devices } from "../../../styles/devices";
 import { mediaQuery } from "../../../utils/mediaQuery";
-import { useMeData } from "../../../utils/userQueries";
+import { useMeData } from "../../../utils/user/userQueries";
 import { useMenu } from "../../utils/hooks";
 import Menu from "../../Menu";
 import Logo from "../../icons/Logo";

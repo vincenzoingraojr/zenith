@@ -7,7 +7,7 @@ import {
     useIsFollowedByMeQuery,
     useIsUserBlockedByMeQuery,
     useMeQuery,
-} from "../generated/graphql";
+} from "../../generated/graphql";
 
 export const useMeData = () => {
     const { data, loading, error } = useMeQuery({ fetchPolicy: "cache-first" });

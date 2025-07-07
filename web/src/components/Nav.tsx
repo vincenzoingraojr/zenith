@@ -17,7 +17,7 @@ import {
 } from "../styles/global";
 import Menu from "./icons/Menu";
 import { useNavOptions } from "./utils/hooks";
-import { useMeData } from "../utils/userQueries";
+import { useMeData } from "../utils/user/userQueries";
 import Wallet from "./icons/Wallet";
 import Add from "./icons/Add";
 import { COLORS } from "../styles/colors";

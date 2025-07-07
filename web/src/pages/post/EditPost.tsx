@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { CustomFieldError, EditorFieldContainer, LumenInputContainer, LumenModalContainer } from "../../styles/global";
-import { useFindPost } from "../../utils/postQueries";
+import { useFindPost } from "../../utils/post/postQueries";
 import ModalLoading from "../../components/layouts/modal/ModalLoading";
 import ErrorOrItemNotFound from "../../components/utils/ErrorOrItemNotFound";
 import {
@@ -15,7 +15,7 @@ import {
 } from "../../generated/graphql";
 import { Form, Formik } from "formik";
 import { FileWrapper, ProgressStatus } from "../../components/input/commons";
-import { useMeData } from "../../utils/userQueries";
+import { useMeData } from "../../utils/user/userQueries";
 import { useToasts } from "../../components/utils/ToastProvider";
 import { toErrorMap } from "../../utils/toErrorMap";
 import { useRef, useState } from "react";

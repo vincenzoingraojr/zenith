@@ -1,6 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import LumenInput from "../../components/input/lumen/LumenInput";
-import { useFindPost } from "../../utils/postQueries";
+import { useFindPost } from "../../utils/post/postQueries";
 import styled from "styled-components";
 import { LumenModalContainer, PageBlock, PageText } from "../../styles/global";
 import QuotedPost from "../../components/layouts/items/post/QuotedPost";

@@ -39,7 +39,7 @@ import {
     useHasBlockedMeData,
     useIsUserBlockedData,
     useMeData,
-} from "../../../../utils/userQueries";
+} from "../../../../utils/user/userQueries";
 import Bin from "../../../icons/Bin";
 import FollowIcon from "../../../icons/FollowIcon";
 import Chain from "../../../icons/Chain";
@@ -58,15 +58,15 @@ import {
     usePostLikes,
     useRepostData,
     useReposts,
-} from "../../../../utils/postQueries";
+} from "../../../../utils/post/postQueries";
 import QuotedPost from "./QuotedPost";
 import LoadingComponent from "../../../utils/LoadingComponent";
 import AffiliationIcon from "../../../utils/AffiliationIcon";
 import BookmarkIcon from "../../../icons/Bookmark";
 import Block from "../../../icons/Block";
 import OptionComponent from "../../options/OptionComponent";
-import { usePostMutations } from "../../../../utils/postMutations";
-import { useUserMutations } from "../../../../utils/userMutations";
+import { usePostMutations } from "../../../../utils/post/postMutations";
+import { useUserMutations } from "../../../../utils/user/userMutations";
 import Unmention from "../../../icons/Unmention";
 import ProfilePicture from "../../../utils/ProfilePicture";
 import { POST_TYPES } from "../../../../utils/constants";

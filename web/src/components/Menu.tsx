@@ -10,7 +10,7 @@ import {
     PageText,
 } from "../styles/global";
 import Close from "./icons/Close";
-import { useMeData } from "../utils/userQueries";
+import { useMeData } from "../utils/user/userQueries";
 import { Link } from "react-router-dom";
 import Profile from "./icons/Profile";
 import Settings from "./icons/Settings";

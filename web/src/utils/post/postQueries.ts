@@ -10,7 +10,7 @@ import {
     useIsRepostedByUserQuery,
     usePostCommentsQuery,
     usePostMediaQuery,
-} from "../generated/graphql";
+} from "../../generated/graphql";
 
 export const useFindPost = (postId: string, username?: string) => {
     const { data, loading, error } = useFindPostQuery({

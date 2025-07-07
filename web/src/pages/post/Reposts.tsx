@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import Modal from "../../components/layouts/modal/Modal";
-import { useFindPost, useReposts } from "../../utils/postQueries";
+import { useFindPost, useReposts } from "../../utils/post/postQueries";
 import ModalLoading from "../../components/layouts/modal/ModalLoading";
 import ErrorOrItemNotFound from "../../components/utils/ErrorOrItemNotFound";
 import { ERROR_SOMETHING_WENT_WRONG } from "../../utils/constants";
