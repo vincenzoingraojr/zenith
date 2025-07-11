@@ -1,9 +1,11 @@
 import { FunctionComponent } from "react";
 import styled from "styled-components";
 import { COLORS } from "../../styles/colors";
+import { PageText } from "../../styles/global";
 
 interface CircularProgressProps {
     progress: number;
+    statusText?: string;
 }
 
 const CircularProgressWrapper = styled.div`
@@ -14,10 +16,11 @@ const CircularProgressWrapper = styled.div`
     }
 `;
 
-export const ProgressContainer = styled.div`
+const ProgressContainer = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-direction: column;
     position: absolute;
     top: 0;
     left: 0;
@@ -25,10 +28,17 @@ export const ProgressContainer = styled.div`
     bottom: 0;
     background-color: ${({ theme }) => theme.overlayGrey};
     border-radius: 12px 12px 0px 0px;
+    gap: 8px;
+`;
+
+const ProgressText = styled(PageText)`
+    font-size: 16px;
+    color: ${({ theme }) => theme.inputText};
 `;
 
 const CircularProgress: FunctionComponent<CircularProgressProps> = ({
     progress,
+    statusText = "Uploading...",
 }) => {
     const size = 26;
     const trackWidth = 2;
@@ -46,7 +56,7 @@ const CircularProgress: FunctionComponent<CircularProgressProps> = ({
         dashOffset = dashArray * ((100 - progress) / 100);
 
     return (
-        <>
+        <ProgressContainer>
             <CircularProgressWrapper>
                 <svg style={{ width: size, height: size }}>
                     <circle
@@ -71,7 +81,8 @@ const CircularProgress: FunctionComponent<CircularProgressProps> = ({
                     />
                 </svg>
             </CircularProgressWrapper>
-        </>
+            <ProgressText>{statusText}</ProgressText>
+        </ProgressContainer>
     );
 }
 

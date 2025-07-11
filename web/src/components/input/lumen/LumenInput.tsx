@@ -16,6 +16,7 @@ import { CustomFieldError, EditorFieldContainer, LumenInputContainer } from "../
 import EditorComponent from "./EditorComponent";
 import { client } from "../../..";
 import { uploadAllMedia } from "./utils/uploadFile";
+import { checkForDeletedFiles } from "./utils/manageProgress";
 
 interface LumenInputProps {
     type: "post" | "comment";
@@ -64,208 +65,218 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({
                     content: "",
                     media: [] as FileWrapper[],
                 }}
-                onSubmit={async (values, { setErrors }) => {
+                onSubmit={async (values, { setErrors, setSubmitting }) => {
                     let postMediaDirectory = "";
                     let media = [...values.media];
+                    checkForDeletedFiles(media, setMediaUploadStatusArray);
 
+                    setSubmitting(true);
                     if (media.length > 0 && me) {
                         postMediaDirectory = `${folder}/${new Date().getTime()}-${me.id}`;
                         media = await uploadAllMedia(media, postMediaDirectory, setMediaUploadStatusArray, addToast);
                     }
 
-                    const response = await createPost({
-                        variables: {
-                            type: values.type,
-                            content: values.content,
-                            media: JSON.stringify(media),
-                            isReplyToId,
-                            isReplyToType,
-                            quotedPostId,
-                        },
-                    });
+                    if (mediaUploadStatusArray.some((item) => item.status === "error")) {
+                        addToast(
+                            "There was an error uploading your media. Please try again."
+                        );
+                        setSubmitting(false);
+                    } else {
+                        const response = await createPost({
+                            variables: {
+                                type: values.type,
+                                content: values.content,
+                                media: JSON.stringify(media),
+                                isReplyToId,
+                                isReplyToType,
+                                quotedPostId,
+                            },
+                        });
 
-                    if (response.data) {
-                        if (
-                            response.data.createPost.errors &&
-                            response.data.createPost.errors.length > 0
-                        ) {
-                            setErrors(
-                                toErrorMap(response.data.createPost.errors)
-                            );
-                        } else if (
-                            response.data.createPost.ok &&
-                            response.data.createPost.post
-                        ) {
-                            if (editorRef.current) {
-                                editorRef.current.clearEditor();
-                            }
+                        if (response.data) {
+                            if (
+                                response.data.createPost.errors &&
+                                response.data.createPost.errors.length > 0
+                            ) {
+                                setErrors(
+                                    toErrorMap(response.data.createPost.errors)
+                                );
+                            } else if (
+                                response.data.createPost.ok &&
+                                response.data.createPost.post
+                            ) {
+                                if (editorRef.current) {
+                                    editorRef.current.clearEditor();
+                                }
 
-                            if (type === "post") {
-                                const newPost = response.data.createPost.post;
+                                if (type === "post") {
+                                    const newPost = response.data.createPost.post;
 
-                                client.cache.modify({
-                                    fields: {
-                                        postFeed(
-                                            existing = {
-                                                posts: [],
-                                                hasMore: true,
-                                            }
-                                        ) {
-                                            const exists = existing.posts.some(
-                                                (p: any) =>
-                                                    p.__ref ===
-                                                    `Post:${newPost.id}`
-                                            );
+                                    client.cache.modify({
+                                        fields: {
+                                            postFeed(
+                                                existing = {
+                                                    posts: [],
+                                                    hasMore: true,
+                                                }
+                                            ) {
+                                                const exists = existing.posts.some(
+                                                    (p: any) =>
+                                                        p.__ref ===
+                                                        `Post:${newPost.id}`
+                                                );
 
-                                            if (exists) return existing;
+                                                if (exists) return existing;
 
-                                            return {
-                                                hasMore: existing.hasMore,
-                                                posts: [
-                                                    client.cache.writeFragment({
-                                                        data: newPost,
-                                                        fragment: gql`
-                                                            fragment NewPost on Post {
-                                                                id
-                                                                itemId
-                                                                authorId
-                                                                type
-                                                                content
-                                                                isEdited
-                                                                lang
-                                                                topics
-                                                                author {
+                                                return {
+                                                    hasMore: existing.hasMore,
+                                                    posts: [
+                                                        client.cache.writeFragment({
+                                                            data: newPost,
+                                                            fragment: gql`
+                                                                fragment NewPost on Post {
                                                                     id
-                                                                    name
-                                                                    username
-                                                                    email
+                                                                    itemId
+                                                                    authorId
                                                                     type
-                                                                    gender
-                                                                    birthDate {
-                                                                        date
-                                                                        monthAndDayVisibility
-                                                                        yearVisibility
+                                                                    content
+                                                                    isEdited
+                                                                    lang
+                                                                    topics
+                                                                    author {
+                                                                        id
+                                                                        name
+                                                                        username
+                                                                        email
+                                                                        type
+                                                                        gender
+                                                                        birthDate {
+                                                                            date
+                                                                            monthAndDayVisibility
+                                                                            yearVisibility
+                                                                        }
+                                                                        emailVerified
+                                                                        profile {
+                                                                            profilePicture
+                                                                            profileBanner
+                                                                            bio
+                                                                            website
+                                                                        }
+                                                                        userSettings {
+                                                                            incomingMessages
+                                                                            twoFactorAuth
+                                                                        }
+                                                                        searchSettings {
+                                                                            hideSensitiveContent
+                                                                            hideBlockedAccounts
+                                                                        }
+                                                                        createdAt
+                                                                        updatedAt
+                                                                        hiddenPosts
+                                                                        identity {
+                                                                            verified
+                                                                            verifiedSince
+                                                                        }
+                                                                        verification {
+                                                                            verified
+                                                                            verifiedSince
+                                                                        }
                                                                     }
-                                                                    emailVerified
-                                                                    profile {
-                                                                        profilePicture
-                                                                        profileBanner
-                                                                        bio
-                                                                        website
+                                                                    isReplyToId
+                                                                    isReplyToType
+                                                                    quotedPostId
+                                                                    media {
+                                                                        id
+                                                                        type
+                                                                        src
+                                                                        alt
                                                                     }
-                                                                    userSettings {
-                                                                        incomingMessages
-                                                                        twoFactorAuth
-                                                                    }
-                                                                    searchSettings {
-                                                                        hideSensitiveContent
-                                                                        hideBlockedAccounts
-                                                                    }
+                                                                    hashtags
                                                                     createdAt
                                                                     updatedAt
-                                                                    hiddenPosts
-                                                                    identity {
-                                                                        verified
-                                                                        verifiedSince
-                                                                    }
-                                                                    verification {
-                                                                        verified
-                                                                        verifiedSince
-                                                                    }
                                                                 }
-                                                                isReplyToId
-                                                                isReplyToType
-                                                                quotedPostId
-                                                                media {
-                                                                    id
-                                                                    type
-                                                                    src
-                                                                    alt
-                                                                }
-                                                                hashtags
-                                                                createdAt
-                                                                updatedAt
-                                                            }
-                                                        `,
-                                                    }),
-                                                    ...existing.posts,
-                                                ],
-                                                totalCount:
-                                                    existing.totalCount + 1,
-                                            };
+                                                            `,
+                                                        }),
+                                                        ...existing.posts,
+                                                    ],
+                                                    totalCount:
+                                                        existing.totalCount + 1,
+                                                };
+                                            },
                                         },
-                                    },
-                                });
-                            } else {
-                                const existing = client.cache.readQuery({
-                                    query: PostCommentsDocument,
-                                    variables: {
-                                        id: isReplyToId,
-                                        type: isReplyToType,
-                                        limit: 3,
-                                    },
-                                });
-
-                                const {
-                                    posts: existingPosts,
-                                    totalCount: oldCount,
-                                    hasMore,
-                                } = (
-                                    existing as {
-                                        postComments: {
-                                            posts: Post[];
-                                            totalCount: number;
-                                            hasMore: boolean;
-                                        };
-                                    }
-                                ).postComments;
-
-                                client.cache.writeQuery({
-                                    query: PostCommentsDocument,
-                                    variables: {
-                                        id: isReplyToId,
-                                        type: isReplyToType,
-                                        limit: 3,
-                                    },
-                                    data: {
-                                        postComments: {
-                                            posts: [
-                                                response.data.createPost.post,
-                                                ...existingPosts,
-                                            ],
-                                            totalCount: oldCount + 1,
-                                            hasMore,
-                                        },
-                                    },
-                                });
-                            }
-
-                            addToast(
-                                `Your ${
-                                    values.type === POST_TYPES.COMMENT
-                                        ? POST_TYPES.COMMENT
-                                        : POST_TYPES.POST
-                                } has been created successfully.`
-                            );
-
-                            if (closingOnSubmit) {
-                                if (window.history.length > 2) {
-                                    navigate(-1);
+                                    });
                                 } else {
-                                    navigate("/");
+                                    const existing = client.cache.readQuery({
+                                        query: PostCommentsDocument,
+                                        variables: {
+                                            id: isReplyToId,
+                                            type: isReplyToType,
+                                            limit: 3,
+                                        },
+                                    });
+
+                                    const {
+                                        posts: existingPosts,
+                                        totalCount: oldCount,
+                                        hasMore,
+                                    } = (
+                                        existing as {
+                                            postComments: {
+                                                posts: Post[];
+                                                totalCount: number;
+                                                hasMore: boolean;
+                                            };
+                                        }
+                                    ).postComments;
+
+                                    client.cache.writeQuery({
+                                        query: PostCommentsDocument,
+                                        variables: {
+                                            id: isReplyToId,
+                                            type: isReplyToType,
+                                            limit: 3,
+                                        },
+                                        data: {
+                                            postComments: {
+                                                posts: [
+                                                    response.data.createPost.post,
+                                                    ...existingPosts,
+                                                ],
+                                                totalCount: oldCount + 1,
+                                                hasMore,
+                                            },
+                                        },
+                                    });
                                 }
+
+                                addToast(
+                                    `Your ${
+                                        values.type === POST_TYPES.COMMENT
+                                            ? POST_TYPES.COMMENT
+                                            : POST_TYPES.POST
+                                    } has been created successfully.`
+                                );
+
+                                if (closingOnSubmit) {
+                                    if (window.history.length > 2) {
+                                        navigate(-1);
+                                    } else {
+                                        navigate("/");
+                                    }
+                                }
+                            } else {
+                                addToast(response.data.createPost.status as string);
                             }
                         } else {
-                            addToast(response.data.createPost.status as string);
+                            addToast(BAD_REQUEST_MESSAGE);
                         }
-                    } else {
-                        addToast(BAD_REQUEST_MESSAGE);
-                    }
 
-                    setMediaUploadStatusArray([]);
+                        setMediaUploadStatusArray([]);
+                        setSubmitting(false);
+                    }
                 }}
             >
-                {({ errors }) => (
+                {({ errors, isSubmitting }) => (
                     <Form>
                         <EditorFieldContainer>
                             {errors && errors["content"] && (
@@ -276,6 +287,7 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({
                                 placeholder={placeholder}
                                 buttonText={buttonText}
                                 progress={mediaUploadStatusArray}
+                                isSubmitting={isSubmitting}
                             />
                         </EditorFieldContainer>
                     </Form>

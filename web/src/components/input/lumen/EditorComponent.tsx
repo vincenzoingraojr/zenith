@@ -4,7 +4,7 @@ import { useMeData } from "../../../utils/user/userQueries";
 import { Link, useLocation } from "react-router-dom";
 import {
     Button,
-    ControlContainer,
+    ButtonControlContainer,
     PageBlock,
     PageText,
 } from "../../../styles/global";
@@ -43,12 +43,13 @@ import { useToasts } from "../../utils/ToastProvider";
 import { FileWrapper, ProgressStatus } from "../commons";
 import ProfilePicture from "../../utils/ProfilePicture";
 import { useFormikContext } from "formik";
-import CircularProgress, { ProgressContainer } from "../../utils/CircularProgress";
+import CircularProgress from "../../utils/CircularProgress";
 
 interface EditorComponentProps {
     placeholder: string;
     buttonText: string;
     progress: ProgressStatus[];
+    isSubmitting?: boolean;
 }
 
 const EditorComponentWrapper = styled.div`
@@ -144,7 +145,7 @@ const ProfileImageContainer = styled.div`
     }
 `;
 
-const PostMediaUploadButton = styled(ControlContainer)`
+const PostMediaUploadButton = styled(ButtonControlContainer)`
     input[type="file"] {
         position: absolute;
         width: 36px;
@@ -212,7 +213,7 @@ const MediaSmallInfo = styled(PageText)`
     color: ${({ theme }) => theme.color};
 `;
 
-const DeleteMediaButton = styled(ControlContainer)`
+const DeleteMediaButton = styled(ButtonControlContainer)`
     position: absolute;
     top: 6px;
     left: unset;
@@ -278,7 +279,7 @@ const ShouldClearEditorPlugin: FunctionComponent<ShouldClearEditorProps> = ({
 
 const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
     const { me, loading } = useMeData();
-    const { placeholder, buttonText, progress } = props;
+    const { placeholder, buttonText, progress, isSubmitting } = props;
     const { setFieldValue, values } = useFormikContext<EditorFormValues>();
     const [content, setContent] = useState(values.content || "");
     const [isEditorEmpty, setIsEditorEmpty] = useState(false);
@@ -504,18 +505,17 @@ const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
                                                     item.id ===
                                                     mediaItem.id
                                             ) && (
-                                                <ProgressContainer>
-                                                    <CircularProgress progress={progress.find(
-                                                        (item) =>
-                                                            item.id ===
-                                                            mediaItem.id
-                                                    )?.progress as number} />
-                                                </ProgressContainer>
+                                                <CircularProgress progress={progress.find(
+                                                    (item) =>
+                                                        item.id ===
+                                                        mediaItem.id
+                                                )?.progress as number} statusText={progress.find(item => item.id === mediaItem.id)?.status === "error" ? "An error occurred" : undefined} />
                                             )}
                                         </MediaFileContainer>
                                         <MediaFileInfo>
                                             <MediaAltContainer>
                                                 <Field
+                                                    disabled={isSubmitting}
                                                     as="input"
                                                     aria-label="Description"
                                                     placeholder="Description"
@@ -553,7 +553,8 @@ const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
                                         </MediaFileInfo>
                                     </MediaMainContainer>
                                     <DeleteMediaButton
-                                        role="button"
+                                        disabled={isSubmitting}
+                                        type="button"
                                         title="Delete media item"
                                         aria-label="Delete media item"
                                         onClick={() => {
@@ -590,7 +591,8 @@ const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
                 <EditorCommandsContainer>
                     <EditorButtonsContainer>
                         <PostMediaUploadButton
-                            role="button"
+                            type="button"
+                            disabled={isSubmitting}
                             title="Upload media"
                             aria-label="Upload media"
                             onClick={() => {
@@ -649,9 +651,9 @@ const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
                             role="button"
                             title={buttonText}
                             aria-label={buttonText}
-                            disabled={isEditorEmpty}
+                            disabled={isEditorEmpty || isSubmitting}
                         >
-                            {buttonText}
+                            {isSubmitting ? "Creating..." : buttonText}
                         </EditorButton>
                     </PageBlock>
                 </EditorCommandsContainer>
