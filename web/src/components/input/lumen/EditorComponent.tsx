@@ -44,11 +44,16 @@ import { FileWrapper, ProgressStatus } from "../commons";
 import ProfilePicture from "../../utils/ProfilePicture";
 import { useFormikContext } from "formik";
 import CircularProgress from "../../utils/CircularProgress";
+import { MediaItem } from "../../../generated/graphql";
+import { uploadMedia } from "./utils/uploadFile";
 
 interface EditorComponentProps {
     placeholder: string;
     buttonText: string;
+    directory: string;
     progress: ProgressStatus[];
+    setProgress: (progress: ProgressStatus[]) => void;
+    existingMedia?: MediaItem[];
     isSubmitting?: boolean;
 }
 
@@ -67,13 +72,17 @@ const EditorComponentContainer = styled.div`
     overflow-x: hidden;
 `;
 
-const EditorContainer = styled.div`
+const EditorContainer = styled.div.attrs(
+    (props: { disabled: boolean }) => props
+)`
     display: block;
     position: relative;
     min-height: 54px;
     font-size: 22px;
     max-height: 220px;
     overflow-y: auto;
+    opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
+    pointer-events: ${({ disabled }) => (disabled ? "none" : "auto")};
 
     div p {
         margin: 0;
@@ -277,9 +286,19 @@ const ShouldClearEditorPlugin: FunctionComponent<ShouldClearEditorProps> = ({
     return null;
 };
 
+const EditableControlPlugin: FunctionComponent<{ isSubmitting: boolean }> = ({ isSubmitting }) => {
+    const [editor] = useLexicalComposerContext();
+
+    useEffect(() => {
+        editor.setEditable(!isSubmitting);
+    }, [isSubmitting, editor]);
+
+    return null;
+};
+
 const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
     const { me, loading } = useMeData();
-    const { placeholder, buttonText, progress, isSubmitting } = props;
+    const { placeholder, buttonText, directory, progress, setProgress, existingMedia, isSubmitting = false } = props;
     const { setFieldValue, values } = useFormikContext<EditorFormValues>();
     const [content, setContent] = useState(values.content || "");
     const [isEditorEmpty, setIsEditorEmpty] = useState(false);
@@ -342,10 +361,18 @@ const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
         theme: {
             hashtag: "editor-hashtag",
         },
+        editable: true,
     };
 
     const uploadPostMediaRef = useRef<HTMLInputElement | null>(null);
-    const [media, setMedia] = useState<FileWrapper[]>(values.media || []);
+
+    const [media, setMedia] = useState<FileWrapper[]>(existingMedia?.map((item) => ({
+        id: item.id,
+        type: item.type,
+        alt: item.alt,
+        src: item.src,
+        status: "uploaded",
+    })) as FileWrapper[] || []);
 
     useEffect(() => {
         if (EMPTY_CONTENT_REGEXP.test(content) || content === "") {
@@ -396,7 +423,7 @@ const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
             </ProfileImageContainer>
             <EditorComponentContainer>
                 <LexicalComposer initialConfig={initialConfig}>
-                    <EditorContainer>
+                    <EditorContainer disabled={isSubmitting}>
                         <PlainTextPlugin
                             contentEditable={<ContentEditable />}
                             placeholder={
@@ -421,6 +448,7 @@ const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
                         <AutoLinkPlugin matchers={MATCHERS} />
                         <ClearEditorPlugin />
                         <HashtagPlugin />
+                        <EditableControlPlugin isSubmitting={isSubmitting} />
                         {clearEditor && (
                             <ShouldClearEditorPlugin
                                 setMedia={setMedia}
@@ -445,71 +473,59 @@ const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
                                 <MediaContainer key={mediaItem.id}>
                                     <MediaMainContainer>
                                         <MediaFileContainer>
-                                            {mediaItem.file ? (
-                                                <>
-                                                    {mediaItem.file.type.includes(
-                                                        "image"
-                                                    ) ? (
-                                                        <img
-                                                            src={URL.createObjectURL(
-                                                                mediaItem.file
-                                                            )}
-                                                            alt={mediaItem.alt}
-                                                        />
-                                                    ) : (
-                                                        <video
-                                                            controls
-                                                            src={URL.createObjectURL(
-                                                                mediaItem.file
-                                                            )}
-                                                            muted
-                                                            playsInline
-                                                            preload="metadata"
-                                                        />
-                                                    )}
-                                                </>
+                                            {mediaItem.type.includes(
+                                                "image"
+                                            ) ? (
+                                                <img
+                                                    src={
+                                                        mediaItem.src
+                                                    }
+                                                    alt={
+                                                        mediaItem.alt
+                                                    }
+                                                />
                                             ) : (
-                                                <>
-                                                    {mediaItem.src &&
-                                                        mediaItem.src.length >
-                                                            0 && (
-                                                            <>
-                                                                {mediaItem.type.includes(
-                                                                    "image"
-                                                                ) ? (
-                                                                    <img
-                                                                        src={
-                                                                            mediaItem.src
-                                                                        }
-                                                                        alt={
-                                                                            mediaItem.alt
-                                                                        }
-                                                                    />
-                                                                ) : (
-                                                                    <video
-                                                                        controls
-                                                                        src={
-                                                                            mediaItem.src
-                                                                        }
-                                                                        muted
-                                                                        playsInline
-                                                                        preload="metadata"
-                                                                    />
-                                                                )}
-                                                            </>
-                                                        )}
-                                                </>
+                                                <video
+                                                    controls
+                                                    src={
+                                                        mediaItem.src
+                                                    }
+                                                    muted
+                                                    playsInline
+                                                    preload="metadata"
+                                                />
                                             )}
                                             {progress.find(
                                                 (item) =>
                                                     item.id ===
                                                     mediaItem.id
                                             ) && (
-                                                <CircularProgress progress={progress.find(
-                                                    (item) =>
-                                                        item.id ===
-                                                        mediaItem.id
-                                                )?.progress as number} statusText={progress.find(item => item.id === mediaItem.id)?.status === "error" ? "An error occurred" : undefined} />
+                                                <CircularProgress 
+                                                    progress={progress.find(
+                                                        (item) =>
+                                                            item.id ===
+                                                            mediaItem.id
+                                                    )?.progress as number}
+                                                    statusText={progress.find(item => item.id === mediaItem.id)?.status === "error" ? "An error occurred" : undefined}
+                                                    statusFlag={progress.find(item => item.id === mediaItem.id)?.status === "error" ? "error" : "ok"}
+                                                    onError={async () => {
+                                                        const updatedItem = await uploadMedia(
+                                                            mediaItem,
+                                                            directory,
+                                                            setProgress
+                                                        );
+
+                                                        setMedia((prevArray) =>
+                                                            prevArray.map(
+                                                                (item) =>
+                                                                    item.id ===
+                                                                    mediaItem.id
+                                                                        ? updatedItem
+                                                                        : item
+                                                            )
+                                                        );
+                                                    }}
+                                                />
                                             )}
                                         </MediaFileContainer>
                                         <MediaFileInfo>
@@ -546,10 +562,9 @@ const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
                                                     }}
                                                 />
                                             </MediaAltContainer>
-                                            {mediaItem.status ===
-                                                "uploaded" && (
-                                                    <MediaSmallInfo>Already uploaded</MediaSmallInfo>
-                                                )}
+                                            {mediaItem.status === "uploaded" && (
+                                                <MediaSmallInfo>Already uploaded</MediaSmallInfo>
+                                            )}
                                         </MediaFileInfo>
                                     </MediaMainContainer>
                                     <DeleteMediaButton
@@ -580,6 +595,14 @@ const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
                                                     )
                                                 );
                                             }
+
+                                            setProgress(
+                                                progress.filter(
+                                                    (item) =>
+                                                        item.id !==
+                                                        mediaItem.id
+                                                )
+                                            );
                                         }}
                                     >
                                         <Close type="small" />
@@ -629,6 +652,7 @@ const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
                                                         index +
                                                         new Date().getTime(),
                                                     alt: "",
+                                                    src: URL.createObjectURL(item),
                                                     file: item,
                                                     type: item.type,
                                                     status: "uploading",
@@ -653,7 +677,7 @@ const EditorComponent = forwardRef((props: EditorComponentProps, ref) => {
                             aria-label={buttonText}
                             disabled={isEditorEmpty || isSubmitting}
                         >
-                            {isSubmitting ? "Creating..." : buttonText}
+                            {isSubmitting ? "Loading..." : buttonText}
                         </EditorButton>
                     </PageBlock>
                 </EditorCommandsContainer>

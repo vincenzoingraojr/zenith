@@ -13,9 +13,3 @@ export const markUploadError = (id: number, setMediaUploadStatusArray: any) => {
         prev.map(status => status.id === id ? { ...status, progress: 0, status: "error" } : status)
     );
 };
-
-export const checkForDeletedFiles = (media: any[], setMediaUploadStatusArray: any) => {
-    setMediaUploadStatusArray((prev: ProgressStatus[]) =>
-        prev.filter(status => media.some(item => item.id === status.id))
-    );
-}

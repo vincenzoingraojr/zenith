@@ -1,4 +1,4 @@
-import { FunctionComponent, useRef, useState } from "react";
+import { FunctionComponent, useEffect, useRef, useState } from "react";
 import { Form, Formik } from "formik";
 import { useMeData } from "../../../utils/user/userQueries";
 import { useToasts } from "../../utils/ToastProvider";
@@ -16,7 +16,6 @@ import { CustomFieldError, EditorFieldContainer, LumenInputContainer } from "../
 import EditorComponent from "./EditorComponent";
 import { client } from "../../..";
 import { uploadAllMedia } from "./utils/uploadFile";
-import { checkForDeletedFiles } from "./utils/manageProgress";
 
 interface LumenInputProps {
     type: "post" | "comment";
@@ -47,6 +46,14 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({
     };
     const editorRef = useRef<EditorComponentHandle>(null);
 
+    const [postMediaDirectory, setPostMediaDirectory] = useState("");
+    
+    useEffect(() => {
+        if (me) {
+            setPostMediaDirectory(`${folder}/${new Date().getTime()}-${me.id}`);
+        }
+    }, [me, folder]);
+
     const { addToast } = useToasts();
 
     const [createPost] = useCreatePostMutation();
@@ -66,14 +73,11 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({
                     media: [] as FileWrapper[],
                 }}
                 onSubmit={async (values, { setErrors, setSubmitting }) => {
-                    let postMediaDirectory = "";
                     let media = [...values.media];
-                    checkForDeletedFiles(media, setMediaUploadStatusArray);
 
                     setSubmitting(true);
-                    if (media.length > 0 && me) {
-                        postMediaDirectory = `${folder}/${new Date().getTime()}-${me.id}`;
-                        media = await uploadAllMedia(media, postMediaDirectory, setMediaUploadStatusArray, addToast);
+                    if (!mediaUploadStatusArray.some((item) => item.status === "error") && media.length > 0 && me) {
+                        media = await uploadAllMedia(media, postMediaDirectory, setMediaUploadStatusArray);
                     }
 
                     if (mediaUploadStatusArray.some((item) => item.status === "error")) {
@@ -286,7 +290,9 @@ const LumenInput: FunctionComponent<LumenInputProps> = ({
                                 ref={editorRef}
                                 placeholder={placeholder}
                                 buttonText={buttonText}
+                                directory={postMediaDirectory}
                                 progress={mediaUploadStatusArray}
+                                setProgress={setMediaUploadStatusArray}
                                 isSubmitting={isSubmitting}
                             />
                         </EditorFieldContainer>

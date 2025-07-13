@@ -1,11 +1,13 @@
 import { FunctionComponent } from "react";
 import styled from "styled-components";
 import { COLORS } from "../../styles/colors";
-import { PageText } from "../../styles/global";
+import { PageText, SmallButton } from "../../styles/global";
 
 interface CircularProgressProps {
     progress: number;
     statusText?: string;
+    statusFlag: "ok" | "error";
+    onError?: () => void;
 }
 
 const CircularProgressWrapper = styled.div`
@@ -36,8 +38,16 @@ const ProgressText = styled(PageText)`
     color: ${({ theme }) => theme.inputText};
 `;
 
+const RetryButton = styled(SmallButton)`
+    border: none;
+    background-color: ${COLORS.blue};
+    color: ${COLORS.white};
+`;
+
 const CircularProgress: FunctionComponent<CircularProgressProps> = ({
     progress,
+    statusFlag,
+    onError,
     statusText = "Uploading...",
 }) => {
     const size = 26;
@@ -58,30 +68,41 @@ const CircularProgress: FunctionComponent<CircularProgressProps> = ({
     return (
         <ProgressContainer>
             <CircularProgressWrapper>
-                <svg style={{ width: size, height: size }}>
-                    <circle
-                        cx={center}
-                        cy={center}
-                        fill="transparent"
-                        r={radius}
-                        stroke={trackColor}
-                        strokeWidth={trackWidth}
-                        strokeOpacity={trackOpacity}
-                    />
-                    <circle
-                        cx={center}
-                        cy={center}
-                        fill="transparent"
-                        r={radius}
-                        stroke={indicatorColor}
-                        strokeWidth={indicatorWidth}
-                        strokeDasharray={dashArray}
-                        strokeDashoffset={dashOffset}
-                        strokeLinecap={indicatorCap}
-                    />
-                </svg>
+                {statusFlag === "ok" ? (
+                    <svg style={{ width: size, height: size }}>
+                        <circle
+                            cx={center}
+                            cy={center}
+                            fill="transparent"
+                            r={radius}
+                            stroke={trackColor}
+                            strokeWidth={trackWidth}
+                            strokeOpacity={trackOpacity}
+                        />
+                        <circle
+                            cx={center}
+                            cy={center}
+                            fill="transparent"
+                            r={radius}
+                            stroke={indicatorColor}
+                            strokeWidth={indicatorWidth}
+                            strokeDasharray={dashArray}
+                            strokeDashoffset={dashOffset}
+                            strokeLinecap={indicatorCap}
+                        />
+                    </svg>
+                ) : (
+                    <RetryButton
+                        type="button"
+                        title="Retry upload"
+                        aria-label="Retry upload"
+                        onClick={onError}
+                    >
+                        Retry
+                    </RetryButton>
+                )}
             </CircularProgressWrapper>
-            <ProgressText>{statusText}</ProgressText>
+            <ProgressText>{statusFlag === "ok" && progress === 100 ? "Upload completed" : statusText}</ProgressText>
         </ProgressContainer>
     );
 }

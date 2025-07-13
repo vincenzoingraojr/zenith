@@ -14,6 +14,6 @@ export type FileWrapper = {
     file?: File;
     type: string;
     alt: string;
-    src?: string;
-    status: "uploading" | "uploaded" | "to_be_deleted";
+    src: string;
+    status: "uploading" | "to_be_saved" | "uploaded" | "to_be_deleted";
 };

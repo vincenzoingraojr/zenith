@@ -1009,7 +1009,7 @@ export class PostResolver {
 
                         if (post) {
                             const mediaToUpload = mediaArray.filter(
-                                (item: any) => item.status === "uploading"
+                                (item: any) => item.status === "to_be_saved"
                             );
 
                             if (mediaToUpload && mediaToUpload.length > 0 && post) {
